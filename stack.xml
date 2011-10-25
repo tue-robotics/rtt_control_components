@@ -1,0 +1,11 @@
+<stack>
+  <description brief="rtt_generic_components">rtt_generic_components</description>
+  <author>Maintained by Tim Clephas</author>
+  <license>BSD</license>  
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/rtt_generic_components</url>
+  <depend stack="orocos_toolchain" /> <!-- rtt -->
+  <depend stack="ros" />
+  <depend stack="rtt_ros_integration" /> <!-- rtt_rosnode -->
+
+</stack>
