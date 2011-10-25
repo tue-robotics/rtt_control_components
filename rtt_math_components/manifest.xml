@@ -1,0 +1,26 @@
+<package>
+  <description brief="orocos_components">
+
+     orocos_components
+
+  </description>
+  <author>Tim Clephas e.a.</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/amigo_base_controller_position</url>
+  <depend package="rtt_geometry_msgs"/>
+  <depend package="rtt_nav_msgs"/>
+  <depend package="rtt_amigo_msgs"/>
+  <depend package="rtt_std_msgs"/>
+  <depend package="rtt"/>
+  <depend package="ocl"/>
+  <depend package="tf"/>
+  <depend package="amigo_ref_interpolator"/>
+  <depend package="soem_beckhoff_drivers"/>
+  <depend package="eigen"/>
+  <depend package="rtt_diagnostic_msgs"/>diagnostic_updater
+  <depend package="diagnostic_updater"/>
+  
+</package>
+
+
