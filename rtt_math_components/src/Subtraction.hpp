@@ -1,3 +1,11 @@
+/**
+ * author: Tim Clephas
+ * email:  t.t.g.clephas@student.tue.nl
+ *
+ * filename:             Addition.hpp
+ * Last modification:    March 2011
+ */
+
 #ifndef SUBTRACTION_HPP
 #define SUBTRACTION_HPP
 
@@ -7,33 +15,52 @@
 
 using namespace RTT;
 
-// Define a new type for easy coding:
-typedef vector<double> doubles;
+namespace MATH // Just because it looks nice
+{
+  /**
+   * @brief A Component that subtracts two vectors elementwise.
+   *
+   * The component has two input ports that should receive vectors
+   * of the same size. The minus port is an eventport which will
+   * trigger the component.
+   *
+   * @par Configuration
+   * The component is configured using only the 'vectorsize'-property.
+   */
 
-class Subtraction
-: public RTT::TaskContext
-  {
-  private:
+  class Subtraction
+  : public RTT::TaskContext
+    {
+    private:
 
-  // Declaring input- and output_ports
+    /**
+     * Define a new type doubles for easy coding.
+     */
+    typedef vector<double> doubles;
+
+
+    /*
+     * Declaring input- and output_ports
+     */
   InputPort<doubles> inport_plus;
   InputPort<doubles> inport_minus;
   OutputPort<doubles> outport;
 
+    /*
+     * Declaring variable vectorsize which is set by a property
+     */
+    uint vectorsize; // Number of elements to be calculated.
 
-  // Declaring global variables
+    public:
+    /**
+     * Set up a component for subtracting two vectors.
+     */
+    Subtraction(const string& name);
+    ~Subtraction();
 
-  // Delacring variables set by properties
-
-  uint vectorsize; // Number of errors to be calculated.
-
-  public:
-
-  Subtraction(const string& name);
-  ~Subtraction();
-
-  bool configureHook();
-  bool startHook();
-  void updateHook();
-  };
+    bool configureHook();
+    bool startHook();
+    void updateHook();
+    };
+}
 #endif

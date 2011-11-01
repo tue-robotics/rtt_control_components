@@ -1,14 +1,23 @@
+/**
+ * author: Tim Clephas
+ * email:  t.t.g.clephas@student.tue.nl
+ *
+ * filename:             Addition.cpp
+ * Last modification:    March 2011
+ */
+
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
 #include <ocl/Component.hpp>
 
-#include "Subtraction.hpp"
+#include "Addition.hpp"
 
 using namespace RTT;
+using namespace MATH;
 
 Subtraction::Subtraction(const string& name) : TaskContext(name, PreOperational)
 {
-  addProperty( "vectorsize", vectorsize );
+  addProperty( "vectorsize", vectorsize ).doc("An unsigned integer that specifies the size of the vector");;
 
   // Adding ports
   addPort( "in_plus", inport_plus );
@@ -57,4 +66,4 @@ void Subtraction::updateHook()
   outport.write( output );
 }
 
-ORO_CREATE_COMPONENT(Subtraction)
+ORO_CREATE_COMPONENT(MATH::Subtraction)
