@@ -23,4 +23,5 @@ orocos_component(AnalogIns src/AnalogIns.cpp)
 orocos_component(AnalogOuts src/AnalogOuts.cpp)
 orocos_component(DigitalIns src/DigitalIns.cpp)
 orocos_component(DigitalOuts src/DigitalOuts.cpp)
+orocos_component(ReadEncoders src/ReadEncoders.cpp)
 
