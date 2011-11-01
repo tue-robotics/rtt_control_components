@@ -1,0 +1,16 @@
+<package>
+  <description brief="rtt_ROS_interfacing">
+
+     rtt_ROS_interfacing
+
+  </description>
+  <author>Tim Clephas e.a.</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/rtt_ROS_interfacing</url>
+  <depend package="rtt"/>
+  <depend package="rtt_rosnode"/>
+  
+</package>
+
+
