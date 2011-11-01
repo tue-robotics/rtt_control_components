@@ -10,6 +10,7 @@
   <url>http://ros.org/wiki/rtt_soem_interfacing</url>
   <depend package="rtt"/>
   <depend package="rtt_rosnode"/>
+  <depend package="soem_beckhoff_drivers"/>
   
 </package>
 
