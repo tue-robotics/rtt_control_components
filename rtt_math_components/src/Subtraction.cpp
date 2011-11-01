@@ -2,7 +2,7 @@
  * author: Tim Clephas
  * email:  t.t.g.clephas@student.tue.nl
  *
- * filename:             Addition.cpp
+ * filename:             Subtraction.cpp
  * Last modification:    March 2011
  */
 
@@ -10,7 +10,7 @@
 #include <rtt/Port.hpp>
 #include <ocl/Component.hpp>
 
-#include "Addition.hpp"
+#include "Subtraction.hpp"
 
 using namespace RTT;
 using namespace MATH;

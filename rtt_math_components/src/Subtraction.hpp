@@ -2,7 +2,7 @@
  * author: Tim Clephas
  * email:  t.t.g.clephas@student.tue.nl
  *
- * filename:             Addition.hpp
+ * filename:             Subtraction.hpp
  * Last modification:    March 2011
  */
 
