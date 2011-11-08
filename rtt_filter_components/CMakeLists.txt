@@ -21,8 +21,11 @@ include(${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake)
 #common commands for building c++ executables and libraries
 orocos_component(FirstOrderLowPass src/FirstOrderLowPass.cpp)
 orocos_component(LeadLag src/LeadLag.cpp)
+orocos_component(LeadLags src/LeadLags.cpp)
 orocos_component(PID src/PID.cpp)
 orocos_component(SecondOrderLowPass src/SecondOrderLowPass.cpp)
+orocos_component(SecondOrderLowPasses src/SecondOrderLowPasses.cpp)
 orocos_component(SkewedNotch src/SkewedNotch.cpp)
 orocos_component(WeakIntegrator src/WeakIntegrator.cpp)
+orocos_component(WeakIntegrators src/WeakIntegrators.cpp)
 
