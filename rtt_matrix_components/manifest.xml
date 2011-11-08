@@ -1,0 +1,16 @@
+<package>
+  <description brief="rtt_matrix_components">
+
+     rtt_matrix_components
+
+  </description>
+  <author>Janno Lunenburg e.a.</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/rtt_matrix_components</url>
+  <depend package="rtt"/>
+  <depend package="rtt_rosnode"/>
+
+</package>
+
+
