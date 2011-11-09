@@ -5,7 +5,7 @@
 #include "DigitalIns.hpp"
 
 using namespace RTT;
-using namespace AMIGO;
+using namespace SOEM;
 
 DigitalIns::DigitalIns(const string& name) : TaskContext(name, PreOperational)
 {
@@ -42,4 +42,4 @@ void DigitalIns::updateHook()
 	}
 }
 
-ORO_CREATE_COMPONENT(DigitalIns)
+ORO_CREATE_COMPONENT(SOEM::DigitalIns)

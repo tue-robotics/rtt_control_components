@@ -8,7 +8,7 @@
 
 using namespace RTT;
 using namespace soem_beckhoff_drivers;
-using namespace AMIGO;
+using namespace SOEM;
 
 ReadEncoders::ReadEncoders(const string& name) : TaskContext(name, PreOperational)
 {
@@ -108,4 +108,4 @@ double ReadEncoders::readEncoder( int i )
   return SI_value;
 }
 
-ORO_CREATE_COMPONENT(ReadEncoders)
+ORO_CREATE_COMPONENT(SOEM::ReadEncoders)

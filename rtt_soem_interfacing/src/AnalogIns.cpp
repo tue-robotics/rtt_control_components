@@ -5,7 +5,7 @@
 #include "AnalogIns.hpp"
 
 using namespace RTT;
-using namespace AMIGO;
+using namespace SOEM;
 
 AnalogIns::AnalogIns(const string& name) : TaskContext(name, PreOperational)
 {
@@ -38,4 +38,4 @@ void AnalogIns::updateHook()
 	}
 }
 
-ORO_CREATE_COMPONENT(AnalogIns)
+ORO_CREATE_COMPONENT(SOEM::AnalogIns)

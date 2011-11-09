@@ -15,7 +15,7 @@ inline string to_string (const T& t){
 
 using namespace RTT;
 
-namespace AMIGO
+namespace SOEM
 {
   class DigitalIns
   : public RTT::TaskContext

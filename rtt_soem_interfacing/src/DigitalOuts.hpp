@@ -9,7 +9,7 @@
 
 using namespace RTT;
 
-namespace AMIGO // Just because it looks nice
+namespace SOEM // Just because it looks nice
 {
 
   class DigitalOuts

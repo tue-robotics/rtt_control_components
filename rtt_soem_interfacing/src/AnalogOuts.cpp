@@ -5,7 +5,7 @@
 #include "AnalogOuts.hpp"
 
 using namespace RTT;
-using namespace AMIGO;
+using namespace SOEM;
 
 AnalogOuts::AnalogOuts(const string& name) : TaskContext(name, PreOperational)
 {
@@ -62,4 +62,4 @@ void AnalogOuts::updateHook()
   Analog_out_port.write(amsg);
 }
 
-ORO_CREATE_COMPONENT(AnalogOuts)
+ORO_CREATE_COMPONENT(SOEM::AnalogOuts)

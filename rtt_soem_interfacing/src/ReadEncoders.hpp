@@ -21,7 +21,7 @@ inline string to_string (const T& t){
 using namespace RTT;
 using namespace soem_beckhoff_drivers;
 
-namespace AMIGO // Just because it looks nice
+namespace SOEM // Just because it looks nice
 {
   typedef vector<double> doubles;
 

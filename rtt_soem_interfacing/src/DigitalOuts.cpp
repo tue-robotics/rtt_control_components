@@ -5,7 +5,7 @@
 #include "DigitalOuts.hpp"
 
 using namespace RTT;
-using namespace AMIGO;
+using namespace SOEM;
 
 DigitalOuts::DigitalOuts(const string& name) : TaskContext(name, PreOperational)
 {
@@ -70,4 +70,4 @@ void DigitalOuts::updateHook()
 }
 }
 
-ORO_CREATE_COMPONENT(DigitalOuts)
+ORO_CREATE_COMPONENT(SOEM::DigitalOuts)
