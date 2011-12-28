@@ -21,9 +21,7 @@ VectorConcatenate::VectorConcatenate(const string& name) :
 	TaskContext(name, PreOperational),
 		N(2)
 {
-  
-  addProperty( "number_of_inputs", N );
- 
+  addProperty( "number_of_inputs", N ).doc("An unsigned integer that specifies the number of input ports");;
 }
 
 VectorConcatenate::~VectorConcatenate(){}
@@ -31,10 +29,10 @@ VectorConcatenate::~VectorConcatenate(){}
 bool VectorConcatenate::configureHook()
 {
 	Logger::In in("VectorConcatenate::configureHook()");
-	Ts = getPeriod();
 	
-	inports.resize(N);
-	
+	//inports.resize(N);
+
+	/*
 	// Adding ports
 	for (uint i = 0; i < N; i++) {
 		std::string portname("in");
@@ -42,7 +40,14 @@ bool VectorConcatenate::configureHook()
 		os << (i+1);
 		portname += os.str();
 		addPort( portname, inports[i] );
+	}*/
+	
+	for ( uint i = 0; i < N; i++ )
+	{
+		string name_inport = "in"+to_string(i+1);
+		addEventPort( name_inport, inports[i] );
 	}
+	
 	addPort( "out", outport );
 	
 	return true;
@@ -65,7 +70,7 @@ bool VectorConcatenate::startHook()
     log(Warning)<<"Outputport not connected!"<<endlog();
   }
   
-  if (N < 1 || Ts <= 0) {
+  if (N < 1 ) {
     log(Error)<<"VectorConcatenate parameters not valid!"<<endlog();
     return false;
   }

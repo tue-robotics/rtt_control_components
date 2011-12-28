@@ -17,6 +17,15 @@
 #include <iostream>
 #include <sstream>
 
+#define maxN 10 //Maximum number of ports that can be created. Still a workaround.
+
+template <class T>
+inline string to_string (const T& t){
+  stringstream ss;
+  ss << t;
+  return ss.str();
+};
+
 using namespace RTT;
 
 namespace SIGNALROUTING
@@ -41,12 +50,9 @@ namespace SIGNALROUTING
     private:
 
 		/* Declaring and output port*/
-		vector< InputPort<doubles> > inports;
+		InputPort<doubles> inports[maxN];
 		OutputPort<doubles> outport;
 
-		/* Declaring global variables */
-		double Ts;		
-		
 		/* Declaring variables set by properties */
 		// Number of input ports
 		uint N;
