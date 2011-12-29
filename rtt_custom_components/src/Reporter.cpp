@@ -24,6 +24,7 @@ Reporter::Reporter(const string& name) :
 {
 	addProperty( "number_of_inputs", N ).doc("An unsigned integer that specifies the number of input ports");;
 	addProperty( "ReportFile", filename ).doc("Name of the report file");;
+	addProperty( "FirstLine", firstline ).doc("First line of the file");;
 }
 
 Reporter::~Reporter(){}
@@ -32,12 +33,12 @@ bool Reporter::configureHook()
 {
 	Logger::In in("Reporter::configureHook()");
 
-	addEventPort( "trigger", inports[0] );
-	for ( uint i = 1; i <= N; i++ )
+	for ( uint i = 0; i < N; i++ )
 	{
-		string name_inport = "in"+to_string(i);
+		string name_inport = "in"+to_string(i+1);
 		addPort( name_inport, inports[i] );
 	}
+	addEventPort( "trigger", inports[N] );
 
 	return true;
 }
@@ -47,7 +48,7 @@ bool Reporter::startHook()
   Logger::In in("Reporter::startHook()");
 
   // Check validity of Ports:
-  for (uint i = 0; i < N; i++) {
+  for (uint i = 0; i <= N; i++) {
 	  if ( !inports[i].connected() ) {
 		  log(Error)<<"Input port "<< i <<" not connected!"<<endlog();
 		  // No connection was made, can't do my job !
@@ -61,7 +62,8 @@ bool Reporter::startHook()
   }
 
   // Create file
-  file.open (filename);
+  file.open (filename.c_str());
+  file << firstline << "\n";
 
   starttime = os::TimeService::Instance()->getTicks();
   return true;
@@ -74,7 +76,7 @@ void Reporter::updateHook()
   doubles output;
   double vector_size = 0;
 
-  for ( uint i = 1; i <= N; i++ ) {
+  for ( uint i = 0; i < N; i++ ) {
 	  doubles input;
 	  inports[i].read( input );
 	  vector_size = input.size();
@@ -86,7 +88,7 @@ void Reporter::updateHook()
 
   timestamp = os::TimeService::Instance()->secondsSince( starttime );
   file << timestamp;
-  for ( uint i = 1; i <= output.size(); i++ ) {
+  for ( uint i = 0; i < output.size(); i++ ) {
 		file << " " << output[i];
   }
   file << "\n";

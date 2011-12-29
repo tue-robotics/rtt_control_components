@@ -58,6 +58,7 @@ namespace CUSTOM
 		// Number of input ports
 		uint N;
 		string filename;
+		string firstline;
 
 		// Declaring global variables
 		ofstream file;
