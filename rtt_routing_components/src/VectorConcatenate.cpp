@@ -42,11 +42,13 @@ bool VectorConcatenate::configureHook()
 		addPort( portname, inports[i] );
 	}*/
 	
-	for ( uint i = 0; i < N; i++ )
+	for ( uint i = 0; i < N-1; i++ )
 	{
 		string name_inport = "in"+to_string(i+1);
 		addEventPort( name_inport, inports[i] );
 	}
+	string name_inport = "in"+to_string(N)+"_event";
+	addEventPort( name_inport, inports[N-1] );
 	
 	addPort( "out", outport );
 	
