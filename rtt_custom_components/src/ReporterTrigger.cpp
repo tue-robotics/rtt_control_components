@@ -15,12 +15,13 @@
 #include "ReporterTrigger.hpp"
 
 using namespace RTT;
-using namespace MATH;
+using namespace CUSTOM;
 
 ReporterTrigger::ReporterTrigger(const string& name) : 
 	TaskContext(name, PreOperational)
 {
 	addEventPort( "in", inport);
+	addPort( "out", outport);
 }
 
 ReporterTrigger::~ReporterTrigger(){}
@@ -58,4 +59,4 @@ void ReporterTrigger::updateHook()
 
 }
 
-ORO_CREATE_COMPONENT(MATH::ReporterTrigger)
+ORO_CREATE_COMPONENT(CUSTOM::ReporterTrigger)

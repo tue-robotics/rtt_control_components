@@ -16,7 +16,7 @@
 
 using namespace RTT;
 
-namespace MATH
+namespace CUSTOM
 {
   // Define a new type for easy coding:
   typedef vector<double> doubles;
