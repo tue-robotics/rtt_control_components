@@ -1,6 +1,6 @@
 <stack>
   <description brief="rtt_generic_components">rtt_generic_components</description>
-  <author>Maintained by Tim Clephas</author>
+  <author>Maintained by Janno Lunenburg</author>
   <license>BSD</license>  
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/rtt_generic_components</url>
