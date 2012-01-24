@@ -80,41 +80,16 @@ void Polynomials::updateHook()
 	
 	for (uint i = 0; i < vector_size; i++){
 		int order=polynomials[i].size()-1;
-		printf("i=%d \n",i);
+		//printf("i=%d \n",i);
 		for (int j = 0; j <=order; j++){
 			
 			output[i]+=polynomials[i][j]*pow(input[i],j);
-			printf("j=%d and adding %f to output which now = %f \n",j,polynomials[i][j]*pow(input[i],j-1),output[i]);
+			//printf("j=%d and adding %f to output which now = %f \n",j,polynomials[i][j]*pow(input[i],j-1),output[i]);
 		}
 	}
 	
 	// Write the outputs
 	outport.write( output );
-}
-
-//double Polynomials::power(double x, int y)
-//{
-	//double rv;
-	//if(y==0){
-		//rv=1.0;
-	//}
-	//if(y>0){
-		//rv=x;
-		//for(int i=1; i<y; i++){
-			//rv=rv*x;
-		//}
-	//}
-	//if(y<0){
-		//rv=x;
-		//for(int i=1; i<y; i++){
-			//rv=rv*x;
-		//}
-		//rv=1/rv;
-	//}
-	
-	//return rv;
-	
-//}
-	
+}	
 
 ORO_CREATE_COMPONENT(MATH::Polynomials)

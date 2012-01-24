@@ -72,7 +72,7 @@ bool Reporter::startHook()
 void Reporter::updateHook()
 {
   Logger::In in("Reporter::updateHook()");
-
+  stringstream ss;
   doubles output;
   double vector_size = 0;
 
@@ -87,11 +87,12 @@ void Reporter::updateHook()
 
 
   timestamp = os::TimeService::Instance()->secondsSince( starttime );
-  file << timestamp;
+  ss << timestamp;
   for ( uint i = 0; i < output.size(); i++ ) {
-		file << " " << output[i];
+		ss << " " << output[i];
   }
-  file << "\n";
+  ss << "\n";
+  file << ss.str();
 }
 
 void Reporter::stopHook()
