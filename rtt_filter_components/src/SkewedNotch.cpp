@@ -53,8 +53,10 @@ bool SkewedNotch::configureHook()
 
   a[0].resize(vector_size);
   a[1].resize(vector_size);
+  a[2].resize(vector_size);
   b[0].resize(vector_size);
   b[1].resize(vector_size);
+  b[2].resize(vector_size);
   previous_input.resize(vector_size);
   previous_output.resize(vector_size);
   second_previous_input.resize(vector_size);
