@@ -20,4 +20,5 @@ include(${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake)
 
 #common commands for building c++ executables and libraries
 orocos_component(Saturation src/Saturation.cpp)
+orocos_component(Deadzone src/Deadzone.cpp)
 
