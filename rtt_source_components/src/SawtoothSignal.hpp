@@ -15,6 +15,7 @@
 #include <rtt/Port.hpp>
 #include <math.h>
 
+using namespace std;
 using namespace RTT;
 
 namespace SOURCES

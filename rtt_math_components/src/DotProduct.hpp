@@ -23,6 +23,7 @@ inline string to_string (const T& t){
   return ss.str();
 };
 
+using namespace std;
 using namespace RTT;
 
 namespace MATH

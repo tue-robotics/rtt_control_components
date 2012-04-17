@@ -17,6 +17,7 @@
 #define plus '+'
 #define minus '-'
 
+using namespace std;
 using namespace RTT;
 using namespace MATH;
 

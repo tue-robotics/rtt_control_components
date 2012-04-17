@@ -6,7 +6,7 @@
 #include <ocl/Component.hpp>
 #include <soem_beckhoff_drivers/EncoderMsg.h>
 
-
+using namespace std;
 
 template <class T>
 inline string to_string (const T& t){
@@ -17,6 +17,7 @@ inline string to_string (const T& t){
 
 
 #define maxN 10 //Maximum number of ports that can be created. Still a workaround.
+
 
 using namespace RTT;
 using namespace soem_beckhoff_drivers;

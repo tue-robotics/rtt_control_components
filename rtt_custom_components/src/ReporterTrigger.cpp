@@ -14,6 +14,7 @@
 
 #include "ReporterTrigger.hpp"
 
+using namespace std;
 using namespace RTT;
 using namespace CUSTOM;
 

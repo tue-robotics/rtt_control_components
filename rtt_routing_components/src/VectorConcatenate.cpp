@@ -14,6 +14,7 @@
 
 #include "VectorConcatenate.hpp"
 
+using namespace std;
 using namespace RTT;
 using namespace SIGNALROUTING;
 

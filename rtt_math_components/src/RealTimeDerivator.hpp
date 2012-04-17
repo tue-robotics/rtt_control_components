@@ -18,6 +18,7 @@
 #define MAX_SIZE	20
 #define PI 			3.14159265358979
 
+using namespace std;
 using namespace RTT;
 
 namespace AMIGO

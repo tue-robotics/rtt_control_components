@@ -6,6 +6,7 @@
 #include <geometry_msgs/Twist.h>
 
 
+using namespace std;
 using namespace RTT;
 
 namespace MSG // Just because it looks nice

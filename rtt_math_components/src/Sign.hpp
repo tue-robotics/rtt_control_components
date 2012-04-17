@@ -16,6 +16,8 @@
 
 #define maxN 10 //Maximum number of ports that can be created. Still a workaround.
 
+using namespace std;
+
 template <class T>
 inline string to_string (const T& t){
   stringstream ss;

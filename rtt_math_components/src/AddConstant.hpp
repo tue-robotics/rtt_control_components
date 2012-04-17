@@ -13,6 +13,7 @@
 #include <rtt/Port.hpp>
 
 
+using namespace std;
 using namespace RTT;
 
 namespace MATH

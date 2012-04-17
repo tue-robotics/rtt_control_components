@@ -6,6 +6,8 @@
 #include <soem_beckhoff_drivers/DigitalMsg.h>
 #include <std_msgs/Bool.h>
 
+using namespace std;
+
 template <class T>
 inline string to_string (const T& t){
   stringstream ss;

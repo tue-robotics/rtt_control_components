@@ -6,6 +6,7 @@
 #include "ReadEncoders.hpp"
 
 
+using namespace std;
 using namespace RTT;
 using namespace soem_beckhoff_drivers;
 using namespace SOEM;

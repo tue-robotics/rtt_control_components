@@ -16,6 +16,7 @@
 
 #define eps 1e-2
 
+using namespace std;
 using namespace RTT;
 using namespace MATH;
 

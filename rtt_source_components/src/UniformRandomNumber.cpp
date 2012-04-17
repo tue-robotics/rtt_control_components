@@ -14,6 +14,7 @@
 
 #include "UniformRandomNumber.hpp"
 
+using namespace std;
 using namespace RTT;
 using namespace SOURCES;
 

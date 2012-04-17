@@ -7,6 +7,7 @@
 #include <soem_beckhoff_drivers/DigitalMsg.h>
 
 
+using namespace std;
 using namespace RTT;
 
 namespace SOEM // Just because it looks nice

@@ -17,6 +17,8 @@
 
 #define maxN 40 //Maximum  size. Still a workaround.
 
+using namespace std;
+
 template <class T>
 inline string to_string (const T& t){
   stringstream ss;

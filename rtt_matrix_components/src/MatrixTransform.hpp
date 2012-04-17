@@ -7,6 +7,7 @@
 
 #define maxN 10 //Maximum matrix size. Still a workaround.
 
+using namespace std;
 
 template <class T>
 inline string to_string (const T& t){
@@ -14,7 +15,6 @@ inline string to_string (const T& t){
   ss << t;
   return ss.str();
 };
-
 
 using namespace RTT;
 

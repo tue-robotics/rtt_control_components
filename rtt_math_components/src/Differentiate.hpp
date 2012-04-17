@@ -15,6 +15,7 @@
 #include <rtt/Port.hpp>
 #include <vector>
 
+using namespace std;
 using namespace RTT;
 
 namespace MATH

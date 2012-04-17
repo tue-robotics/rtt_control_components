@@ -17,6 +17,7 @@
 #define PI 3.14159265358979
 #define eps 1e-16
 
+using namespace std;
 using namespace RTT;
 using namespace SOURCES;
 

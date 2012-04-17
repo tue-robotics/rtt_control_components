@@ -17,6 +17,7 @@
 #include <iostream>
 #include <sstream>
 
+using namespace std;
 using namespace RTT;
 
 namespace DISCONTINUITIES
