@@ -1,6 +1,6 @@
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
-#include <ocl/Component.hpp>
+#include <rtt/Component.hpp>
 #include <amigo_ref_interpolator/interpolator.h>
 
 #include "ReferenceGenerator.hpp"

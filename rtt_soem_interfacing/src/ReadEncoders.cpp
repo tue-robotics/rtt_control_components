@@ -1,6 +1,6 @@
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
-#include <ocl/Component.hpp>
+#include <rtt/Component.hpp>
 #include <soem_beckhoff_drivers/EncoderMsg.h>
 
 #include "ReadEncoders.hpp"
