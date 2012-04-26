@@ -12,11 +12,9 @@ Integrator::Integrator(const string& name) : TaskContext(name, PreOperational)
 {
   /*** Default properties ***/
   N = 1;
-  init = 0.0;
   
   /*** Reading properties ***/
   addProperty( "vector_size", N );
-  addProperty( "initial_condition", init );
 
   /*** Adding ports ***/
   addEventPort( "in", inport );
@@ -53,10 +51,16 @@ bool Integrator::startHook()
     log(Warning)<<"Integrator::Outputport not connected!"<<endlog();
   }
 
+  //Start at value of initial port (will be zero if not connected).
+  doubles init(N,0.0);
+  if ( initialport.connected() )
+  {
+    initialport.read (init);
+  }
   for ( uint i = 0; i < N; i++ )
-    {
-      previous_output[i] = init;
-    }
+  {
+    previous_output[i] = init[i];
+  }
 
   // Initialise old time:
   old_time = os::TimeService::Instance()->getNSecs()*1e-9;

@@ -24,6 +24,7 @@ namespace MATH // Just because it looks nice
     // Declaring input and output ports
     InputPort<doubles> inport;
     InputPort<doubles> resetport;
+    InputPort<doubles> initialport;
     OutputPort<doubles> outport;
 
     // Declaring global variables
@@ -32,7 +33,6 @@ namespace MATH // Just because it looks nice
 
     // Delacring variables set by properties
     uint N; // Number of ports to be calculated.
-    double init;	//Initial condition
 
     public:
 
