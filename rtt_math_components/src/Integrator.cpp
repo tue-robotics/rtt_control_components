@@ -19,6 +19,7 @@ Integrator::Integrator(const string& name) : TaskContext(name, PreOperational)
   /*** Adding ports ***/
   addEventPort( "in", inport );
   addPort( "reset", resetport );
+  addPort( "initial", initialport );
   addPort( "out", outport );
 }
 Integrator::~Integrator(){}
