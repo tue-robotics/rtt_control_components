@@ -62,6 +62,7 @@ namespace MATH // Just because it looks nice
     bool configureHook();
     bool startHook();
     void updateHook();
+    void stopHook();
     };
 }
 #endif

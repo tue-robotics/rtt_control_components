@@ -72,4 +72,11 @@ void Gains::updateHook()
   outport.write( output );
 }
 
+void Gains::stopHook()
+{
+  // Close down neatly
+  doubles output(vectorsize,0.0);
+  outport.write( output );
+}
+
 ORO_CREATE_COMPONENT(MATH::Gains)
