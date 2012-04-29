@@ -44,7 +44,7 @@ void AnalogOuts::updateHook()
   }
   if ( NewData == spindle_port.read(spindle))
   {
-    output[4] = spindle[0];
+    output[4] = spindle;
   }
 
   for ( uint i = 0; i < 8; i++ )

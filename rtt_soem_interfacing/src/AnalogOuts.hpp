@@ -20,14 +20,14 @@ namespace SOEM // Just because it looks nice
 
     OutputPort<soem_beckhoff_drivers::AnalogMsg> Analog_out_port;
     InputPort<doubles> wheels_port;
-    InputPort<doubles> spindle_port;
+    InputPort<double> spindle_port;
 
     soem_beckhoff_drivers::AnalogMsg amsg;
 
     // Declaring output vector to write to the stack
     doubles values;
     doubles wheels;
-    doubles spindle;
+    double spindle;
 
     // Specify maximum voltages:
     doubles max_volt;
