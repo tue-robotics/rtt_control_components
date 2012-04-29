@@ -21,4 +21,7 @@ echo "Created $nameeps"
 namepdf=${1%\.*}.pdf
 epstopdf $nameeps
 echo "Created pdf from $nameeps"
-#evince $namepdf
+
+rm $namegv $nameeps
+
+evince $namepdf
