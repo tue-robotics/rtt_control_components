@@ -9,6 +9,6 @@
   <depend stack="ros" />
   <depend stack="rtt_common_msgs" /> <!-- rtt_diagnostic_msgs -->
   <depend stack="rtt_ros_integration" /> <!-- rtt_rosnode -->
-  <!--<depend stack="soem" /> <-- soem_beckhoff_drivers -->
+  <!--<depend stack="soem" /> <- - soem_beckhoff_drivers -->
 
 </stack>
