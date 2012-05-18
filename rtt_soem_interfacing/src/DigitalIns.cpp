@@ -12,6 +12,8 @@ DigitalIns::DigitalIns(const string& name) : TaskContext(name, PreOperational)
 {
 	for ( uint i = 0; i < 8; i++ ) {
 		addPort("out"+to_string(i+1), outport[i]);
+		flip[i] = false;
+		addProperty("flip_out"+to_string(i+1), flip[i]);
 	} 
 	addPort( "in", inport );
 }
@@ -34,7 +36,7 @@ void DigitalIns::updateHook()
 		
 	inport.read(dmsg);
 	for ( uint i = 0; i < dmsg.values.size(); i++ ) {
-		if (i==5) {
+		if (flip[i]) {
 			newmsg.data = !dmsg.values[i];
 		} else {
 			newmsg.data = dmsg.values[i];

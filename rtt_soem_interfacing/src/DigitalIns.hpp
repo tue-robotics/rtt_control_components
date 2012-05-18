@@ -27,6 +27,7 @@ namespace SOEM
 
     InputPort<soem_beckhoff_drivers::DigitalMsg> inport;
     OutputPort<std_msgs::Bool> outport[8];
+    bool flip[8];
 	
     public:
 
