@@ -2,6 +2,8 @@
   <description brief="rtt_discontinuity_components">
 
      rtt_discontinuity_components
+     
+     Get amigo_ref_interpolator out of here asap please :)
 
   </description>
   <author>Tim Clephas e.a.</author>
@@ -10,6 +12,7 @@
   <url>http://ros.org/wiki/rtt_discontinuity_components</url>
   <depend package="rtt"/>
   <depend package="rtt_rosnode"/>
+  <depend package="amigo_ref_interpolator"/>
   
 </package>
 
