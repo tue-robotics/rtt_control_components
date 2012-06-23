@@ -45,6 +45,7 @@ namespace SOEM // Just because it looks nice
     doubles init_SI_value;
     int ienc[maxN];
     doubles enc2SI;
+    doubles offset;
     uint encoderbits;
     doubles SI_value;
 

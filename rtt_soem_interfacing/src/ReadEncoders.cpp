@@ -14,9 +14,9 @@ using namespace SOEM;
 ReadEncoders::ReadEncoders(const string& name) : TaskContext(name, PreOperational)
 {
   // Creating Properties
-  addProperty( "enc2SI", enc2SI ).doc("Value to convert the encoder value to an SI value. Typically 2pi/(encodersteps_per_rev*gearbox)");
   addProperty( "encoderbits", encoderbits ).doc("Saturation value of the encoder. For example: 65536 for a 16 bit encoder");
-  //const uint encoderbits = 65536;
+  addProperty( "enc2SI", enc2SI ).doc("Value to convert the encoder value to an SI value. Typically 2pi/(encodersteps_per_rev*gearbox)");
+  addProperty( "offset", offset ).doc("Offset value in SI units");
 }
 ReadEncoders::~ReadEncoders(){}
 
@@ -26,6 +26,7 @@ bool ReadEncoders::configureHook()
   N = enc2SI.size();
   SI_value.resize(N);
   init_SI_value.resize(N);
+  offset.assign(N,0.0);
 
   if (N > maxN)
   {
@@ -105,7 +106,7 @@ double ReadEncoders::readEncoder( int i )
     ienc[i]--;
   previous_enc_position[i] = new_enc_position;
   int enc_position = ienc[i] * encoderbits + new_enc_position;
-  double SI_value =  ((double)enc_position * enc2SI[i]) - init_SI_value[i];
+  double SI_value =  ((double)enc_position * enc2SI[i]) - init_SI_value[i] + offset[i];
   return SI_value;
 }
 

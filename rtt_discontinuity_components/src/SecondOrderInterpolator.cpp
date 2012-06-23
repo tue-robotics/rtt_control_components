@@ -84,6 +84,22 @@ void SecondOrderInterpolator::updateHook()
 		  log(Warning)<<"Velocity zero, no movement!"<<endlog();
   posinport.read( desiredPos );  
   
+    // If new data on the resetport [yes/no, resetpos, resetvel, resetacc] reset the according interpolator(s).
+  doubles resetdata(NrInterpolators*4,0.0);
+  if (NewData == resetPort.read( resetdata ) ){
+	  for ( uint i = 0; i < NrInterpolators; i++ ){
+		  if(resetdata[i*4]==1.0){
+			  log(Info)<<"ReferenceGenerator: resetting refgen "<<i+1<<"\n"<<endlog();
+			  mRefGenerators[i].setRefGen(resetdata[i*4+1]);
+			  if(resetdata[i*4+2]!=0.0){
+				  interpolators[i][1]=resetdata[i*4+2];
+			  }
+			  if(resetdata[i*4+3]!=0.0){
+				  interpolators[i][2]=resetdata[i*4+3];
+			  }
+		  }
+	  }
+  }
   
   // Compute the next reference points
   for ( uint i = 0; i < NrInterpolators; i++ ){
