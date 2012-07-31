@@ -1,0 +1,20 @@
+import("rtt_tracing")
+import("rtt_source_components")
+
+var double Ts = 0.001
+
+loadComponent("Ramp","SOURCES::RampSignal")
+setActivity("Ramp",Ts,HighestPriority,ORO_SCHED_RT)
+Ramp.slope = 1
+Ramp.vector_size = 1
+Ramp.configure
+
+
+
+loadComponent("Tracing","Tracing::Tracing")
+setActivity("Tracing",0.0,HighestPriority,ORO_SCHED_RT)
+Tracing.configure
+connect ("Ramp.out","Tracing.in", ConnPolicy() )
+
+Ramp.start
+Tracing.start
