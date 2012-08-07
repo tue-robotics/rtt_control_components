@@ -23,6 +23,7 @@ namespace Signal
 {
   // Define a new type for easy coding:
   typedef vector<double> doubles;
+  typedef vector<uint> uints;
   
   /**
    * @brief A Component that calculates Tracingolute value of the 
@@ -44,12 +45,15 @@ namespace Signal
 		/* Declaring and output port*/
 		InputPort<doubles> inport;
 
-		int buffersize;
+		string filename;
+		uint vectorsize;
+		uint buffersize;
 		doubles buffer;
 		vector<doubles> buffers;
 		int counter;
-		int columns;
-		int rows;
+		uint columns;
+		uint rows;
+		std::vector<doubles>::iterator it;
 	
     public:
 
@@ -60,6 +64,7 @@ namespace Signal
 		bool startHook();
 		void updateHook();
 		void stopHook();
+		void fatal();
 
     };
 }

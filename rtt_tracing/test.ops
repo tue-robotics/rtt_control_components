@@ -1,20 +1,50 @@
 import("rtt_tracing")
 import("rtt_source_components")
 
-var double Ts = 0.001
+var double Ts = 0.00001
+var int buffersize = 16384
 
 loadComponent("Ramp","SOURCES::RampSignal")
 setActivity("Ramp",Ts,HighestPriority,ORO_SCHED_RT)
-Ramp.slope = 1
-Ramp.vector_size = 1
+Ramp.vector_size = 2
+Ramp.slope = array ( 1.0, 2.0 )
 Ramp.configure
 
+loadComponent("Clock","SOURCES::Clock")
+setActivity("Clock",Ts,HighestPriority,ORO_SCHED_RT)
+Clock.vector_size = 1
+Clock.configure
 
+
+var ConnPolicy tracingpolicy
+tracingpolicy.type = BUFFER
+tracingpolicy.size = buffersize
+tracingpolicy.lock_policy = LOCKED
 
 loadComponent("Tracing","Tracing::Tracing")
 setActivity("Tracing",0.0,HighestPriority,ORO_SCHED_RT)
+Tracing.vector_size = 1
+Tracing.buffersize = buffersize
+Tracing.filename = "data2.txt"
 Tracing.configure
-connect ("Ramp.out","Tracing.in", ConnPolicy() )
+connect ("Ramp.out","Tracing.in", tracingpolicy )
+
+
+#Setting up reporting
+loadComponent("Reporter", "OCL::FileReporting")
+Reporter.ReportFile = "report.dat"
+addPeer("Reporter","Ramp")
+Reporter.reportPort("Ramp","out")
+Reporter.NullSample = "-1"
+Reporter.setPeriod(Ts)
+Reporter.Ramp_out.disconnect()
+connect ("Ramp.out","Reporter.Ramp_out", tracingpolicy )
+Reporter.configure
+
+
+
 
 Ramp.start
+Clock.start
 Tracing.start
+#Reporter.start
