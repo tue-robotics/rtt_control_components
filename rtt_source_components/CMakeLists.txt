@@ -20,6 +20,7 @@ include(${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake)
 
 #common commands for building c++ executables and libraries
 orocos_component(ConstantSignal src/ConstantSignal.cpp)
+orocos_component(Clock src/Clock.cpp)
 orocos_component(GaussianRandomNumber src/GaussianRandomNumber.cpp)
 orocos_component(PulseSignal src/PulseSignal.cpp)
 orocos_component(RampSignal src/RampSignal.cpp)
