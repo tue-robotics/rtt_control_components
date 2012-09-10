@@ -21,9 +21,9 @@ tracingpolicy.type = BUFFER
 tracingpolicy.size = buffersize
 tracingpolicy.lock_policy = LOCKED
 
-loadComponent("Tracing","Tracing::Tracing")
+loadComponent("Tracing","Signal::Tracing")
 setActivity("Tracing",0.0,HighestPriority,ORO_SCHED_RT)
-Tracing.vector_size = 1
+Tracing.vector_size = 2
 Tracing.buffersize = buffersize
 Tracing.filename = "data2.txt"
 Tracing.configure

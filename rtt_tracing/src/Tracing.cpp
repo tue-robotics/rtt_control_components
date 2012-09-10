@@ -41,10 +41,10 @@ bool Tracing::configureHook()
 	// TODO: Creat multiple ports
 	columns = vectorsize;
 
-	buffers.resize(columns); // Maybe create reserve()?
-	for (uint column = 0; column < columns; column++)
+	buffers.resize(buffersize); // Maybe create reserve()?
+	for (uint line = 0; line < buffersize; line++)
 	{
-		buffers[column].resize(buffersize,-1);
+		buffers[line].resize(columns,-1);
 	}
 
 
@@ -75,7 +75,7 @@ void Tracing::updateHook()
 
 		for (uint column = 0; column < columns; ++column)
 			{
-				buffers[column][counter] = input[column];
+				buffers[counter][column] = input[column];
 			}
 
 		counter++;
@@ -97,8 +97,9 @@ void Tracing::stopHook()
 		for(dit = (*vit).begin(); dit != (*vit).end(); ++dit)
 		{
 			myFile << *dit;
-			myFile << "\n";
+			myFile << "   ";
 		}
+		myFile << "\n";
 	}
 
 
@@ -116,4 +117,4 @@ void Tracing::fatal()
 	oeps[0] = oeps[1];
 }
 
-ORO_CREATE_COMPONENT(Tracing::Tracing)
+ORO_CREATE_COMPONENT(Signal::Tracing)
