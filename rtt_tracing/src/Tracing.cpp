@@ -82,6 +82,9 @@ void Tracing::updateHook()
 	// First updatehook is useless
 	if(counter == -1){counter = 0;return;}
 
+	// Hier nog iets als: For i = ports { inport[i]==NewData; then write}
+
+
 	doubles input(vectorsizes[0],-2.0);
 	inports[0].read( input );
 
