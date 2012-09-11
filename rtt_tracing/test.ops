@@ -2,12 +2,12 @@ import("rtt_tracing")
 import("rtt_source_components")
 
 var double Ts = 0.00001
-var int buffersize = 16384
+var int buffersize = 128
 
 loadComponent("Ramp","SOURCES::RampSignal")
 setActivity("Ramp",Ts,HighestPriority,ORO_SCHED_RT)
 Ramp.vector_size = 2
-Ramp.slope = array ( 1.0, 2.0 )
+Ramp.slope = array ( 1.0, -2.0 )
 Ramp.configure
 
 loadComponent("Clock","SOURCES::Clock")

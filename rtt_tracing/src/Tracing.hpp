@@ -48,6 +48,9 @@ namespace Signal
 		string filename;
 		uint vectorsize;
 		uint buffersize;
+		double Ts;
+		bool crash;
+
 		doubles buffer;
 		vector<doubles> buffers;
 		int counter;

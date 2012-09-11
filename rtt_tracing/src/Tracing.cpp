@@ -23,13 +23,16 @@ using namespace Signal;
 Tracing::Tracing(const string& name) : 
 					TaskContext(name, PreOperational),
 					filename("data.txt"),
-					buffersize(16384)
+					buffersize(16384),
+					Ts(0.001),
+					crash(true)
 {
 	addEventPort( "in", inport);
 	addProperty( "vector_size", vectorsize ).doc("size of the vector (port)");
 	addProperty( "buffersize", buffersize ).doc("Size of the buffer");
 	addProperty( "filename", filename ).doc("Name of the file");
-
+	addProperty( "Ts", Ts ).doc("Sample time of orocos, used for time vector");
+	addProperty( "Crash_if_done", crash ).doc("Let orocos crash once the logging is finished");
 }
 
 Tracing::~Tracing(){}
@@ -39,7 +42,7 @@ bool Tracing::configureHook()
 	counter = -1;
 
 	// TODO: Creat multiple ports
-	columns = vectorsize;
+	columns = vectorsize +1 ; //+1 for time vector
 
 	buffers.resize(buffersize); // Maybe create reserve()?
 	for (uint line = 0; line < buffersize; line++)
@@ -65,17 +68,16 @@ void Tracing::updateHook()
 	// First updatehook is useless
 	if(counter == -1){counter = 0;return;}
 
-
-	doubles input(columns,2.0);
+	doubles input(vectorsize,-2.0);
 	inport.read( input );
 
 	// Fill it with data
 	if(abs(counter) < buffersize)
 	{
-
-		for (uint column = 0; column < columns; ++column)
+		buffers[counter][0] = Ts*counter;
+		for (uint column = 1; column < columns; ++column)
 			{
-				buffers[counter][column] = input[column];
+				buffers[counter][column] = input[column-1];
 			}
 
 		counter++;
@@ -88,7 +90,11 @@ void Tracing::updateHook()
 
 void Tracing::stopHook()
 {
-	ofstream myFile (filename.c_str());
+	FILE * pFile;
+	pFile = fopen (filename.c_str(),"w");
+
+	string portname = inport.getName();
+	fprintf(pFile, "Time\t%s\n", portname.c_str());
 
 	std::vector<doubles>::iterator vit;
 	doubles::iterator dit;
@@ -96,17 +102,16 @@ void Tracing::stopHook()
 	{
 		for(dit = (*vit).begin(); dit != (*vit).end(); ++dit)
 		{
-			myFile << *dit;
-			myFile << "   ";
+			fprintf(pFile, "% .6e\t", *dit);
 		}
-		myFile << "\n";
+		fprintf(pFile, "\n");
 	}
 
 
+	fclose(pFile);
 
-	myFile.close();
-
-	fatal();
+	if ( crash )
+		fatal();
 
 }
 
