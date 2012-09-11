@@ -16,6 +16,9 @@
 #include "boost/multi_array.hpp"
 #include <cassert>
 
+#define maxN 10 //Maximum number of ports that can be created. Still a workaround.
+
+
 using namespace std;
 using namespace RTT;
 
@@ -24,6 +27,13 @@ namespace Signal
   // Define a new type for easy coding:
   typedef vector<double> doubles;
   typedef vector<uint> uints;
+
+  template <class T>
+  inline string to_string (const T& t){
+    stringstream ss;
+    ss << t;
+    return ss.str();
+  };
   
   /**
    * @brief A Component that calculates Tracingolute value of the 
@@ -43,10 +53,11 @@ namespace Signal
     private:
 
 		/* Declaring and output port*/
-		InputPort<doubles> inport;
+		InputPort<doubles> inports[maxN];
 
 		string filename;
-		uint vectorsize;
+		doubles vectorsizes_prop;
+		vector<int> vectorsizes;
 		uint buffersize;
 		double Ts;
 		bool crash;
@@ -56,7 +67,6 @@ namespace Signal
 		int counter;
 		uint columns;
 		uint rows;
-		std::vector<doubles>::iterator it;
 	
     public:
 

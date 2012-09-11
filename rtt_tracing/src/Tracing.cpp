@@ -27,8 +27,7 @@ Tracing::Tracing(const string& name) :
 					Ts(0.001),
 					crash(true)
 {
-	addEventPort( "in", inport);
-	addProperty( "vector_size", vectorsize ).doc("size of the vector (port)");
+	addProperty( "vector_sizes", vectorsizes_prop ).doc("size of the vector per port. Example: array ( 2.0 4.0 4.0 )");
 	addProperty( "buffersize", buffersize ).doc("Size of the buffer");
 	addProperty( "filename", filename ).doc("Name of the file");
 	addProperty( "Ts", Ts ).doc("Sample time of orocos, used for time vector");
@@ -39,11 +38,26 @@ Tracing::~Tracing(){}
 
 bool Tracing::configureHook()
 {
+
+	// Create ports based on the number of vector sizes given
+	uint Nports = vectorsizes_prop.size();
+	vectorsizes.resize(Nports);
+
+	// Creating ports
+	for ( uint i = 0; i < Nports; i++ )
+	{
+		vectorsizes[i] = vectorsizes_prop[i]; // Hack
+		string name_inport = "in"+to_string(i+1);
+		addEventPort( name_inport, inports[i]);
+		columns += vectorsizes[i];
+	}
+
 	counter = -1;
 
-	// TODO: Creat multiple ports
-	columns = vectorsize +1 ; //+1 for time vector
+	columns += 1 ; // for time vector
 
+	cout << columns;
+	stop();
 	buffers.resize(buffersize); // Maybe create reserve()?
 	for (uint line = 0; line < buffersize; line++)
 	{
@@ -56,10 +70,10 @@ bool Tracing::configureHook()
 
 bool Tracing::startHook()
 {
-	if ( !inport.connected() ) {
+	/*if ( !inports[0].connected() ) {
 		log(Error)<<"Input port not connected!"<<endlog();
 		return false;
-	}
+	}*/
 	return true;
 }
 
@@ -68,8 +82,8 @@ void Tracing::updateHook()
 	// First updatehook is useless
 	if(counter == -1){counter = 0;return;}
 
-	doubles input(vectorsize,-2.0);
-	inport.read( input );
+	doubles input(vectorsizes[0],-2.0);
+	inports[0].read( input );
 
 	// Fill it with data
 	if(abs(counter) < buffersize)
@@ -93,7 +107,7 @@ void Tracing::stopHook()
 	FILE * pFile;
 	pFile = fopen (filename.c_str(),"w");
 
-	string portname = inport.getName();
+	string portname = inports[0].getName();
 	fprintf(pFile, "Time\t%s\n", portname.c_str());
 
 	std::vector<doubles>::iterator vit;

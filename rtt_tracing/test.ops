@@ -1,7 +1,7 @@
 import("rtt_tracing")
 import("rtt_source_components")
 
-var double Ts = 0.00001
+var double Ts = 0.001
 var int buffersize = 128
 
 loadComponent("Ramp","SOURCES::RampSignal")
@@ -23,11 +23,12 @@ tracingpolicy.lock_policy = LOCKED
 
 loadComponent("Tracing","Signal::Tracing")
 setActivity("Tracing",0.0,HighestPriority,ORO_SCHED_RT)
-Tracing.vector_size = 2
+Tracing.vector_sizes = array ( 1.0, 2.0 )
 Tracing.buffersize = buffersize
 Tracing.filename = "data2.txt"
 Tracing.configure
-connect ("Ramp.out","Tracing.in", tracingpolicy )
+connect ("Clock.out","Tracing.in1", tracingpolicy )
+connect ("Ramp.out","Tracing.in2", tracingpolicy )
 
 
 #Setting up reporting
