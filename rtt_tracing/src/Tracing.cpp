@@ -83,6 +83,7 @@ void Tracing::updateHook()
 {
 	// First updatehook is useless
 	if(counter == -1){counter = 0;return;}
+	// TODO: if ( !this->isRunning() ) return; (Check if this also works, counter can become a uint
 
 	// Hier nog iets als: For i = ports { inport[i]==NewData; then write}
 
@@ -116,7 +117,9 @@ void Tracing::updateHook()
 
 
 	}
-	else
+	// TODO: Create a seperate ifloop here for easier readibility
+	// if(abs(counter) => buffersize); stop();
+	else 
 	{
 		stop();
 	}
