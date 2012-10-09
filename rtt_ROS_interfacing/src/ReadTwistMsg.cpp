@@ -104,7 +104,6 @@ void ReadTwistMsg::updateHook()
   // Start fresh data check
   if(NewData == inport.read(cmd_veldata))
   {
-    log(Info)<<"New Data received"<<endlog();
     receive_interval = new_time - aquisition_time;
     aquisition_time = new_time;
     //log(Debug)<<"aquisition_time: "<<aquisition_time<<endlog();
