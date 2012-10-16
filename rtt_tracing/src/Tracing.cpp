@@ -87,39 +87,37 @@ void Tracing::updateHook()
 
 	// Hier nog iets als: For i = ports { inport[i]==NewData; then write}
 
-	if(abs(counter) < buffersize)
-	{
-		for ( uint i = 0; i < vectorsizes.size(); i++ )
-		{
-			doubles input(vectorsizes[i],-2.0);
 
-			if ( inports[i].read( input ) == NewData )
+	for ( uint i = 0; i < vectorsizes.size(); i++ )
+	{
+		doubles input(vectorsizes[i],-2.0);
+
+		if ( inports[i].read( input ) == NewData )
+		{
+			counters[i]++;
+			// Fill it with data
+			buffers[counter][0] = Ts*counter;
+			for (uint column = 1; column < columns; ++column)
 			{
-				counters[i]++;
-				// Fill it with data
-				buffers[counter][0] = Ts*counter;
-				for (uint column = 1; column < columns; ++column)
-				{
-					buffers[counter][column] = input[column-1];
-				}
+				buffers[counter][column] = input[column-1];
 			}
 		}
-
-		counter = *max_element(counters.begin(),counters.end());
-
-
-
-		cout << "Counter: ";
-		cout << counter;
-		cout << "\n";
-
-
-
-
 	}
-	// TODO: Create a seperate ifloop here for easier readibility
-	// if(abs(counter) => buffersize); stop();
-	else 
+
+	counter = *max_element(counters.begin(),counters.end());
+
+
+
+	cout << "Counter: ";
+	cout << counter;
+	cout << "\n";
+
+
+
+
+
+	// Stop if buffer is full
+	if(abs(counter) => buffersize) 
 	{
 		stop();
 	}
