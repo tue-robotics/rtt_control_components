@@ -68,6 +68,7 @@ namespace Signal
 		int counter;
 		uint columns;
 		uint rows;
+		uint Nports;
 	
     public:
 

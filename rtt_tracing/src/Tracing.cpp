@@ -41,7 +41,7 @@ bool Tracing::configureHook()
 	columns = 0;
 
 	// Create ports based on the number of vector sizes given
-	uint Nports = vectorsizes_prop.size();
+	Nports = vectorsizes_prop.size();
 	vectorsizes.resize(Nports);
 	counters.resize(Nports);
 
@@ -85,39 +85,41 @@ void Tracing::updateHook()
 	if(counter == -1){counter = 0;return;}
 	// TODO: if ( !this->isRunning() ) return; (Check if this also works, counter can become a uint
 
-	// Hier nog iets als: For i = ports { inport[i]==NewData; then write}
-
-
-	for ( uint i = 0; i < vectorsizes.size(); i++ )
+	uint startcolumn = 0;
+	for ( uint i = 0; i < Nports; i++ )
 	{
+		
+		
 		doubles input(vectorsizes[i],-2.0);
 
-		if ( inports[i].read( input ) == NewData )
+		if ( inports[i].read( input ) == NewData && counters[i] <= counter )
 		{
-			counters[i]++;
+			uint inputiterator = 0;
 			// Fill it with data
-			buffers[counter][0] = Ts*counter;
-			for (uint column = 1; column < columns; ++column)
+			for (uint column =  startcolumn; column < startcolumn + vectorsizes[i]; ++column)
 			{
-				buffers[counter][column] = input[column-1];
+				buffers[counters[i]][column] = input[inputiterator];
+				inputiterator++;
 			}
+			counters[i]++;
 		}
+		startcolumn += vectorsizes[i];
 	}
 
 	counter = *max_element(counters.begin(),counters.end());
 
 
 
-	cout << "Counter: ";
-	cout << counter;
-	cout << "\n";
+//	cout << "Counter: ";
+//	cout << counter;
+//	cout << "\n";
 
 
 
 
 
 	// Stop if buffer is full
-	if(abs(counter) => buffersize) 
+	if(abs(counter) >= buffersize) 
 	{
 		stop();
 	}
@@ -155,6 +157,7 @@ void Tracing::stopHook()
 		for(dit = (*vit).begin(); dit != (*vit).end(); ++dit)
 		{
 			fprintf(pFile, "% .6e\t", *dit);
+			//fprintf(pFile, "% f\t", *dit);
 		}
 		fprintf(pFile, "\n");
 		line++;
@@ -164,7 +167,9 @@ void Tracing::stopHook()
 	fclose(pFile);
 
 	if ( crash )
+	{
 		fatal();
+	}
 
 }
 
