@@ -27,21 +27,11 @@ Tracing.vector_sizes = array ( 1.0, 2.0 )
 Tracing.buffersize = buffersize
 Tracing.filename = "data2.txt"
 Tracing.Ts = Ts
+Tracing.Crash_if_done = True; #This way the controllers are terminated after gathering data
 Tracing.configure
 connect ("Clock.out","Tracing.in1", tracingpolicy )
 connect ("Ramp.out","Tracing.in2", tracingpolicy )
 
-
-#Setting up reporting
-loadComponent("Reporter", "OCL::FileReporting")
-Reporter.ReportFile = "report.dat"
-addPeer("Reporter","Ramp")
-Reporter.reportPort("Ramp","out")
-Reporter.NullSample = "-1"
-Reporter.setPeriod(Ts)
-Reporter.Ramp_out.disconnect()
-connect ("Ramp.out","Reporter.Ramp_out", tracingpolicy )
-Reporter.configure
 
 
 
