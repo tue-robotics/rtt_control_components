@@ -33,7 +33,7 @@ connect ("Clock.out","Tracing.in1", tracingpolicy )
 connect ("Ramp.out","Tracing.in2", tracingpolicy )
 
 
-
+#Makingfunofcheckerboardcharly
 
 
 Ramp.start
