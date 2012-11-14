@@ -165,6 +165,8 @@ void Tracing::stopHook()
 
 
 	fclose(pFile);
+	
+	cout << "Trace written";
 
 	if ( crash )
 	{
