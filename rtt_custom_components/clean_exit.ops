@@ -1,2 +1,3 @@
-waitForSignal(2)
+waitForInterrupt
 kickOutAll 
+quit
