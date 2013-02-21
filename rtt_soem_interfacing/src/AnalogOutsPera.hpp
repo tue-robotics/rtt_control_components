@@ -1,5 +1,5 @@
-#ifndef ANALOGOUTS_HPP
-#define ANALOGOUTS_HPP
+#ifndef ANALOGOUTSPERA_HPP
+#define ANALOGOUTSPERA_HPP
 
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
@@ -13,33 +13,35 @@ namespace SOEM // Just because it looks nice
 {
   typedef std::vector<double> doubles;
 
-  class AnalogOuts
+  class AnalogOutsPera
   : public RTT::TaskContext
     {
     private:
 
-    OutputPort<soem_beckhoff_drivers::AnalogMsg> Analog_out_port;
-    InputPort<doubles> wheels_port;
-    InputPort<double> spindle_port;
+    OutputPort<soem_beckhoff_drivers::AnalogMsg> out_port1;
+    OutputPort<soem_beckhoff_drivers::AnalogMsg> out_port2;
+    OutputPort<soem_beckhoff_drivers::AnalogMsg> out_port3;
+    InputPort<doubles> rpera_port;
 
-    soem_beckhoff_drivers::AnalogMsg amsg;
+
+    soem_beckhoff_drivers::AnalogMsg amsg1;
+    soem_beckhoff_drivers::AnalogMsg amsg2;
+    soem_beckhoff_drivers::AnalogMsg amsg3;
 
     // Declaring output vector to write to the stack
-    doubles values;
-    doubles wheels;
-    double spindle;
+    doubles rpera;
+    doubles output1;
+    doubles output2;
+    doubles output3;
 
     // Specify maximum voltages:
     doubles max_volt;
     bool safe;
-    
-    // Global variables:
-    doubles output;
 
     public:
 
-    AnalogOuts(const string& name);
-    ~AnalogOuts();
+    AnalogOutsPera(const string& name);
+    ~AnalogOutsPera();
 
     bool configureHook();
     bool startHook();
