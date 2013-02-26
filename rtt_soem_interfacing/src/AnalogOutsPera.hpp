@@ -23,7 +23,6 @@ namespace SOEM // Just because it looks nice
     OutputPort<soem_beckhoff_drivers::AnalogMsg> out_port3;
     InputPort<doubles> rpera_port;
 
-
     soem_beckhoff_drivers::AnalogMsg amsg1;
     soem_beckhoff_drivers::AnalogMsg amsg2;
     soem_beckhoff_drivers::AnalogMsg amsg3;

@@ -10,7 +10,7 @@ using namespace SOEM;
 
 AnalogInsPera::AnalogInsPera(const string& name) : TaskContext(name, PreOperational)
 {
-    addEventPort("in_for1", inport_for1);
+    addEventPort("in_for1_ev", inport_for1);
     addPort("in_for2", inport_for2);
     addPort("in_for3", inport_for3);
     addPort("in_pos1", inport_pos1);
@@ -23,6 +23,8 @@ AnalogInsPera::~AnalogInsPera(){}
 
 bool AnalogInsPera::configureHook()
 {
+  output_for.resize(8);
+  output_pos.resize(8);
   return true;
 }
 
@@ -51,6 +53,7 @@ void AnalogInsPera::updateHook()
         output_pos[i] = amsgp2.values[i-2];
     }
 
+
     for ( uint i = 5; i < 8; i++ )
     {
         output_for[i] = amsgf3.values[i-5];
@@ -59,7 +62,6 @@ void AnalogInsPera::updateHook()
 
     outport_for.write(output_for);
     outport_pos.write(output_pos);
-
 }
 
 ORO_CREATE_COMPONENT(SOEM::AnalogInsPera)
