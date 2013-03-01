@@ -13,10 +13,11 @@ AnalogOutsPera::AnalogOutsPera(const string& name) : TaskContext(name, PreOperat
   max_volt.assign(8,0.0);
   addProperty( "max_volt", max_volt );
 
+  addEventPort( "in_ev", rpera_port );
   addPort( "out1", out_port1 );
   addPort( "out2", out_port2 );
   addPort( "out3", out_port3 );
-  addEventPort( "in_ev", rpera_port );
+
 }
 AnalogOutsPera::~AnalogOutsPera(){}
 
