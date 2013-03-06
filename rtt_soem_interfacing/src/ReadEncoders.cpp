@@ -45,12 +45,10 @@ bool ReadEncoders::configureHook()
   for ( uint i = 0; i < N; i++ )
   {
     string name_inport = "enc"+to_string(i+1)+"_in";
-    //if (i == 0)
-    //  addEventPort( "enc1_in_ev", inport_enc[i] );
-    //else
-      addPort ( name_inport, inport_enc[i] );
+    addPort( name_inport, inport_enc[i] );
   }
   addPort( "out", outport );
+  SI_value.resize(4);
 
   counter = 0;
 
