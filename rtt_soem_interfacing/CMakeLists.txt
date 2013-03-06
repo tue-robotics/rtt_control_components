@@ -21,10 +21,7 @@ include(${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake)
 #common commands for building c++ executables and libraries
 orocos_component(AnalogIns src/AnalogIns.cpp)
 orocos_component(AnalogOuts src/AnalogOuts.cpp)
-orocos_component(AnalogInsPera src/AnalogInsPera.cpp)
-orocos_component(AnalogOutsPera src/AnalogOutsPera.cpp)
 orocos_component(DigitalIns src/DigitalIns.cpp)
 orocos_component(DigitalOuts src/DigitalOuts.cpp)
 orocos_component(ReadEncoders src/ReadEncoders.cpp)
-
 
