@@ -51,6 +51,8 @@ void AnalogOutsPera::updateHook()
       output3[i-5] = rpera[i];
   }
 
+  log(Warning) << " Control effort = [] " << rpera[2] << "]"<<endlog();
+
   for ( uint i = 0; i < 8; i++ )
     if ( rpera[i] > max_volt[i] )
     {
@@ -72,9 +74,10 @@ void AnalogOutsPera::updateHook()
         amsg1.values[i] = 0.0;
         amsg2.values[i] = 0.0;
         amsg3.values[i] = 0.0;
-        log(Error)<<"AnalogOutsPera" <<endlog();
+        //log(Error)<<"AnalogOutsPera" <<endlog();
       }
     }
+
 
     out_port1.write(amsg1);
     out_port2.write(amsg2);
