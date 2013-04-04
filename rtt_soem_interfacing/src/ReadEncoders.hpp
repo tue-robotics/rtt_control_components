@@ -49,7 +49,6 @@ namespace SOEM // Just because it looks nice
     uint encoderbits;
     doubles SI_value;
 
-
     public:
 
     ReadEncoders(const string& name);

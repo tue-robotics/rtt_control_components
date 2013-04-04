@@ -45,10 +45,10 @@ bool ReadEncoders::configureHook()
   for ( uint i = 0; i < N; i++ )
   {
     string name_inport = "enc"+to_string(i+1)+"_in";
-    addPort( name_inport, inport_enc[i] );
+    if (i != 0) addPort( name_inport, inport_enc[i] );
+    else if (i == 0) addEventPort( name_inport, inport_enc[i] );
   }
   addPort( "out", outport );
-  SI_value.resize(4);
 
   counter = 0;
 
@@ -78,25 +78,21 @@ bool ReadEncoders::startHook()
     previous_enc_position[i] = 0.0; // obsolete
     init_SI_value[i] = 0.0;
     init_SI_value[i] = readEncoder(i);
-
-    // Setting first encoder value so the output always starts at zero
   }
   return true;
 }
 
 void ReadEncoders::updateHook()
 {
-    for ( uint i = 0; i < N; i++ )
-    {
-      SI_value[i] = readEncoder(i);
-    }
+  for ( uint i = 0; i < N; i++ )
+    SI_value[i] = readEncoder(i);
   outport.write(SI_value);
   counter++;
 }
 
 double ReadEncoders::readEncoder( int i )
 {
-  //log(Debug)<<"Reading encoder "<<i<<endlog();
+
   EncoderMsg encdata;
   inport_enc[i].read(encdata);
   uint new_enc_position = encdata.value;
