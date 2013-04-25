@@ -30,7 +30,12 @@ bool AnalogInsPera::configureHook()
 
 bool AnalogInsPera::startHook()
 {
-  return true;
+	if (!inport_for1.connected() || !inport_for2.connected() || !inport_for3.connected() || !inport_pos1.connected() || !inport_pos2.connected() || !inport_pos3.connected() ) 
+	{
+		log(Error) << "ANALOGINSPERA: One of the inputs is not connected, cannot start component" << endlog();
+		return false; 
+	}
+	return true;
 }
 
 void AnalogInsPera::updateHook()
