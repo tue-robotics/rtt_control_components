@@ -51,10 +51,12 @@ void BoolToROS::updateHook()
 	for ( uint i = 0; i < Nbool; i++ )
 	{
 		bool value;
-		boolinports[i].read( value );
-		std_msgs::Bool msg;
-		msg.data = value;
-		booloutports[i].write( msg );
+		if ( boolinports[i].read( value ) == NewData )
+		{
+			std_msgs::Bool msg;
+			msg.data = value;
+			booloutports[i].write( msg );
+		}
 	}
 }
 
