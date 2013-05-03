@@ -42,13 +42,16 @@ bool AnalogOutsPera::startHook()
 void AnalogOutsPera::updateHook()
 {
   if ( NewData == rpera_port.read(rpera))   // this if statement loads the new data from rpera_port into vector rpera and splits them into three output vectors for each slave
-  {
-    for ( uint i = 0; i < 2; i++ ) // Slave.1002 (and Slave.1005)
-      output1[i] = rpera[i];
-    for ( uint i = 2; i < 5; i++ ) // Slave.1003 (and Slave.1006)
-      output2[i-2] = rpera[i];
-    for ( uint i = 5; i < 8; i++ ) // Slave.1004 (and Slave.1007)
-      output3[i-5] = rpera[i];
+  {	output2[0] = rpera[0];
+	output2[1] = rpera[1];
+	
+    output2[0] = rpera[2];
+	output2[1] = rpera[3];
+	output2[2] = rpera[4];
+	
+    output3[0] = rpera[5];
+    output3[1] = rpera[6];
+    output3[2] = rpera[7];
   }
 
   for ( uint i = 0; i < 8; i++ )
