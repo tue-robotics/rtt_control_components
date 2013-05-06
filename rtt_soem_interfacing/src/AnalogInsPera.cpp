@@ -23,8 +23,8 @@ AnalogInsPera::~AnalogInsPera(){}
 
 bool AnalogInsPera::configureHook()
 {  
-  output_for.resize(8);
-  output_pos.resize(8);
+  output_for.resize(9);
+  output_pos.resize(9);
   return true;
 }
 
@@ -47,22 +47,22 @@ void AnalogInsPera::updateHook()
     inport_pos2.read(amsgp2);
     inport_pos3.read(amsgp3);
 
-    for ( uint i = 0; i < 2; i++ )
+    for ( uint i = 0; i < 3; i++ )
     {
         output_for[i] = amsgf1.values[i];
         output_pos[i] = amsgp1.values[i];
     }
-    for ( uint i = 2; i < 5; i++ )
+    for ( uint i = 3; i < 6; i++ )
     {
-        output_for[i] = amsgf2.values[i-2];
-        output_pos[i] = amsgp2.values[i-2];
+        output_for[i] = amsgf2.values[i-3];
+        output_pos[i] = amsgp2.values[i-3];
     }
 
 
-    for ( uint i = 5; i < 8; i++ )
+    for ( uint i = 6; i < 9; i++ )
     {
-        output_for[i] = amsgf3.values[i-5];
-        output_pos[i] = amsgp3.values[i-5];
+        output_for[i] = amsgf3.values[i-6];
+        output_pos[i] = amsgp3.values[i-6];
     }
 
     outport_for.write(output_for);
