@@ -16,7 +16,8 @@ ReadEncoders::ReadEncoders(const string& name) : TaskContext(name, PreOperationa
   // Creating Properties
   addProperty( "encoderbits", encoderbits ).doc("Saturation value of the encoder. For example: 65536 for a 16 bit encoder");
   addProperty( "enc2SI", enc2SI ).doc("Value to convert the encoder value to an SI value. Typically 2pi/(encodersteps_per_rev*gearbox)");
-  addProperty( "offset", offset ).doc("Offset value in SI units");
+  addProperty( "offset", offset ).doc("Offset value in SI units, untested feature");
+  //addOperation( "reset", &ReadEncoders::reset, this, OwnThread ).doc("Reset an encoder value to a new value, usefull for homing");
 }
 ReadEncoders::~ReadEncoders(){}
 
@@ -105,5 +106,14 @@ double ReadEncoders::readEncoder( int i )
   double SI_value =  ((double)enc_position * enc2SI[i]) - init_SI_value[i] + offset[i];
   return SI_value;
 }
+
+/*void reset( uint Nreset, double resetvalue )
+{
+	// ReInitialising variables
+  ienc[Nreset] = 0;
+  previous_enc_position[Nreset] = 0.0; // obsolete
+  init_SI_value[Nreset] = 0.0;
+  init_SI_value[Nreset] = readEncoder(i) - resetvalue;
+}*/
 
 ORO_CREATE_COMPONENT(SOEM::ReadEncoders)

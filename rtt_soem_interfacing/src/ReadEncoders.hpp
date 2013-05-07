@@ -57,6 +57,7 @@ namespace SOEM // Just because it looks nice
     bool configureHook();
     bool startHook();
     void updateHook();
+    //void reset( uint Nreset, double resetvalue )
 
     private:
 
