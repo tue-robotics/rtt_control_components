@@ -9,7 +9,7 @@
 using namespace std;
 using namespace RTT;
 
-namespace SOEM // Just because it looks nice
+namespace SOEM
 {
   typedef std::vector<double> doubles;
 
@@ -27,17 +27,13 @@ namespace SOEM // Just because it looks nice
     soem_beckhoff_drivers::AnalogMsg amsg2;
     soem_beckhoff_drivers::AnalogMsg amsg3;
 
-    // Declaring output vector to write to the stack
+    // Declaring output vector to write to the slaves
     doubles rpera;
     doubles output1;
     doubles output2;
     doubles output3;
 
-    // Specify maximum voltages:
-    doubles max_volt;
-    bool safe;
-
-    public:
+	public:
 
     AnalogOutsPera(const string& name);
     ~AnalogOutsPera();
