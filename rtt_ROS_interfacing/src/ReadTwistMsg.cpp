@@ -70,8 +70,7 @@ bool ReadTwistMsg::startHook()
     log(Error)<<"Cannot start if the reference velocity has a value of "<<cmd_veldata.angular.z<<". A maximum of "<<max_start_vel<<" is allowed"<<endlog();
     return false;
   }
-  aquisition_time = os::TimeService::Instance()->getNSecs()*1e-9;
-  //log(Debug)<<"aquisition_time: "<<aquisition_time<<endlog();
+  aquisition_time = 0;//os::TimeService::Instance()->getNSecs()*1e-9;     (Hack)
   status = 0;
 
   for ( uint i = 0; i <= 2; i++ )
@@ -106,7 +105,6 @@ void ReadTwistMsg::updateHook()
   {
     receive_interval = new_time - aquisition_time;
     aquisition_time = new_time;
-    //log(Debug)<<"aquisition_time: "<<aquisition_time<<endlog();
     status = 2;
   }
 
