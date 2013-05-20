@@ -26,6 +26,7 @@ bool ReadEncoders::configureHook()
   // Determine number of encoders to be read
   N = enc2SI.size();
   SI_value.resize(N);
+  ENC_value.resize(N);
   init_SI_value.resize(N);
   offset.assign(N,0.0);
 
@@ -50,7 +51,9 @@ bool ReadEncoders::configureHook()
     else if (i == 0) addEventPort( name_inport, inport_enc[i] );
   }
   addPort( "out", outport );
-
+  addPort( "out_enc", outport_enc );
+  addPort( "in_reNull", inport_reNull );
+  
   counter = 0;
 
   return true;
@@ -70,7 +73,7 @@ bool ReadEncoders::startHook()
   if ( !outport.connected() ) {
     log(Warning)<<"ReadEncoders::Outputport not connected!"<<endlog();
   }
-  
+ 
   sleep(1); // This is to ensure soem is already sending correct data. Might be much less than one second.
   for ( uint i = 0; i < N; i++ )
   {
@@ -85,18 +88,31 @@ bool ReadEncoders::startHook()
 
 void ReadEncoders::updateHook()
 {
+  bool reNull;
+		
+  if(NewData == inport_reNull.read(reNull)){
+    if(reNull == true){
+      log(Warning)<<"ReadEncoders: Renull signal received"<<endlog();
+        for ( uint i = 0; i < N; i++ )
+        reset(i, 0.0);
+      reNull = false;
+    }
+  }
+	
   for ( uint i = 0; i < N; i++ )
     SI_value[i] = readEncoder(i);
+    
   outport.write(SI_value);
+  outport_enc.write(ENC_value);
   counter++;
 }
 
 double ReadEncoders::readEncoder( int i )
 {
-
   EncoderMsg encdata;
   inport_enc[i].read(encdata);
   uint new_enc_position = encdata.value;
+  ENC_value[i] = encdata.value;
   if( (previous_enc_position[i] - new_enc_position) > encoderbits/2)
     ienc[i]++;
   else if( (previous_enc_position[i] - new_enc_position) < (-1 * (double)encoderbits/2))
@@ -109,11 +125,13 @@ double ReadEncoders::readEncoder( int i )
 
 void ReadEncoders::reset( uint Nreset, double resetvalue )
 {
-	// ReInitialising variables
+  // ReInitialising variables
   ienc[Nreset] = 0;
   previous_enc_position[Nreset] = 0.0; // obsolete
   init_SI_value[Nreset] = 0.0;
   init_SI_value[Nreset] = readEncoder(Nreset) - resetvalue;
+  if (Nreset == 1)
+    log(Warning)<<"ReadEncoders: Resetting"<<endlog();
 }
 
 ORO_CREATE_COMPONENT(SOEM::ReadEncoders)

@@ -38,16 +38,21 @@ namespace SOEM // Just because it looks nice
 
     // Declaring input- and output_ports
     InputPort<EncoderMsg> inport_enc[maxN];
+    InputPort<bool> inport_reNull;
     OutputPort<doubles> outport;
+    OutputPort<doubles> outport_enc;
+    
 
     // Declaring message types
     double previous_enc_position[maxN];
+    doubles SI_value;
+    doubles ENC_value;
     doubles init_SI_value;
     int ienc[maxN];
     doubles enc2SI;
     doubles offset;
     uint encoderbits;
-    doubles SI_value;
+    
 
     public:
 
