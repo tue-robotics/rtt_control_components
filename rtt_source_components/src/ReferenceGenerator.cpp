@@ -94,7 +94,6 @@ void ReferenceGenerator::updateHook()
   if (NewData == resetPort.read( resetdata ) ){
 	  for ( uint i = 0; i < NrInterpolators; i++ ){
 		  if(resetdata[i*4]==1.0){
-			  //log(Warning)<<"ReferenceGenerator: resetting refgen "<<i+1<<"\n"<<endlog();
 			  mRefGenerators[i].setRefGen(resetdata[i*4+1]);
 			  if(resetdata[i*4+2]!=0.0){
 				  interpolators[i][1]=resetdata[i*4+2];
