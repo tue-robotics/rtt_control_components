@@ -51,8 +51,8 @@ bool ReadEncoders::configureHook()
     else if (i == 0) addEventPort( name_inport, inport_enc[i] );
   }
   addPort( "out", outport );
-  addPort( "out_enc", outport_enc );
-  addPort( "in_reNull", inport_reNull );
+  addPort( "out_enc", outport_enc );  //TODO: remove
+  addPort( "in_reNull", inport_reNull );  //TODO: remove
   
   counter = 0;
 

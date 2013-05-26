@@ -1,6 +1,6 @@
-/** DoubleToRos.cpp
+/** DoubleToROS.cpp
  *
- * @class DoubleToRos
+ * @class DoubleToROS
  *
  * \author Tim Clephas
  * \date Istanbul, 2011
@@ -18,7 +18,7 @@ using namespace std;
 using namespace RTT;
 using namespace ROS;
 
-DoubleToRos::DoubleToRos(const string& name) :
+DoubleToROS::DoubleToROS(const string& name) :
 	TaskContext(name, PreOperational)
 {
 	// Adding ports
@@ -26,9 +26,9 @@ DoubleToRos::DoubleToRos(const string& name) :
 	addProperty( "NumberOfDoublePorts", Ndouble );
 }
 
-DoubleToRos::~DoubleToRos(){}
+DoubleToROS::~DoubleToROS(){}
 
-bool DoubleToRos::configureHook()
+bool DoubleToROS::configureHook()
 {
 	for ( uint i = 0; i < Ndouble; i++ )
 	{
@@ -40,12 +40,12 @@ bool DoubleToRos::configureHook()
 	return true;
 }
 
-bool DoubleToRos::startHook()
+bool DoubleToROS::startHook()
 {
 	return true;
 }
 
-void DoubleToRos::updateHook()
+void DoubleToROS::updateHook()
 {
 	for ( uint i = 0; i < Ndouble; i++ )
 	{
@@ -59,4 +59,4 @@ void DoubleToRos::updateHook()
 	}
 }
 
-ORO_CREATE_COMPONENT(ROS::DoubleToRos)
+ORO_CREATE_COMPONENT(ROS::DoubleToROS)

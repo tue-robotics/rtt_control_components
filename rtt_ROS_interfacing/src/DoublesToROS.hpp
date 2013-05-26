@@ -1,6 +1,6 @@
-/** DoubleToROS.hpp
+/** DoublesToROS.hpp
  *
- * @class DoubleToROS
+ * @class DoublesToROS
  *
  * \author Tim Clephas
  * \date Sept, 2011
@@ -36,7 +36,7 @@ namespace ROS
    * @param No parameters
    */
 
-  class DoubleToROS
+  class DoublesToROS
   : public RTT::TaskContext
     {
     private:
@@ -47,17 +47,17 @@ namespace ROS
     /* Declaring and output port*/
     OutputPort<std_msgs::Float64> doubleoutports[maxN];
 
-    InputPort<double> doubleinports[maxN];
+    InputPort<doubles> doubleinport;
 
 
     /* Declaring global variables */
-    uint Ndouble; // Number of booleans to output
+    uint Ndouble; // Number of doubles in vector
 
 
     public:
 
-    DoubleToROS(const string& name);
-    ~DoubleToROS();
+    DoublesToROS(const string& name);
+    ~DoublesToROS();
 
     bool configureHook();
     bool startHook();
