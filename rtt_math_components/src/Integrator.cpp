@@ -65,6 +65,9 @@ bool Integrator::startHook()
 
   // Initialise old time:
   old_time = os::TimeService::Instance()->getNSecs()*1e-9;
+  
+  // Write the outputs to prevent sync issues
+  outport.write( init );
 
   return true;
 }
