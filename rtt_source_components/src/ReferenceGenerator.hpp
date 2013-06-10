@@ -29,6 +29,8 @@ namespace AMIGO
 
     // Declaring input- and output_ports
     InputPort<doubles> posinport;
+    InputPort< vector<doubles> > refinport;
+    InputPort<doubles> actualposinport;
     InputPort<doubles> resetPort;
     OutputPort<doubles> posoutport;
     OutputPort<doubles> veloutport;
@@ -39,7 +41,11 @@ namespace AMIGO
     // Declaring global variables
     std::vector<refgen::RefGenerator> mRefGenerators;
     std::vector<amigo_msgs::ref_point> mRefPoints;
+    
+    vector<doubles> refin;
     doubles desiredPos;
+    doubles desiredVel;
+    doubles desiredAcc;
     doubles interpolators[maxN];
     double InterpolDt, InterpolEps;
 

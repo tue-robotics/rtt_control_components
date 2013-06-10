@@ -74,7 +74,6 @@ bool ReadEncoders::startHook()
     log(Warning)<<"ReadEncoders::Outputport not connected!"<<endlog();
   }
  
-  sleep(1); // This is to ensure soem is already sending correct data. Might be much less than one second.
   for ( uint i = 0; i < N; i++ )
   {
     // Initialising variables

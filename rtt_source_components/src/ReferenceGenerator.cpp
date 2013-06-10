@@ -28,14 +28,18 @@ ReferenceGenerator::~ReferenceGenerator(){}
 
 bool ReferenceGenerator::configureHook()
 {
-  addPort( "posin", posinport );
+  addPort( "posin", posinport ); //Deprecated
+  addPort( "refin", refinport );
   addPort( "posout", posoutport );
   addPort( "velout", veloutport );
   addPort( "accout", accoutport );
+  addPort( "actual_pos", actualposinport );
   addEventPort( "resetValues", resetPort );
   
   mRefGenerators.resize(NrInterpolators);
   desiredPos.resize(NrInterpolators);
+  desiredVel.resize(NrInterpolators);
+  desiredAcc.resize(NrInterpolators);
   mRefPoints.resize(NrInterpolators);
   //interpolators.resize(NrInterpolators);
   
@@ -51,23 +55,41 @@ bool ReferenceGenerator::configureHook()
 bool ReferenceGenerator::startHook()
 {
   // Check validity of Ports:
-  if ( !posinport.connected() )
+  if ( posinport.connected() )
+  {
+    log(Warning)<<"ReferenceGenerator::Deprecated port. Use ref_port!"<<endlog();
+  }
+  if ( !refinport.connected() )
   {
     log(Error)<<"ReferenceGenerator::Inputport not connected!"<<endlog();
     // No connection was made, can't do my job !
-    return false;
+    //TODO: return false;
   }
   if ( !posoutport.connected() ) {
     log(Warning)<<"ReferenceGenerator::Outputport not connected!"<<endlog();
   }
-  if ( !resetPort.connected() ) {
-    log(Warning)<<"ReferenceGenerator::resetPort not connected!"<<endlog();
+  if ( resetPort.connected() ) {
+    log(Warning)<<"ReferenceGenerator::resetPort is connected! Try to use the service instead."<<endlog();
   }
   
+  //Set the starting value to the current actual value
+  doubles actualPos;
+  actualPos.resize(NrInterpolators);
+  actualposinport.read( actualPos );
   for ( uint i = 0; i < NrInterpolators; i++ ){
-	  // Set the initial desired position to the one stored in the property
-	  desiredPos[i] = interpolators[i][0];
-  }
+	  mRefGenerators[i].setRefGen(actualPos[i]);
+  }  
+  
+  //Initialise reference vectors
+  refin.resize(NrInterpolators);
+  for ( uint i = 0; i < NrInterpolators; i++ ){
+	  refin[i].resize(3); //pos, vel, acc
+  }  
+  
+  // Write on the outposport to make sure the receiving components gets new data
+  posoutport.write( actualPos );
+  
+  log(Warning)<<"ReferenceGenerator::started at " << os::TimeService::Instance()->getNSecs()*1e-9 <<endlog();
   
   return true;
 }
@@ -76,20 +98,44 @@ bool ReferenceGenerator::startHook()
 void ReferenceGenerator::updateHook()
 {
   // Read the inputports
-  doubles inpos(NrInterpolators,0.0);
+  doubles inpos(NrInterpolators,0.0); //Deprecated
   doubles outpos(NrInterpolators,0.0);
   doubles outvel(NrInterpolators,0.0);
   doubles outacc(NrInterpolators,0.0);
   doubles resetdata(NrInterpolators*4,0.0);
   
   // If new data on the channel then change the desired positions
+  if (NewData == refinport.read( refin ) ){
+	  for ( uint i = 0; i < NrInterpolators; i++ ){
+		  desiredPos[i]=refin[i][0];
+		  if ( refin[i][1] != 0.0 ){
+			  desiredVel[i]=refin[i][1];
+		  }
+		  else{
+			  desiredVel[i]=interpolators[i][1];
+		  }
+		  if ( refin[i][2] != 0.0 ){
+			  desiredAcc[i]=refin[i][2];
+		  }
+		  else{
+			  desiredAcc[i]=interpolators[i][2];
+		  }		 
+	  }
+  }
+
+  // Deprecated:
+  // If new data on the channel then change the desired positions
   if (NewData == posinport.read( inpos ) ){
 	  for ( uint i = 0; i < NrInterpolators; i++ ){
 		  desiredPos[i]=inpos[i];
+		  desiredVel[i]=interpolators[i][1];
+ 	      desiredAcc[i]=interpolators[i][2];
 	  }
 	  //log(Warning)<<"New desiredPos"<<endlog();
-  }
+  } 
+  // end Deprecated
   
+  // TODO: remove code below, should be a service, not a port, or remove completely
   // If new data on the resetport [yes/no, resetpos, resetvel, resetacc] reset the according interpolator(s).
   if (NewData == resetPort.read( resetdata ) ){
 	  for ( uint i = 0; i < NrInterpolators; i++ ){
@@ -107,7 +153,7 @@ void ReferenceGenerator::updateHook()
   
   // Compute the next reference points
   for ( uint i = 0; i < NrInterpolators; i++ ){
-	  mRefPoints[i] = mRefGenerators[i].generateReference(desiredPos[i], interpolators[i][1], interpolators[i][2], InterpolDt, false, InterpolEps);
+	  mRefPoints[i] = mRefGenerators[i].generateReference(desiredPos[i], desiredVel[i], desiredAcc[i], InterpolDt, false, InterpolEps);
       outpos[i]=mRefPoints[i].pos;
       outvel[i]=mRefPoints[i].vel;
       outacc[i]=mRefPoints[i].acc;

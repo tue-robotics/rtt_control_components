@@ -64,24 +64,21 @@ bool Saturation::startHook()
 
 void Saturation::updateHook()
 {
-  Logger::In in("Saturation::updateHook()");
 
-	doubles input(vector_size,0.0);
-	doubles output(vector_size,0.0);
+	doubles values(vector_size,0.0);
 
-  inport.read( input );
+  inport.read( values );
   
-  output = input;
   for (uint i = 0; i < vector_size; i++) {
-	  if (input[i] > upper_limit[i]) {
-		  output[i] = upper_limit[i];
+	  if (values[i] > upper_limit[i]) {
+		  values[i] = upper_limit[i];
 	  }
-	  if (input[i] < lower_limit[i]) {
-		  output[i] = lower_limit[i];
+	  if (values[i] < lower_limit[i]) {
+		  values[i] = lower_limit[i];
 	  }
   }
   
-  outport.write( output );
+  outport.write( values );
 }
 
 ORO_CREATE_COMPONENT(DISCONTINUITIES::Saturation)
