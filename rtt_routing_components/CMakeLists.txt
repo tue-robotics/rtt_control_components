@@ -22,4 +22,6 @@ include(${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake)
 orocos_component(Demux src/Demux.cpp)
 orocos_component(Mux src/Mux.cpp)
 orocos_component(VectorConcatenate src/VectorConcatenate.cpp)
+#orocos_component(Switch src/Switch.cpp)
+
 
