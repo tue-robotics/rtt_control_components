@@ -22,6 +22,7 @@ include(${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake)
 orocos_component(BoolToROS src/BoolToROS.cpp)
 orocos_component(DoubleToROS src/DoubleToROS.cpp)
 orocos_component(DoublesToROS src/DoublesToROS.cpp)
+orocos_component(DoublesToJointState src/DoublesToJointState.cpp)
 orocos_component(ReadTwistMsg src/ReadTwistMsg.cpp)
 orocos_component(RosDiagnostics src/RosDiagnostics.cpp)
-
+orocos_component(JointStateToDoubles src/JointStateToDoubles.cpp)

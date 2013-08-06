@@ -11,8 +11,10 @@
   <depend package="rtt"/>
   <depend package="rtt_rosnode"/>
   <depend package="geometry_msgs"/>
-  <depend package="rtt_diagnostic_msgs"/>diagnostic_updater
+  <depend package="sensor_msgs"/>
+  <depend package="rtt_diagnostic_msgs"/>
   <depend package="diagnostic_updater"/>
+  <depend package="rtt_sensor_msgs"/>
   
 </package>
 
