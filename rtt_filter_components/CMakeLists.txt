@@ -19,6 +19,7 @@ find_package(OROCOS-RTT HINTS ${rtt_PACKAGE_PATH}/../install )
 include(${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake)
 
 #common commands for building c++ executables and libraries
+orocos_component(AddmittanceControllers src/AdmittanceControllers.cpp)
 orocos_component(FirstOrderLowPass src/FirstOrderLowPass.cpp)
 orocos_component(LeadLag src/LeadLag.cpp)
 orocos_component(LeadLags src/LeadLags.cpp)

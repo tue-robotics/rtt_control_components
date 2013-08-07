@@ -10,6 +10,7 @@
   <url>http://ros.org/wiki/rtt_filter_components</url>
   <depend package="rtt"/>
   <depend package="rtt_rosnode"/>
+  <depend package="scl_filters"/>
   
 </package>
 
