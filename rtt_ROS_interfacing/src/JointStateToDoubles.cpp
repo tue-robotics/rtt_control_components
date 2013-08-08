@@ -80,14 +80,13 @@ void JointStateToDoubles::updateHook()
         {
             for (uint i = 0; i < Ndouble_; i++)
             {
-                eff_out_[i] = in_msg.velocity[i];
+                eff_out_[i] = in_msg.effort[i];
             }
             effort_outport_.write(eff_out_);
         }
     }
 
     // ToDo: How do we handle the case that not all joints are actuated?
-    //log(Warning)<<"Running!"<<endlog();
 
 }
 
