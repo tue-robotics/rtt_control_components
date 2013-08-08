@@ -65,6 +65,9 @@ bool AdmittanceControllers::configureHook()
     force_input.assign(vector_size, 0.0);
     position_input.assign(vector_size, 0.0);
     position_output.assign(vector_size, 0.0);
+    previous_position_output.assign(vector_size, 0.0);
+    
+    //ToDo: check whether input is valid, e.g., whether all vector lengths coincide 
 
     return true;
 }
@@ -103,6 +106,7 @@ bool AdmittanceControllers::startHook()
     // Read ports to initialize
     force_inport.read(force_input);
     position_inport.read(position_input);
+    position_inport.read(previous_position_output);
     return true;
 }
 
@@ -112,7 +116,9 @@ void AdmittanceControllers::updateHook()
     position_inport.read(position_input);
     if (force_inport.read(force_input) == NewData)
     {
+		log(Warning)<<"Admittance: received new data"<<endlog();
         timestamp_last_force_input = os::TimeService::Instance()->getNSecs()*1e-9;
+        log(Warning)<<"Admittance: stamped time"<<endlog();
     }
 
     // Safety check
@@ -141,14 +147,18 @@ void AdmittanceControllers::updateHook()
         double v_desired = k[i] * filter_out;
 
         // Integrate
-        position_output[i] = position_input[i] + v_desired * Ts;
+        //position_output[i] = position_input[i] + v_desired * Ts;
+        position_output[i] = previous_position_output[i] + v_desired * Ts;
 
         // Saturate
         position_output[i] = max(position_output[i], lower_bound[i]);
         position_output[i] = min(position_output[i], upper_bound[i]);
+        
+        previous_position_output[i] = position_output[i];
     }
 
     // Write results
+    log(Warning)<<"r = "<<position_output[0]<<" "<<position_output[1]<<" "<<position_output[2]<<" "<<position_output[3]<<" "<<position_output[4]<<" "<<position_output[5]<<" "<<position_output[6]<<endlog();
     outport.write(position_output);
 }
 

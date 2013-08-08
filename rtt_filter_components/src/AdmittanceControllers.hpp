@@ -55,6 +55,7 @@ namespace FILTERS
         doubles force_input;
         doubles position_input;
         doubles position_output;
+        doubles previous_position_output;
         long double timestamp_last_force_input;
 
         //doubles previous_output;
