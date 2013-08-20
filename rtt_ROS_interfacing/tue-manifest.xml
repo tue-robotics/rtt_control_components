@@ -1,0 +1,3 @@
+<deps ros_distro="groovy">
+    <stack name="rtt_common_msgs" type="system" source="ros-groovy-rtt-common-msgs"/>
+</deps>
