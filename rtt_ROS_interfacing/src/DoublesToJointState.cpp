@@ -64,6 +64,7 @@ void DoublesToJointState::updateHook()
             out_msg_.position[i] = pos[i];
         }
     }
+    out_msg_.header.stamp = ros::Time::now();
     outport_.write(out_msg_);
     //log(Warning)<<"Running!"<<endlog();
 
