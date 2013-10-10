@@ -45,8 +45,8 @@ private:
     //typedef vector<string> strings;
 
     /* Declaring and output ports*/
-    std::vector<InputPort<sensor_msgs::JointState> > inports_;
-    //InputPort<sensor_msgs::JointState> inports_[maxN];
+    //std::vector<InputPort<sensor_msgs::JointState> > inports_;
+    InputPort<sensor_msgs::JointState> inports_[maxN];
     OutputPort<sensor_msgs::JointState> outport_;
 
     /* Declaring global variables */
@@ -76,7 +76,13 @@ public:
       * Adds an inport to the aggregator
       * @param port_name Name of the port, e.g., "base" or "left_arm"
       */
-    bool addAggregationPort(const std::string& port_name);
+    virtual bool addAggregationPort(const std::string& port_name);
+    
+    /**
+      * Adds joints to the JointStateAggregator
+      * @param Vector with joint_names Names of the joints to add
+      */
+    virtual bool addJointNames(const std::vector<std::string>& joint_names);
 
 };
 }

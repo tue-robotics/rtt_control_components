@@ -1,6 +1,7 @@
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
 #include <geometry_msgs/Twist.h>
+#include <std_msgs/Bool.h>
 #include <nav_msgs/Odometry.h>
 #include <rtt/Component.hpp>
 #include <tf/transform_broadcaster.h>
@@ -16,6 +17,7 @@ PublishOdometry::PublishOdometry(const std::string& name) : TaskContext(name)
     // Creating ports
     addPort( "pos", pos_port );
     addPort( "odom", odom_port );
+    addPort( "reset", reset_port );
 
     addProperty( "base_link_frame", base_link_frame );
     addProperty( "odom_frame", odom_frame );
@@ -35,6 +37,7 @@ bool PublishOdometry::startHook()
     prev_pos.assign(3,0.0);
     global_px = 0.0;
     global_py = 0.0;
+    yaw_correction = 0.0;
 
     if (base_link_frame == "" || odom_frame == "") {
         log(Error)<<"Base link frame or odom frame not specified"<<endlog();
@@ -49,6 +52,13 @@ void PublishOdometry::updateHook()
     long double new_time = os::TimeService::Instance()->getNSecs()*1e-9;
     double dt = new_time - old_time;
     old_time = new_time;
+    
+    // Check if reset required: will be published correctly from next update
+    std_msgs::Bool reset;
+    if (reset_port.read(reset) == NewData)
+    {
+		resetOdometry();
+	}
 
     // Read position port
     doubles pos(3);
@@ -79,7 +89,7 @@ void PublishOdometry::updateHook()
     global_py = global_py + delta_y;
 
     // Since all odometry is 6DOF we'll need a quaternion created from yaw
-    geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(pos[2]);
+    geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(pos[2]+yaw_correction);
 
     // Instantiate odometry message and odometry tf message
     nav_msgs::Odometry odom;
@@ -150,5 +160,11 @@ void PublishOdometry::updateHook()
     tf_broadcaster.sendTransform(odom_tf);
 }
 
+void PublishOdometry::resetOdometry()
+{
+    global_px = 0.0;
+    global_py = 0.0;
+    yaw_correction = -prev_pos[2];
+}
 
 ORO_CREATE_COMPONENT(MSG::PublishOdometry)

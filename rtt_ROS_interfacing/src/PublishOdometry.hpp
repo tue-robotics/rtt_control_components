@@ -23,6 +23,7 @@ private:
 
     //Declaring input- and output_ports
     InputPort<doubles> pos_port;
+    InputPort<std_msgs::Bool> reset_port;
     OutputPort<nav_msgs::Odometry> odom_port;
     tf::TransformBroadcaster tf_broadcaster;
 
@@ -31,9 +32,12 @@ private:
     long double old_time;
     double global_px;
     double global_py;
+    double yaw_correction;
     
     //Frame ids
     string base_link_frame, odom_frame;
+    
+    
 
 public:
 
@@ -47,6 +51,7 @@ public:
 private:
 
     void publishOdometry();
+    void resetOdometry();
 };
 }
 #endif
