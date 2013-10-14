@@ -116,9 +116,9 @@ void AdmittanceControllers::updateHook()
     position_inport.read(position_input);
     if (force_inport.read(force_input) == NewData)
     {
-		log(Warning)<<"Admittance: received new data"<<endlog();
+		//log(Warning)<<"Admittance: received new data"<<endlog();
         timestamp_last_force_input = os::TimeService::Instance()->getNSecs()*1e-9;
-        log(Warning)<<"Admittance: stamped time"<<endlog();
+        //log(Warning)<<"Admittance: stamped time"<<endlog();
     }
 
     // Safety check
@@ -131,7 +131,7 @@ void AdmittanceControllers::updateHook()
         if ( force_input_safe && fabs(force_input[i]) > eps && duration > 0.11)
         {
             force_input_safe = false;
-            log(Warning) << "No new force input received for " << duration << "seconds, setting force to zero" << endlog();
+            //log(Warning) << "No new force input received for " << duration << "seconds, setting force to zero" << endlog();
             force_input.assign(vector_size, 0.0);
         }
     }
@@ -158,7 +158,7 @@ void AdmittanceControllers::updateHook()
     }
 
     // Write results
-    log(Warning)<<"r = "<<position_output[0]<<" "<<position_output[1]<<" "<<position_output[2]<<" "<<position_output[3]<<" "<<position_output[4]<<" "<<position_output[5]<<" "<<position_output[6]<<endlog();
+    //log(Warning)<<"r = "<<position_output[0]<<" "<<position_output[1]<<" "<<position_output[2]<<" "<<position_output[3]<<" "<<position_output[4]<<" "<<position_output[5]<<" "<<position_output[6]<<endlog();
     outport.write(position_output);
 }
 
