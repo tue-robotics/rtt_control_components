@@ -46,7 +46,6 @@ bool JointStateAggregator::startHook()
     {
         log(Warning)<<"WriteJointState: Outport not connected"<<endlog();
     }
-    log(Warning)<<"JointStateAggregator: end of starthook"<<endlog();
     return true;
 }
 
