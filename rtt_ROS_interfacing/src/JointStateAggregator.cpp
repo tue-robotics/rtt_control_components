@@ -68,24 +68,31 @@ void JointStateAggregator::updateHook()
             /// Loop over input message
             for (unsigned int j = 0; j < in_msg.name.size(); j++)
             {
-                unsigned int index = joint_name_to_index_[in_msg.name[j]];
-                //log(Warning)<<"Joint name = "<<in_msg.name[j]<<", index = "<<index<<endlog();
-                /// Only copy data if contains exists
-                if ( !in_msg.position.empty() )
-                {
-					//log(Warning)<<"Copying Positions"<<endlog();
-                    out_msg_.position[index] = in_msg.position[j];
-                }
-                if ( !in_msg.velocity.empty() )
-                {
-					//log(Warning)<<"Copying Velocities"<<endlog();
-                    out_msg_.velocity[index] = in_msg.velocity[j];
-                }
-                if ( !in_msg.effort.empty() )
-                {
-					//log(Warning)<<"Copying Efforts"<<endlog();
-                    out_msg_.effort[index] = in_msg.effort[j];
-                }
+				std::map<std::string, unsigned int>::iterator it = joint_name_to_index_.find(in_msg.name[j]);
+				if (it != joint_name_to_index_.end())
+				{
+					
+					unsigned int index = it->second;
+					//log(Warning)<<"Joint name = "<<in_msg.name[j]<<", index = "<<index<<endlog();
+					/// Only copy data if contains exists
+					if ( !in_msg.position.empty() )
+					{
+						//log(Warning)<<"Copying Positions"<<endlog();
+						out_msg_.position[index] = in_msg.position[j];
+					}
+					if ( !in_msg.velocity.empty() )
+					{
+						//log(Warning)<<"Copying Velocities"<<endlog();
+						out_msg_.velocity[index] = in_msg.velocity[j];
+					}
+					if ( !in_msg.effort.empty() )
+					{
+						//log(Warning)<<"Copying Efforts"<<endlog();
+						out_msg_.effort[index] = in_msg.effort[j];
+					}
+				} else {
+					log(Error) << "Unknown joint: " << in_msg.name[j] << endlog();
+				}
             }
         }
     }
@@ -120,8 +127,15 @@ bool JointStateAggregator::addJointNames(const std::vector<std::string>& joint_n
 		out_msg_.position.push_back(0.0);
 		out_msg_.velocity.push_back(0.0);
 		out_msg_.effort.push_back(0.0);
-		joint_name_to_index_[joint_names[i]] = joint_name_to_index_.size();
-		++number_joints_;
+		
+		if (joint_name_to_index_.find(joint_names[i]) == joint_name_to_index_.end()) {
+			unsigned int index = joint_name_to_index_.size();
+			joint_name_to_index_[joint_names[i]] = index;
+			log(Warning)<<"Adding joint "<<joint_names[i]<<" at index"<<joint_name_to_index_[joint_names[i]]<<endlog();
+			++number_joints_;
+		} else {
+		    log(Error) << "ERROR ERROR! " << joint_names[i] << endlog();
+		}
 	}
 	return true;
 }
