@@ -34,6 +34,7 @@ bool JointStateAggregator::configureHook()
 
 bool JointStateAggregator::startHook()
 {
+	log(Warning)<<"JSA: Starthook"<<endlog();
 	/// Check which ports are connected
     for (unsigned int i = 0; i < number_inports_; i++)
     {
@@ -46,11 +47,17 @@ bool JointStateAggregator::startHook()
     {
         log(Warning)<<"WriteJointState: Outport not connected"<<endlog();
     }
+    
+    for (std::map<std::string, unsigned int>::iterator iter = joint_name_to_index_.begin(); iter != joint_name_to_index_.end(); ++iter)
+    {
+		log(Warning)<<"Joint name = "<<iter->first<<", index = "<<iter->second<<endlog();
+	}
     return true;
 }
 
 void JointStateAggregator::updateHook()
 {
+    //log(Warning)<<"JSA: UpdateHook"<<endlog();
     sensor_msgs::JointState in_msg;
     /// Loop over input ports
     for (unsigned int i = 0; i < number_inports_; i++ )
@@ -62,17 +69,21 @@ void JointStateAggregator::updateHook()
             for (unsigned int j = 0; j < in_msg.name.size(); j++)
             {
                 unsigned int index = joint_name_to_index_[in_msg.name[j]];
+                //log(Warning)<<"Joint name = "<<in_msg.name[j]<<", index = "<<index<<endlog();
                 /// Only copy data if contains exists
                 if ( !in_msg.position.empty() )
                 {
+					//log(Warning)<<"Copying Positions"<<endlog();
                     out_msg_.position[index] = in_msg.position[j];
                 }
                 if ( !in_msg.velocity.empty() )
                 {
+					//log(Warning)<<"Copying Velocities"<<endlog();
                     out_msg_.velocity[index] = in_msg.velocity[j];
                 }
                 if ( !in_msg.effort.empty() )
                 {
+					//log(Warning)<<"Copying Efforts"<<endlog();
                     out_msg_.effort[index] = in_msg.effort[j];
                 }
             }
@@ -109,7 +120,7 @@ bool JointStateAggregator::addJointNames(const std::vector<std::string>& joint_n
 		out_msg_.position.push_back(0.0);
 		out_msg_.velocity.push_back(0.0);
 		out_msg_.effort.push_back(0.0);
-		joint_name_to_index_[joint_names[i]] = number_joints_;
+		joint_name_to_index_[joint_names[i]] = joint_name_to_index_.size();
 		++number_joints_;
 	}
 	return true;
