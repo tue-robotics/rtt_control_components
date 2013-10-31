@@ -34,7 +34,6 @@ bool JointStateAggregator::configureHook()
 
 bool JointStateAggregator::startHook()
 {
-	log(Warning)<<"JSA: Starthook"<<endlog();
 	/// Check which ports are connected
     for (unsigned int i = 0; i < number_inports_; i++)
     {
@@ -131,7 +130,7 @@ bool JointStateAggregator::addJointNames(const std::vector<std::string>& joint_n
 		if (joint_name_to_index_.find(joint_names[i]) == joint_name_to_index_.end()) {
 			unsigned int index = joint_name_to_index_.size();
 			joint_name_to_index_[joint_names[i]] = index;
-			log(Warning)<<"Adding joint "<<joint_names[i]<<" at index"<<joint_name_to_index_[joint_names[i]]<<endlog();
+			log(Info)<<"Adding joint "<<joint_names[i]<<" at index"<<joint_name_to_index_[joint_names[i]]<<endlog();
 			++number_joints_;
 		} else {
 		    log(Error) << "ERROR ERROR! " << joint_names[i] << endlog();
