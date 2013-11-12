@@ -13,11 +13,12 @@
 #include <rtt/Port.hpp>
 #include <std_msgs/Bool.h>
 #include <rosgraph_msgs/Log.h>
+#include <soem_beckhoff_drivers/EncoderMsg.h>
 
 using namespace std;
 using namespace RTT;
 
-namespace AMIGO
+namespace SUPERVISOR
 {
     /** \ingroup ARP-arp_core
      *
@@ -43,8 +44,8 @@ namespace AMIGO
 		long double aquisition_time;
 		long double start_time;
 		
-		// Port for checking Soem
-		InputPort<bool> serialRunningPort;
+		// Port for checking Soem // ToDo: switch back to bool
+		InputPort<soem_beckhoff_drivers::EncoderMsg> serialRunningPort;
 		
         /** Constructeur pour définir le chemin vers le projet. Utile pour ROS*/
         Supervisor(const std::string& name);
