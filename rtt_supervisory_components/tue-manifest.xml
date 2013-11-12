@@ -1,0 +1,12 @@
+<deps>
+    <stack name="soem"
+           type="git"
+           source="http://git.mech.kuleuven.be/robotics/soem.git"
+           local-path="kul-ros-pkg"/>
+</deps>
+
+<deps ros_distro="groovy">
+    <library name="ros-groovy-rtt-ros-integration" type="system"/>
+</deps>
+
+
