@@ -71,6 +71,8 @@ void PublishOdometry::updateHook()
         vel[i] = ( pos[i] - prev_pos[i] )/dt;
         prev_pos[i] = pos[i];
     }
+    // Correct for possible resets
+    pos[2] += yaw_correction;
 
     // Compote angle of movement
     double costh = cos(pos[2]);
@@ -89,7 +91,7 @@ void PublishOdometry::updateHook()
     global_py = global_py + delta_y;
 
     // Since all odometry is 6DOF we'll need a quaternion created from yaw
-    geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(pos[2]+yaw_correction);
+    geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(pos[2]);
 
     // Instantiate odometry message and odometry tf message
     nav_msgs::Odometry odom;
