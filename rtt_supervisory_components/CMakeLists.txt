@@ -20,12 +20,12 @@ include(${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake)
 
 #common commands for building c++ executables and libraries
 orocos_component(Supervisor src/Supervisor.cpp)
-orocos_component(Homing src/Homing.cpp)
+#orocos_component(Homing src/Homing.cpp)
 
-rosbuild_include(rtt_rosnode GenerateRTTtypekit)
+#rosbuild_include(rtt_rosnode GenerateRTTtypekit)
 
-ros_generate_rtt_typekit(soem_beckhoff_drivers)
+#ros_generate_rtt_typekit(soem_beckhoff_drivers)
 
-orocos_plugin(soem_armEthercat ${soem_beckhoff_drivers_PACKAGE_PATH}/src/soem_beckhoff_drivers.cpp src/soem_armEthercat.cpp)
+#orocos_plugin(soem_armEthercat ${soem_beckhoff_drivers_PACKAGE_PATH}/src/soem_beckhoff_drivers.cpp src/soem_armEthercat.cpp)
 
 

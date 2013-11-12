@@ -1,7 +1,7 @@
 <package>
-  <description brief="amigo_etherCAT">
+  <description brief="Contains supervisory components for control loops such as supervisor, homing and safety">
 
-     amigo_etherCAT
+     rtt_supervisory_components
 
   </description>
   <author>Tim Clephas</author>
@@ -19,8 +19,6 @@
   <depend package="rtt_rosgraph_msgs"/>
   <depend package="rtt_ROS_interfacing"/>
   
-  
-
 </package>
 
 
