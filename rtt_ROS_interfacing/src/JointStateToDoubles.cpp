@@ -47,7 +47,7 @@ bool JointStateToDoubles::startHook()
     {
         log(Warning)<<"ReadJointState: Inport not connected"<<endlog();
     }
-    log(Warning)<<"JointStateToDoubles can only handle jointstate messages with the correct length"<<endlog();
+    log(Warning)<<"JointStateToDoubles can only handle jointstate messages with the correct length"<<endlog(); //To Do why does this warning appear always?
 
     // ToDo: How do we properly initialize stuff?
 
