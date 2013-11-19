@@ -67,8 +67,7 @@ bool AdmittanceControllersSpindle::configureHook()
     force_input.assign(vector_size, 0.0);
     position_input.assign(vector_size, 0.0);
     position_output.assign(vector_size, 0.0);
-    previous_position_output.assign(vector_size, 0.38); // Beuned to the Max: startvalue of spindlecontroller added.
-    
+    previous_position_output.assign(vector_size, 0.0);
     //ToDo: check whether input is valid, e.g., whether all vector lengths coincide 
 
     return true;
@@ -114,30 +113,32 @@ bool AdmittanceControllersSpindle::startHook()
 
 void AdmittanceControllersSpindle::updateHook()
 {
-    // Read inports
-    position_inport.read(position_input);
-    if (force_inport.read(force_input) == NewData)
-    {
+	/*
+	// Read inports
+		position_inport.read(position_input);
+		if (force_inport.read(force_input) == NewData)
+		{
 		//log(Warning)<<"Admittance: received new data"<<endlog();
-        timestamp_last_force_input = os::TimeService::Instance()->getNSecs()*1e-9;
+			timestamp_last_force_input = os::TimeService::Instance()->getNSecs()*1e-9;
         //log(Warning)<<"Admittance: stamped time"<<endlog();
-    }
+		}
 
-    // Safety check
-    long double current_timestamp = os::TimeService::Instance()->getNSecs()*1e-9;
-    double duration = (double)(current_timestamp - timestamp_last_force_input);
-    bool force_input_safe = true;
-    for (unsigned int i = 0; i < vector_size; i++)
-    {
-        // If: ( do_it_only_once && force is unequal to zero && time since last update exceeds threshold )
-        if ( force_input_safe && fabs(force_input[i]) > eps && duration > 0.11)
-        {
-            force_input_safe = false;
-            //log(Warning) << "No new force input received for " << duration << "seconds, setting force to zero" << endlog();
-            force_input.assign(vector_size, 0.0);
-        }
-    }
-
+		// Safety check
+		long double current_timestamp = os::TimeService::Instance()->getNSecs()*1e-9;
+		double duration = (double)(current_timestamp - timestamp_last_force_input);
+		bool force_input_safe = true;
+		for (unsigned int i = 0; i < vector_size; i++)
+		{
+			// If: ( do_it_only_once && force is unequal to zero && time since last update exceeds threshold )
+			if ( force_input_safe && fabs(force_input[i]) > eps && duration > 0.11)
+			{
+				force_input_safe = false;
+				//log(Warning) << "No new force input received for " << duration << "seconds, setting force to zero" << endlog();
+				force_input.assign(vector_size, 0.0);
+			}
+		}
+    
+	
     // Update stuff
     for (unsigned int i = 0; i < vector_size; i++)
     {
@@ -161,14 +162,65 @@ void AdmittanceControllersSpindle::updateHook()
 
     // Write results
     //log(Warning)<<"r = "<<position_output[0]<<" "<<position_output[1]<<" "<<position_output[2]<<" "<<position_output[3]<<" "<<position_output[4]<<" "<<position_output[5]<<" "<<position_output[6]<<endlog();
+    */
     
-    
-    if (NewData == homingfinished_inport.read( finishedhoming ) ){	  
+    if (NewData == homingfinished_inport.read( finishedhoming ) ){	 
+		 position_inport.read(position_input);
+		 previous_position_output[0] = position_input[0];
+		 log(Warning) << "Admittance Spindle: Initialized position, from pos_in, needed for integration" << endlog();
 	}
   
-  if (finishedhoming) {
-	  outport.write(position_output);
-  } 
+    if (finishedhoming) {
+		// Read inports
+		position_inport.read(position_input);
+		if (force_inport.read(force_input) == NewData)
+		{
+			//log(Warning)<<"Admittance: received new data"<<endlog();
+			timestamp_last_force_input = os::TimeService::Instance()->getNSecs()*1e-9;
+			//log(Warning)<<"Admittance: stamped time"<<endlog();
+		}
+
+		// Safety check
+		long double current_timestamp = os::TimeService::Instance()->getNSecs()*1e-9;
+		double duration = (double)(current_timestamp - timestamp_last_force_input);
+		bool force_input_safe = true;
+		for (unsigned int i = 0; i < vector_size; i++)
+		{
+			// If: ( do_it_only_once && force is unequal to zero && time since last update exceeds threshold )
+			if ( force_input_safe && fabs(force_input[i]) > eps && duration > 0.11)
+			{
+				force_input_safe = false;
+				//log(Warning) << "No new force input received for " << duration << "seconds, setting force to zero" << endlog();
+				force_input.assign(vector_size, 0.0);
+			}
+		}
+		// Update stuff
+		for (unsigned int i = 0; i < vector_size; i++)
+		{
+			// ToDo: is it more efficient to do this (less readable) in less lines?
+
+			// Update
+			filters[i]->update(force_input[i]);
+			double filter_out = filters[i]->getOutput();
+			double v_desired = k[i] * filter_out;
+
+			// Integrate
+			//position_output[i] = position_input[i] + v_desired * Ts;
+			position_output[i] = previous_position_output[i] + v_desired * Ts;
+			//log(Warning)<<"SPEED: "<<v_desired<<endlog();
+			// Saturate
+			position_output[i] = max(position_output[i], lower_bound[i]);
+			position_output[i] = min(position_output[i], upper_bound[i]);
+        
+			previous_position_output[i] = position_output[i];
+		}
+		
+		
+		
+		
+		outport.write(position_output);
+	  
+    } 
     
 }
 
