@@ -14,12 +14,13 @@ using namespace AMIGO;
 
 Homing::Homing(const string& name) : TaskContext(name, PreOperational)
   {
-  addEventPort( "endswitch", endSwitch_inport );
+  addEventPort( "endswitch_in", endSwitch_inport );
   addPort( "abs_pos_in", absPos_inport );
   addPort( "force_in", force_inport );
   addPort( "servo_error_in", servoError_inport );
   addPort( "ref_out", ref_outport );
   addPort( "relPos_in", relPos_inport );
+  addPort( "status_out", status_outport );
 
   // Creating variables
   addProperty( "homing_body", homing_body );     	// name of the body that is stopped/started during homing procedure
@@ -55,9 +56,9 @@ bool Homing::configureHook()
 	if ( !Supervisor ) {
         log(Error) << "Could not find Supervisor component! Did you add it as Peer in the ops file?"<<endlog();
 		return false;
-	}		
-	
-	// Lookup operations of peers
+    }
+
+    // Lookup operations of peers
 	StartBodyPart = Supervisor->getOperation("StartBodyPart");
 	if ( !StartBodyPart.ready() ) {
 		log(Error) << homing_body << "Could not find Supervisor.StartBodyPart Operation!"<<endlog();
@@ -67,27 +68,27 @@ bool Homing::configureHook()
 	if ( !StopBodyPart.ready() ) {
 		log(Error) << homing_body << "Could not find Supervisor.StopBodyPart Operation!"<<endlog();
 		return false;
-	}	
-	
-	// Lookup the ReadEncoders and the ReadReferences component.
-	TaskContext* ReadEncodersComponent = this->getPeer( homing_body + "_ReadEncoders");		
-	if ( !ReadEncodersComponent ) {
-		log(Error) << "Could not find" << homing_body << "_ReadEncoders component! Did you add it as Peer in the ops file?"<<endlog();
-		return false;
-	}	
-	
-	TaskContext* ReadReferenceComponent = this->getPeer( homing_body + "_ReadReferences");		//To Do make generic for
-	if ( !ReadReferenceComponent ) {
-		log(Error) << "Could not find" << homing_body << "_ReadReferences component! Did you add it as Peer in the ops file?"<<endlog();
-		return false;
-	}
+    }
+
+    // Lookup the ReadEncoders and the ReadReferences component.
+    TaskContext* ReadEncodersComponent = this->getPeer( homing_body + "_ReadEncoders");
+    if ( !ReadEncodersComponent ) {
+        log(Error) << "Could not find" << homing_body << "_ReadEncoders component! Did you add it as Peer in the ops file?"<<endlog();
+        return false;
+    }
+
+    TaskContext* ReadReferenceComponent = this->getPeer( homing_body + "_ReadReferences");		//To Do make generic for
+    if ( !ReadReferenceComponent ) {
+        log(Error) << "Could not find" << homing_body << "_ReadReferences component! Did you add it as Peer in the ops file?"<<endlog();
+        return false;
+    }
 
 	// Fetch reset function
 	ResetEncoders = ReadEncodersComponent->getOperation("reset");
 	if ( !ResetEncoders.ready() ) {
 		log(Error) << "Could not find" << homing_body << "_ReadEncoder.reset Operation!"<<endlog();
 		return false;
-	}
+    }
 	
 	return true;  
 }
@@ -118,6 +119,9 @@ bool Homing::startHook()
     if (require_homing == false) {
         this->stop();
     }
+
+    uint one = 1;
+    status_outport.write(one);
 
   return true;
 }
@@ -220,12 +224,13 @@ void Homing::updateHook()
 		relPos_inport.read(relPos);        
         if ( fabs(relPos[homing_order_t-1]-homing_midpos[homing_order_t-1]) <= 0.01) {
 			GoToMidPos = false;     
-			homing_order_t++;
-			homed = true;
+            JntNr++;
+            status_outport.write(JntNr);
+			homed = true;            
         }
     }
 
-    if ( homing_order_t == (N + 1) && (!GoToMidPos) ) 	// if Last Jnt is homed and mid pos is reached for the last joint go to end pos
+    if ( JntNr == (N + 1) && (!GoToMidPos) ) 	// if Last Jnt is homed and mid pos is reached for the last joint go to end pos
     {
 		for (uint j = 0; j < N; j++){
 			ref[j][0] = homing_endpos[j]; 
@@ -237,6 +242,8 @@ void Homing::updateHook()
         
 		relPos_inport.read(relPos);
         if ( fabs(relPos[0]-homing_endpos[0]) <= 0.01) {
+            uint homingfinished = 10;
+            status_outport.write(homingfinished);
             log(Warning)<< "Homing of " << homing_body << ": Finished homing"  <<endlog();
 
             // Stop this component.

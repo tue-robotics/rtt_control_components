@@ -27,6 +27,7 @@ namespace AMIGO // Just because it looks nice
 
     // Declaring Outports
     OutputPort< vector<doubles> > ref_outport;
+    OutputPort< uint > status_outport;
 
 
     // Declaring system variables
