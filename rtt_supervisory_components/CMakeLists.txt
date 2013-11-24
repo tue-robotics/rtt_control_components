@@ -20,7 +20,8 @@ include(${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake)
 
 #common commands for building c++ executables and libraries
 orocos_component(Supervisor src/Supervisor.cpp)
-#orocos_component(Homing src/Homing.cpp)
+orocos_component(Homing src/Homing.cpp)
+orocos_component(Safety src/Safety.cpp)
 
 #rosbuild_include(rtt_rosnode GenerateRTTtypekit)
 
