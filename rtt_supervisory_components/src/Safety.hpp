@@ -9,7 +9,7 @@
 using namespace std;
 using namespace RTT;
 
-namespace AMIGO // Just because it looks nice
+namespace SUPERVISORY
 {
   typedef vector<double> doubles;
   typedef vector<int> ints;

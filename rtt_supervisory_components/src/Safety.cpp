@@ -11,7 +11,7 @@
 
 using namespace std;
 using namespace RTT;
-using namespace AMIGO;
+using namespace SUPERVISORY;
 
 
 Safety::Safety(const string& name) : TaskContext(name, PreOperational)
@@ -164,4 +164,4 @@ void Safety::updateHook()
 
 }
 
-ORO_CREATE_COMPONENT(AMIGO::Safety)
+ORO_CREATE_COMPONENT(SUPERVISORY::Safety)

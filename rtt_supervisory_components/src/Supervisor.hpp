@@ -18,7 +18,7 @@
 using namespace std;
 using namespace RTT;
 
-namespace SUPERVISOR
+namespace SUPERVISORY
 {
     /** \ingroup ARP-arp_core
      *
@@ -44,8 +44,9 @@ namespace SUPERVISOR
 		long double aquisition_time;
 		long double start_time;
 		
-		// Port for checking Soem // ToDo: switch back to bool
-		InputPort<soem_beckhoff_drivers::EncoderMsg> serialRunningPort;
+		// Port for checking Soem 
+		//InputPort<soem_beckhoff_drivers::EncoderMsg> serialRunningPort;
+		InputPort<bool> serialRunningPort;
 		
         /** Constructeur pour définir le chemin vers le projet. Utile pour ROS*/
         Supervisor(const std::string& name);
