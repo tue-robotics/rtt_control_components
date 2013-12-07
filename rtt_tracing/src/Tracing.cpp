@@ -24,14 +24,12 @@ Tracing::Tracing(const string& name) :
 											TaskContext(name, PreOperational),
 											filename("data.txt"),
 											buffersize(16384),
-											Ts(0.001),
-											crash(true)
+											Ts(0.001)
 {
 	addProperty( "vector_sizes", vectorsizes_prop ).doc("size of the vector per port. Example: array ( 2.0 4.0 4.0 )");
 	addProperty( "buffersize", buffersize ).doc("Size of the buffer");
 	addProperty( "filename", filename ).doc("Name of the file");
 	addProperty( "Ts", Ts ).doc("Sample time of orocos, used for time vector");
-	addProperty( "Crash_if_done", crash ).doc("Let orocos crash once the logging is finished");
 }
 
 Tracing::~Tracing(){}
@@ -88,8 +86,6 @@ void Tracing::updateHook()
 	uint startcolumn = 0;
 	for ( uint i = 0; i < Nports; i++ )
 	{
-		
-		
 		doubles input(vectorsizes[i],-2.0);
 
 		if ( inports[i].read( input ) == NewData && counters[i] <= counter )
@@ -107,16 +103,6 @@ void Tracing::updateHook()
 	}
 
 	counter = *max_element(counters.begin(),counters.end());
-
-
-
-//	cout << "Counter: ";
-//	cout << counter;
-//	cout << "\n";
-
-
-
-
 
 	// Stop if buffer is full
 	if(abs(counter) >= buffersize) 
@@ -167,19 +153,9 @@ void Tracing::stopHook()
 	fclose(pFile);
 	
 	cout << "Trace written";
+	cout << "Finished Tracing";
+	cout << "End of Tracing Buffer reached, Controller can be terminated!";
 
-	if ( crash )
-	{
-		fatal();
-	}
-
-}
-
-void Tracing::fatal()
-{
-	cout << "AAAAAAHHHHH!";
-	vector<double> oeps;
-	oeps[0] = oeps[1];
 }
 
 ORO_CREATE_COMPONENT(Signal::Tracing)

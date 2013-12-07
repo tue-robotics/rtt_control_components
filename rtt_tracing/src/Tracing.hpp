@@ -60,7 +60,6 @@ namespace Signal
 		vector<int> vectorsizes;
 		uint buffersize;
 		double Ts;
-		bool crash;
 
 		doubles buffer;
 		vector<doubles> buffers;
@@ -79,7 +78,6 @@ namespace Signal
 		bool startHook();
 		void updateHook();
 		void stopHook();
-		void fatal();
 
     };
 }
