@@ -123,6 +123,15 @@ bool Homing::startHook()
     uint one = 1;
     status_outport.write(one);
 
+    homing_order_t = homing_order[JntNr-1]; // writing of homing reference
+    homing_refPos_t [homing_order_t-1] = homing_refPos[homing_order_t-1];
+    homing_refVel_t [homing_order_t-1] = homing_refVel[homing_order_t-1];
+
+    ref[homing_order_t-1][0] = homing_refPos_t[homing_order_t-1];
+    ref[homing_order_t-1][1] = homing_refVel_t[homing_order_t-1];
+    ref[homing_order_t-1][2] = 0.0;
+    send_new_reference = true;
+
   return true;
 }
 
@@ -135,14 +144,6 @@ void Homing::updateHook()
 
 	if ( HomingConstraintMet == false && homed == false && GoToMidPos == false )
     {
-        homing_order_t = homing_order[JntNr-1]; // writing of homing reference
-        homing_refPos_t [homing_order_t-1] = homing_refPos[homing_order_t-1];
-        homing_refVel_t [homing_order_t-1] = homing_refVel[homing_order_t-1];
-		
-        ref[homing_order_t-1][0] = homing_refPos_t[homing_order_t-1];
-        ref[homing_order_t-1][1] = homing_refVel_t[homing_order_t-1];
-        ref[homing_order_t-1][2] = 0.0;
-	
    		int homing_type_t = homing_type[homing_order_t-1];
         switch (homing_type_t) {
             case 0 : 
@@ -208,12 +209,14 @@ void Homing::updateHook()
         StopBodyPart(homing_body);
         ResetEncoders((homing_order_t-1),homing_stroke[homing_order_t-1]);
         StartBodyPart(homing_body);
+        log(Warning)<< "Homing of " << homing_body << ": called stop, reset and start of joint:" << homing_order_t <<endlog();
 				
         // send body joint to midpos
         ref[homing_order_t-1][0] = homing_midpos[homing_order_t-1];
         ref[homing_order_t-1][1] = 0.0;
         ref[homing_order_t-1][2] = 0.0;
         ref_outport.write(ref);
+        log(Warning)<< "Homing of " << homing_body << ": send to midpos of joint:" << homing_order_t <<endlog();
         
         HomingConstraintMet = false;
         GoToMidPos = true;                            
@@ -223,15 +226,27 @@ void Homing::updateHook()
     {              
 		relPos_inport.read(relPos);        
         if ( fabs(relPos[homing_order_t-1]-homing_midpos[homing_order_t-1]) <= 0.01) {
+            log(Warning)<< "Homing of " << homing_body << ": Midpos reached of joint:" << homing_order_t <<endlog();
 			GoToMidPos = false;     
             JntNr++;
             status_outport.write(JntNr);
-			homed = true;            
+            log(Warning)<< "Homing of " << homing_body << ": status_outport.write:" << JntNr <<endlog();
+
+            homing_order_t = homing_order[JntNr-1]; // writing of homing reference
+            homing_refPos_t [homing_order_t-1] = homing_refPos[homing_order_t-1];
+            homing_refVel_t [homing_order_t-1] = homing_refVel[homing_order_t-1];
+
+            ref[homing_order_t-1][0] = homing_refPos_t[homing_order_t-1];
+            ref[homing_order_t-1][1] = homing_refVel_t[homing_order_t-1];
+            ref[homing_order_t-1][2] = 0.0;
+            send_new_reference = true;
         }
     }
 
     if ( JntNr == (N + 1) && (!GoToMidPos) ) 	// if Last Jnt is homed and mid pos is reached for the last joint go to end pos
     {
+        log(Warning)<< "Homing of " << homing_body << ": Sending Endpos!!!"  <<endlog();
+        homed = true;
 		for (uint j = 0; j < N; j++){
 			ref[j][0] = homing_endpos[j]; 
 			ref[j][1] = 0.0;
