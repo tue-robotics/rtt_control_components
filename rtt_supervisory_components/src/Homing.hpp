@@ -8,7 +8,7 @@
 using namespace std;
 using namespace RTT;
 
-namespace AMIGO // Just because it looks nice
+namespace SUPERVISORY // Just because it looks nice
 {
   // Define a new type for easy coding:
   typedef vector<double> doubles;

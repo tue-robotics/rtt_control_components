@@ -9,7 +9,7 @@
 
 using namespace std;
 using namespace RTT;
-using namespace AMIGO;
+using namespace SUPERVISORY;
 
 
 Homing::Homing(const string& name) : TaskContext(name, PreOperational)
@@ -74,20 +74,20 @@ bool Homing::configureHook()
     // Lookup the ReadEncoders and the ReadReferences component.
     TaskContext* ReadEncodersComponent = this->getPeer( homing_compname + "_ReadEncoders");
     if ( !ReadEncodersComponent ) {
-        log(Error) << "Could not find" << homing_body << "_ReadEncoders component! Did you add it as Peer in the ops file?"<<endlog();
+        log(Error) << "Could not find :" << homing_compname << "_ReadEncoders component! Did you add it as Peer in the ops file?"<<endlog();
         return false;
     }
-
+    
     TaskContext* ReadReferenceComponent = this->getPeer( homing_compname + "_ReadReferences");		//To Do make generic for
     if ( !ReadReferenceComponent ) {
-        log(Error) << "Could not find" << homing_body << "_ReadReferences component! Did you add it as Peer in the ops file?"<<endlog();
+        log(Error) << "Could not find :" << homing_compname << "_ReadReferences component! Did you add it as Peer in the ops file?"<<endlog();
         return false;
     }
 
 	// Fetch reset function
 	ResetEncoders = ReadEncodersComponent->getOperation("reset");
 	if ( !ResetEncoders.ready() ) {
-		log(Error) << "Could not find" << homing_body << "_ReadEncoder.reset Operation!"<<endlog();
+		log(Error) << "Could not find :" << homing_body << "_ReadEncoder.reset Operation!"<<endlog();
 		return false;
     }
 	
@@ -101,8 +101,7 @@ bool Homing::startHook()
     increased_vel = false;
     HomingConstraintMet = false;
     GoToMidPos = false;
-    send_new_reference = false;
-
+    
     if ( !homed ) {
         TaskContext* Spindle_ReadReferences = this->getPeer( homing_compname + "_ReadReferences");
         if ( ! Spindle_ReadReferences->isRunning() ) {
@@ -120,6 +119,15 @@ bool Homing::startHook()
     if (require_homing == false) {
         this->stop();
     }
+    
+	homing_order_t = homing_order[JntNr-1]; // writing of homing reference
+	homing_refPos_t [homing_order_t-1] = homing_refPos[homing_order_t-1];
+	homing_refVel_t [homing_order_t-1] = homing_refVel[homing_order_t-1];
+	
+	ref[homing_order_t-1][0] = homing_refPos_t[homing_order_t-1];
+	ref[homing_order_t-1][1] = homing_refVel_t[homing_order_t-1];
+	ref[homing_order_t-1][2] = 0.0;
+	send_new_reference = true;
 
     uint one = 1;
     status_outport.write(one);
@@ -205,7 +213,7 @@ void Homing::updateHook()
 
     if ( HomingConstraintMet == true && homed == false )
     {
-        // Actually call the services
+		// Actually call the services
         StopBodyPart(homing_body);
         ResetEncoders((homing_order_t-1),homing_stroke[homing_order_t-1]);
         StartBodyPart(homing_body);
@@ -236,7 +244,6 @@ void Homing::updateHook()
 
     if ( JntNr == (N + 1) && (!GoToMidPos) ) 	// if Last Jnt is homed and mid pos is reached for the last joint go to end pos
     {
-        log(Warning)<< "Homing of " << homing_body << ": Sending Endpos!!!"  <<endlog();
         homed = true;
 		for (uint j = 0; j < N; j++){
 			ref[j][0] = homing_endpos[j]; 
@@ -259,4 +266,4 @@ void Homing::updateHook()
     
 }
 
-ORO_CREATE_COMPONENT(AMIGO::Homing)
+ORO_CREATE_COMPONENT(SUPERVISORY::Homing)
