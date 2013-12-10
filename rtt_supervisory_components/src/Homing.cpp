@@ -124,27 +124,26 @@ bool Homing::startHook()
     uint one = 1;
     status_outport.write(one);
 
-    homing_order_t = homing_order[JntNr-1]; // writing of homing reference
-    homing_refPos_t [homing_order_t-1] = homing_refPos[homing_order_t-1];
-    homing_refVel_t [homing_order_t-1] = homing_refVel[homing_order_t-1];
-
-    ref[homing_order_t-1][0] = homing_refPos_t[homing_order_t-1];
-    ref[homing_order_t-1][1] = homing_refVel_t[homing_order_t-1];
-    ref[homing_order_t-1][2] = 0.0;
-    send_new_reference = true;
-
   return true;
 }
 
 void Homing::updateHook()
 {
-    if (send_new_reference == true && require_homing ) {  // if ref changes, the new ref is sent only once to the reference generator
+    if (send_new_reference == true && homed == false ) {  // if ref changes, the new ref is sent only once to the reference generator
         ref_outport.write(ref);
         send_new_reference = false;
     }
 
-    if ( HomingConstraintMet == false && require_homing && GoToMidPos == false )
+	if ( HomingConstraintMet == false && homed == false && GoToMidPos == false )
     {
+        homing_order_t = homing_order[JntNr-1]; // writing of homing reference
+        homing_refPos_t [homing_order_t-1] = homing_refPos[homing_order_t-1];
+        homing_refVel_t [homing_order_t-1] = homing_refVel[homing_order_t-1];
+		
+        ref[homing_order_t-1][0] = homing_refPos_t[homing_order_t-1];
+        ref[homing_order_t-1][1] = homing_refVel_t[homing_order_t-1];
+        ref[homing_order_t-1][2] = 0.0;
+	
    		int homing_type_t = homing_type[homing_order_t-1];
         switch (homing_type_t) {
             case 0 : 
@@ -204,7 +203,7 @@ void Homing::updateHook()
         }
     }
 
-    if ( HomingConstraintMet == true && require_homing )
+    if ( HomingConstraintMet == true && homed == false )
     {
         // Actually call the services
         StopBodyPart(homing_body);
@@ -223,7 +222,7 @@ void Homing::updateHook()
         GoToMidPos = true;                            
     }
 
-    if ( GoToMidPos && require_homing ) 				// Send the joint to a position where it does not interfere with rest of the homing procedure
+    if ( GoToMidPos && homed == false ) 				// Send the joint to a position where it does not interfere with rest of the homing procedure
     {              
 		relPos_inport.read(relPos);        
         if ( fabs(relPos[homing_order_t-1]-homing_midpos[homing_order_t-1]) <= 0.01) {
@@ -231,16 +230,7 @@ void Homing::updateHook()
 			GoToMidPos = false;     
             JntNr++;
             status_outport.write(JntNr);
-            log(Warning)<< "Homing of " << homing_body << ": status_outport.write:" << JntNr <<endlog();
-
-            homing_order_t = homing_order[JntNr-1]; // writing of homing reference
-            homing_refPos_t [homing_order_t-1] = homing_refPos[homing_order_t-1];
-            homing_refVel_t [homing_order_t-1] = homing_refVel[homing_order_t-1];
-
-            ref[homing_order_t-1][0] = homing_refPos_t[homing_order_t-1];
-            ref[homing_order_t-1][1] = homing_refVel_t[homing_order_t-1];
-            ref[homing_order_t-1][2] = 0.0;
-            send_new_reference = true;
+			homed = true;            
         }
     }
 
@@ -265,7 +255,8 @@ void Homing::updateHook()
             // Stop this component.
             this->stop();
         }
-    }
+    }   
+    
 }
 
 ORO_CREATE_COMPONENT(AMIGO::Homing)
