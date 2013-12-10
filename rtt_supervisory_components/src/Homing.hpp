@@ -42,6 +42,7 @@ namespace AMIGO // Just because it looks nice
     // homing variables
     bool require_homing;
     string homing_body;
+    string homing_compname;
     doubles homing_order;
     doubles homing_type;    
     doubles homing_refPos;

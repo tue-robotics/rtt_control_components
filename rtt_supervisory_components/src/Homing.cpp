@@ -23,18 +23,19 @@ Homing::Homing(const string& name) : TaskContext(name, PreOperational)
   addPort( "status_out", status_outport );
 
   // Creating variables
-  addProperty( "homing_body", homing_body );     	// name of the body that is stopped/started during homing procedure
-  addProperty( "homing_type", homing_type );     	// 0 = abs sensor homing 1 = servo error homing  2 = Force sensor homing  3 = endSwitch homing
-  addProperty( "homing_order", homing_order );   	// The order in which the joints are homed, array [2 3 1] will make sure joint 2, joint 3 and then joint 1 is homed.
-  addProperty( "homing_refPos", homing_refPos ); 	// Points far away in positive or negative direction. Therefore controlls mainly direction. Overuled for abs sensor homing.
-  addProperty( "homing_refVel", homing_refVel ); 	// Homing velocities
-  addProperty( "homing_stroke", homing_stroke ); 	// Stroke from zero point to homing point (encoders are resetted using this value)
-  addProperty( "homing_midpos", homing_midpos ); 	// position that the joint should have during homing. To avoid collisions with other bodies/ itself
-  addProperty( "homing_endpos", homing_endpos ); 	// position that the body should go to after homing is finished.
-  addProperty( "homing_absPos", homing_absPos ); 	// The absolute value at which the sensor should be moving
-  addProperty( "homing_force", homing_force );   	// Force at which homing position is reached
-  addProperty( "homing_error", homing_error );   	// Servo error at which homing position is reached
-  addProperty( "require_homing", require_homing ); 	// set to false to disable homing
+  addProperty( "homing_body", homing_body );            // name of the body that is stopped/started during homing procedure  (for example: Spindle)
+  addProperty( "homing_compname", homing_compname );   	// body name of components (for example: SPINDLE)
+  addProperty( "homing_type", homing_type );            // 0 = abs sensor homing 1 = servo error homing  2 = Force sensor homing  3 = endSwitch homing
+  addProperty( "homing_order", homing_order );          // The order in which the joints are homed, array [2 3 1] will make sure joint 2, joint 3 and then joint 1 is homed.
+  addProperty( "homing_refPos", homing_refPos );        // Points far away in positive or negative direction. Therefore controlls mainly direction. Overuled for abs sensor homing.
+  addProperty( "homing_refVel", homing_refVel );        // Homing velocities
+  addProperty( "homing_stroke", homing_stroke );        // Stroke from zero point to homing point (encoders are resetted using this value)
+  addProperty( "homing_midpos", homing_midpos );        // position that the joint should have during homing. To avoid collisions with other bodies/ itself
+  addProperty( "homing_endpos", homing_endpos );        // position that the body should go to after homing is finished.
+  addProperty( "homing_absPos", homing_absPos );        // The absolute value at which the sensor should be moving
+  addProperty( "homing_force", homing_force );          // Force at which homing position is reached
+  addProperty( "homing_error", homing_error );          // Servo error at which homing position is reached
+  addProperty( "require_homing", require_homing );      // set to false to disable homing
 }
 
 Homing::~Homing(){}
@@ -71,13 +72,13 @@ bool Homing::configureHook()
     }
 
     // Lookup the ReadEncoders and the ReadReferences component.
-    TaskContext* ReadEncodersComponent = this->getPeer( homing_body + "_ReadEncoders");
+    TaskContext* ReadEncodersComponent = this->getPeer( homing_compname + "_ReadEncoders");
     if ( !ReadEncodersComponent ) {
         log(Error) << "Could not find" << homing_body << "_ReadEncoders component! Did you add it as Peer in the ops file?"<<endlog();
         return false;
     }
 
-    TaskContext* ReadReferenceComponent = this->getPeer( homing_body + "_ReadReferences");		//To Do make generic for
+    TaskContext* ReadReferenceComponent = this->getPeer( homing_compname + "_ReadReferences");		//To Do make generic for
     if ( !ReadReferenceComponent ) {
         log(Error) << "Could not find" << homing_body << "_ReadReferences component! Did you add it as Peer in the ops file?"<<endlog();
         return false;
@@ -103,12 +104,12 @@ bool Homing::startHook()
     send_new_reference = false;
 
     if ( !homed ) {
-        TaskContext* ReadEncodersComponent = this->getPeer( homing_body + "_ReadEncoders");
-        if ( ! ReadEncodersComponent->isRunning() ) {
-            log(Error) << homing_body << "_ReadEncoders component is not running yet, please start this component first"<<endlog();
+        TaskContext* Spindle_ReadReferences = this->getPeer( homing_compname + "_ReadReferences");
+        if ( ! Spindle_ReadReferences->isRunning() ) {
+            log(Error) << homing_compname << "_ReadReferences component is not running yet, please start this component first"<<endlog();
         }
         else {
-            ReadEncodersComponent->stop(); //Disabling reading of references. Will be enabled automagically at the end by the supervisor.
+            Spindle_ReadReferences->stop(); //Disabling reading of references. Will be enabled automagically at the end by the supervisor.
         }
     }
     else {
@@ -137,12 +138,12 @@ bool Homing::startHook()
 
 void Homing::updateHook()
 {
-    if (send_new_reference == true && homed == false ) {  // if ref changes, the new ref is sent only once to the reference generator
+    if (send_new_reference == true && require_homing ) {  // if ref changes, the new ref is sent only once to the reference generator
         ref_outport.write(ref);
         send_new_reference = false;
     }
 
-	if ( HomingConstraintMet == false && homed == false && GoToMidPos == false )
+    if ( HomingConstraintMet == false && require_homing && GoToMidPos == false )
     {
    		int homing_type_t = homing_type[homing_order_t-1];
         switch (homing_type_t) {
@@ -203,7 +204,7 @@ void Homing::updateHook()
         }
     }
 
-    if ( HomingConstraintMet == true && homed == false )
+    if ( HomingConstraintMet == true && require_homing )
     {
         // Actually call the services
         StopBodyPart(homing_body);
@@ -222,7 +223,7 @@ void Homing::updateHook()
         GoToMidPos = true;                            
     }
 
-    if ( GoToMidPos && homed == false ) 				// Send the joint to a position where it does not interfere with rest of the homing procedure
+    if ( GoToMidPos && require_homing ) 				// Send the joint to a position where it does not interfere with rest of the homing procedure
     {              
 		relPos_inport.read(relPos);        
         if ( fabs(relPos[homing_order_t-1]-homing_midpos[homing_order_t-1]) <= 0.01) {
@@ -264,8 +265,7 @@ void Homing::updateHook()
             // Stop this component.
             this->stop();
         }
-    }   
-    
+    }
 }
 
 ORO_CREATE_COMPONENT(AMIGO::Homing)
