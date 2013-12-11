@@ -2,9 +2,9 @@
 *
 * @class LeadLag
 *
-* \author Boris Mrkajic
-* \date March, 2011
-* \version 1.0
+* \author Boris Mrkajic, Janno Lunenburg
+* \date August, 2013
+* \version 2.0
 *
 */
 
@@ -22,104 +22,92 @@ using namespace RTT;
 using namespace FILTERS;
 
 LeadLag::LeadLag(const string& name) : 
-	TaskContext(name, PreOperational),
-		vector_size(0), Ts(0.0)
+    TaskContext(name, PreOperational),
+    vector_size(0), Ts(0.0)
 {
 
-  addProperty( "vector_size", vector_size );
-  addProperty( "sampling_time", Ts );
-  addProperty( "zero_frequency", fz );
-  addProperty( "pole_frequency", fp );
+    addProperty( "vector_size", vector_size );
+    addProperty( "sampling_time", Ts );
+    addProperty( "zero_frequency", fz );
+    addProperty( "pole_frequency", fp );
 
-  // Adding ports
-  addEventPort( "in", inport );
-  addPort( "out", outport );
+    // Adding ports
+    addEventPort( "in", inport );
+    addPort( "out", outport );
 }
 
-LeadLag::~LeadLag(){}
+LeadLag::~LeadLag()
+{
+    for (unsigned int i = 0; i < vector_size; i++)
+    {
+        delete filters[i];
+        filters[i] = NULL;
+    }
+}
 
 bool LeadLag::configureHook()
 {
-  a0.resize(vector_size);
-  a1.resize(vector_size);
-  b0.resize(vector_size);
-  b1.resize(vector_size);
-  previous_input.resize(vector_size);
-  previous_output.resize(vector_size);
-  
-  for (uint i = 0; i < vector_size; i++) {
 
-	double wp = 2*PI*sqrt(fz[i]*fp[i])+eps;
-	double alpha = wp/(tan(wp*Ts/2)); 
+    filters.resize(vector_size);
+    for (uint i = 0; i < vector_size; i++) {
 
-	double x = 2*PI*fz[i]*fp[i];
-	double x1 = alpha*fz[i] + x;
-	double x2 = -alpha*fz[i] + x;
-	double x3 = alpha*fp[i] + x;
-	double x4 = -alpha*fp[i] + x;
+        // Initialize filters, use Prewarp Tustin method for discretization
+        filters[i] = new DFILTERS::DLeadLag(fz[i], fp[i], Ts, 4);
 
-	// Numerator and denominator of the filter
-	a0[i] = 1;
-	a1[i] = x2 / x1;
-	b0[i] = x3 / x1;
-	b1[i] = x4 / x1;
-  }
+    }
 
-  return true;
+    return true;
 }
 
 bool LeadLag::startHook()
 {
-  // Check validity of ports:
-  if ( !inport.connected() ) {
-    log(Error)<<"LeadLag::Input port not connected!"<<endlog();
-    // No connection was made, can't do my job !
-    return false;
-  }
-  
-  if ( !outport.connected() ) {
-    log(Warning)<<"LeadLag::Output port not connected!"<<endlog();
-  }
-  
-  if (vector_size < 1 || Ts <= 0.0) {
-    log(Error)<<"LeadLag parameters not valid!"<<endlog();
-    return false;
-  }
-  
-  for (uint i = 0; i < vector_size; i++) {
-	  if (fz[i] <= 0.0 || fp[i] <= 0.0){
-		    log(Error)<<"LeadLag parameters not valid!"<<endlog();
-			return false;
-		}
-  }
+    // Check validity of ports:
+    if ( !inport.connected() ) {
+        log(Error)<<"LeadLag::Input port not connected!"<<endlog();
+        // No connection was made, can't do my job !
+        return false;
+    }
 
-  for (uint i = 0; i < vector_size; i++) {
-	previous_input[i]  = 0.0;
-	previous_output[i] = 0.0;
-  }
+    if ( !outport.connected() ) {
+        log(Warning)<<"LeadLag::Output port not connected!"<<endlog();
+    }
 
-  return true;
+    if (vector_size < 1 || Ts <= 0.0) {
+        log(Error)<<"LeadLag parameters not valid!"<<endlog();
+        return false;
+    }
+
+    for (uint i = 0; i < vector_size; i++) {
+        if (fz[i] <= 0.0 || fp[i] <= 0.0){
+            log(Error)<<"LeadLag parameters not valid!"<<endlog();
+            return false;
+        }
+    }
+
+    /// Print debug info
+    for (uint i = 0; i < vector_size; i++)
+    {
+        log(Warning)<<"LeadLag: output[i] = "<<filters[i]->getOutput()<<endlog();
+    }
+
+    return true;
 }
 
 void LeadLag::updateHook()
 {
-	// Read the input port
-	doubles input(vector_size,0.0);
-	doubles output(vector_size,0.0);
+    // Read the input port
+    doubles input(vector_size,0.0);
+    doubles output(vector_size,0.0);
 
-	inport.read( input );
+    inport.read( input );
 
-	for (uint i = 0; i < vector_size; i++) {
-		output[i]  = b0[i] * input[i];
-		output[i] += b1[i] * previous_input[i];
-		output[i] -= a1[i] * previous_output[i];    
-	}
+    for (uint i = 0; i < vector_size; i++) {
+        filters[i]->update( input[i] );
+        output[i] = filters[i]->getOutput();
+    }
 
-	previous_input  = input;
-	previous_output = output;
-
-	// Write the outputs
-	outport.write( output );
+    // Write the outputs
+    outport.write( output );
 }
 
 ORO_CREATE_COMPONENT(FILTERS::LeadLag)

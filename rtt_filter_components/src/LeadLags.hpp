@@ -2,9 +2,9 @@
  *
  * @class LeadLags
  *
- * \author Boris Mrkajic
- * \date March, 2011
- * \version 1.0
+ * \author Boris Mrkajic, Janno Lunenburg
+ * \date August, 2013
+ * \version 2.0
  *
  */
 
@@ -14,21 +14,22 @@
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
 #include <vector>
+#include <scl/filters/DLeadLag.hpp>
 
 using namespace std;
 using namespace RTT;
 
 namespace FILTERS
 {
-	
-  // Define a new type for easy coding:
-  typedef vector<double> doubles;
-  
-  /**
-   * @brief A Component that acts as a lead-lag filters for multiple 
+
+// Define a new type for easy coding:
+typedef vector<double> doubles;
+
+/**
+   * @brief A Component that acts as a lead-lag filters for multiple
    *        inputs
    *
-   * The component has one input port that should receive vector of 
+   * The component has one input port that should receive vector of
    * doubles.
    *
    * @param * fz[] [Hz] - array of zero frequencies of the filter
@@ -36,43 +37,36 @@ namespace FILTERS
    *        * vector_size - size of the array
    *        * Ts - sampling time
    */
-   
-  class LeadLags
-  : public RTT::TaskContext
-    {
-    private:
 
-		/* Declaring input and output ports*/
-		InputPort<doubles> inport;
-		OutputPort<doubles> outport;
+class LeadLags
+        : public RTT::TaskContext
+{
+private:
 
-		/* Declaring global variables */
-		// Variables for history storage
-		doubles previous_output;
-		doubles previous_input;
+    /* Declaring input and output ports*/
+    InputPort<doubles> inport;
+    OutputPort<doubles> outport;
 
-		// Numerator and denominator of the filter
-		doubles a0;
-		doubles a1;
-		doubles b0;
-		doubles b1;
-		
-		/* Declaring variables set by properties */
-		// Filter parameters
-		doubles fz;
-		doubles fp;
-		uint vector_size;
-		double Ts;
-		
-    public:
+    /* Declaring global variables */
+    // Vector of pointers to filters
+    vector<DFILTERS::DLeadLag*> filters;
 
-		LeadLags(const string& name);
-		~LeadLags();
+    /* Declaring variables set by properties */
+    // Filter parameters
+    doubles fz;
+    doubles fp;
+    uint vector_size;
+    double Ts;
 
-		bool configureHook();
-		bool startHook();
-		void updateHook();
+public:
 
-    };
+    LeadLags(const string& name);
+    ~LeadLags();
+
+    bool configureHook();
+    bool startHook();
+    void updateHook();
+
+};
 }
 #endif

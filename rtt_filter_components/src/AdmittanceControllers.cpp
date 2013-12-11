@@ -44,6 +44,7 @@ AdmittanceControllers::~AdmittanceControllers()
     for (unsigned int i = 0; i < vector_size; i++)
     {
         delete filters[i];
+        filters[i] = NULL;
     }
 }
 
@@ -67,7 +68,7 @@ bool AdmittanceControllers::configureHook()
     position_output.assign(vector_size, 0.0);
     previous_position_output.assign(vector_size, 0.0);
     
-    //ToDo: check whether input is valid, e.g., whether all vector lengths coincide 
+    //ToDo: check whether input is valid, e.g., whether all vector lengths coincide
 
     return true;
 }
@@ -116,7 +117,7 @@ void AdmittanceControllers::updateHook()
     position_inport.read(position_input);
     if (force_inport.read(force_input) == NewData)
     {
-		//log(Warning)<<"Admittance: received new data"<<endlog();
+        //log(Warning)<<"Admittance: received new data"<<endlog();
         timestamp_last_force_input = os::TimeService::Instance()->getNSecs()*1e-9;
         //log(Warning)<<"Admittance: stamped time"<<endlog();
     }
@@ -131,7 +132,7 @@ void AdmittanceControllers::updateHook()
         if ( force_input_safe && fabs(force_input[i]) > eps && duration > 0.11)
         {
             force_input_safe = false;
-            //log(Warning) << "No new force input received for " << duration << "seconds, setting force to zero" << endlog();
+            log(Warning) << "No new force input received for " << duration << "seconds, setting force to zero" << endlog();
             force_input.assign(vector_size, 0.0);
         }
     }

@@ -2,9 +2,9 @@
  *
  * @class PID
  *
- * \author Boris Mrkajic
- * \date March, 2011
- * \version 1.0
+ * \author Boris Mrkajic, Janno Lunenburg
+ * \date August, 2013
+ * \version 2.0
  *
  */
 
@@ -14,16 +14,17 @@
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
 #include <vector>
+#include <scl/filters/DPID.hpp>
 
 using namespace std;
 using namespace RTT;
 
 namespace FILTERS
 {
-  // Define a new type for easy coding:
-  typedef vector<double> doubles;
-  
-  /**
+// Define a new type for easy coding:
+typedef vector<double> doubles;
+
+/**
    * @brief A Component that acts as a PID filter with anti-windup
    *
    * The component has one input port that should receive array.
@@ -37,53 +38,40 @@ namespace FILTERS
    *        * Ts [0.0 sec] - sampling time
    *        * vector_size [0] - size of input vector
    */
-   
-  class PID
-  : public RTT::TaskContext
-    {
-    private:
 
-		/* Declaring input and output ports*/
-		InputPort<doubles> inport;
-		OutputPort<doubles> outport;
+class PID
+        : public RTT::TaskContext
+{
+private:
 
-		/* Declaring global variables */
-		// Variables for history storage
-		doubles previous_output;
-		doubles previous_input;
-		doubles second_previous_output;
-		doubles second_previous_input;
-		// Parameters for Tustin prewarping discretization
-		long double old_time;
-		doubles windup;
-		doubles anti_windup;
-		
-		// Numerator and denominator of the filter
-		doubles a[3];
-		doubles b[3];
-		
-		/* Declaring variables set by properties */
-		// Filter parameters
-		doubles kp;
-		doubles kv;
-		doubles ki;
-		doubles kaw;
-		doubles init;
-		doubles limit;
-		double Ts;
-		uint vector_size;
-		
-		double determineDt();
-		
-    public:
+    /* Declaring input and output ports*/
+    InputPort<doubles> inport;
+    OutputPort<doubles> outport;
 
-		PID(const string& name);
-		~PID();
+    /* Declaring global variables */
+    // Vector of pointers to filters
+    vector<DFILTERS::DPID*> filters;
 
-		bool configureHook();
-		bool startHook();
-		void updateHook();
+    /* Declaring variables set by properties */
+    // Filter parameters
+    doubles kp;
+    doubles kv;
+    doubles ki;
+    doubles kaw;
+    doubles init;
+    doubles limit;
+    double Ts;
+    uint vector_size;
 
-    };
+public:
+
+    PID(const string& name);
+    ~PID();
+
+    bool configureHook();
+    bool startHook();
+    void updateHook();
+
+};
 }
 #endif
