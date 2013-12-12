@@ -31,9 +31,10 @@ namespace SUPERVISORY // Just because it looks nice
 
 
     // Declaring system variables
-    bool homed;
+    bool movetoconstraint;
+    bool movetomidpos;
+    bool movetoendpos;
     bool HomingConstraintMet;
-    bool GoToMidPos;
     bool increased_vel;
     bool send_new_reference;
     uint N;

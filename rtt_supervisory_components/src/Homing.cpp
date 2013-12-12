@@ -97,12 +97,12 @@ bool Homing::configureHook()
 bool Homing::startHook()
 { 
     JntNr = 1;
-    homed = !require_homing;
     increased_vel = false;
-    HomingConstraintMet = false;
-    GoToMidPos = false;
+    movetoconstraint = true;
+    movetomidpos = false;
+    movetoendpos = false;
     
-    if ( !homed ) {
+    if ( require_homing ) {
         TaskContext* Spindle_ReadReferences = this->getPeer( homing_compname + "_ReadReferences");
         if ( ! Spindle_ReadReferences->isRunning() ) {
             log(Error) << homing_compname << "_ReadReferences component is not running yet, please start this component first"<<endlog();
@@ -111,13 +111,8 @@ bool Homing::startHook()
             Spindle_ReadReferences->stop(); //Disabling reading of references. Will be enabled automagically at the end by the supervisor.
         }
     }
-    else {
+    else { // if require_homing parameter is false, homing component can be stopped immediately since no homing is required
         this->stop(); //Nothing to do
-    }
-
-    // if require_homing parameter is false, homing component can be stopped immediately since no homing is required
-    if (require_homing == false) {
-        this->stop();
     }
     
 	homing_order_t = homing_order[JntNr-1]; // writing of homing reference
@@ -137,12 +132,12 @@ bool Homing::startHook()
 
 void Homing::updateHook()
 {
-    if (send_new_reference == true && homed == false ) {  // if ref changes, the new ref is sent only once to the reference generator
+    if (send_new_reference == true ) {  // if ref changes, the new ref is sent only once to the reference generator
         ref_outport.write(ref);
         send_new_reference = false;
     }
 
-	if ( HomingConstraintMet == false && homed == false && GoToMidPos == false )
+    if ( movetoconstraint ) // Send the joint to constaint position, check if constraint is met, if constraint is met call homing
     {
         homing_order_t = homing_order[JntNr-1]; // writing of homing reference
         homing_refPos_t [homing_order_t-1] = homing_refPos[homing_order_t-1];
@@ -209,43 +204,51 @@ void Homing::updateHook()
                 }
             }
         }
-    }
 
-    if ( HomingConstraintMet == true && homed == false )
-    {
-		// Actually call the services
-        StopBodyPart(homing_body);
-        ResetEncoders((homing_order_t-1),homing_stroke[homing_order_t-1]);
-        StartBodyPart(homing_body);
-        log(Warning)<< "Homing of " << homing_body << ": called stop, reset and start of joint:" << homing_order_t <<endlog();
-				
-        // send body joint to midpos
-        ref[homing_order_t-1][0] = homing_midpos[homing_order_t-1];
-        ref[homing_order_t-1][1] = 0.0;
-        ref[homing_order_t-1][2] = 0.0;
-        ref_outport.write(ref);
-        log(Warning)<< "Homing of " << homing_body << ": send to midpos of joint:" << homing_order_t <<endlog();
-        
-        HomingConstraintMet = false;
-        GoToMidPos = true;                            
-    }
+        if ( HomingConstraintMet ) // after homingconstraint is met, call for homing and sent midpos reference
+        {
+            // Actually call the services
+            StopBodyPart(homing_body);
+            ResetEncoders((homing_order_t-1),homing_stroke[homing_order_t-1]);
+            StartBodyPart(homing_body);
+            log(Warning)<< "Homing of " << homing_body << ": called stop, reset and start of joint:" << homing_order_t <<endlog();
 
-    if ( GoToMidPos && homed == false ) 				// Send the joint to a position where it does not interfere with rest of the homing procedure
-    {              
-		relPos_inport.read(relPos);        
-        if ( fabs(relPos[homing_order_t-1]-homing_midpos[homing_order_t-1]) <= 0.01) {
-            log(Warning)<< "Homing of " << homing_body << ": Midpos reached of joint:" << homing_order_t <<endlog();
-			GoToMidPos = false;     
-            JntNr++;
-            status_outport.write(JntNr);
-			homed = true;            
+            // send body joint to midpos
+            ref[homing_order_t-1][0] = homing_midpos[homing_order_t-1];
+            ref[homing_order_t-1][1] = 0.0;
+            ref[homing_order_t-1][2] = 0.0;
+            ref_outport.write(ref);
+            log(Warning)<< "Homing of " << homing_body << ": send to midpos of joint:" << homing_order_t <<endlog();
+
+            HomingConstraintMet = false;
+            movetoconstraint = false;
+            movetomidpos = true;
         }
     }
 
-    if ( JntNr == (N + 1) && (!GoToMidPos) ) 	// if Last Jnt is homed and mid pos is reached for the last joint go to end pos
+    if ( movetomidpos ) 				// Wait for joint to reach midpos (position where it does not interfere with rest of the homing procedure)
+    {              
+		relPos_inport.read(relPos);        
+        if ( fabs(relPos[homing_order_t-1]-homing_midpos[homing_order_t-1]) <= 0.01) {
+            JntNr++;
+            status_outport.write(JntNr);
+            movetomidpos = false;
+            if ( JntNr == (N + 1)) // if last joint is homed, go to movetoendpos state
+            {
+                movetoendpos = true;
+            }
+            else // go to next joint
+            {
+                movetoconstraint = true;
+            }
+
+            log(Warning)<< "Homing of " << homing_body << ": Midpos reached of joint:" << homing_order_t <<endlog();
+        }
+    }
+
+    if ( movetoendpos ) 	// if Last Jnt is homed and mid pos is reached for the last joint go to end pos
     {
-        homed = true;
-		for (uint j = 0; j < N; j++){
+        for (uint j = 0; j < N; j++){
 			ref[j][0] = homing_endpos[j]; 
 			ref[j][1] = 0.0;
             ref[j][2] = 0.0;
