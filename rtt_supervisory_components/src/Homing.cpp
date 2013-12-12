@@ -101,6 +101,7 @@ bool Homing::startHook()
     movetoconstraint = true;
     movetomidpos = false;
     movetoendpos = false;
+    HomingConstraintMet = false;
     
     if ( require_homing ) {
         TaskContext* Spindle_ReadReferences = this->getPeer( homing_compname + "_ReadReferences");
@@ -260,6 +261,7 @@ void Homing::updateHook()
         if ( fabs(relPos[0]-homing_endpos[0]) <= 0.01) {
             uint homingfinished = 10;
             status_outport.write(homingfinished);
+            log(Warning)<< "Homing of " << homing_body << ": Endpos reached of joint:" << homing_order_t <<endlog();
             log(Warning)<< "Homing of " << homing_body << ": Finished homing"  <<endlog();
 
             // Stop this component.
