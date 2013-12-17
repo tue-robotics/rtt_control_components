@@ -89,6 +89,9 @@ bool Homing::configureHook()
 		log(Error) << "Could not find :" << homing_body << "_ReadEncoder.reset Operation!"<<endlog();
 		return false;
     }
+    
+    	log(Warning)<< "configureHook" << HomJntNr <<endlog();
+
 	
 	return true;  
 }
@@ -104,6 +107,7 @@ bool Homing::startHook()
     HomingConstraintMet = false;
     StepRefSlow = 0.10/Ts;
     StepRefFast = 0.01/Ts;
+    prevref[0] = 0.0;
 
     if ( require_homing ) {
         TaskContext* Spindle_ReadReferences = this->getPeer( homing_compname + "_ReadReferences");
@@ -120,7 +124,8 @@ bool Homing::startHook()
     
     uint one = 1;
     status_outport.write(one);
-
+    
+	log(Warning)<< "startHook" << HomJntNr <<endlog();
   return true;
 }
 
@@ -136,6 +141,11 @@ void Homing::updateHook()
              ref[HomJntNr-1]     = prevref[HomJntNr-1] + StepRefSlow;
         }
         ref_outport.write(ref);
+        
+        log(Warning)<< "Homing of " << homing_body << ": sent reference1:" << StepRefSlow <<endlog();
+        log(Warning)<< "Homing of " << homing_body << ": sent reference2:" << prevref[HomJntNr-1] <<endlog();
+        log(Warning)<< "Homing of " << homing_body << ": sent reference3:" << (HomJntNr-1) <<endlog();
+		log(Warning)<< "Homing of " << homing_body << ": sent reference4:" << ref[HomJntNr-1] <<endlog();
 
         int homing_type_t = homing_type[HomJntNr-1];
         switch (homing_type_t) {
