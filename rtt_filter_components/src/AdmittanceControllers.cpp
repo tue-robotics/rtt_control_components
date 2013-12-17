@@ -132,7 +132,7 @@ void AdmittanceControllers::updateHook()
         if ( force_input_safe && fabs(force_input[i]) > eps && duration > 0.11)
         {
             force_input_safe = false;
-            log(Warning) << "No new force input received for " << duration << "seconds, setting force to zero" << endlog();
+            //log(Warning) << "No new force input received for " << duration << "seconds, setting force to zero" << endlog();
             force_input.assign(vector_size, 0.0);
         }
     }
