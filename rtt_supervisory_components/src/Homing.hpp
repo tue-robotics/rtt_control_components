@@ -26,17 +26,16 @@ namespace SUPERVISORY // Just because it looks nice
     InputPort<doubles> relPos_inport;
 
     // Declaring Outports
-    OutputPort< vector<doubles> > ref_outport;
-    OutputPort< uint > status_outport;
+    OutputPort<doubles> ref_outport;
+    OutputPort<uint> status_outport;
 
 
     // Declaring system variables
-    bool movetoconstraint;
-    bool movetomidpos;
-    bool movetoendpos;
+    bool MoveJoint;
+    bool MoveToMidpos;
+    bool MoveToEndpos;
     bool HomingConstraintMet;
-    bool increased_vel;
-    bool send_new_reference;
+    bool FastHoming;
     uint N;
     uint JntNr;
 
@@ -53,12 +52,17 @@ namespace SUPERVISORY // Just because it looks nice
     doubles homing_stroke;
 
     // local homing variables
-    int homing_order_t;
+    uint HomJntNr;               // homing_order(JntNr)
     doubles homing_refPos_t;
     doubles homing_refVel_t;
 
     //ref
-    vector<doubles> ref;
+    doubles ref;
+    doubles maxref;
+    doubles prevref;
+    double StepRefSlow;
+    double StepRefFast;
+    double Ts;
 
     // Current value variables
     std_msgs::Bool endSwitch;
