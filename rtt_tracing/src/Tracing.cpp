@@ -152,9 +152,7 @@ void Tracing::stopHook()
 
 	fclose(pFile);
 	
-	cout << "Trace written";
-	cout << "Finished Tracing";
-	cout << "End of Tracing Buffer reached, Controller can be terminated!";
+	cout << "Trace written!!!! Finished Tracing !!!!!!     End of Tracing Buffer reached, Controller can be terminated!";
 
 }
 
