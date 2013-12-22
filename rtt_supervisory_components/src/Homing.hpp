@@ -50,6 +50,8 @@ namespace SUPERVISORY // Just because it looks nice
     doubles homing_midpos;
     doubles homing_endpos;
     doubles homing_stroke;
+    double slow_step;
+    double fast_step;
 
     // local homing variables
     uint HomJntNr;               // homing_order(JntNr)
@@ -60,9 +62,6 @@ namespace SUPERVISORY // Just because it looks nice
     doubles ref;
     doubles maxref;
     doubles prevref;
-    double StepRefSlow;
-    double StepRefFast;
-    double Ts;
 
     // Current value variables
     std_msgs::Bool endSwitch;
@@ -75,7 +74,8 @@ namespace SUPERVISORY // Just because it looks nice
     doubles homing_absPos;
     doubles homing_force;
     doubles homing_error;
-
+    int cntrrr;
+    
     protected:
     OperationCaller<bool(string)> StartBodyPart;
     OperationCaller<bool(string)> StopBodyPart;
