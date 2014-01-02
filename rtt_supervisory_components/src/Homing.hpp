@@ -74,7 +74,7 @@ namespace SUPERVISORY // Just because it looks nice
     doubles homing_absPos;
     doubles homing_force;
     doubles homing_error;
-    int cntrrr;
+    int cntr;
     
     protected:
     OperationCaller<bool(string)> StartBodyPart;

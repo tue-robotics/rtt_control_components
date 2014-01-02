@@ -48,6 +48,7 @@ bool Homing::configureHook()
     ref.resize(N);
     maxref.resize(N);
     prevref.resize(N);
+    servoErrors.resize(N);
     
     homing_refPos_t.resize(N);
     homing_refVel_t.resize(N);
@@ -91,9 +92,6 @@ bool Homing::configureHook()
 		return false;
     }
     
-    	log(Warning)<< "configureHook" << HomJntNr <<endlog();
-
-	
 	return true;  
 }
 
@@ -115,21 +113,19 @@ bool Homing::startHook()
             log(Error) << homing_compname << "_ReadReferences component is not running yet, please start this component first"<<endlog();
         }
         else {
-            Spindle_ReadReferences->stop(); //Disabling reading of references. Will be enabled automagically at the end by the supervisor.
-            SPINDLE_ReferenceGenerator->stop(); //Disabling reading of references. Will be enabled automagically at the end by the supervisor.
+            Spindle_ReadReferences->stop(); //Disabling reading of references.
+            SPINDLE_ReferenceGenerator->stop(); //Disable Reference Generator.
         }
     }
     else { // if require_homing parameter is false, homing component can be stopped immediately since no homing is required
         this->stop(); //Nothing to do
     }
-    
+        
+    cntr = 0;
     uint one = 1;
     status_outport.write(one);
-    
-    cntrrr = 0;
-    
-	log(Warning)<< "startHook" << HomJntNr <<endlog();
-  return true;
+
+    return true;
 }
 
 void Homing::updateHook()
@@ -145,11 +141,11 @@ void Homing::updateHook()
         }
         ref_outport.write(ref);
         
-		if (cntrrr >= 1000) {
+		if (cntr >= 1000) {
 			log(Warning)<< "Homing of " << homing_body << ": sent reference:" << ref[HomJntNr-1] <<endlog();
-			cntrrr = 0;
+			cntr = 0;
 		}
-		cntrrr++;
+		cntr++;
 		
         int homing_type_t = homing_type[HomJntNr-1];
         switch (homing_type_t) {
@@ -219,12 +215,10 @@ void Homing::updateHook()
             MoveJoint = false;
             MoveToMidpos = true;
             ref[HomJntNr-1] = homing_stroke[HomJntNr-1];
-            log(Warning)<< "Homing STRRRRROOOOKe of " << homing_body << " joint: " << HomJntNr << ". ref is :" << ref[HomJntNr-1] <<endlog();
             TaskContext* Spindle_ReadReferences = this->getPeer( homing_compname + "_ReadReferences");
 			TaskContext* SPINDLE_ReferenceGenerator = this->getPeer( homing_compname + "_ReferenceGenerator");
-            Spindle_ReadReferences->stop(); //Disabling reading of references. Will be enabled automagically at the end by the supervisor.
-            SPINDLE_ReferenceGenerator->stop(); //Disabling reading of references. Will be enabled automagically at the end by the supervisor.      
-
+            Spindle_ReadReferences->stop(); //Disabling reading of references.
+            SPINDLE_ReferenceGenerator->stop(); //Disabling reading of references.    
         }
     }
 
@@ -232,17 +226,16 @@ void Homing::updateHook()
     {
         maxref[HomJntNr-1]  = homing_midpos[HomJntNr-1];
         prevref[HomJntNr-1] = ref[HomJntNr-1];
-        ref[HomJntNr-1]     = max((prevref[HomJntNr-1] - slow_step), maxref[HomJntNr-1]);
+        ref[HomJntNr-1]     = max((prevref[HomJntNr-1] - fast_step), maxref[HomJntNr-1]);
         ref_outport.write(ref);
         
-        if (cntrrr >= 200) {
-			//servoError_inport.read(servoErrors);
-			//log(Warning)<< "Send to midpos with ref: [" << ref[HomJntNr-1] << "] with error:" << servoErrors[HomJntNr-1] <<endlog();
-			//log(Warning)<< "Send to midpos  prevref: [" << prevref[HomJntNr-1] - slow_step << "] maxref:" << maxref[HomJntNr-1] <<endlog();
-			cntrrr = 0;
+		if (cntr >= 1000) {
+			servoError_inport.read(servoErrors);
+			log(Warning)<< "Going to midpos " << homing_body << ": sent reference:" << ref[HomJntNr-1] << ". Error is: "<< servoErrors[HomJntNr-1] <<endlog();
+			cntr = 0;
 		}
-		cntrrr++;
-
+		cntr++;
+        
 		relPos_inport.read(relPos);        
         if ( fabs(relPos[HomJntNr-1]-homing_midpos[HomJntNr-1]) <= 0.01) {
             JntNr++;
@@ -267,15 +260,21 @@ void Homing::updateHook()
         for (uint j = 0; j < N; j++){
             maxref[j] = homing_endpos[j];
             prevref[j] = ref[j];
-            ref[homing_order[j]] = min(( prevref[j] + fast_step ), maxref[j]);
-            ref_outport.write(ref);
-		}		
+            ref[homing_order[j]] = min(( prevref[j] + slow_step ), maxref[j]);
+		}
         ref_outport.write(ref);
+        
+		if (cntr >= 1000) {
+			log(Warning)<< "Going to endpos " << homing_body << ": sent reference:" << ref[HomJntNr-1] <<endlog();
+			cntr = 0;
+		}
+		cntr++;
         
 		relPos_inport.read(relPos);
         if ( fabs(relPos[0]-homing_endpos[0]) <= 0.01) {
             uint homingfinished = 10;
             status_outport.write(homingfinished);
+            StartBodyPart(homing_body); 
             log(Warning)<< "Homing of " << homing_body << ": Endpos reached of joint:" << HomJntNr <<endlog();
             log(Warning)<< "Homing of " << homing_body << ": Finished homing"  <<endlog();
             // Stop this component.
