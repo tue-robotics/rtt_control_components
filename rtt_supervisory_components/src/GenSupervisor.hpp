@@ -120,7 +120,8 @@ namespace SUPERVISORY
         //To Do: Make generic by defining this via component name
         diagnostic_msgs::DiagnosticArray hardwareStatusMsg;
         int cntr;
-
+		
+		diagnostic_msgs::DiagnosticStatus StatusStale;
         diagnostic_msgs::DiagnosticStatus StatusOperational;
         diagnostic_msgs::DiagnosticStatus StatusIdle;
         diagnostic_msgs::DiagnosticStatus StatusHoming;

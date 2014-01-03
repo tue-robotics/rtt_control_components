@@ -61,11 +61,13 @@ bool GenSupervisor::startHook()
     cntr = 0;
     hardwareStatusMsg.status.resize(5);
 
+	StatusStale.level = 1;
     StatusOperational.level = 0;
-    StatusIdle.level = 1;
-    StatusHoming.level = 2;
-    StatusError.level = 3;
+    StatusIdle.level = 2;
+    StatusHoming.level = 3;
+    StatusError.level = 4;
 
+	StatusStale.message = "Stale";
     StatusOperational.message = "Operational";
     StatusIdle.message= "Idle";
     StatusHoming.message = "Homing";
@@ -121,7 +123,7 @@ void GenSupervisor::updateHook()
 	}
 	else if ( new_time - aquisition_time > 1.0 )
 	{
-		ROS_ERROR_STREAM("Soem crashed!");
+		//ROS_ERROR_STREAM("Soem crashed!");
 		std_msgs::Bool rosenabledmsg;
 		rosenabledmsg.data = false;
 		enabled_rosport.write( rosenabledmsg );
