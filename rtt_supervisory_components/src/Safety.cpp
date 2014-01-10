@@ -36,8 +36,8 @@ Safety::~Safety(){}
 
 bool Safety::configureHook()
 {
-    jointErrors.resize(8);
-    timeReachedSaturation.resize(8);
+    jointErrors.assign(8,0.0);
+    timeReachedSaturation.assign(8,0.0);
     memset(firstSatInstance, 0, sizeof(firstSatInstance));
     errors=false;
     enable_outport.write(enable);
@@ -96,7 +96,7 @@ void Safety::updateHook()
         // check if a controller reaches its saturation value for longer than MAXCONSATTIME
 
         doubles controllerOutputs;
-        controllerOutputs.resize(9);
+        controllerOutputs.assign(9,0.0);
         controllerOutput_inport.read(controllerOutputs);
 
         long double timeNow = os::TimeService::Instance()->getNSecs()*1e-9;

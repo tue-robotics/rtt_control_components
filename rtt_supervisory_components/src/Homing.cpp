@@ -45,13 +45,25 @@ Homing::~Homing(){}
 bool Homing::configureHook()
 {
     N = homing_refPos.size();
-    ref.resize(N);
-    maxref.resize(N);
-    prevref.resize(N);
-    servoErrors.resize(N);
-    
-    homing_refPos_t.resize(N);
-    homing_refVel_t.resize(N);
+    ref.assign(N,0.0);
+    maxref.assign(N,0.0);
+    prevref.assign(N,0.0);
+    servoErrors.assign(N,0.0);
+    homing_order.assign(N,0.0);
+    homing_type.assign(N,0.0);   
+    homing_refPos.assign(N,0.0);
+    homing_refVel.assign(N,0.0);
+    homing_midpos.assign(N,0.0);
+    homing_endpos.assign(N,0.0);
+    homing_stroke.assign(N,0.0);
+    absPos.assign(N,0.0);
+    forces.assign(N,0.0);
+    relPos.assign(N,0.0);
+    homing_absPos.assign(N,0.0);
+    homing_force.assign(N,0.0);
+    homing_error.assign(N,0.0);    
+    homing_refPos_t.assign(N,0.0);
+    homing_refVel_t.assign(N,0.0);
     
     // Lookup the Supervisor component.
 	TaskContext* Supervisor = this->getPeer("Supervisor");
