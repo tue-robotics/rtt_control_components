@@ -60,7 +60,7 @@ namespace SUPERVISORY // Just because it looks nice
 
     //ref
     doubles ref;
-    doubles maxref;
+    doubles endref;
     doubles prevref;
 
     // Current value variables

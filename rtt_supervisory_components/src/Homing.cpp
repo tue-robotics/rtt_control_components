@@ -46,7 +46,7 @@ bool Homing::configureHook()
 {
     N = homing_refPos.size();
     ref.assign(N,0.0);
-    maxref.assign(N,0.0);
+    endref.assign(N,0.0);
     prevref.assign(N,0.0);
     servoErrors.assign(N,0.0);
     homing_order.assign(N,0.0);
@@ -236,9 +236,9 @@ void Homing::updateHook()
 
     if ( MoveToMidpos ) 	// Wait for joint to reach midpos (position where it does not interfere with rest of the homing procedure)
     {
-        maxref[HomJntNr-1]  = homing_midpos[HomJntNr-1];
+        endref[HomJntNr-1]  = homing_midpos[HomJntNr-1];
         prevref[HomJntNr-1] = ref[HomJntNr-1];
-        ref[HomJntNr-1]     = max((prevref[HomJntNr-1] - fast_step), maxref[HomJntNr-1]);
+        ref[HomJntNr-1]     = max((prevref[HomJntNr-1] - fast_step), endref[HomJntNr-1]);
         ref_outport.write(ref);
         
 		if (cntr >= 1000) {
@@ -270,9 +270,9 @@ void Homing::updateHook()
     if ( MoveToEndpos ) 	// if Last Jnt is homed and mid pos is reached for the last joint go to end pos
     {
         for (uint j = 0; j < N; j++){
-            maxref[j] = homing_endpos[j];
+            endref[j] = homing_endpos[j];
             prevref[j] = ref[j];
-            ref[homing_order[j]] = min(( prevref[j] + slow_step ), maxref[j]);
+            ref[homing_order[j]] = min(( prevref[j] + slow_step ), endref[j]);
 		}
         ref_outport.write(ref);
         
