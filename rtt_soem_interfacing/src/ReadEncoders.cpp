@@ -25,9 +25,12 @@ bool ReadEncoders::configureHook()
 {
   // Determine number of encoders to be read
   N = enc2SI.size();
-  SI_value.resize(N);
-  ENC_value.resize(N);
-  init_SI_value.resize(N);
+  //SI_value.resize(N);
+  //ENC_value.resize(N);
+  //init_SI_value.resize(N);
+  SI_value.assign(N, 0.0);
+  ENC_value.assign(N, 0.0);
+  init_SI_value.assign(N, 0.0);
   offset.assign(N,0.0);
 
   if (N > maxN)
