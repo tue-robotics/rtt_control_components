@@ -25,7 +25,9 @@ bool AnalogInsPera::configureHook()
 {  
   output_for.resize(9);
   output_pos.resize(9);
+  cntr = 0;
   return true;
+  
 }
 
 bool AnalogInsPera::startHook()
@@ -67,6 +69,13 @@ void AnalogInsPera::updateHook()
 
     outport_for.write(output_for);
     outport_pos.write(output_pos);
+    
+    //if ( cntr >= 250) {
+	//  log(Warning) << "Measured Force Voltage is: [" << output_for[6] << "," << output_for[7] << "," << output_for[8] << "]" << endlog();
+	//	cntr = 0;
+	//} 
+	//cntr++;
+
 }
 
 ORO_CREATE_COMPONENT(SOEM::AnalogInsPera)
