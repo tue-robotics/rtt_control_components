@@ -15,7 +15,8 @@
   <depend package="rtt_math_components"/>
   <depend package="rtt_filter_components"/>
   <depend package="rtt_tracing"/>
-  <depend package="rtt_std_msgs"/><!-- Do not remove, used in deployement file-->
+  <depend package="rtt_std_msgs"/>
+  <depend package="diagnostic_msgs"/>
   <depend package="rtt_rosgraph_msgs"/>
   <depend package="rtt_ROS_interfacing"/>
   
