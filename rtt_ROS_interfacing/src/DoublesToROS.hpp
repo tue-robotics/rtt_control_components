@@ -13,7 +13,7 @@
 
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
-#include <std_msgs/Float64.h>
+#include <std_msgs/Float32.h>
 
 #define maxN 40 //Maximum  size. Still a workaround.
 
@@ -45,7 +45,7 @@ namespace ROS
     typedef vector<string> strings;
 
     /* Declaring and output port*/
-    OutputPort<std_msgs::Float64> doubleoutports[maxN];
+    OutputPort<std_msgs::Float32> doubleoutports[maxN];
 
     InputPort<doubles> doubleinport;
 

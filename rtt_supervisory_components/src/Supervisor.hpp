@@ -45,8 +45,7 @@ namespace SUPERVISORY
 		long double start_time;
 		
 		// Port for checking Soem 
-		//InputPort<soem_beckhoff_drivers::EncoderMsg> serialRunningPort;
-		InputPort<bool> serialRunningPort;
+		InputPort<soem_beckhoff_drivers::EncoderMsg> serialRunningPort;
 		
         /** Constructeur pour définir le chemin vers le projet. Utile pour ROS*/
         Supervisor(const std::string& name);

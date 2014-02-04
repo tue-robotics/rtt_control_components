@@ -77,8 +77,8 @@ bool Supervisor::startHook()
 	start_time = os::TimeService::Instance()->getNSecs()*1e-9;
 	aquisition_time = start_time;
 	//Wait untill soem is running
-	bool serialRunning = false;
-	//soem_beckhoff_drivers::EncoderMsg serialRunning;
+	//bool serialRunning = false;
+	soem_beckhoff_drivers::EncoderMsg serialRunning;
 	while (!(serialRunningPort.read(serialRunning) == NewData) )
 	{
 		start_time = os::TimeService::Instance()->getNSecs()*1e-9;
@@ -100,8 +100,8 @@ void Supervisor::updateHook()
 	// Determine timestamp:
 	long double new_time = os::TimeService::Instance()->getNSecs()*1e-9;
   
-	bool serialRunning = false;
-	//soem_beckhoff_drivers::EncoderMsg serialRunning;
+	//bool serialRunning = false;
+	soem_beckhoff_drivers::EncoderMsg serialRunning;
 	if(serialRunningPort.read(serialRunning) == NewData) 
 	{
 		aquisition_time = new_time;

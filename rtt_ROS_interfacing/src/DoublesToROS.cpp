@@ -51,7 +51,7 @@ void DoublesToROS::updateHook()
 	{
 		for ( uint i = 0; i < Ndouble; i++ )
 		{
-			std_msgs::Float64 msg;
+			std_msgs::Float32 msg;
 			msg.data = values[i];
 			doubleoutports[i].write( msg );
 		}
