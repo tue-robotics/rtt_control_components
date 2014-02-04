@@ -41,8 +41,6 @@ namespace SOEM
     doubles output_for;
     doubles output_pos;
 	
-	int cntr;
-	
     public:
 
     AnalogInsPera(const string& name);

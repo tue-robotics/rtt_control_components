@@ -23,9 +23,9 @@ AnalogInsPera::~AnalogInsPera(){}
 
 bool AnalogInsPera::configureHook()
 {  
-  output_for.resize(9);
-  output_pos.resize(9);
-  cntr = 0;
+  output_for.assign(9, 0.0);
+  output_pos.assign(9, 0.0);
+
   return true;
   
 }
@@ -69,12 +69,6 @@ void AnalogInsPera::updateHook()
 
     outport_for.write(output_for);
     outport_pos.write(output_pos);
-    
-    //if ( cntr >= 250) {
-	//  log(Warning) << "Measured Force Voltage is: [" << output_for[6] << "," << output_for[7] << "," << output_for[8] << "]" << endlog();
-	//	cntr = 0;
-	//} 
-	//cntr++;
 
 }
 
