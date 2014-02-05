@@ -40,6 +40,7 @@ namespace SUPERVISORY
         bool enabled[9]; //Keep track if bodyparts are on or off
         bool emergency;
         bool fireup[9];
+        bool homeableParts[9];
         string bodyparts[9];
 		long double aquisition_time;
 		long double start_time;
@@ -87,7 +88,7 @@ namespace SUPERVISORY
          */
         virtual bool AddAllwaysOnPeer(std::string peerName );
         virtual bool AddPeerToBodyPart( std::string peerName, int partNr );
-        virtual bool NameBodyPart( int partNr, std::string partName );
+        virtual bool NameBodyPart( int partNr, std::string partName, bool homeable );
         virtual bool StartBodyPart( std::string partName );
         virtual bool StopBodyPart( std::string partName );
         

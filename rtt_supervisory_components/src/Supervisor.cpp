@@ -355,11 +355,12 @@ bool Supervisor::AddPeerToBodyPart( std::string peerName, int partNr )
 	return false;
 }
 
-bool Supervisor::NameBodyPart( int partNr, std::string partName )
+bool Supervisor::NameBodyPart( int partNr, std::string partName, bool homeable )
 {
 	addPort( partName+"_enabled", isenabled_rosport[partNr] );
 	addEventPort( partName+"_fireup", fireup_rosport[partNr] );
 	bodyparts[partNr] = partName;
+	homeableParts[partNr] = homeable;
 	return true;
 }
 
