@@ -37,10 +37,10 @@ bool ReferenceGenerator::configureHook()
   addEventPort( "resetValues", resetPort );
   
   mRefGenerators.resize(NrInterpolators);
-  desiredPos.resize(NrInterpolators);
-  desiredVel.resize(NrInterpolators);
-  desiredAcc.resize(NrInterpolators);
   mRefPoints.resize(NrInterpolators);
+  desiredPos.assign(NrInterpolators,0.0);
+  desiredVel.assign(NrInterpolators,0.0);
+  desiredAcc.assign(NrInterpolators,0.0);  
   //interpolators.resize(NrInterpolators);
   
   for ( uint i = 0; i < NrInterpolators; i++ ){
@@ -73,8 +73,7 @@ bool ReferenceGenerator::startHook()
   }
   
   //Set the starting value to the current actual value
-  doubles actualPos;
-  actualPos.resize(NrInterpolators);
+  doubles actualPos(NrInterpolators,0.0);
   actualposinport.read( actualPos );
   for ( uint i = 0; i < NrInterpolators; i++ ){
 	  mRefGenerators[i].setRefGen(actualPos[i]);
@@ -83,7 +82,7 @@ bool ReferenceGenerator::startHook()
   //Initialise reference vectors
   refin.resize(NrInterpolators);
   for ( uint i = 0; i < NrInterpolators; i++ ){
-	  refin[i].resize(3); //pos, vel, acc
+	  refin[i].assign(3,0.0); //pos, vel, acc
   }  
   
   // Write on the outposport to make sure the receiving components gets new data
