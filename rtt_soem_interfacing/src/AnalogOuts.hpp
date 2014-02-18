@@ -32,6 +32,7 @@ namespace SOEM // Just because it looks nice
     // Specify maximum voltages:
     doubles max_volt;
     bool safe;
+    bool printerror;
     
     // Global variables:
     doubles output;

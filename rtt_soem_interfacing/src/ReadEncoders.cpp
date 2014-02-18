@@ -28,7 +28,7 @@ bool ReadEncoders::configureHook()
   //SI_value.resize(N);
   //ENC_value.resize(N);
   //init_SI_value.resize(N);
-  SI_value.assign(N, 0.0);
+  SI_values.assign(N, 0.0);
   ENC_value.assign(N, 0.0);
   init_SI_value.assign(N, 0.0);
   offset.assign(N,0.0);
@@ -95,16 +95,18 @@ void ReadEncoders::updateHook()
   if(NewData == inport_reNull.read(reNull)){
     if(reNull == true){
       log(Warning)<<"ReadEncoders: Renull signal received"<<endlog();
-        for ( uint i = 0; i < N; i++ )
-        reset(i, 0.0);
+        for ( uint i = 0; i < N; i++ ) {
+          reset(i, 0.0);
+	    }
       reNull = false;
     }
   }
 	
-  for ( uint i = 0; i < N; i++ )
-    SI_value[i] = readEncoder(i);
+  for ( uint i = 0; i < N; i++ ) {
+	SI_value[i] = readEncoder(i);
+  }
     
-  outport.write(SI_value);
+  outport.write(SI_values);
   outport_enc.write(ENC_value);
   counter++;
 }

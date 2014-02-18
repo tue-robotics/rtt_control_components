@@ -31,6 +31,7 @@ bool AnalogOuts::configureHook()
 bool AnalogOuts::startHook()
 {
   safe = true;
+  printerror = false;
   return true;
 }
 
@@ -48,9 +49,10 @@ void AnalogOuts::updateHook()
   }
 
   for ( uint i = 0; i < 8; i++ )
-    if ( output[i] > max_volt[i] )
+    if ( (output[i] > max_volt[i]) && !printerror )
     {
       safe = false;
+      printerror = true;
       log(Error)<<"Output["<<i<<"] has a value of "<<output[i]<<", stopping"<<endlog();
     }
 

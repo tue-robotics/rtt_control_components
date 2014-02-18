@@ -45,7 +45,7 @@ namespace SOEM // Just because it looks nice
 
     // Declaring message types
     double previous_enc_position[maxN];
-    doubles SI_value;
+    doubles SI_values;
     doubles ENC_value;
     doubles init_SI_value;
     int ienc[maxN];
