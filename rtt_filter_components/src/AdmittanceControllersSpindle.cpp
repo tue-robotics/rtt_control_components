@@ -167,7 +167,7 @@ void AdmittanceControllersSpindle::updateHook()
     if (NewData == homingfinished_inport.read( finishedhoming ) ){	 
 		 position_inport.read(position_input);
 		 previous_position_output[0] = position_input[0];
-		 log(Warning) << "Admittance Spindle: Initialized position, from pos_in, needed for integration" << endlog();
+		 log(Warning) << "Admittance Spindle: Initialized position to " << position_input[0] << ", from pos_in, needed for integration" << endlog();
 	}
   
     if (finishedhoming) {
