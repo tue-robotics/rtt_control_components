@@ -103,7 +103,7 @@ void ReadEncoders::updateHook()
   }
 	
   for ( uint i = 0; i < N; i++ ) {
-	SI_value[i] = readEncoder(i);
+	SI_values[i] = readEncoder(i);
   }
     
   outport.write(SI_values);
