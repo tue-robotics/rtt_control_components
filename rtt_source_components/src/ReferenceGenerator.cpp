@@ -5,23 +5,15 @@
 
 #include "ReferenceGenerator.hpp"
 
-/*
- * TODO:
- * See if the rows folluw up. So no: function1, function2, function4
- */
-
-
 using namespace std;
 using namespace RTT;
-using namespace AMIGO;
+using namespace SOURCES;
 
 ReferenceGenerator::ReferenceGenerator(const string& name) : TaskContext(name, PreOperational)
 {
-
   addProperty( "NrInterpolators", NrInterpolators );
   addProperty( "InterpolatorDt", InterpolDt );
   addProperty( "InterpolatorEps", InterpolEps );
-
 }
 
 ReferenceGenerator::~ReferenceGenerator(){}
@@ -166,4 +158,4 @@ void ReferenceGenerator::updateHook()
 
 }
 
-ORO_CREATE_COMPONENT(ReferenceGenerator)
+ORO_CREATE_COMPONENT(SOURCES::ReferenceGenerator)

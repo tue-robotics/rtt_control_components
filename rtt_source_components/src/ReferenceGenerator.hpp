@@ -17,9 +17,8 @@ inline string to_string (const T& t){
 
 using namespace RTT;
 
-namespace AMIGO
+namespace SOURCES
 {
-  // Define a new type for easy coding:
   typedef vector<double> doubles;
 
   class ReferenceGenerator
