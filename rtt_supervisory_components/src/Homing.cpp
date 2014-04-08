@@ -238,7 +238,13 @@ void Homing::updateHook()
     {
         endref[HomJntNr-1]  = homing_midpos[HomJntNr-1];
         prevref[HomJntNr-1] = ref[HomJntNr-1];
-        ref[HomJntNr-1]     = max((prevref[HomJntNr-1] - fast_step), endref[HomJntNr-1]);
+        if (homing_stroke[HomJntNr-1] > homing_midpos[HomJntNr-1]) {
+            ref[HomJntNr-1]     = max((prevref[HomJntNr-1] - fast_step), endref[HomJntNr-1]);
+        }
+        else {
+            ref[HomJntNr-1]     = min((prevref[HomJntNr-1] - fast_step), endref[HomJntNr-1]);
+        }
+
         ref_outport.write(ref);
         
 		if (cntr >= 1000) {
@@ -272,7 +278,12 @@ void Homing::updateHook()
         for (uint j = 0; j < N; j++){
             endref[j] = homing_endpos[j];
             prevref[j] = ref[j];
-            ref[homing_order[j]] = min(( prevref[j] + slow_step ), endref[j]);
+            if (homing_midpos[HomJntNr-1] > homing_endpos[HomJntNr-1]) {
+                ref[HomJntNr-1]     = max((prevref[HomJntNr-1] - fast_step), endref[HomJntNr-1]);
+            }
+            else {
+                ref[HomJntNr-1]     = min((prevref[HomJntNr-1] - fast_step), endref[HomJntNr-1]);
+            }
 		}
         ref_outport.write(ref);
         
