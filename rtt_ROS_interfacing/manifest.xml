@@ -12,6 +12,7 @@
   <depend package="rtt_rosnode"/>
   <depend package="geometry_msgs"/>
   <depend package="sensor_msgs"/>
+  <depend package="trajectory_msgs"/>
   <depend package="rtt_diagnostic_msgs"/>
   <depend package="diagnostic_updater"/>
   <depend package="rtt_sensor_msgs"/>
