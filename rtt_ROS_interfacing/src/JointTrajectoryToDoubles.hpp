@@ -53,7 +53,8 @@ namespace ROS
 
     /* Declaring global variables */
     uint Ndouble_; // Number of doubles in vector
-    doubles pos_out_, eff_out_;
+    double max_dx;
+    doubles last_pos_out_, pos_out_, eff_out_; 
     uint tp;
     trajectory_msgs::JointTrajectory in_msg;
     bool playing_trajectory;
