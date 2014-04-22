@@ -50,7 +50,7 @@ bool JointTrajectoryToDoubles::startHook()
 
 void JointTrajectoryToDoubles::updateHook()
 {
-    if (inport_.read(in_msg) == NewData)
+    if ( (!playing_trajectory) && inport_.read(in_msg) == NewData) // For now, do not listen if busy
     {
 		tp = 0;
         playing_trajectory = true;
