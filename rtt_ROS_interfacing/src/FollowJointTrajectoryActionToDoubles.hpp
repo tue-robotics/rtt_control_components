@@ -1,20 +1,21 @@
-/** JointTrajectoryToDoubles.hpp
+/** FollowJointTrajectoryActionToDoubles.hpp
  *
- * @class DoublesToJointState
+ * @class FollowJointTrajectoryActionToDoubles
  *
- * \author Janno Lunenburg
- * \date Aug, 2013
+ * \author Tim Clephas
+ * \date May, 2014
  * \version 1.0
  *
  */
 
-#ifndef JOINTTRAJECTORYTODOUBLES_HPP
-#define JOINTTRAJECTORYTODOUBLES_HPP
+#ifndef FollowJointTrajectoryActionToDoubles_HPP
+#define FollowJointTrajectoryActionToDoubles_HPP
 
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
 #include <trajectory_msgs/JointTrajectory.h>
 #include <trajectory_msgs/JointTrajectoryPoint.h>
+#include <control_msgs/FollowJointTrajectoryAction.h>
 
 #define maxN 40 //Maximum  size. Still a workaround.
 
@@ -37,16 +38,16 @@ namespace ROS
    * @param No parameters
    */
 
-  class JointTrajectoryToDoubles
+  class FollowJointTrajectoryActionToDoubles
   : public RTT::TaskContext
     {
     private:
 
     typedef vector<double> doubles;
-    //typedef vector<string> strings;
 
     /* Declaring and output ports*/
-    InputPort<trajectory_msgs::JointTrajectory> inport_;
+    InputPort<control_msgs::FollowJointTrajectoryActionGoal> goalport;
+    OutputPort<control_msgs::FollowJointTrajectoryActionResult> resultport;
 
     OutputPort<doubles> position_outport_;
     OutputPort<doubles> effort_outport_;
@@ -54,16 +55,29 @@ namespace ROS
     /* Declaring global variables */
     uint Ndouble_; // Number of doubles in vector
     double max_dx;
-    doubles last_pos_out_, pos_out_, eff_out_; 
+    doubles last_pos_out_, pos_out_, eff_out_, cur_max_acc, cur_max_vel;
+    doubles joint_states;
+    	doubles goal_pos, pos;
     uint tp;
-    trajectory_msgs::JointTrajectory in_msg;
+    control_msgs::FollowJointTrajectoryActionGoal goalmsg;
+    //trajectory_msgs::JointTrajectory goal;
     bool playing_trajectory;
-
+    bool playing_trajectory_point;
+    
+	double abs(double v, double& s) {
+		if (v >= 0) {
+			s = 1.0;
+			return v;
+		} else {
+			s = -1.0;
+			return -v;
+		}
+	}
 
     public:
 
-    JointTrajectoryToDoubles(const string& name);
-    ~JointTrajectoryToDoubles();
+    FollowJointTrajectoryActionToDoubles(const string& name);
+    ~FollowJointTrajectoryActionToDoubles();
 
     bool configureHook();
     bool startHook();

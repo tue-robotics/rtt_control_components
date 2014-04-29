@@ -15,6 +15,7 @@
   <depend package="rtt_diagnostic_msgs"/>
   <depend package="diagnostic_updater"/>
   <depend package="rtt_sensor_msgs"/>
+  <depend package="rtt_control_msgs"/>
   <depend package="tf"/>
   
 </package>
