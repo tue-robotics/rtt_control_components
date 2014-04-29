@@ -76,7 +76,7 @@ bool WeakIntegrator::startHook()
     }
 
     for (uint i = 0; i < vector_size; i++) {
-        if (fz[i] <= 0.0) {
+        if (fz[i] < 0.0) {
             log(Error)<<"WeakIntegrator:: parameters not valid!"<<endlog();
             return false;
         }
