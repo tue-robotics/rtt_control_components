@@ -12,6 +12,7 @@ JointStateToDoubles::JointStateToDoubles(const string& name) :
     TaskContext(name, PreOperational)
 {
     addProperty( "NumberOfJoints", Ndouble_ );
+    addProperty( "NumberOfJoints2", Ndouble2_ );
     addEventPort( "in", inport_ );
     addPort( "pos_in", position_inport_ );
     addPort( "pos_out", position_outport_ );
@@ -26,7 +27,7 @@ bool JointStateToDoubles::configureHook()
     pos_out_.assign(Ndouble_, 0.0);
     vel_out_.assign(Ndouble_, 0.0);
     eff_out_.assign(Ndouble_, 0.0);
-    pos_in_.assign(Ndouble_, 0.0);
+    pos_in_.assign(Ndouble2_, 0.0);
     return true;
 }
 
@@ -50,8 +51,11 @@ bool JointStateToDoubles::startHook()
         log(Warning)<<"ReadJointState: Inport not connected"<<endlog();
     }
     log(Info)<<"JointStateToDoubles can only handle jointstate messages with the correct length"<<endlog();
-		
+	
 	position_inport_.read(pos_in_);
+	for (uint i = 0; i < Ndouble_; i++) {
+		pos_out_[i] = pos_in_[i];
+	}
 	pos_out_ = pos_in_;
 	position_outport_.write(pos_out_);
 	

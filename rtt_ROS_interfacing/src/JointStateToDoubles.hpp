@@ -15,8 +15,6 @@
 #include <rtt/Port.hpp>
 #include <sensor_msgs/JointState.h>
 
-#define maxN 40 //Maximum  size. Still a workaround.
-
 using namespace std;
 using namespace RTT;
 
@@ -46,6 +44,7 @@ namespace ROS
 
     /* Declaring global variables */
     uint Ndouble_; // Number of doubles in vector
+    uint Ndouble2_;
     doubles pos_out_, vel_out_, eff_out_, pos_in_;
 
     public:
