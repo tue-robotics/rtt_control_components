@@ -59,10 +59,8 @@ bool JointStateToDoubles::startHook()
 	pos_out_ = pos_in_;
 	position_outport_.write(pos_out_);
 	
-	log(Warning)<<"Started JointStateToDoubles component with first element: [" << pos_out_[0] << "]" <<endlog();
+	log(Info)<<"Started JointStateToDoubles component with first element: [" << pos_out_[0] << "]" <<endlog();
 	
-    // ToDo: How do we properly initialize stuff?
-
     return true;
 }
 
