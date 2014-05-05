@@ -18,14 +18,6 @@
 #define maxN 40 //Maximum  size. Still a workaround.
 
 using namespace std;
-
-/*template <class T>
-inline string to_string (const T& t){
-  stringstream ss;
-  ss << t;
-  return ss.str();
-};*/
-
 using namespace RTT;
 
 namespace ROS
@@ -46,6 +38,7 @@ namespace ROS
 
     /* Declaring and output ports*/
     InputPort<sensor_msgs::JointState> inport_;
+	InputPort<doubles> position_inport_;
 
     OutputPort<doubles> position_outport_;
     OutputPort<doubles> velocity_outport_;
@@ -53,7 +46,7 @@ namespace ROS
 
     /* Declaring global variables */
     uint Ndouble_; // Number of doubles in vector
-    doubles pos_out_, vel_out_, eff_out_;
+    doubles pos_out_, vel_out_, eff_out_, pos_in_;
 
     public:
 

@@ -13,6 +13,7 @@ JointStateToDoubles::JointStateToDoubles(const string& name) :
 {
     addProperty( "NumberOfJoints", Ndouble_ );
     addEventPort( "in", inport_ );
+    addPort( "pos_in", position_inport_ );
     addPort( "pos_out", position_outport_ );
     addPort( "vel_out", velocity_outport_ );
     addPort( "eff_out", effort_outport_ );
@@ -25,6 +26,7 @@ bool JointStateToDoubles::configureHook()
     pos_out_.assign(Ndouble_, 0.0);
     vel_out_.assign(Ndouble_, 0.0);
     eff_out_.assign(Ndouble_, 0.0);
+    pos_in_.assign(Ndouble_, 0.0);
     return true;
 }
 
@@ -47,8 +49,14 @@ bool JointStateToDoubles::startHook()
     {
         log(Warning)<<"ReadJointState: Inport not connected"<<endlog();
     }
-    log(Warning)<<"JointStateToDoubles can only handle jointstate messages with the correct length"<<endlog(); //To Do why does this warning appear always?
-
+    log(Info)<<"JointStateToDoubles can only handle jointstate messages with the correct length"<<endlog();
+		
+	position_inport_.read(pos_in_);
+	pos_out_ = pos_in_;
+	position_outport_.write(pos_out_);
+	
+	log(Warning)<<"Started JointStateToDoubles component with first element: [" << pos_out_[0] << "]" <<endlog();
+	
     // ToDo: How do we properly initialize stuff?
 
     return true;
