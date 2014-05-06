@@ -4,6 +4,7 @@
 
 #include "FollowJointTrajectoryActionToDoubles.hpp"
 #define DT 0.001
+#define EPS 0.001
 
 using namespace std;
 using namespace RTT;
@@ -12,22 +13,24 @@ using namespace ROS;
 FollowJointTrajectoryActionToDoubles::FollowJointTrajectoryActionToDoubles(const string& name) :
     TaskContext(name, PreOperational)
 {
-    addProperty( "NumberOfJoints", Ndouble_ );
-    addProperty( "max_dx", max_dx );
-    addPort( "in", goalport );
+    addProperty( "NumberOfJoints", Nj );
+    addProperty( "start_pos", start_pos );
+    addProperty( "max_vels", max_vels );
+    addProperty( "max_accs", max_accs );
+    addPort( "goal", goalport );
     addPort( "pos_out", position_outport_ );
-    addPort( "eff_out", effort_outport_ );
+    addPort( "resetValues", resetPort );
+    addPort( "result", resultport );
 }
 
 FollowJointTrajectoryActionToDoubles::~FollowJointTrajectoryActionToDoubles(){}
 
 bool FollowJointTrajectoryActionToDoubles::configureHook()
 {
-    eff_out_.assign(Ndouble_, 0.0);
-    pos_out_.assign(Ndouble_, 0.0);
-    last_pos_out_.assign(Ndouble_, 0.0);
-    joint_states.assign(Ndouble_, 0.0);
-    pos.assign(Ndouble_, 0.0);
+    pos.assign(Nj, 0.0);
+    goal_pos.assign(Nj, 0.0);
+    cur_max_vel.assign(Nj, 0.0);
+    cur_max_acc.assign(Nj, 0.0);
     return true;
 }
 
@@ -38,97 +41,112 @@ bool FollowJointTrajectoryActionToDoubles::startHook()
     {
         log(Warning)<<"ReadJointState: Position outport not connected"<<endlog();
     }
-    if (!effort_outport_.connected())
-    {
-        log(Info)<<"ReadJointState: Effort outport not connected"<<endlog();
-    }
     if (!goalport.connected())
     {
         log(Warning)<<"ReadJointState: Inport not connected"<<endlog();
     }
-    playing_trajectory = false;
+            
+    for(unsigned int j = 0; j < Nj; ++j) {
+		pos[j] = start_pos[j];
+	}
 
+    playing_trajectory = false;
     return true;
 }
 
 void FollowJointTrajectoryActionToDoubles::updateHook()
 {
+	doubles resetdata;
+	if (resetPort.read( resetdata ) == NewData) // Following the trajectory is interupted and the actual joints may be moved
+	{
+		for(unsigned int j = 0; j < Nj; ++j) 
+		{
+			pos[j] = resetdata[j];
+		}
+		playing_trajectory = false;        
+		return;
+	}
 
     if ( goalport.read(goalmsg) == NewData) 
     {
-		// TODO: If the emergency button is pressed, a continuous stream of new goals containing current measured positions should be send
 		tp = 0;
         playing_trajectory = true;
         playing_trajectory_point = false;
+		log(Warning)<<"New goal received"<<endlog();
 	}
 	
 	if ( playing_trajectory && ! playing_trajectory_point ) // Lets calculate the speeds to the next point
 	{
-		double max_vels[8] = {}; //TODO: What is the current arm position?
-		double max_accs[8] = {}; //TODO: What is the current arm position?
-		double times[8] = {}; //TODO: What is the current arm position?
+		doubles durations; //How long does the movement take per joint
+		durations.assign(Nj, 0.0);
 		
 		// find out how long it will take to reach the point
         // taking into account acceleration and deceleration
         goal_pos = goalmsg.goal.trajectory.points[tp].positions;
         
-        double max_time = 0;
-        for(unsigned int j = 0; j < goal_pos.size(); ++j) {           
-			double state = joint_states[j];
+        //TODO: Check goal_pos with Ndouble
+         
+        double max_duration = 0.0;
+        for(unsigned int j = 0; j < Nj; ++j) {           
 			double max_vel = max_vels[j];
 			double max_acc = max_accs[j];
 			
-            double diff = std::abs(goal_pos[j] - state);
+            double diff = std::abs(goal_pos[j] - pos[j]);
 
             double t_acc = max_vel / max_acc;
             double x_acc = max_acc * t_acc * t_acc / 2;
 
-            double time;
+            double duration;
             if (x_acc < diff / 2) {
                 // reach full velocity
                 double x_max_vel = diff - (2 * x_acc);
-                time = x_max_vel / max_vel + 2 * t_acc;
+                duration = x_max_vel / max_vel + 2 * t_acc;
             } else {
                 // do not reach full velocity
                 double t_half = sqrt(2 * (diff / 2) / max_acc);
-                time = 2 * t_half;
+                duration = 2 * t_half;
             }
 
-            times[j] = time;
+            durations[j] = duration;
 
-            max_time = std::max(max_time, time);
+            max_duration = std::max(max_duration, duration);
         }
-                    
-        // scale the maximum velocity and acceleration of each joint based on the longest time
-        for(unsigned int j = 0; j < joint_states.size(); ++j) {
-            double time_factor = times[j] / max_time;
+             
+        // scale the maximum velocity and acceleration of each joint based on the longest duration
+        for(unsigned int j = 0; j < Nj; ++j) {
+            double time_factor = durations[j] / max_duration;
             cur_max_acc[j] = max_accs[j] * time_factor * time_factor;
             cur_max_vel[j] = max_vels[j] * time_factor;
         }
-        
-        playing_trajectory_point = true;
-        tp++;
+         
+        playing_trajectory_point = true; // We calculated the vels and accs per joint, lets play
+        tp++; // Next time this function should use the next point in the trajectory message
+		
+		log(Warning)<<"New trajectory to next point calculated"<<endlog();
 	}
 	
-	if (true) //(Criterium goal reached)
+	if ( playing_trajectory && playing_trajectory_point && std::abs(goal_pos[0] - pos[0]) < EPS ) //(Criterium goal reached)
 	{
+		// This implementation does not work, what if the first joint does not move?
 		playing_trajectory_point = false;
+		log(Warning)<<"Trajectory point reached"<<endlog();
 		if (tp >= goalmsg.goal.trajectory.points.size())
 		{
 			// Send action result
 			control_msgs::FollowJointTrajectoryActionResult resultmsg;
 			resultmsg.result.error_code = 0; // SUCCESSFUL
 			resultmsg.status.status = 3;     // SUCCEEDED
-			
+			resultport.write(resultmsg);
 			playing_trajectory = false;
+			log(Warning)<<"Trajectory finished"<<endlog();
+
 		}
 	}
 
 	if (playing_trajectory && playing_trajectory_point)
 	{
-		for(unsigned int j = 0; j < joint_states.size(); ++j) {
+		for(unsigned int j = 0; j < Nj; ++j) {
 			
-
 			double v_sign;
 			double v_abs = abs(cur_max_vel[j], v_sign);
 
@@ -152,10 +170,11 @@ void FollowJointTrajectoryActionToDoubles::updateHook()
 			double vel = dx_sign * v_abs;
 			pos[j] += vel * DT;
 
-			pos_out_[j] = pos[j];
 
 		}
-		position_outport_.write(pos_out_);
+		log(Warning)<<"Going to: " << pos[0] <<", " << pos[1] <<", " << pos[2] <<", " << pos[3] <<", " << pos[4] <<", " << pos[5] <<", " << pos[6] <<endlog();
+
+		position_outport_.write(pos);
     }
 }
 

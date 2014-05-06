@@ -50,17 +50,17 @@ namespace ROS
     OutputPort<control_msgs::FollowJointTrajectoryActionResult> resultport;
 
     OutputPort<doubles> position_outport_;
-    OutputPort<doubles> effort_outport_;
+    InputPort<doubles> resetPort;
 
     /* Declaring global variables */
-    uint Ndouble_; // Number of doubles in vector
+    uint Nj; // Number of doubles in vector
     double max_dx;
-    doubles last_pos_out_, pos_out_, eff_out_, cur_max_acc, cur_max_vel;
-    doubles joint_states;
-    	doubles goal_pos, pos;
+    doubles cur_max_acc, cur_max_vel;
+    doubles goal_pos;
+    doubles start_pos, pos;
+    doubles max_vels, max_accs;
     uint tp;
     control_msgs::FollowJointTrajectoryActionGoal goalmsg;
-    //trajectory_msgs::JointTrajectory goal;
     bool playing_trajectory;
     bool playing_trajectory_point;
     
