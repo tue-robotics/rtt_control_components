@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo "Old visualisation, for component type color visualiation use rtt_visualization graph filename.ops"
+
 if [ $# -ne 1 ]
 then
     echo "Error in $0 - Invalid Argument Count"
