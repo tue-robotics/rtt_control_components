@@ -1,0 +1,28 @@
+#!/bin/bash
+echo "New visualisation, for the old visualisation without component type color visualiation use rtt_visualization graphold filename.ops"
+
+if [ $# -ne 1 ]
+then
+    echo "Error in $0 - Invalid Argument Count"
+    echo "Syntax: $0 <location_of_ops_file>"
+    exit
+fi
+
+namegv=${1%\.*}.gv
+python `rospack find rtt_visualization`/scripts/orocosgraphop.py $1
+echo "Created $namegv"
+
+#namepng=${1%\.*}.png
+#dot -Tpng $namegv > $namepng
+#echo "Created $namepng"
+
+nameeps=${1%\.*}.eps
+dot -Teps $namegv > $nameeps
+echo "Created $nameeps"
+namepdf=${1%\.*}.pdf
+epstopdf $nameeps
+echo "Created pdf from $nameeps"
+
+rm $namegv $nameeps
+
+evince $namepdf
