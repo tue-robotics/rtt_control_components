@@ -10,27 +10,16 @@ components = []
 subs = []
 connections = []
 
-Acomponents = []
-Bcomponents = []
-Ccomponents = []
-Dcomponents = []
-
 substructs = {}
 
 components.append("ROS")
-amountofcomponents = 1
-Aamountofcomponents = 0
-Bamountofcomponents = 0
-Camountofcomponents = 0
-Damountofcomponents = 0
 
 for line in f_in:
     if line[0] != "#":
         if 'loadComponent' in line:
             s = line.split("\"")
             components.append(s[1])
-            #print s[1]
-            amountofcomponents = amountofcomponents + 1
+            print s[1]
         elif 'connect' in line:
             s = line.split("\"")
             comp_sub1 = s[1]
@@ -63,43 +52,6 @@ for line in f_in:
                 connections.append(("ROS", comp, port))
             else:
                 connections.append((comp, "ROS", port))
-        elif 'AddAllwaysOnPeer' in line:
-			s = line.split("\"")
-			#print s[1]
-			Acomponents.append(s[1])
-			Aamountofcomponents = Aamountofcomponents + 1
-        elif 'AddHomingOnlyPeer' in line:
-			s = line.split("\"")
-			#print s[1]
-			Bcomponents.append(s[1])
-			Bamountofcomponents = Bamountofcomponents + 1
-        elif 'AddOpOnlyPeer' in line:
-			s = line.split("\"")
-			#print s[1]
-			Ccomponents.append(s[1])
-			Camountofcomponents = Camountofcomponents + 1
-        elif 'AddEnabledPeer' in line:
-			s = line.split("\"")
-			#print s[1]
-			Dcomponents.append(s[1])
-			Damountofcomponents = Damountofcomponents + 1
-
-for j in range (0,amountofcomponents):
-	for i in range (0,Aamountofcomponents):
-		if (components[j] == Acomponents[i]):
-			print("AddAllwaysOnPeer: ", components[j])
-	for i in range (0,Bamountofcomponents):
-		if (components[j] == Bcomponents[i]):
-			print("AddHomingOnlyPeer: ", components[j])
-	for i in range (0,Camountofcomponents):
-		if (components[j] == Ccomponents[i]):
-			print("AddOpOnlyPeer: ", components[j])
-	for i in range (0,Damountofcomponents):
-		if (components[j] == Dcomponents[i]):
-			print("AddEnabledPeer: ", components[j])
-
-print "The amount of components is :" 
-print amountofcomponents		
             
 f_in.close()
 
@@ -120,21 +72,9 @@ digraph AMIGO_Software_Architecture {
 f_out.write('''\nnode [shape=box];\n
       "ROS"''')
 f_out.write('''\nnode [shape=oval];\n''')
-for comp in Acomponents:
+
+for comp in components:
     f_out.write('   \"' + comp + '\"' + '\n')
-    
-f_out.write('''\nnode [shape=oval, color=yellow];\n''')
-for comp in Bcomponents:
-    f_out.write('   \"' + comp + '\"' + '\n')
-    
-f_out.write('''\nnode [shape=oval, color=green];\n''')
-for comp in Ccomponents:
-    f_out.write('   \"' + comp + '\"' + '\n')
-    
-f_out.write('''\nnode [shape=oval, color=blue];\n''')
-for comp in Dcomponents:
-    f_out.write('   \"' + comp + '\"' + '\n')
-    
 
 i = 0    
 
