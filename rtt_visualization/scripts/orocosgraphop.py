@@ -141,15 +141,11 @@ i = 0
     
 for (n1, n2, n3) in connections:
 	donotprintthisconnection = False
+	
 	for i in range (0,Bamountofcomponents):
 		if (n1 == Bcomponents[i] ) or (n2 == Bcomponents[i]):
 			donotprintthisconnection = True
-			print 'Left out connection: '
-			print n1
-			print 'to' 
-			print n2
-			print '!'
-	
+			
 	if (donotprintthisconnection == False) :
 		f_out.write('   \"' + n1 + '\" -> \"' + n2 + '\"  [ label = \"' + n3 + '\" ]; \n')
 
