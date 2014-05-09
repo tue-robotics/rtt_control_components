@@ -40,23 +40,24 @@ bool BenchmarkReference::configureHook()
 	REF3_[0] = -1.5;
 	REF3_[1] =  1.5;
 	
-	// step 3 q345
-	
+	// step 3 q345	
 	REF5_[2] = 0.0;
 	REF5_[3] = 1.5;
-	REF5_[4] = -1.5;
 	
+	REF6_[0] = -1.5;
 	REF6_[2] = -1.5;
 	REF6_[3] = 1.5;
-	REF6_[4] = -1.5;
-		
-	// step 3 q67
 	
-	REF8_[5] =  0.5;
-	REF8_[6] =  0.0;
+	REF7_[0] = -1.5;
+	REF7_[2] = 0.0;
+	REF7_[3] = 1.5;
 		
-	REF9_[5] =  0.0;
-	REF9_[6] =  -0.5;
+	// step 3 q67	
+	REF9_[5] =  0.5;
+	REF9_[6] =  0.0;
+		
+	REF10_[5] =  0.0;
+	REF10_[6] =  -0.5;
 	
 	return true;
 }
