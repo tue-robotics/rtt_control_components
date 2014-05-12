@@ -20,3 +20,4 @@ include(${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake)
 
 #common commands for building c++ executables and libraries
 orocos_component(Tracing src/Tracing.cpp)
+orocos_component(TracingOneSignal src/TracingOneSignal.cpp)
