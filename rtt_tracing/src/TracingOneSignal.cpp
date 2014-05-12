@@ -54,7 +54,7 @@ bool TracingOneSignal::configureHook()
 	{
 		vectorsizes[i] = vectorsizes_prop[i-1]; // Hack
 		counters[i] = 0;
-		string name_inport = "in"+to_string(i-1);
+        string name_inport = "in"+to_string(i);
 		addEventPort( name_inport, inports[i-1]);
 		columns += vectorsizes[i];
 		cout << "Column size: ";
@@ -99,15 +99,12 @@ void TracingOneSignal::updateHook()
 		if ( inports[i-1].read( input ) == NewData && counters[i] <= counter )
 		{
             // Save time stamp
-            //current_ticks = RTT::os::TimeService::Instance()->ticksSince(previous_ticks);
-            //nsecs_passed = RTT::os::TimeService::Instance()->ticks2nsecs(current_ticks-previous_ticks);
-            //buffers[counters[0]][startcolumn] = (double)(nsecs_passed/1000000000.0);
-            buffers[counters[0]][startcolumn] = RTT::os::TimeService::Instance()->secondsSince(previous_ticks);
-            startcolumn += vectorsizes[0];
-            counters[0]++;
-            //previous_ticks = current_ticks;
-            //previous_ticks = = RTT::os::TimeService::Instance()->getTicks();
-
+            if ( startcolumn == 0 )
+            {
+                buffers[counters[0]][startcolumn] = RTT::os::TimeService::Instance()->secondsSince(previous_ticks);
+                startcolumn += vectorsizes[0];
+                counters[0]++;
+            }
 
 			uint inputiterator = 0;
 			// Fill it with data
@@ -116,8 +113,9 @@ void TracingOneSignal::updateHook()
 				buffers[counters[i]][column] = input[inputiterator];
 				inputiterator++;
 			}
-			counters[i]++;
+
 		}
+        counters[i]++;
 		startcolumn += vectorsizes[i];
 	}
 
