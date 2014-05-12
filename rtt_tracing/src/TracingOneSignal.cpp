@@ -52,10 +52,10 @@ bool TracingOneSignal::configureHook()
 	// Creating ports
     for ( uint i = 1; i < Nports; i++ )
 	{
-		vectorsizes[i] = vectorsizes_prop[i]; // Hack
+		vectorsizes[i] = vectorsizes_prop[i-1]; // Hack
 		counters[i] = 0;
-		string name_inport = "in"+to_string(i+1);
-		addEventPort( name_inport, inports[i]);
+		string name_inport = "in"+to_string(i-1);
+		addEventPort( name_inport, inports[i-1]);
 		columns += vectorsizes[i];
 		cout << "Column size: ";
 		cout << columns;
@@ -80,6 +80,7 @@ bool TracingOneSignal::startHook()
 		log(Error)<<"Input port not connected!"<<endlog();
 		return false;
 	}*/
+	current_ticks = 0;
     previous_ticks = RTT::os::TimeService::Instance()->getTicks();
 	return true;
 }
@@ -95,15 +96,17 @@ void TracingOneSignal::updateHook()
 	{
         doubles input(vectorsizes[i],-2.0);
 
-		if ( inports[i].read( input ) == NewData && counters[i] <= counter )
+		if ( inports[i-1].read( input ) == NewData && counters[i] <= counter )
 		{
             // Save time stamp
-            current_ticks = RTT::os::TimeService::Instance()->ticksSince(previous_ticks);
-            nsecs_passed = RTT::os::TimeService::Instance()->ticks2nsecs(current_ticks-previous_ticks);
-            buffers[counters[0]][startcolumn] = nsecs_passed*1e-9;
+            //current_ticks = RTT::os::TimeService::Instance()->ticksSince(previous_ticks);
+            //nsecs_passed = RTT::os::TimeService::Instance()->ticks2nsecs(current_ticks-previous_ticks);
+            //buffers[counters[0]][startcolumn] = (double)(nsecs_passed/1000000000.0);
+            buffers[counters[0]][startcolumn] = RTT::os::TimeService::Instance()->secondsSince(previous_ticks);
             startcolumn += vectorsizes[0];
             counters[0]++;
-            previous_ticks = current_ticks;
+            //previous_ticks = current_ticks;
+            //previous_ticks = = RTT::os::TimeService::Instance()->getTicks();
 
 
 			uint inputiterator = 0;
@@ -133,13 +136,13 @@ void TracingOneSignal::stopHook()
 	pFile = fopen (filename.c_str(),"w");
 
 
-    fprintf(pFile, "SecondsPast  \t");
-	for ( uint i = 0; i < vectorsizes.size(); i++ )
+    fprintf(pFile, "SecondsPast\t");
+	for ( uint i = 1; i < vectorsizes.size(); i++ )
 	{
-		string portname = inports[i].getName();
+		string portname = inports[i-1].getName();
 		for ( int j = 0; j < vectorsizes[i]; j++ )
 		{
-            fprintf(pFile, " %s[%d]      \t", portname.c_str(), j );
+            fprintf(pFile, "%s[%d]\t", portname.c_str(), j );
 			//char columnheader = "["+to_string(j)+"]\t";
 			//portname.c_str()+
 			//fprintf(pFile, "%s\t", columnheader);
@@ -158,7 +161,7 @@ void TracingOneSignal::stopHook()
         //fprintf(pFile, "%12.6e\t", timevalue);
 		for(dit = (*vit).begin(); dit != (*vit).end(); ++dit)
 		{
-            fprintf(pFile, "% 12.6e\t", *dit);
+            fprintf(pFile, "%12.6e\t", *dit);
 			//fprintf(pFile, "% f\t", *dit);
 		}
 		fprintf(pFile, "\n");
@@ -168,7 +171,7 @@ void TracingOneSignal::stopHook()
 
 	fclose(pFile);
 	
-	cout << "Trace written!!!! Finished Tracing !!!!!!     End of Tracing Buffer reached, Controller can be terminated!";
+	cout << "Trace written!!!! Finished Tracing !!!!!!     End of Tracing Buffer reached, Controller can be terminated!" << endl;
 
 }
 
