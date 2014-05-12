@@ -1,5 +1,5 @@
 #!/bin/bash
-echo "New visualisation, for the old visualisation without component type color visualiation use rtt_visualization graphold filename.ops"
+echo "New visualisation with only components in operational state, for the old visualisation without component type colors use rtt_visualization graphold filename.ops, and for complete color visualisation use rtt_visualization graph filename.ops"
 
 if [ $# -ne 1 ]
 then

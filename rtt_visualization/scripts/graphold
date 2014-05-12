@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "Old visualisation, for component type color visualiation use rtt_visualization graph filename.ops"
+echo "Old visualisation, for component type colors use rtt_visualization graph filename.ops"
 
 if [ $# -ne 1 ]
 then
