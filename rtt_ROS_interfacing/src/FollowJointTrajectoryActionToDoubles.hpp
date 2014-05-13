@@ -28,6 +28,10 @@ inline string to_string (const T& t){
   return ss.str();
 };*/
 
+template <typename T> int sgn(T val) {
+return (T(0) < val) - (val < T(0));
+}
+
 using namespace RTT;
 
 namespace ROS
@@ -44,6 +48,7 @@ namespace ROS
     private:
 
     typedef vector<double> doubles;
+    
 
     /* Declaring and output ports*/
     InputPort<control_msgs::FollowJointTrajectoryActionGoal> goalport;
@@ -57,22 +62,15 @@ namespace ROS
     double max_dx;
     doubles cur_max_acc, cur_max_vel;
     doubles goal_pos;
-    doubles start_pos, pos;
+    doubles start_pos;
+    doubles pos, vel;
+
     doubles max_vels, max_accs;
     uint tp;
+    uint slowest;
     control_msgs::FollowJointTrajectoryActionGoal goalmsg;
     bool playing_trajectory;
     bool playing_trajectory_point;
-    
-	double abs(double v, double& s) {
-		if (v >= 0) {
-			s = 1.0;
-			return v;
-		} else {
-			s = -1.0;
-			return -v;
-		}
-	}
 
     public:
 

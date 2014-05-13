@@ -4,7 +4,7 @@
 
 #include "FollowJointTrajectoryActionToDoubles.hpp"
 #define DT 0.001
-#define EPS 0.001
+#define EPS 0.0017 //[0.1 DEG]
 
 using namespace std;
 using namespace RTT;
@@ -28,6 +28,7 @@ FollowJointTrajectoryActionToDoubles::~FollowJointTrajectoryActionToDoubles(){}
 bool FollowJointTrajectoryActionToDoubles::configureHook()
 {
     pos.assign(Nj, 0.0);
+    vel.assign(Nj, 0.0);
     goal_pos.assign(Nj, 0.0);
     cur_max_vel.assign(Nj, 0.0);
     cur_max_acc.assign(Nj, 0.0);
@@ -72,19 +73,30 @@ void FollowJointTrajectoryActionToDoubles::updateHook()
 		tp = 0;
         playing_trajectory = true;
         playing_trajectory_point = false;
-		log(Warning)<<"New goal received"<<endlog();
+		log(Info)<<"New goal received"<<endlog();
+		
+		//TODO: Check feasibility of trajectory
 	}
 	
 	if ( playing_trajectory && ! playing_trajectory_point ) // Lets calculate the speeds to the next point
 	{
+		log(Debug)<<"Calculating new trajectory initiated." << endlog();
+		log(Debug)<<"Max vel: " << 
+		max_vels[0] << "  " << max_vels[1] << "  " << max_vels[2] << "  " << max_vels[3] << endlog();
+		log(Debug)<<"Max acc: " <<
+		max_accs[0] << "  " << max_accs[1] << "  " << max_accs[2] << "  " << max_accs[3] << endlog();
+
+		goal_pos = goalmsg.goal.trajectory.points[tp].positions;
+		//TODO: Check goal_pos with Ndouble
+
+		log(Debug)<<"Dx: " <<
+		std::abs(goal_pos[0] - pos[0]) << "  " << std::abs(goal_pos[1] - pos[1]) << "  " << std::abs(goal_pos[2] - pos[2]) << "  " << std::abs(goal_pos[3] - pos[3]) << endlog();
+		
 		doubles durations; //How long does the movement take per joint
 		durations.assign(Nj, 0.0);
 		
 		// find out how long it will take to reach the point
         // taking into account acceleration and deceleration
-        goal_pos = goalmsg.goal.trajectory.points[tp].positions;
-        
-        //TODO: Check goal_pos with Ndouble
          
         double max_duration = 0.0;
         for(unsigned int j = 0; j < Nj; ++j) {           
@@ -110,26 +122,39 @@ void FollowJointTrajectoryActionToDoubles::updateHook()
             durations[j] = duration;
 
             max_duration = std::max(max_duration, duration);
+            if (max_duration == duration)
+            {
+				slowest = j;
+			}
+            
+            //TODO: If max_duration == duration
+            // Slowest = j, check for slowest to finish
         }
              
+		log(Debug)<<"Durations: " << durations[0] << "  " << durations[1] << "  " << durations[2] << "  " << durations[3] << endlog();
+		             
         // scale the maximum velocity and acceleration of each joint based on the longest duration
         for(unsigned int j = 0; j < Nj; ++j) {
             double time_factor = durations[j] / max_duration;
             cur_max_acc[j] = max_accs[j] * time_factor * time_factor;
             cur_max_vel[j] = max_vels[j] * time_factor;
         }
+        
+		log(Debug)<<"Current max vel: " << 
+		cur_max_vel[0] << "  " << cur_max_vel[1] << "  " << cur_max_vel[2] << "  " << cur_max_vel[3] << endlog();
+		log(Debug)<<"Current max acc: " <<
+		cur_max_acc[0] << "  " << cur_max_acc[1] << "  " << cur_max_acc[2] << "  " << cur_max_acc[3] << endlog();        
          
         playing_trajectory_point = true; // We calculated the vels and accs per joint, lets play
         tp++; // Next time this function should use the next point in the trajectory message
 		
-		log(Warning)<<"New trajectory to next point calculated"<<endlog();
+		log(Info)<<"New trajectory to next point calculated"<<endlog();
 	}
 	
-	if ( playing_trajectory && playing_trajectory_point && std::abs(goal_pos[0] - pos[0]) < EPS ) //(Criterium goal reached)
+	if ( playing_trajectory && playing_trajectory_point && std::abs(goal_pos[slowest] - pos[slowest]) < EPS ) //(Criterium goal reached)
 	{
-		// This implementation does not work, what if the first joint does not move?
 		playing_trajectory_point = false;
-		log(Warning)<<"Trajectory point reached"<<endlog();
+		
 		if (tp >= goalmsg.goal.trajectory.points.size())
 		{
 			// Send action result
@@ -138,8 +163,11 @@ void FollowJointTrajectoryActionToDoubles::updateHook()
 			resultmsg.status.status = 3;     // SUCCEEDED
 			resultport.write(resultmsg);
 			playing_trajectory = false;
-			log(Warning)<<"Trajectory finished"<<endlog();
-
+			log(Info)<<"Trajectory finished"<<endlog();
+		}
+		else
+		{
+			log(Info)<<"Intermediate trajectory point reached, moving to the next"<<endlog();
 		}
 	}
 
@@ -147,13 +175,12 @@ void FollowJointTrajectoryActionToDoubles::updateHook()
 	{
 		for(unsigned int j = 0; j < Nj; ++j) {
 			
-			double v_sign;
-			double v_abs = abs(cur_max_vel[j], v_sign);
+			double v_abs = std::abs(vel[j]);
 
 			// calculate distance to goal
 			double dx = goal_pos[j] - pos[j];
-			double dx_sign;
-			double dx_abs = abs(dx, dx_sign);
+			double dx_sign = sgn(dx);
+			double dx_abs = std::abs(dx);
 
 			// calculate deceleration time and distance
 			double dt_dec = v_abs / cur_max_acc[j];
@@ -167,12 +194,12 @@ void FollowJointTrajectoryActionToDoubles::updateHook()
 				v_abs = std::min(cur_max_vel[j], v_abs + cur_max_acc[j] * DT);
 			}
 
-			double vel = dx_sign * v_abs;
-			pos[j] += vel * DT;
+			vel[j] = dx_sign * v_abs;
+			pos[j] += vel[j] * DT;
 
 
 		}
-		log(Warning)<<"Going to: " << pos[0] <<", " << pos[1] <<", " << pos[2] <<", " << pos[3] <<", " << pos[4] <<", " << pos[5] <<", " << pos[6] <<endlog();
+		log(Debug)<<"Going to: " << pos[0] <<" " << pos[1] <<" " << pos[2] <<" " << pos[3] <<" With vel: " << vel[0] <<" " << vel[1] <<" " << vel[2] <<" " << vel[3] <<" With acc: " << cur_max_acc[0] <<" " << cur_max_acc[1] <<" " << cur_max_acc[2] <<" " << cur_max_acc[3] <<endlog();
 
 		position_outport_.write(pos);
     }
