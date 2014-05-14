@@ -11,104 +11,117 @@
 
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
-#include <std_msgs/Bool.h>
+#include <diagnostic_msgs/DiagnosticArray.h>
+#include <diagnostic_msgs/DiagnosticStatus.h>
+#include <std_msgs/UInt8MultiArray.h>
 #include <rosgraph_msgs/Log.h>
 #include <soem_beckhoff_drivers/EncoderMsg.h>
+#include <std_msgs/Bool.h>
 
 using namespace std;
 using namespace RTT;
 
 namespace SUPERVISORY
 {
-    /** \ingroup ARP-arp_core
-     *
-     * \class Supervisor
-     *
-     * Cette classe permet de gerer plusieurs composants. Il y en a au moins une par projet
-     * qui permet de faire l'interface de pilotage pour les projets supérieurs.
-     */
+	/*! \class Supervisor
+	 *  \brief Defines Orocos component for supervising hardware components
+	 *
+	 * The Safety component monitors:
+	 *
+	 * 	* Dashboard Cmds -> Home - go to homing state
+	 * 						Start - go to operational state
+	 * 						Stop - go to idle state
+	 * 						Reset - reset error and go to idle state
+	 *
+	 * 	* Emergency Button -> pressed - go to idle state
+	 * 						  released - go to operational state (only
+	 * 						  if idle state was entered due to emergency button)
+	 *   
+	 *  * Errorports -> if boolean true - go to error state
+	 * 
+	 *  * Homingports -> if boolean ture - go to operational state
+	 */
+
     class Supervisor
     : public RTT::TaskContext
       {
       public:
-
+		//ports
         InputPort<std_msgs::Bool> rosemergencyport;
         InputPort<std_msgs::Bool> rosshutdownport;
-        OutputPort<std_msgs::Bool> isenabled_rosport[9];
         OutputPort<std_msgs::Bool> enabled_rosport;
-        InputPort<std_msgs::Bool> fireup_rosport[9];
-        bool enabled[9]; //Keep track if bodyparts are on or off
-        bool emergency;
-        bool fireup[9];
-        bool homeableParts[9];
-        string bodyparts[9];
+        InputPort<bool> homingfinished_port[6];
+        InputPort<bool> error_port[6]; 
+        InputPort<soem_beckhoff_drivers::EncoderMsg> serialRunningPort;
+        InputPort<std_msgs::UInt8MultiArray> dashboardCmdPort;
+        OutputPort<std_msgs::Bool> isenabled_rosport[6];
+        OutputPort<diagnostic_msgs::DiagnosticArray> hardwareStatusPort;
+        
+		//vectors
+        bool homeableParts[6];
+        bool idleDueToEmergencyButton[6];
+        bool homedParts[6];
+        bool staleParts[6]; // staleparts is used to make sure, components that aren't started will be shown stale on the dashboard
+        string bodyParts[6];
+        
+        // scalars
+        bool emergency;     
+        bool goodToGO;   
 		long double aquisition_time;
 		long double start_time;
 		
-		// Port for checking Soem 
-		InputPort<soem_beckhoff_drivers::EncoderMsg> serialRunningPort;
-		
-        /** Constructeur pour définir le chemin vers le projet. Utile pour ROS*/
+		// msgs
+        std_msgs::UInt8MultiArray dashboardCmdmsg;
+        std_msgs::Bool rosenabledmsg;
+        std_msgs::Bool rosdisabledmsg;
+        diagnostic_msgs::DiagnosticStatus StatusStalemsg;
+        diagnostic_msgs::DiagnosticStatus StatusOperationalmsg;
+        diagnostic_msgs::DiagnosticStatus StatusIdlemsg;
+        diagnostic_msgs::DiagnosticStatus StatusHomingmsg;
+        diagnostic_msgs::DiagnosticStatus StatusErrormsg;
+        diagnostic_msgs::DiagnosticArray hardwareStatusmsg;
+
         Supervisor(const std::string& name);
-        /** Destructeur par défaut */
         virtual ~Supervisor();
 
-        /**
-         * Configure all peers previously registered by the AddAllwaysOnPeer command
-         * The configuration is done in the order in which elements where inserted
-         */
+		// component Hook functions
         virtual bool configureHook();
-
-        /**
-         * Start all peers previously registered by the AddAllwaysOnPeer command
-         * The configuration is done in the order in which elements where inserted
-         */
         virtual bool startHook();
-
-        /**
-         * Checks if all components are still running
-         */
         virtual void updateHook();
-
-        /**
-         * Stop all peers previously registered by the AddAllwaysOnPeer command
-         * The configuration is done in the reverse order in which elements where inserted
-         */
         virtual void stopHook();
-
-        /**
-         * Cleanup all peers previously registered by the AddAllwaysOnPeer command
-         * The configuration is done in the reversed order in which elements where inserted
-         */
-        virtual void cleanupHook();
-
-        /**
-         * @param peerName : the name of the Orocos component that needs to be Supervisored
-         * @return true if success, false if the peer to Supervisor is not in the peer list.
-         */
-        virtual bool AddAllwaysOnPeer(std::string peerName );
-        virtual bool AddPeerToBodyPart( std::string peerName, int partNr );
-        virtual bool NameBodyPart( int partNr, std::string partName, bool homeable );
+        
+        // External functions
         virtual bool StartBodyPart( std::string partName );
         virtual bool StopBodyPart( std::string partName );
-        
-        /**
-         * Internal functions for convenience
-         */
+        virtual void displaySupervisoredPeers();
+
+		// Internal functions
         virtual bool AddPeerCheckList( std::string peerName, vector<TaskContext*> List );
         virtual bool startList( vector<TaskContext*> List );
         virtual bool stopList( vector<TaskContext*> List );
         virtual bool isEmpty( vector<TaskContext*> List );
 
-        /**
-         * display the list of Supervisored peers
-         */
-        virtual void displaySupervisoredPeers();
+        // Set up functions for name body part and add component to list
+        virtual bool NameBodyPart(int partNr, std::string partName, bool homeable);
+		virtual bool AddAllwaysOnPeer(std::string peerName);
+        virtual bool AddOpOnlyPeer(std::string peerName, int partNr);
+        virtual bool AddHomingOnlyPeer(std::string peerName, int partNr);
+        virtual bool AddEnabledPeer(std::string peerName, int partNr);
         
+        // state transitions
+        virtual bool GoOperational(int partNr, diagnostic_msgs::DiagnosticArray statusArray);
+        virtual bool GoIdle(int partNr, diagnostic_msgs::DiagnosticArray statusArray);
+        virtual bool GoHoming(int partNr, diagnostic_msgs::DiagnosticArray statusArray);
+        virtual bool GoError(int partNr, diagnostic_msgs::DiagnosticArray statusArray);
+        virtual bool setState(int partNr, diagnostic_msgs::DiagnosticStatus state);
+
     protected:
-        /** List of peers to Supervisor */
+		// Component lists
         vector<TaskContext*> AllwaysOnList;
-        vector<TaskContext*> BodyPartList[9];
+        vector<TaskContext*> OpOnlyList[6];
+        vector<TaskContext*> HomingOnlyList[6];
+        vector<TaskContext*> EnabledList[6];
+        
       };
 }
 

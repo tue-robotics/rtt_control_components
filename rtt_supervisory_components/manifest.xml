@@ -16,10 +16,10 @@
   <depend package="rtt_filter_components"/>
   <depend package="rtt_tracing"/>
   <depend package="rtt_std_msgs"/>
+  <depend package="std_msgs"/>
   <depend package="diagnostic_msgs"/>
   <depend package="rtt_rosgraph_msgs"/>
   <depend package="rtt_ROS_interfacing"/>
-  
 </package>
 
 
