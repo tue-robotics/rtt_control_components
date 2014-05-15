@@ -24,6 +24,7 @@ ActuatorEnabler::~ActuatorEnabler(){}
 bool ActuatorEnabler::configureHook()
 {  
 	safe = false;
+	ErrorWritten = false;
 	return true;
 }
 
@@ -49,10 +50,14 @@ void ActuatorEnabler::updateHook()
 		TimeLastSafeReceived = os::TimeService::Instance()->getNSecs()*1e-9;
 		if (safe) {
 			actuatorEnablePort.write(true);
+			ErrorWritten = false;
 		}
 		else {
-			log(Error)<<"ActuatorEnabler: Safe = false received. Disabling Actuator!"<<endlog();
 			actuatorEnablePort.write(false);
+			if (ErrorWritten) {
+				log(Error)<<"ActuatorEnabler: Safe = false received. Disabling Actuator!"<<endlog();	
+				ErrorWritten = true;
+			}
 		}
 	}
 	else {

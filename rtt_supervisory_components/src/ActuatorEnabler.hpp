@@ -34,6 +34,7 @@ namespace SUPERVISORY
         OutputPort<bool> actuatorEnablePort;
                 
         bool safe;
+        bool ErrorWritten;
         long double TimeLastSafeReceived;
     public:
     
