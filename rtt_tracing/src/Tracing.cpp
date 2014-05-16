@@ -74,6 +74,7 @@ bool Tracing::startHook()
 		log(Error)<<"Input port not connected!"<<endlog();
 		return false;
 	}*/
+		log(Warning) << "Tracing: Started tracing!" << endlog();
 	return true;
 }
 
@@ -152,7 +153,7 @@ void Tracing::stopHook()
 
 	fclose(pFile);
 	
-	cout << "Trace written!!!! Finished Tracing !!!!!!     End of Tracing Buffer reached, Controller can be terminated!";
+	log(Warning) << "Tracing: Trace written!" << endlog();
 
 }
 
