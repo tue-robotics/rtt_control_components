@@ -41,15 +41,19 @@ bool Tracing::configureHook()
 	// Create ports based on the number of vector sizes given
 	Nports = vectorsizes_prop.size();
 	vectorsizes.resize(Nports);
-	counters.resize(Nports);
 
 	// Creating ports
 	for ( uint i = 0; i < Nports; i++ )
 	{
 		vectorsizes[i] = vectorsizes_prop[i]; // Hack
-		counters[i] = 0;
-		string name_inport = "in"+to_string(i+1);
-		addEventPort( name_inport, inports[i]);
+		if (i == 0) {
+			string name_inport = "in"+to_string(i+1);
+			addEventPort( name_inport, inports[i]);
+		}
+		else {
+			string name_inport = "in"+to_string(i+1);
+			addPort( name_inport, inports[i]);
+		}
 		columns += vectorsizes[i];
 		cout << "Column size: ";
 		cout << columns;
@@ -74,7 +78,10 @@ bool Tracing::startHook()
 		log(Error)<<"Input port not connected!"<<endlog();
 		return false;
 	}*/
-		log(Warning) << "Tracing: Started tracing!" << endlog();
+	
+	log(Warning) << "Tracing: Started tracing!" << endlog();
+	printed = false;
+	
 	return true;
 }
 
@@ -83,37 +90,49 @@ void Tracing::updateHook()
 	// First updatehook is useless
 	if(counter == -1){counter = 0;return;}
 	// TODO: if ( !this->isRunning() ) return; (Check if this also works, counter can become a uint
-
+	
+	if (counter == 16384 && printed == false) {
+		log(Warning) << "Tracing: First 16s samples seen!" << endlog(); 
+		printed = true;
+		}
+	
 	uint startcolumn = 0;
 	for ( uint i = 0; i < Nports; i++ )
 	{
 		doubles input(vectorsizes[i],-2.0);
 
-		if ( inports[i].read( input ) == NewData && counters[i] <= counter )
+		if ( inports[i].read( input ) == NewData )
 		{
 			uint inputiterator = 0;
 			// Fill it with data
 			for (uint column =  startcolumn; column < startcolumn + vectorsizes[i]; ++column)
 			{
-				buffers[counters[i]][column] = input[inputiterator];
+				buffers[counter][column] = input[inputiterator];
 				inputiterator++;
 			}
-			counters[i]++;
+		}
+		else {
+			// Fill it with -1 since no data seen
+			for (uint column =  startcolumn; column < startcolumn + vectorsizes[i]; ++column)
+			{
+				buffers[counter][column] = -1;
+			}
 		}
 		startcolumn += vectorsizes[i];
 	}
 
-	counter = *max_element(counters.begin(),counters.end());
+	counter++;
 
 	// Stop if buffer is full
 	if(abs(counter) >= buffersize) 
 	{
+		log(Warning) << "Tracing: Trace stop!" << endlog();
 		stop();
 	}
 }
 
 void Tracing::stopHook()
-{
+{	
 	FILE * pFile;
 	pFile = fopen (filename.c_str(),"w");
 
@@ -150,10 +169,9 @@ void Tracing::stopHook()
 		line++;
 	}
 
+	log(Warning) << "Tracing: Trace written!" << endlog();
 
 	fclose(pFile);
-	
-	log(Warning) << "Tracing: Trace written!" << endlog();
 
 }
 

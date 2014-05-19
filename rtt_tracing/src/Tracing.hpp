@@ -63,11 +63,11 @@ namespace Signal
 
 		doubles buffer;
 		vector<doubles> buffers;
-		uints counters;
 		int counter;
 		uint columns;
 		uint rows;
 		uint Nports;
+		bool printed;
 	
     public:
 
