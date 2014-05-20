@@ -72,7 +72,6 @@ bool SafetyMonitor::startHook()
     firstSatInstance.resize(Nm);    
     
     reset();
-    log(Warning)<<"SafetyMonitor: finished resetting interpolator, end of startHook!"<<endlog();
 	return true;
 }
 
