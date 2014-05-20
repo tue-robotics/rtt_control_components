@@ -47,21 +47,17 @@ bool ReferenceGenerator::configureHook()
 bool ReferenceGenerator::startHook()
 {
   // Check validity of Ports:
-  if ( posinport.connected() )
-  {
-    log(Warning)<<"ReferenceGenerator::Deprecated port. Use ref_port!"<<endlog();
+  if ( !posinport.connected() ) {
+    log(Warning)<<"ReferenceGenerator::Inputport not connected! posin"<<endlog();
   }
-  if ( !refinport.connected() )
-  {
-    log(Error)<<"ReferenceGenerator::Inputport not connected!"<<endlog();
-    // No connection was made, can't do my job !
-    //TODO: return false;
+  if ( !refinport.connected() ) {
+    log(Warning)<<"ReferenceGenerator::Inputport not connected: refin!"<<endlog();
   }
   if ( !posoutport.connected() ) {
     log(Warning)<<"ReferenceGenerator::Outputport not connected!"<<endlog();
   }
-  if ( resetPort.connected() ) {
-    log(Warning)<<"ReferenceGenerator::resetPort is connected! Try to use the service instead."<<endlog();
+  if ( !resetPort.connected() ) {
+    log(Warning)<<"ReferenceGenerator::resetPort not connected!"<<endlog();
   }
   
   //Set the starting value to the current actual value
@@ -80,7 +76,7 @@ bool ReferenceGenerator::startHook()
   // Write on the outposport to make sure the receiving components gets new data
   posoutport.write( actualPos );
   
-  log(Warning)<<"ReferenceGenerator::started at " << os::TimeService::Instance()->getNSecs()*1e-9 <<endlog();
+  log(Info)<<"ReferenceGenerator::started at " << os::TimeService::Instance()->getNSecs()*1e-9 <<endlog();
   
   return true;
 }
