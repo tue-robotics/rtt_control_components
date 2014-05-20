@@ -49,7 +49,7 @@ bool DoublesToJointState::startHook()
     {
         log(Warning)<<"WriteJointState: Outport not connected"<<endlog();
     }
-    log(Warning)<<"Velocity and effort not yet implemented"<<endlog();
+
     return true;
 }
 
@@ -66,7 +66,6 @@ void DoublesToJointState::updateHook()
     }
     out_msg_.header.stamp = ros::Time::now();
     outport_.write(out_msg_);
-    //log(Warning)<<"Running!"<<endlog();
 
 }
 
