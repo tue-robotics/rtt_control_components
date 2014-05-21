@@ -47,11 +47,8 @@ bool ReferenceGenerator::configureHook()
 bool ReferenceGenerator::startHook()
 {
   // Check validity of Ports:
-  if ( !posinport.connected() ) {
-    log(Warning)<<"ReferenceGenerator::Inputport not connected! posin"<<endlog();
-  }
-  if ( !refinport.connected() ) {
-    log(Warning)<<"ReferenceGenerator::Inputport not connected: refin!"<<endlog();
+  if ( (!posinport.connected() ) && ( !refinport.connected() ) ) {
+    log(Warning)<<"ReferenceGenerator::No inputport connected! connect posin or refin"<<endlog();
   }
   if ( !posoutport.connected() ) {
     log(Warning)<<"ReferenceGenerator::Outputport not connected!"<<endlog();
