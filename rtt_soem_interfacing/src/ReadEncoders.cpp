@@ -94,7 +94,7 @@ void ReadEncoders::updateHook()
 		
   if(NewData == inport_reNull.read(reNull)){
     if(reNull == true){
-      log(Warning)<<"ReadEncoders: Renull signal received"<<endlog();
+      log(Info)<<"ReadEncoders: Renull signal received"<<endlog();
         for ( uint i = 0; i < N; i++ ) {
           reset(i, 0.0);
 	    }
@@ -135,7 +135,7 @@ void ReadEncoders::reset( uint Nreset, double resetvalue )
   init_SI_value[Nreset] = 0.0;
   init_SI_value[Nreset] = readEncoder(Nreset) - resetvalue;
   if (Nreset == 1)
-    log(Warning)<<"ReadEncoders: Resetting"<<endlog();
+    log(Warning)<<"ReadEncoders: Nulling encoders"<<endlog();
 }
 
 ORO_CREATE_COMPONENT(SOEM::ReadEncoders)

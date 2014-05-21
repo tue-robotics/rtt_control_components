@@ -87,7 +87,7 @@ bool LeadLag::startHook()
     /// Print debug info
     for (uint i = 0; i < vector_size; i++)
     {
-        log(Warning)<<"LeadLag: output[i] = "<<filters[i]->getOutput()<<endlog();
+        log(Debug)<<"LeadLag: output[i] = "<<filters[i]->getOutput()<<endlog();
     }
 
     return true;
