@@ -79,7 +79,6 @@ bool Tracing::startHook()
 		return false;
 	}*/
 	
-	log(Warning) << "Tracing: Started tracing!" << endlog();
 	printed = false;
 	
 	return true;
@@ -91,8 +90,8 @@ void Tracing::updateHook()
 	if(counter == -1){counter = 0;return;}
 	// TODO: if ( !this->isRunning() ) return; (Check if this also works, counter can become a uint
 	
-	if (counter == 16384 && printed == false) {
-		log(Warning) << "Tracing: First 16s samples seen!" << endlog(); 
+	if (counter == 10 && printed == false) {
+		log(Warning) << "Tracing: Started tracing!" << endlog();
 		printed = true;
 		}
 	
