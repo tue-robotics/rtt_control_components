@@ -12,9 +12,7 @@ JointStateToDoubles::JointStateToDoubles(const string& name) :
     TaskContext(name, PreOperational)
 {
     addProperty( "NumberOfJoints", Ndouble_ );
-    addProperty( "NumberOfJoints2", Ndouble2_ );
     addEventPort( "in", inport_ );
-    addPort( "pos_in", position_inport_ );
     addPort( "pos_out", position_outport_ );
     addPort( "vel_out", velocity_outport_ );
     addPort( "eff_out", effort_outport_ );
@@ -27,7 +25,6 @@ bool JointStateToDoubles::configureHook()
     pos_out_.assign(Ndouble_, 0.0);
     vel_out_.assign(Ndouble_, 0.0);
     eff_out_.assign(Ndouble_, 0.0);
-    pos_in_.assign(Ndouble2_, 0.0);
     return true;
 }
 
@@ -52,16 +49,13 @@ bool JointStateToDoubles::startHook()
     }
     log(Info)<<"JointStateToDoubles can only handle jointstate messages with the correct length"<<endlog();
 	
-	position_inport_.read(pos_in_);
-	for (uint i = 0; i < Ndouble_; i++) {
-		pos_out_[i] = pos_in_[i];
+	// This step is done to clear old msgs from this port.
+	sensor_msgs::JointState in_msg;
+	while (inport_.read(in_msg) == NewData) {
+		log(Info)<<"JOINTSTATE TO DOUBLES: Cleared msgs from port"<<endlog();
 	}
-	pos_out_ = pos_in_;
-	position_outport_.write(pos_out_);
 	
-	log(Info)<<"Started JointStateToDoubles component with first element: [" << pos_out_[0] << "]" <<endlog();
-	
-    return true;
+	return true;
 }
 
 void JointStateToDoubles::updateHook()

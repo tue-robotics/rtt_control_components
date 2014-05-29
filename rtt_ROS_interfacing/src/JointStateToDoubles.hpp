@@ -36,7 +36,6 @@ namespace ROS
 
     /* Declaring and output ports*/
     InputPort<sensor_msgs::JointState> inport_;
-	InputPort<doubles> position_inport_;
 
     OutputPort<doubles> position_outport_;
     OutputPort<doubles> velocity_outport_;
@@ -44,8 +43,7 @@ namespace ROS
 
     /* Declaring global variables */
     uint Ndouble_; // Number of doubles in vector
-    uint Ndouble2_;
-    doubles pos_out_, vel_out_, eff_out_, pos_in_;
+    doubles pos_out_, vel_out_, eff_out_;
 
     public:
 
