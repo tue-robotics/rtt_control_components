@@ -12,6 +12,7 @@
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
 
+#define maxN 10 //Maximum number of ports that can be created.
 
 using namespace std;
 using namespace RTT;
@@ -34,28 +35,25 @@ namespace MATH // Just because it looks nice
     {
     private:
 
-    /**
-     * Define a new type doubles for easy coding.
-     */
     typedef vector<double> doubles;
+    
+	template <class T>
+		inline string to_string (const T& t){
+		stringstream ss;
+		ss << t;
+		return ss.str();
+	};
 
-
-    /*
-     * Declaring input- and output_ports
-     */
-    InputPort<doubles> inport1;
-    InputPort<doubles> inport2;
+    InputPort<doubles> inports[maxN];
     OutputPort<doubles> outport;
 
-    /*
-     * Declaring variable vectorsize which is set by a property
-     */
-    uint vectorsize; // Number of elements to be calculated.
+    uint vectorsize;
+    uint numberofinputs;
+    
+    vector<doubles> inputs;
 
     public:
-    /**
-     * Set up a component for adding two vectors.
-     */
+
     Addition(const string& name);
     ~Addition();
 

@@ -18,53 +18,69 @@ using namespace MATH;
 
 Addition::Addition(const string& name) : TaskContext(name, PreOperational)
 {
-  addProperty( "vectorsize", vectorsize ).doc("An unsigned integer that specifies the size of the vector");
+	addProperty( "vectorsize", vectorsize ).doc("An unsigned integer that specifies the size of the vector");
+	addProperty( "numberofinputs", numberofinputs ).doc("An unsigned integer that specifies the number of inputs");
 
-  // Adding ports
-  addPort( "in1", inport1 );
-  addEventPort( "in2_event", inport2 );
-  addPort( "out", outport );
+	// Adding outport
+	addPort( "out", outport );
 }
 Addition::~Addition(){}
 
 bool Addition::configureHook()
 {
-  return true;
+	// Adding inports
+	addEventPort( "in1_ev", inports[0]);
+	for ( uint j = 1; j < numberofinputs; j++ ) {
+		string name_inport = "in"+to_string(j+1);
+		addPort( name_inport, inports[j]);
+	}
+	
+	// Initialising input matrix inputs
+	inputs.resize(numberofinputs);
+	for ( uint j = 0; j < numberofinputs; j++ ) {
+		inputs[j].assign(vectorsize,0.0);
+	}
+	
+	return true;
 }
 
 bool Addition::startHook()
 {
-  // Check validity of Ports:
-  if ( !inport1.connected() || !inport2.connected() )
-  {
-    log(Error)<<"Addition::One or more inputports not connected!"<<endlog();
-    // No connection was made, can't do my job !
-    return false;
-  }
-  if ( !outport.connected() ) {
-    log(Warning)<<"Addition::Outputport not connected!"<<endlog();
-  }
-  return true;
+	// Check validity of Ports:
+	for ( uint i = 1; i < numberofinputs; i++ ) {
+		if (!inports[i].connected()) {
+			log(Error)<<"Addition::Inputport[" << i << "] not connected!"<<endlog();
+			return false;
+		}
+	}
+	
+	if ( !outport.connected() ) {
+		log(Warning)<<"Addition::Outputport not connected!"<<endlog();
+	}
+	return true;
 }
 
 void Addition::updateHook()
 {
-  // Read the inputports
-  doubles input1(vectorsize,0.0);
-  doubles input2(vectorsize,0.0);
+	// Read the inputports
+	for ( uint j = 0; j < numberofinputs; j++ ) {
+		doubles tempinput(vectorsize,0.0); 
+		inports[j].read(tempinput);
+		for ( uint i = 0; i < vectorsize; i++ ) {
+			inputs[j][i] = tempinput[i];
+		}
+	}
 
-  inport1.read( input1 );
-  inport2.read( input2 );
-
-  // Calculate the output:
-  doubles output(vectorsize,0.0);
-  for ( uint i = 0; i < vectorsize; i++ )
-  {
-    output[i] = input1[i] + input2[i];
-  }
-
-  // Write the outputs
-  outport.write( output );
+	// Calculate the output:
+	doubles output(vectorsize,0.0);
+	for ( uint j = 0; j < numberofinputs; j++ ) {
+		for ( uint i = 0; i < vectorsize; i++ ) {
+			output[i] += inputs[j][i];
+		}
+	}
+	
+	// Write the outputs
+	outport.write( output );
 }
 
 ORO_CREATE_COMPONENT(MATH::Addition)
