@@ -82,7 +82,7 @@ bool ReferenceGenerator::startHook()
 void ReferenceGenerator::updateHook()
 {
   // Read the inputports
-  doubles inpos(NrInterpolators,0.0); //Deprecated
+  doubles inpos(NrInterpolators,0.0);
   doubles outpos(NrInterpolators,0.0);
   doubles outvel(NrInterpolators,0.0);
   doubles outacc(NrInterpolators,0.0);
@@ -107,7 +107,6 @@ void ReferenceGenerator::updateHook()
 	  }
   }
 
-  // Deprecated:
   // If new data on the channel then change the desired positions
   if (NewData == posinport.read( inpos ) ){
 	  for ( uint i = 0; i < NrInterpolators; i++ ){
@@ -117,7 +116,6 @@ void ReferenceGenerator::updateHook()
 	  }
 	  //log(Warning)<<"New desiredPos"<<endlog();
   } 
-  // end Deprecated
   
   // TODO: remove code below, should be a service, not a port, or remove completely
   // If new data on the resetport [yes/no, resetpos, resetvel, resetacc] reset the according interpolator(s).
@@ -143,8 +141,6 @@ void ReferenceGenerator::updateHook()
       outacc[i]=mRefPoints[i].acc;
   }
   
-  //log(Info)<<"outpos[6] from interpolator = "<<outpos[6]<<endlog();
-
   posoutport.write( outpos );
   veloutport.write( outvel );
   accoutport.write( outacc );
