@@ -1,4 +1,4 @@
-/*! 
+/*!
 * \author Max Baeten
 * \date May, 2014
 * \version 1.0 
@@ -35,21 +35,17 @@ namespace ARM
 	  private:
 	  
 	  InputPort<doubles> jointAnglesPort;
-	  OutputPort<doubles> gravCompPort;
+      OutputPort<doubles> gravityTorquesPort;
 	  
-	  int rv;
 	  size_t nrJoints;
-	  size_t nrCompensatedJoints;
 	  
-	  Eigen::MatrixXd a;
-	  Eigen::MatrixXd d;
-	  Eigen::MatrixXd alpha;
+      Eigen::MatrixXd DH_a;
+      Eigen::MatrixXd DH_d;
+      Eigen::MatrixXd DH_alpha;
+      Eigen::MatrixXd DH_theta;
 	  
-	  Eigen::MatrixXd m;
-	  Eigen::MatrixXd cog;
-
-	  Eigen::MatrixXd Istore;
-	  Eigen::MatrixXd grav;
+      Eigen::MatrixXd m;
+      Eigen::MatrixXd COG;
 
 	public:
 
@@ -59,11 +55,9 @@ namespace ARM
 	  bool configureHook();
 	  bool startHook();
 	  void updateHook();
-	  
-	  Eigen::Matrix3d ComputeRotationMatrix(double d,double alpha,double q);
-	  Eigen::Matrix3d eul2rot(double phi, double theta, double psi);
-	  Eigen::MatrixXd rne(Eigen::MatrixXd a,Eigen::MatrixXd d,Eigen::MatrixXd alpha,Eigen::MatrixXd cog,Eigen::MatrixXd m,Eigen::MatrixXd Istore,Eigen::MatrixXd q,Eigen::MatrixXd qd,Eigen::MatrixXd qdd,Eigen::MatrixXd grav, Eigen::MatrixXd Fext);
-	  Eigen::MatrixXd ComputeGravity(Eigen::MatrixXd a,Eigen::MatrixXd d,Eigen::MatrixXd alpha,Eigen::MatrixXd cog,Eigen::MatrixXd m,Eigen::MatrixXd Istore,Eigen::MatrixXd q,Eigen::MatrixXd grav);
+
+      Eigen::MatrixXd ComputeJacobian();
+      doubles ComputeGravityTorques();
 	  
 	};
 	
