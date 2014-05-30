@@ -1,13 +1,10 @@
 /*! 
- * \author Max Baeten
- * \date May, 2014
- * \version 1.0 
- */
- #include <rtt/TaskContext.hpp>
-#include <rtt/Component.hpp>
+* \author Max Baeten
+* \date May, 2014
+* \version 1.0 
+*/
+
 #include <rtt/os/TimeService.hpp>
-#include <rtt/Port.hpp>
-#include <ros/ros.h>
 #include <vector>
 #include <math.h>
 #include <Eigen/Eigen>
@@ -47,12 +44,12 @@ namespace ARM
 	  Eigen::MatrixXd a;
 	  Eigen::MatrixXd d;
 	  Eigen::MatrixXd alpha;
-	  Eigen::MatrixXd coglist;
-	  Eigen::MatrixXd mlist;
+	  
+	  Eigen::MatrixXd m;
+	  Eigen::MatrixXd cog;
+
 	  Eigen::MatrixXd Istore;
 	  Eigen::MatrixXd grav;
-	  Eigen::MatrixXd q;
-	  Eigen::MatrixXd gravComp;
 
 	public:
 
@@ -65,8 +62,8 @@ namespace ARM
 	  
 	  Eigen::Matrix3d ComputeRotationMatrix(double d,double alpha,double q);
 	  Eigen::Matrix3d eul2rot(double phi, double theta, double psi);
-	  Eigen::MatrixXd rne(Eigen::MatrixXd a,Eigen::MatrixXd d,Eigen::MatrixXd alpha,Eigen::MatrixXd coglist,Eigen::MatrixXd mlist,Eigen::MatrixXd Istore,Eigen::MatrixXd q,Eigen::MatrixXd qd,Eigen::MatrixXd qdd,Eigen::MatrixXd grav, Eigen::MatrixXd Fext);
-	  Eigen::MatrixXd ComputeGravity(Eigen::MatrixXd a,Eigen::MatrixXd d,Eigen::MatrixXd alpha,Eigen::MatrixXd coglist,Eigen::MatrixXd mlist,Eigen::MatrixXd Istore,Eigen::MatrixXd q,Eigen::MatrixXd grav);
+	  Eigen::MatrixXd rne(Eigen::MatrixXd a,Eigen::MatrixXd d,Eigen::MatrixXd alpha,Eigen::MatrixXd cog,Eigen::MatrixXd m,Eigen::MatrixXd Istore,Eigen::MatrixXd q,Eigen::MatrixXd qd,Eigen::MatrixXd qdd,Eigen::MatrixXd grav, Eigen::MatrixXd Fext);
+	  Eigen::MatrixXd ComputeGravity(Eigen::MatrixXd a,Eigen::MatrixXd d,Eigen::MatrixXd alpha,Eigen::MatrixXd cog,Eigen::MatrixXd m,Eigen::MatrixXd Istore,Eigen::MatrixXd q,Eigen::MatrixXd grav);
 	  
 	};
 	

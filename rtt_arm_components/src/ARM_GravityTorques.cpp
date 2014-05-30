@@ -6,23 +6,10 @@
  
 #include <rtt/TaskContext.hpp>
 #include <rtt/Component.hpp>
-#include <rtt/os/TimeService.hpp>
 #include <rtt/Port.hpp>
 #include <ros/ros.h>
-#include <vector>
-#include <math.h>
-#include "ARM_GravityTorques.hpp"
 
-// to do set as variable
-#define d3 0.32
-#define d5 0.28
-#define a7 0.2
-#define m3 2.9
-#define m5 0.8
-#define m7 0.2
-#define c3y 0.213
-#define c5y 0.140
-#define c7x 0.150
+#include "ARM_GravityTorques.hpp"
 
 using namespace std;
 using namespace RTT;
@@ -31,45 +18,35 @@ using namespace ARM;
 GravityTorques::GravityTorques(const std::string& name)
 	: TaskContext(name, PreOperational)
 {
+	grav.setZero(3,1);
+	
+	// declaration of ports
 	addEventPort("in", jointAnglesPort);
 	addPort("out",gravCompPort);
+
+	// declaration of DH parameters, Mass vector and COG
+	addProperty( "DOF", nrJoints ).doc("An unsigned integer that specifies the number of degrees of freedom");
+	addProperty( "a", a ).doc("An Eigen::MatrixXd vector containing DH parameters a");
+	addProperty( "d", d ).doc("An Eigen::MatrixXd vector containing DH parameters d");
+	addProperty( "alpha", alpha ).doc("An Eigen::MatrixXd vector containing DH parameters alpha");
+	addProperty( "theta", alpha ).doc("An Eigen::MatrixXd vector containing DH parameters theta");
+	addProperty( "m", m ).doc("mass vector m stored in an Eigen::MatrixXd vector");
 	
-	nrJoints = 8;
-	nrCompensatedJoints = 7;
-	a.setZero(1,7);
-	d.setZero(1,7);
-	alpha.setZero(1,7);
-	mlist.setZero(1,7);
-	grav.setZero(3,1);
-	q.setZero(7,1);
-	Istore.setZero(3,21);
-	gravComp.setZero(7,1);
-	coglist.setZero(3,7);
+	cog.setZero(3,nrJoints);
+	addProperty( "COGx", cog(0) ).doc("center of gravity coordinate vector x stored in an Eigen::MatrixXd matrix");
+	addProperty( "COGy", cog(1) ).doc("center of gravity coordinate vector x stored in an Eigen::MatrixXd matrix");
+	addProperty( "COGz", cog(2) ).doc("center of gravity coordinate vector x stored in an Eigen::MatrixXd matrix");
 }
 
 
 GravityTorques::~GravityTorques(){}
 
-bool GravityTorques::configureHook(){
-
-	// Gravity compensation
+bool GravityTorques::configureHook()
+{
+	Istore.setZero(3,3*nrJoints);
 	grav << -9.81,0,0;
-	a << 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, a7;
-	d << 0,0,-d3,0,-d5, 0, 0;
-	alpha << -PI/2, -PI/2, PI/2, -PI/2, PI/2, -PI/2, 0.0;
-
-	// Centers Of Gravity of the 3 links (upper and lowerarm and hand)
-	coglist(1,2) = c3y;
-	coglist(1,4) = c5y;
-	coglist(0,6) = c7x; // minussign
-
-	// Masses of the 3 links (upper and lowerarm and hand)
-	mlist(0,2) = m3;
-	mlist(0,4) = m5;
-	mlist(0,6) = m7;
-
+	
 	return true;
-
 }
 
 bool GravityTorques::startHook()
@@ -89,28 +66,27 @@ bool GravityTorques::startHook()
 
 void GravityTorques::updateHook()
 {
-	doubles additionalTorques; // gravity compensation outcome
-	doubles jointAngles; // measured actual joint angles
+	doubles jointAngles(nrJoints,0.0);
+	doubles gravityTorques(nrJoints,0.0);
+	Eigen::MatrixXd q;
+	Eigen::MatrixXd gravityTorquesVector;
+	q.setZero(nrJoints,1);
+	gravityTorquesVector.setZero(nrJoints,1);
 	
-	jointAngles.resize(nrJoints);
-	additionalTorques.resize(nrCompensatedJoints);
 	
 	jointAnglesPort.read(jointAngles);
 	
-	/// Gravity compensation
-	q << -jointAngles[0], jointAngles[1]-(PI/2), jointAngles[2], jointAngles[3], jointAngles[4], jointAngles[5]-(PI/2), jointAngles[6];
-
-	gravComp = ComputeGravity(a,d,alpha,coglist,mlist,Istore,q,grav);
-
-	additionalTorques[0]=gravComp(0,0);
-	additionalTorques[1]=gravComp(1,0);
-	additionalTorques[2]=gravComp(2,0);
-	additionalTorques[3]=gravComp(3,0);
-	additionalTorques[4]=gravComp(4,0);
-	additionalTorques[5]=gravComp(5,0);
-	additionalTorques[6]=gravComp(6,0);
+	for (uint i=0; i<nrJoints; i++) {
+		q(i,0) = jointAngles[i];
+	}
 	
-	gravCompPort.write(additionalTorques);
+	gravityTorquesVector = ComputeGravity(a,d,alpha,cog,m,Istore,q,grav);
+	
+	for(uint i=0; i<nrJoints; i++) {
+		gravityTorques[i] = gravityTorquesVector(i,0);
+	}
+	
+	gravCompPort.write(gravityTorques);
 }
 
 // Matrix computing the rotation matrix from link i-1 to link i, using the DH-parameters
@@ -146,7 +122,7 @@ Eigen::Matrix3d GravityTorques::eul2rot(double phi, double theta, double psi){
 }
 
 // Compute Recursive Newton Euler (only for revolute joints!!)
-Eigen::MatrixXd GravityTorques::rne(Eigen::MatrixXd a,Eigen::MatrixXd d,Eigen::MatrixXd alpha,Eigen::MatrixXd coglist,Eigen::MatrixXd mlist,Eigen::MatrixXd Istore,Eigen::MatrixXd Q,Eigen::MatrixXd Qd,Eigen::MatrixXd Qdd,Eigen::MatrixXd grav, Eigen::MatrixXd Fext){
+Eigen::MatrixXd GravityTorques::rne(Eigen::MatrixXd a,Eigen::MatrixXd d,Eigen::MatrixXd alpha,Eigen::MatrixXd cog,Eigen::MatrixXd m,Eigen::MatrixXd Istore,Eigen::MatrixXd Q,Eigen::MatrixXd Qd,Eigen::MatrixXd Qdd,Eigen::MatrixXd grav, Eigen::MatrixXd Fext){
 	// Declare matrices, vectors and scalars
 	Eigen::MatrixXd R(3,3);
 	Eigen::Vector3d pstar;
@@ -170,7 +146,7 @@ Eigen::MatrixXd GravityTorques::rne(Eigen::MatrixXd a,Eigen::MatrixXd d,Eigen::M
 	// Rotation axis
 	z0 << 0,0,1;    
 	// Determine number of links
-	n = mlist.cols();      
+	n = m.cols();      
 	// Determine if matrix or vector has to be computed
 	np = Q.rows();
 	// Define size of tau
@@ -226,7 +202,7 @@ Eigen::MatrixXd GravityTorques::rne(Eigen::MatrixXd a,Eigen::MatrixXd d,Eigen::M
 	   for(jj=1; jj<n+1; jj++){
 		   R = Rs.block(0,3*jj-3,3,3).transpose();
 		   pstar = pstarm.block(0,jj-1,3,1);
-		   r = coglist.block(0,jj-1,3,1); 
+		   r = cog.block(0,jj-1,3,1); 
 		   // compute omegadot_i wrt base frame (eq 7.152)
 		   wd = R*(wd + z0*qdd(jj-1) + w.cross(z0*qd(jj-1)));
 		   // compute omega_i (eq 7.149 + eq 7.150 but in GC axis of rot. is constantly z0 because of DH)
@@ -238,7 +214,7 @@ Eigen::MatrixXd GravityTorques::rne(Eigen::MatrixXd a,Eigen::MatrixXd d,Eigen::M
 		   vhat = wd.cross(r) + w.cross(w.cross(r)) + vd;
 		   // compute m_{i}*a_{c,i} which is part of eq 7.146 for the backward recursion. Note that this
 		   // includes the gravity component for all links because the first link is given vd = grav.
-		   F = mlist(0,jj-1)*vhat;
+		   F = m(0,jj-1)*vhat;
 		   Ii = Istore.block(0,3*jj-3,3,3);
 		   Iiw = Ii*w;
 		   // (eq 7.136)
@@ -259,7 +235,7 @@ Eigen::MatrixXd GravityTorques::rne(Eigen::MatrixXd a,Eigen::MatrixXd d,Eigen::M
 		   else{
 			   R   = Rs.block(0,3*k,3,3);
 		   }
-		   r = coglist.block(0,k-1,3,1);
+		   r = cog.block(0,k-1,3,1);
 		   Rtranpos_pstar = R.transpose()*pstar;
 		   Fmi = Fm.block(0,k-1,3,1);
 		   nn = R*(nn + Rtranpos_pstar.cross(f)) + (pstar+r).cross(Fmi) + Nm.block(0,k-1,3,1);
@@ -275,16 +251,16 @@ Eigen::MatrixXd GravityTorques::rne(Eigen::MatrixXd a,Eigen::MatrixXd d,Eigen::M
 	 return tau;	
 }
 
-Eigen::MatrixXd GravityTorques::ComputeGravity(Eigen::MatrixXd a,Eigen::MatrixXd d,Eigen::MatrixXd alpha,Eigen::MatrixXd coglist,Eigen::MatrixXd mlist,Eigen::MatrixXd Istore,Eigen::MatrixXd q,Eigen::MatrixXd grav){
+Eigen::MatrixXd GravityTorques::ComputeGravity(Eigen::MatrixXd a,Eigen::MatrixXd d,Eigen::MatrixXd alpha,Eigen::MatrixXd cog,Eigen::MatrixXd m,Eigen::MatrixXd Istore,Eigen::MatrixXd q,Eigen::MatrixXd grav){
 	// Declare matrices and vectors 
-	Eigen::MatrixXd Gravity(1,mlist.cols());
+	Eigen::MatrixXd Gravity(1,m.cols());
 	Eigen::MatrixXd no_Fext(6,1);
 	
 	// No external force to compute gravitational forces
 	no_Fext = Eigen::MatrixXd::Zero(6,1);
 	
 	// Compute gravitational forces  
-	Gravity = rne(a,d,alpha,coglist,mlist,Istore,q.transpose(),0*q.transpose(),0*q.transpose(),grav,no_Fext);
+	Gravity = rne(a,d,alpha,cog,m,Istore,q.transpose(),0*q.transpose(),0*q.transpose(),grav,no_Fext);
 	
 	return Gravity.transpose();	
 }
