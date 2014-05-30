@@ -17,7 +17,7 @@
 using namespace std;
 using namespace RTT;
 
-namespace MATH // Just because it looks nice
+namespace MATH
 {
   /**
    * @brief A Component that adds two vectors elementwise.
