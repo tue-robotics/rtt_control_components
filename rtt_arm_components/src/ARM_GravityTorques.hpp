@@ -4,19 +4,24 @@
 * \version 1.0 
 */
 
-#include <rtt/os/TimeService.hpp>
 #include <vector>
 #include <math.h>
+#include <rtt/os/TimeService.hpp>
+#include <kdl/chainjnttojacsolver.hpp>
+
 #include <Eigen/Eigen>
 
 using namespace std;
 using namespace RTT;
+using namespace KDL;
+using namespace Eigen;
 
 #define PI 3.1415926535897932384626433
 
 namespace ARM
 {
 	typedef std::vector<double> doubles;
+    typedef std::vector<double> ints;
 	
 	/*! \class GravityTorques
 	 *  \brief Defines Orocos component for computation of torque in the
@@ -37,15 +42,24 @@ namespace ARM
 	  InputPort<doubles> jointAnglesPort;
       OutputPort<doubles> gravityTorquesPort;
 	  
-	  size_t nrJoints;
-	  
-      Eigen::MatrixXd DH_a;
-      Eigen::MatrixXd DH_d;
-      Eigen::MatrixXd DH_alpha;
-      Eigen::MatrixXd DH_theta;
-	  
-      Eigen::MatrixXd m;
-      Eigen::MatrixXd COG;
+      //Properties
+      uint nrJoints;
+      doubles DH_a;
+      doubles DH_d;
+      doubles DH_alpha;
+      doubles DH_theta;
+      doubles masses;
+      doubles COGx;
+      doubles COGy;
+      doubles COGz;
+      
+      KDL::Chain RobotArmChain;
+
+      //variables
+      ints mass_indexes;
+      uint nrMasses;
+      Eigen::VectorXd GravityVector;
+      Eigen::MatrixXd GravityForces;
 
 	public:
 
