@@ -52,9 +52,12 @@ namespace ARM
       doubles COGx;
       doubles COGy;
       doubles COGz;
+      doubles jointAngles;
       
       KDL::Chain RobotArmChain;
-
+	  std::vector<Eigen::MatrixXd> Jacobians_;
+	  KDL::ChainJntToJacSolver* jacobian_solver_;
+	  
       //variables
       ints mass_indexes;
       uint nrMasses;
@@ -70,9 +73,9 @@ namespace ARM
 	  bool startHook();
 	  void updateHook();
 
-      Eigen::MatrixXd ComputeJacobian();
-      doubles ComputeGravityTorques();
-	  
+      Eigen::MatrixXd ComputeJacobian(KDL::JntArray q_current_, int chain_tip_index);
+      doubles ComputeGravityTorques(KDL::JntArray q_current_);
+      	  
 	};
 	
 };

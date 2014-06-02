@@ -11,8 +11,10 @@
   <depend package="roscpp"/>
   <depend package="rtt"/>
   <depend package="ocl"/>
+  <depend package="tf"/>
   <depend package="kdl"/>
+  <depend package="kdl_parser"/>
   <depend package="common_rosdeps" />
   <depend package="rtt_std_msgs"/>
-  <rosdep name="eigen" />
+  <rosdep name="eigen" /> 
 </package>
