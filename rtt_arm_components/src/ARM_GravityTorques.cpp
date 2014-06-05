@@ -2,11 +2,6 @@
  * \author Max Baeten
  * \date May, 2014
  * \version 1.0
- * 
- * To Do:
- * - Fix Robot chain parsing
- * - Fix function computeGravityTorques
- * - Integrate frame tip for calculation of partial Jacobian
  */
  
 #include <rtt/TaskContext.hpp>
@@ -42,8 +37,8 @@ GravityTorques::~GravityTorques(){}
 
 bool GravityTorques::configureHook()
 {
-	GravityVector.setZero(3,1);
-	GravityVector(2,0) = -9.81;
+	GravityWrench.setZero(6,1);
+    GravityWrench(0) = -10.0;
 	
 	return true;
 }
@@ -59,29 +54,32 @@ bool GravityTorques::startHook()
 			mass_indexes[nrMasses-1] = i;
 		}
 	}
-	GravityForces.setZero(3,nrMasses);
+	
+	// Construct Gravity Wrenches
+	GravityWrenches.setZero(6,nrMasses);
 	for (uint i=0; i<nrMasses; i++) {
-		GravityForces.col(i) << masses[mass_indexes[i]]*GravityVector;
+		GravityWrenches.col(i) << masses[mass_indexes[i]]*GravityWrench;
 	}
 
 	// construct chain
 	for (uint i = 0; i < nrJoints; i++) {
-		//RobotArmChain.addSegment(Segment(Joint(Joint::RotZ),Frame(Rotation::RotZ(DH_alpha[i])),Frame(Rotation::RotZ(DH_theta[i])),Vector(DH_a[i],0.0,DH_d[i])));
-		RobotArmChain.addSegment(Segment(Joint(Joint::RotZ),Frame(Rotation::RotZ(DH_alpha[i]))));
+		RobotArmChain.addSegment(Segment(Joint(Joint::RotZ),Frame(Rotation::RotX(DH_alpha[i]),Vector(DH_a[i],0.0,DH_d[i])) ) );
 	}
 	
 	// construct jacobian solver
-	jacobian_solver_ = new KDL::ChainJntToJacSolver(RobotArmChain);
+    jacobian_solver = new KDL::ChainJntToJacSolver(RobotArmChain);
 	
 	// Connection checks
 	if ( !jointAnglesPort.connected() ){
-		log(Error)<<"ARM GravityTorques: jointAnglesPort not connected!"<<endlog();
-		//return false;
+        log(Error)<<"ARM GravityTorques: jointAnglesPort not connected!"<<endlog();
+        //return false;
 	}
-	if ( !gravityTorquesPort.connected() ){
-		log(Warning)<<"ARM GravityTorques: Outputport not connected!"<<endlog();
+    if ( !gravityTorquesPort.connected() ){
+        log(Warning)<<"ARM GravityTorques: Outputport not connected!"<<endlog();
 		//return false;
-	}
+    }
+
+    log(Warning)<<"ARM GravityTorques: Number of masses found: [" << nrMasses  << "]" <<endlog();
 
 	return true;
 }
@@ -93,36 +91,48 @@ void GravityTorques::updateHook()
 	jointAnglesPort.read(jointAngles);
 
 	// jointAngles to KDL jointArray
-	KDL::JntArray q_current_;
+	KDL::JntArray q_current_(nrJoints);
 	for (uint i = 0; i < nrJoints; i++) {
 		q_current_(i) = jointAngles[i];
 	}
+	
 	// calculate gravityTorques
 	doubles gravityTorques(nrJoints,0.0);
-	gravityTorques = ComputeGravityTorques(q_current_);
+    gravityTorques = ComputeGravityTorques(q_current_);
 
 	//write gravity torques
 	gravityTorquesPort.write(gravityTorques);
-}
 
-Eigen::MatrixXd GravityTorques::ComputeJacobian(KDL::JntArray q_current_, int chain_tip_index)
-{
-	//jacobian_solver_->JntToJac(q_current, partial_jacobian);
-	
-	Eigen::MatrixXd partial_jacobian_;
-	return partial_jacobian_;
+    log(Warning) << "GravityTorques: [" << gravityTorques[0] << "," << gravityTorques[1] << "," << gravityTorques[2] << "," << gravityTorques[3] << "," << gravityTorques[4] << "," << gravityTorques[5] << "," << gravityTorques[6] << "]" <<endlog();
 }
 
 doubles GravityTorques::ComputeGravityTorques(KDL::JntArray q_current_)
 {
-	// For every Gravity force, The Joint Torques are calculated by multiplying the force by the corresponding Jacobian
-	//doubles gravityTorques_(nrJoints,0.0);
+    doubles gravityTorques_(nrJoints,0.0);
+
+    // Joint Torques are calculated by multiplying the wrench for each link by the corresponding partial Jacobian
 	for (uint i=0; i<nrMasses; i++) {
-		Eigen::MatrixXd partial_jacobian = ComputeJacobian(q_current_, mass_indexes[i]);
-		//gravityTorques_ = gravityTorques_ + partial_jacobian * GravityForces.col(i);
+
+        //Determine Jacobian (KDL)        
+        KDL::Jacobian partial_jacobian_KDL_(nrJoints);
+        jacobian_solver->JntToJac(q_current_, partial_jacobian_KDL_);
+
+        //Convert Jacobian of type KDL to type Eigen::MatrixXd
+        Eigen::MatrixXd partial_jacobian_(partial_jacobian_KDL_.rows(), partial_jacobian_KDL_.columns());
+        for (uint jc=0; jc<partial_jacobian_KDL_.columns(); jc++) {
+            for (uint jr=0; jr<partial_jacobian_KDL_.rows(); jr++) {
+                partial_jacobian_(jr,jc) = partial_jacobian_KDL_(jr,jc);
+            }
+        }
+        Eigen::VectorXd PartialGravityTorques_(nrJoints);
+        PartialGravityTorques_ = partial_jacobian_.transpose() * GravityWrenches.col(i);
+
+        for (uint j=0; j<nrJoints; j++) {
+            gravityTorques_[j] += PartialGravityTorques_(j);
+        }
 	}
-	doubles gravityTorques_(nrJoints,0.0);
-	return gravityTorques_;
+
+    return gravityTorques_;
 }
 
 ORO_CREATE_COMPONENT(ARM::GravityTorques)

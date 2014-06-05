@@ -7,6 +7,12 @@
 #include <vector>
 #include <math.h>
 #include <rtt/os/TimeService.hpp>
+
+// KDL
+#include <kdl/chain.hpp>
+#include <kdl/chainfksolverpos_recursive.hpp>
+#include <kdl/chaindynparam.hpp>
+#include <kdl/frames.hpp>
 #include <kdl/chainjnttojacsolver.hpp>
 
 #include <Eigen/Eigen>
@@ -34,49 +40,46 @@ namespace ARM
 	 */
 	
 	class GravityTorques : 
-
-	  public RTT::TaskContext
-	  {
-	  private:
-	  
-	  InputPort<doubles> jointAnglesPort;
-      OutputPort<doubles> gravityTorquesPort;
-	  
-      //Properties
-      uint nrJoints;
-      doubles DH_a;
-      doubles DH_d;
-      doubles DH_alpha;
-      doubles DH_theta;
-      doubles masses;
-      doubles COGx;
-      doubles COGy;
-      doubles COGz;
-      doubles jointAngles;
-      
-      KDL::Chain RobotArmChain;
-	  std::vector<Eigen::MatrixXd> Jacobians_;
-	  KDL::ChainJntToJacSolver* jacobian_solver_;
-	  
-      //variables
-      ints mass_indexes;
-      uint nrMasses;
-      Eigen::VectorXd GravityVector;
-      Eigen::MatrixXd GravityForces;
-
-	public:
-
-	  GravityTorques(const std::string& name);
-	  ~GravityTorques();
-	  
-	  bool configureHook();
-	  bool startHook();
-	  void updateHook();
-
-      Eigen::MatrixXd ComputeJacobian(KDL::JntArray q_current_, int chain_tip_index);
-      doubles ComputeGravityTorques(KDL::JntArray q_current_);
-      	  
-	};
 	
-};
+	public RTT::TaskContext
+	{
+	private:
+	
+	InputPort<doubles> jointAnglesPort;
+	OutputPort<doubles> gravityTorquesPort;
+	
+	//Properties
+	uint nrJoints;
+	doubles DH_a;
+	doubles DH_d;
+	doubles DH_alpha;
+	doubles DH_theta;
+	doubles masses;
+	doubles COGx;
+	doubles COGy;
+	doubles COGz;
+	doubles jointAngles;
+	
+	KDL::Chain RobotArmChain;
+    KDL::ChainJntToJacSolver* jacobian_solver;
+	
+	//variables
+	ints mass_indexes;
+	uint nrMasses;
+	Eigen::VectorXd GravityWrench;
+	Eigen::MatrixXd GravityWrenches;
+	
+	public:
+	
+	GravityTorques(const std::string& name);
+	~GravityTorques();
+	
+	bool configureHook();
+	bool startHook();
+	void updateHook();
+	
+	KDL::Jacobian ComputeJacobian(KDL::JntArray q_current_, int chain_tip_index);
+	doubles ComputeGravityTorques(KDL::JntArray q_current_);
 
+	};
+};
