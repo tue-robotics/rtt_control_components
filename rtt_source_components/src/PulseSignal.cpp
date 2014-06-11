@@ -81,14 +81,14 @@ void PulseSignal::updateHook()
   doubles output(vector_size,0.0);
   
   for ( uint i = 0; i < vector_size; i++ ) {
-	  if (k[i]*Ts > phase_delay[i] && k[i]*Ts <= (phase_delay[i] + pulse_width[i]) ) {
+	  if (k[i]*Ts >= phase_delay[i] && k[i]*Ts < (phase_delay[i] + pulse_width[i]) ) {
 		output[i] = amplitude[i];
 	  } else {
 		output[i] = 0.0;
 	  }   
 	  k[i]++;
 
-	  if (k[i]*Ts > (period[i])) {
+	  if (k[i]*Ts >= (period[i])) {
 		k[i] = 0;
 	  }
   }
