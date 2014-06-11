@@ -29,4 +29,4 @@ include(${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake)
 #rosbuild_gensrv()
 
 #common commands for building c++ executables and libraries
-#orocos_component(ARM_GravityTorques src/ARM_GravityTorques.cpp)
+orocos_component(ARM_GravityTorques src/ARM_GravityTorques.cpp)
