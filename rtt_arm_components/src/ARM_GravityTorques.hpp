@@ -22,23 +22,24 @@ using namespace RTT;
 using namespace KDL;
 using namespace Eigen;
 
-#define PI 3.1415926535897932384626433
+#define MAXJOINTS 10
 
 namespace ARM
 {
 	typedef std::vector<double> doubles;
-    typedef std::vector<int> ints;
+    typedef std::vector<uint> ints;
     typedef std::vector<string> strings;
 	
-	/*! \class GravityTorques
-     *  \brief Defines Orocos component for computation of joint torques
-     *  as a result of gravity. Note that only positive revolute joints are
-     *  supported however support of prismatic joints or negative revolute
-     *  joints could be implemented. Also for each link either a rotation
-     *  in theta or in alpha can be made, not both.
+    /*! \class GravityTorques
+     * \brief Defines Orocos component for computation of joint torques
+     * as a result of gravity. Note that only positive revolute joints are
+     * supported however support of prismatic joints joints could be easily
+     * implemented.
 	 * 
-     * The Denavit-Hartenberg convention is used to provide a robot model.
-     * To indicate the joint directions, rot_Z, and rot_X are used.
+     * A robot model should be provided that consists of frame
+     * transformations that make sure the joint rotations are positive
+     * and the frame transformations consist of a rotation around any axis
+     * and a translation by a vector
      *
      * Every link that has a mass, should be provided with coordinates
      * of the location of the Centor of gravity using COGx, COGy, and COGz.
@@ -52,6 +53,10 @@ namespace ARM
      * Using partial_jacobian_.transpose() * GravityWrenches.col(i). the
      * gravity joint torques of the ith COG is calculated summing to the
      * total output gravityTorques.
+     *
+     *
+     * To Do:
+     * Rewrite to parse urdf in stead of declaring parameters in ops file
 	 */
 	
 	class GravityTorques : 
@@ -84,15 +89,14 @@ namespace ARM
     // input
 	doubles jointAngles;
 	
-	KDL::Chain RobotArmChain;
-    KDL::ChainJntToJacSolver* jacobian_solver;
+    KDL::Chain RobotArmChain[MAXJOINTS];
+    KDL::ChainJntToJacSolver* jacobian_solver[MAXJOINTS];
+    KDL::Wrench GravityWrenchGlobal;
 	
 	//variables
-	ints mass_indexes;
+    ints mass_indexes;
 	uint nrMasses;
-	Eigen::VectorXd GravityWrench;
-	Eigen::MatrixXd GravityWrenches;
-	
+
 	public:
 	
 	GravityTorques(const std::string& name);
@@ -102,7 +106,6 @@ namespace ARM
 	bool startHook();
 	void updateHook();
 	
-	KDL::Jacobian ComputeJacobian(KDL::JntArray q_current_, int chain_tip_index);
 	doubles ComputeGravityTorques(KDL::JntArray q_current_);
 
 	};

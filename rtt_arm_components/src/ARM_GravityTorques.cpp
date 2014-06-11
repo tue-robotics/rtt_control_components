@@ -26,8 +26,8 @@ GravityTorques::GravityTorques(const std::string& name)
     addProperty( "GravityVector", GravityVector ).doc("Gravity Vector depends on choice of base frame. (array(0.0, 0.0, -9.81) for negative z direction)");
     addProperty( "joint_type", joint_type ).doc("");
     addProperty( "joint_axis", joint_axis ).doc("");
-    addProperty( "rotation_angle", rotation_angle ).doc("");
     addProperty( "rotation_axis", rotation_axis ).doc("");
+    addProperty( "rotation_angle", rotation_angle ).doc("");
     addProperty( "translation_X", translation_X ).doc("");
     addProperty( "translation_Y", translation_Y ).doc("");
     addProperty( "translation_Z", translation_Z ).doc("");
@@ -42,91 +42,105 @@ GravityTorques::~GravityTorques(){}
 
 bool GravityTorques::configureHook()
 {
-    // construct gravity wrench from GravityVector
-	GravityWrench.setZero(6,1);
-    for (uint i = 0; i < 3; i++) {
-        GravityWrench(i) = GravityVector[i];
+    if (nrJoints >= MAXJOINTS) {
+        log(Error)<<"ARM GravityTorques: Could not configure Gravity torques component: The number of joints " << nrJoints << " exceeds the maximum number of joints " << MAXJOINTS << "!"<<endlog();
+        return false;
     }
 
-    printed = false;
-	
+    mass_indexes.assign(nrJoints,0);
+    nrMasses = 0;
+
 	return true;
 }
 
 bool GravityTorques::startHook()
 {
-//    // Parameter input checks
-//    if ( DH_a.size() != nrJoints || DH_d.size() != nrJoints || DH_alpha.size() != nrJoints || DH_theta.size() != nrJoints || COGx.size() != nrJoints || COGy.size() != nrJoints || COGz.size() != nrJoints || masses.size() != nrJoints ) {
-//        log(Error)<<"ARM GravityTorques: Could not start Gravity torques component due to Wrongly sized DH parameters, masses or COG!"<<endlog();
-//        return false;
-//    }
+    // Parameter input checks
+    if ( joint_type.size() != nrJoints || joint_axis.size() != nrJoints || rotation_angle.size() != nrJoints || rotation_axis.size() != nrJoints || translation_X.size() != nrJoints|| translation_Y.size() != nrJoints|| translation_Z.size() != nrJoints ) {
+        log(Error)<<"ARM GravityTorques: Could not start Gravity torques component due to Wrongly sized arm parameters!"<<endlog();
+        return false;
+    }
 
-//    if ( rot_X.size() != nrJoints || rot_Z.size() != nrJoints ) {
-//        log(Error)<<"ARM GravityTorques: Could not start Gravity torques component due to Wrongly sized rot_X or rot_Z parameters!"<<endlog();
-//    }
-//    else {
-//        for (uint i = 0; i < nrJoints; i++) {
-//            if ( rot_X[i] + rot_Z[i] != 1.0) {
-//                log(Error)<<"ARM GravityTorques: Could not start Gravity torques component due to erroneous input of rot_X or rot_Z"<<endlog();
-//                log(Error)<<"ARM GravityTorques: Please make sure that either: rot_X[" << i << "], or rot_Z[" << i << "] is equal to 1.0." <<endlog();
-//                return false;
-//            }
-//        }
-//    }
+    // Parameter input checks
+    if ( masses.size() != nrJoints || COGx.size() != nrJoints || COGy.size() != nrJoints || COGz.size() != nrJoints ) {
+        log(Error)<<"ARM GravityTorques: Could not start Gravity torques component due to Wrongly sized masses, COGx, COGy or COGz!"<<endlog();
+        return false;
+    }
+    for (uint k = 0; k < 3; k++) {
+        GravityWrenchGlobal(k) = GravityVector[k];
+    }
 
-//	// For every non zero mass a gravity force is calculated.
-//	nrMasses = 0;
-//	for (uint i = 0; i < nrJoints; i++) {
-//		if (masses[i] != 0.0) {
-//			nrMasses++;
-//			mass_indexes.resize(nrMasses);
-//			mass_indexes[nrMasses-1] = i;
-//		}
-//	}
-//    log(Warning)<<"ARM GravityTorques: Number of masses: [" << nrMasses  << "]" <<endlog();
+    // For every non zero mass a gravity force is calculated.
+    for (uint j = 0; j < nrJoints; j++) {
+        if (masses[j] != 0.0) {
+            mass_indexes[nrMasses] = j;
+            nrMasses++;
+        }
+    }
+    log(Warning)<<"ARM GravityTorques: Number of masses: [" << nrMasses  << "]" <<endlog();
+
+    // construct chains and solvers
+    for (uint i = 0; i < nrMasses; i++) {
+        log(Warning)<<"ARM GravityTorques: Constructing Chain and Solver to link: [" << mass_indexes[i]  << "] and with mass: [" << masses[mass_indexes[i]] << "]" <<endlog();
+        for (uint j = 0; j < mass_indexes[i]; j++) {
+
+            KDL::Segment Segment_;
+            KDL::Frame Frame_;
+
+            // Determine Frame of fixed rotation and translation
+            if (rotation_axis[j] == "X") {
+                Frame_ = Frame(Rotation::RotX(rotation_angle[j]),Vector(translation_X[j],translation_Y[j],translation_Z[j]));
+            }
+            else if (rotation_axis[j] == "Y") {
+                Frame_ = Frame(Rotation::RotX(rotation_angle[j]),Vector(translation_X[j],translation_Y[j],translation_Z[j]));
+            }
+            else if (rotation_axis[j] == "Z") {
+                Frame_ = Frame(Rotation::RotX(rotation_angle[j]),Vector(translation_X[j],translation_Y[j],translation_Z[j]));
+            }
+            else if (rotation_axis[j] == "") {
+                Frame_ = Frame(Vector(translation_X[j],translation_Y[j],translation_Z[j]));
+            }
+            else {
+                log(Error)<<"ARM GravityTorques: Could not start Gravity torques component: wrong rotation_axis for joint " << j << "!"<<endlog();
+                return false;
+            }
+
+            // Construct Segment with joint, and the fixed rotation and translation of Frame_. Note that Prismatic joints are not (yet) supported.
+            if (joint_type[j] == "R" ) {
+                if (joint_axis[j] == "X") {
+                    Segment_ = Segment(Joint(Joint::RotX),Frame_);
+                }
+                if (joint_axis[j] == "Y") {
+                    Segment_ = Segment(Joint(Joint::RotY),Frame_);
+                }
+                if (joint_axis[j] == "Z") {
+                    Segment_ = Segment(Joint(Joint::RotZ),Frame_);
+                }
+            }
+            else if (joint_type[j] == "P" ) {
+                log(Error)<<"ARM GravityTorques: Could not start Gravity torques component: Prismatic Joints are not yet supported!"<<endlog();
+                return false;
+            }
+            else {
+                log(Error)<<"ARM GravityTorques: Could not start Gravity torques component: wrong joint type for joint " << j << "!"<<endlog();
+                return false;
+            }
+            RobotArmChain[i].addSegment(Segment_);
+        }
+
+        // construct jacobian solver
+        jacobian_solver[i] = new KDL::ChainJntToJacSolver(RobotArmChain[i]);
+    }
 	
-//	// Construct Gravity Wrenches
-//	GravityWrenches.setZero(6,nrMasses);
-//	for (uint i=0; i<nrMasses; i++) {
-//		GravityWrenches.col(i) << masses[mass_indexes[i]]*GravityWrench;
-//    }
-
-//    // construct chain
-//	for (uint i = 0; i < nrJoints; i++) {
-//        if (rot_X[i] == 1.0 ) {
-//            if (DH_alpha[i] != 0.0) {
-//                RobotArmChain.addSegment(Segment(Joint(Joint::RotX),Frame(Rotation::RotX(DH_alpha[i]),Vector(DH_a[i],0.0,DH_d[i])) ) );
-//            }
-//            else {
-//                RobotArmChain.addSegment(Segment(Joint(Joint::RotX),Frame(Rotation::RotZ(DH_theta[i]),Vector(DH_a[i],0.0,DH_d[i])) ) );
-//            }
-//        }
-//        else if (rot_Z[i] == 1.0 ) {
-//            if (DH_alpha[i] != 0.0) {
-//                RobotArmChain.addSegment(Segment(Joint(Joint::RotZ),Frame(Rotation::RotX(DH_alpha[i]),Vector(DH_a[i],0.0,DH_d[i])) ) );
-//            }
-//            else {
-//                RobotArmChain.addSegment(Segment(Joint(Joint::RotZ),Frame(Rotation::RotZ(DH_theta[i]),Vector(DH_a[i],0.0,DH_d[i])) ) );
-//            }
-//        }
-//        else {
-//            log(Error)<<"ARM GravityTorques: Could not start Gravity torques component: A value unequal to 1.0 was found in rot_Z and rot_X"<<endlog();
-//            return false;
-//        }
-//    }
-
-//	// construct jacobian solver
-//    jacobian_solver = new KDL::ChainJntToJacSolver(RobotArmChain);
-	
-//	// Connection checks
-//	if ( !jointAnglesPort.connected() ){
-//        log(Error)<<"ARM GravityTorques: Could not start Gravity torques component: jointAnglesPort not connected!"<<endlog();
-//        return false;
-//	}
-//    if ( !gravityTorquesPort.connected() ){
-//        log(Error)<<"ARM GravityTorques: Could not start Gravity torques component: Outputport not connected!"<<endlog();
-//		//return false;
-//    }
+    // Connection checks
+    if ( !jointAnglesPort.connected() ){
+        log(Error)<<"ARM GravityTorques: Could not start Gravity torques component: jointAnglesPort not connected!"<<endlog();
+        return false;
+    }
+    if ( !gravityTorquesPort.connected() ){
+        log(Error)<<"ARM GravityTorques: Could not start Gravity torques component: Outputport not connected!"<<endlog();
+        //return false;
+    }
 
     return true;
 }
@@ -139,8 +153,8 @@ void GravityTorques::updateHook()
 
 	// jointAngles to KDL jointArray
 	KDL::JntArray q_current_(nrJoints);
-	for (uint i = 0; i < nrJoints; i++) {
-		q_current_(i) = jointAngles[i];
+    for (uint j = 0; j < nrJoints; j++) {
+        q_current_(j) = jointAngles[j];
 	}
 	
 	// calculate gravityTorques
@@ -161,17 +175,7 @@ doubles GravityTorques::ComputeGravityTorques(KDL::JntArray q_current_)
 
         //Determine Jacobian (KDL)        
         KDL::Jacobian partial_jacobian_KDL_(nrJoints);
-        jacobian_solver->JntToJac(q_current_, partial_jacobian_KDL_);
-
-        if ( printed == false ) {
-            log(Warning) << "JAC1: [" << partial_jacobian_KDL_(0,0) << ", " << partial_jacobian_KDL_(0,1) << ", " << partial_jacobian_KDL_(0,2) << ", " << partial_jacobian_KDL_(0,3) << ", " << partial_jacobian_KDL_(0,4) << ", " << partial_jacobian_KDL_(0,5) << ", " << partial_jacobian_KDL_(0,6) << "]" <<endlog();
-            log(Warning) << "JAC2: [" << partial_jacobian_KDL_(1,0) << ", " << partial_jacobian_KDL_(1,1) << ", " << partial_jacobian_KDL_(1,2) << ", " << partial_jacobian_KDL_(1,3) << ", " << partial_jacobian_KDL_(1,4) << ", " << partial_jacobian_KDL_(1,5) << ", " << partial_jacobian_KDL_(1,6) << "]" <<endlog();
-            log(Warning) << "JAC3: [" << partial_jacobian_KDL_(2,0) << ", " << partial_jacobian_KDL_(2,1) << ", " << partial_jacobian_KDL_(2,2) << ", " << partial_jacobian_KDL_(2,3) << ", " << partial_jacobian_KDL_(2,4) << ", " << partial_jacobian_KDL_(2,5) << ", " << partial_jacobian_KDL_(2,6) << "]" <<endlog();
-            log(Warning) << "JAC4: [" << partial_jacobian_KDL_(3,0) << ", " << partial_jacobian_KDL_(3,1) << ", " << partial_jacobian_KDL_(3,2) << ", " << partial_jacobian_KDL_(3,3) << ", " << partial_jacobian_KDL_(3,4) << ", " << partial_jacobian_KDL_(3,5) << ", " << partial_jacobian_KDL_(3,6) << "]" <<endlog();
-            log(Warning) << "JAC5: [" << partial_jacobian_KDL_(4,0) << ", " << partial_jacobian_KDL_(4,1) << ", " << partial_jacobian_KDL_(4,2) << ", " << partial_jacobian_KDL_(4,3) << ", " << partial_jacobian_KDL_(4,4) << ", " << partial_jacobian_KDL_(4,5) << ", " << partial_jacobian_KDL_(4,6) << "]" <<endlog();
-            log(Warning) << "JAC6: [" << partial_jacobian_KDL_(5,0) << ", " << partial_jacobian_KDL_(5,1) << ", " << partial_jacobian_KDL_(5,2) << ", " << partial_jacobian_KDL_(5,3) << ", " << partial_jacobian_KDL_(5,4) << ", " << partial_jacobian_KDL_(5,5) << ", " << partial_jacobian_KDL_(5,6) << "]" <<endlog();
-            printed = true;
-        }
+        jacobian_solver[0]->JntToJac(q_current_, partial_jacobian_KDL_);
 
         //Convert Jacobian of type KDL to type Eigen::MatrixXd
         Eigen::MatrixXd partial_jacobian_(partial_jacobian_KDL_.rows(), partial_jacobian_KDL_.columns());
@@ -181,15 +185,33 @@ doubles GravityTorques::ComputeGravityTorques(KDL::JntArray q_current_)
             }
         }
         Eigen::VectorXd PartialGravityTorques_(nrJoints);
-        PartialGravityTorques_ = partial_jacobian_.transpose() * GravityWrenches.col(i);
+
+        // calculate gravityWrench
+        KDL::Wrench GravityWrenchKDL_;
+        KDL::Vector COG_translation;
+        COG_translation(0) = COGx[mass_indexes[i]];
+        COG_translation(1) = COGy[mass_indexes[i]];
+        COG_translation(2) = COGz[mass_indexes[i]];
+        GravityWrenchKDL_ = GravityWrenchGlobal.RefPoint(COG_translation);
+        GravityWrenchKDL_ = GravityWrenchKDL_*masses[mass_indexes[i]];
+        Eigen::VectorXd GravityWrench_;
+        for (uint j=0; j<nrJoints; j++) {
+            GravityWrench_(j) = GravityWrenchKDL_(j);
+        }
+
+        // calculate partial gravity torque
+        PartialGravityTorques_ = partial_jacobian_.transpose()*GravityWrench_;
 
         for (uint j=0; j<nrJoints; j++) {
             gravityTorques_[j] += PartialGravityTorques_(j);
         }
 
-        log(Warning) << "GravityTorques: [" << gravityTorques_[0] << "," << gravityTorques_[1] << "," << gravityTorques_[2] << "," << gravityTorques_[3] << "," << gravityTorques_[4] << "," << gravityTorques_[5] << "," << gravityTorques_[6] << "]" <<endlog();
+        log(Warning) << "GravityTorques " << i << ": [" << gravityTorques_[0] << "," << gravityTorques_[1] << "," << gravityTorques_[2] << "," << gravityTorques_[3] << "," << gravityTorques_[4] << "," << gravityTorques_[5] << "," << gravityTorques_[6] << "]" <<endlog();
 
 	}
+
+    log(Warning) << "GravityTorques T: [" << gravityTorques_[0] << "," << gravityTorques_[1] << "," << gravityTorques_[2] << "," << gravityTorques_[3] << "," << gravityTorques_[4] << "," << gravityTorques_[5] << "," << gravityTorques_[6] << "]" <<endlog();
+
 
     return gravityTorques_;
 }
