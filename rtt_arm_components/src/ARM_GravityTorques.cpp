@@ -49,6 +49,7 @@ bool GravityTorques::configureHook()
 
     mass_indexes.assign(nrJoints,0);
     nrMasses = 0;
+    printed = false;
 
 	return true;
 }
@@ -131,14 +132,14 @@ bool GravityTorques::startHook()
         // construct jacobian solver
         jacobian_solver[i] = new KDL::ChainJntToJacSolver(RobotArmChain[i]);
     }
-	
+
     // Connection checks
     if ( !jointAnglesPort.connected() ){
         log(Error)<<"ARM GravityTorques: Could not start Gravity torques component: jointAnglesPort not connected!"<<endlog();
-        return false;
+        //return false;
     }
     if ( !gravityTorquesPort.connected() ){
-        log(Error)<<"ARM GravityTorques: Could not start Gravity torques component: Outputport not connected!"<<endlog();
+        //log(Error)<<"ARM GravityTorques: Could not start Gravity torques component: Outputport not connected!"<<endlog();
         //return false;
     }
 
@@ -147,23 +148,23 @@ bool GravityTorques::startHook()
 
 void GravityTorques::updateHook()
 {
-	// read jointAngles
-	jointAngles.assign(nrJoints,0.0);
-	jointAnglesPort.read(jointAngles);
+    // read jointAngles
+    jointAngles.assign(nrJoints,0.0);
 
-	// jointAngles to KDL jointArray
-	KDL::JntArray q_current_(nrJoints);
-    for (uint j = 0; j < nrJoints; j++) {
-        q_current_(j) = jointAngles[j];
-	}
-	
-	// calculate gravityTorques
-	doubles gravityTorques(nrJoints,0.0);
-    gravityTorques = ComputeGravityTorques(q_current_);
+    if ( jointAnglesPort.read(jointAngles) == NewData ) {
+        // jointAngles to KDL jointArray
+        KDL::JntArray q_current_(nrJoints);
+        for (uint j = 0; j < nrJoints; j++) {
+            q_current_(j) = jointAngles[j];
+        }
 
-	//write gravity torques
-	gravityTorquesPort.write(gravityTorques);
+        // calculate gravityTorques
+        doubles gravityTorques(nrJoints,0.0);
+        gravityTorques = ComputeGravityTorques(q_current_);
 
+        //write gravity torques
+        gravityTorquesPort.write(gravityTorques);
+    }
 }
 
 doubles GravityTorques::ComputeGravityTorques(KDL::JntArray q_current_)
@@ -182,8 +183,13 @@ doubles GravityTorques::ComputeGravityTorques(KDL::JntArray q_current_)
         for (uint jc=0; jc<partial_jacobian_KDL_.columns(); jc++) {
             for (uint jr=0; jr<partial_jacobian_KDL_.rows(); jr++) {
                 partial_jacobian_(jr,jc) = partial_jacobian_KDL_(jr,jc);
+                if (printed == false) {
+                    //log(Warning) << "INDEX: [" << partial_jacobian_(jr,jc) << "]" <<endlog();
+                }
             }
         }
+        //printed = true;
+
         Eigen::VectorXd PartialGravityTorques_(nrJoints);
 
         // calculate gravityWrench
@@ -192,28 +198,26 @@ doubles GravityTorques::ComputeGravityTorques(KDL::JntArray q_current_)
         COG_translation(0) = COGx[mass_indexes[i]];
         COG_translation(1) = COGy[mass_indexes[i]];
         COG_translation(2) = COGz[mass_indexes[i]];
-        GravityWrenchKDL_ = GravityWrenchGlobal.RefPoint(COG_translation);
+        GravityWrenchKDL_ = GravityWrenchGlobal;
+        //GravityWrenchKDL_ = GravityWrenchGlobal.RefPoint(COG_translation);
         GravityWrenchKDL_ = GravityWrenchKDL_*masses[mass_indexes[i]];
-        Eigen::VectorXd GravityWrench_;
-        for (uint j=0; j<nrJoints; j++) {
-            GravityWrench_(j) = GravityWrenchKDL_(j);
+        Eigen::VectorXd GravityWrench_(6);
+        for (uint l=0; l<6; l++) {
+            GravityWrench_(l) = 1.0;
         }
 
         // calculate partial gravity torque
         PartialGravityTorques_ = partial_jacobian_.transpose()*GravityWrench_;
 
         for (uint j=0; j<nrJoints; j++) {
-            gravityTorques_[j] += PartialGravityTorques_(j);
+            gravityTorques_[j] = PartialGravityTorques_(j);
         }
-
-        log(Warning) << "GravityTorques " << i << ": [" << gravityTorques_[0] << "," << gravityTorques_[1] << "," << gravityTorques_[2] << "," << gravityTorques_[3] << "," << gravityTorques_[4] << "," << gravityTorques_[5] << "," << gravityTorques_[6] << "]" <<endlog();
-
-	}
+    }
 
     log(Warning) << "GravityTorques T: [" << gravityTorques_[0] << "," << gravityTorques_[1] << "," << gravityTorques_[2] << "," << gravityTorques_[3] << "," << gravityTorques_[4] << "," << gravityTorques_[5] << "," << gravityTorques_[6] << "]" <<endlog();
-
 
     return gravityTorques_;
 }
 
 ORO_CREATE_COMPONENT(ARM::GravityTorques)
+

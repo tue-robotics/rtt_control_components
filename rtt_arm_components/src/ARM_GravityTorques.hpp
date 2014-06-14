@@ -81,7 +81,8 @@ namespace ARM
 	doubles masses;
 	doubles COGx;
 	doubles COGy;
-	doubles COGz;
+    doubles COGz;
+    //Eigen::MatrixXd GravityWrench;
 
     // temp
     bool printed;
@@ -96,6 +97,7 @@ namespace ARM
 	//variables
     ints mass_indexes;
 	uint nrMasses;
+    //bool printed;
 
 	public:
 	
@@ -105,7 +107,7 @@ namespace ARM
 	bool configureHook();
 	bool startHook();
 	void updateHook();
-	
+
 	doubles ComputeGravityTorques(KDL::JntArray q_current_);
 
 	};
