@@ -66,10 +66,13 @@ namespace ARM
 	private:
 	
 	InputPort<doubles> jointAnglesPort;
-	OutputPort<doubles> gravityTorquesPort;
+    OutputPort<doubles> gravityTorquesPort1;
+    OutputPort<doubles> gravityTorquesPort2;
+    OutputPort<doubles> gravityTorquesPort3;
 	
 	//Properties
 	uint nrJoints;
+    uint nrLinks;
     strings joint_type;
     strings joint_axis;
     strings rotation_axis;
@@ -82,22 +85,16 @@ namespace ARM
 	doubles COGx;
 	doubles COGy;
     doubles COGz;
-    //Eigen::MatrixXd GravityWrench;
-
-    // temp
-    bool printed;
 
     // input
 	doubles jointAngles;
 	
     KDL::Chain RobotArmChain[MAXJOINTS];
     KDL::ChainJntToJacSolver* jacobian_solver[MAXJOINTS];
-    KDL::Wrench GravityWrenchGlobal;
 	
 	//variables
     ints mass_indexes;
 	uint nrMasses;
-    //bool printed;
 
 	public:
 	
@@ -108,7 +105,7 @@ namespace ARM
 	bool startHook();
 	void updateHook();
 
-	doubles ComputeGravityTorques(KDL::JntArray q_current_);
+    doubles ComputeGravityTorques(KDL::JntArray q_current_, int i);
 
 	};
 };
