@@ -43,17 +43,20 @@ namespace ARM
      *
      * Every link that has a mass, should be provided with coordinates
      * of the location of the Centor of gravity using COGx, COGy, and COGz.
-     *
-     * These COG's are then considered point masses and for each of them a
-     * gravitywrench is calculated (one column in GravityWrenches)
+     * for every COG, considered as point mass, a kinematic chain is
+     * generated with the tip frame in the COG
      *
      * A partial jacobian matrix is then calculated for each COG to the
      * base frame.
      *
-     * Using partial_jacobian_.transpose() * GravityWrenches.col(i). the
-     * gravity joint torques of the ith COG is calculated summing to the
-     * total output gravityTorques.
+     * Using partial_jacobian_.transpose() * *GravityWrench_. the gravity
+     * joint torques of the ith COG is calculated summing to the total
+     * output gravityTorques.
      *
+     * iterators
+     * i iterates over all the masses
+     * j iterates over all the joints
+     * k iterates over all DOF in cartesian space
      *
      * To Do:
      * Rewrite to parse urdf in stead of declaring parameters in ops file
@@ -66,35 +69,34 @@ namespace ARM
 	private:
 	
 	InputPort<doubles> jointAnglesPort;
-    OutputPort<doubles> gravityTorquesPort1;
-    OutputPort<doubles> gravityTorquesPort2;
-    OutputPort<doubles> gravityTorquesPort3;
+    OutputPort<doubles> gravityTorquesPort;
 	
 	//Properties
 	uint nrJoints;
-    uint nrLinks;
     strings joint_type;
     strings joint_axis;
     strings rotation_axis;
-    doubles GravityVector;
     doubles rotation_angle;
     doubles translation_X;
     doubles translation_Y;
     doubles translation_Z;
 	doubles masses;
-	doubles COGx;
-	doubles COGy;
-    doubles COGz;
+    doubles COG_X;
+    doubles COG_Y;
+    doubles COG_Z;
+    doubles GravityVector;
 
-    // input
+    // input variable
 	doubles jointAngles;
-	
-    KDL::Chain RobotArmChain[MAXJOINTS];
-    KDL::ChainJntToJacSolver* jacobian_solver[MAXJOINTS];
-	
+
 	//variables
     ints mass_indexes;
-	uint nrMasses;
+    uint nrMasses;
+
+    // Vectors of GravityWrenches, Robot Arm Chains and jacobian solvers
+    Eigen::VectorXd GravityWrenches[MAXJOINTS];
+    KDL::Chain RobotArmChain[MAXJOINTS];
+    KDL::ChainJntToJacSolver* jacobian_solver[MAXJOINTS];
 
 	public:
 	
@@ -105,7 +107,7 @@ namespace ARM
 	bool startHook();
 	void updateHook();
 
-    doubles ComputeGravityTorques(KDL::JntArray q_current_, int i);
+    doubles ComputeGravityTorques(KDL::JntArray q_current_);
 
 	};
 };

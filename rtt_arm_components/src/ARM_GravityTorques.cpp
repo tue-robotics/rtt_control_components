@@ -19,44 +19,41 @@ GravityTorques::GravityTorques(const std::string& name)
 {
 	// declaration of ports
 	addEventPort("in", jointAnglesPort);
-    addPort("out1",gravityTorquesPort1);
-    addPort("out2",gravityTorquesPort2);
-    addPort("out3",gravityTorquesPort3);
+    addPort("out",gravityTorquesPort);
 
     // declaration of arm parameters and gravityvector
     addProperty( "nrJoints", nrJoints ).doc("An unsigned integer that specifies the number of degrees of freedom");
-    addProperty( "joint_type", joint_type ).doc("");
-    addProperty( "joint_axis", joint_axis ).doc("");
-    addProperty( "rotation_axis", rotation_axis ).doc("");
-    addProperty( "rotation_angle", rotation_angle ).doc("");
-    addProperty( "translation_X", translation_X ).doc("");
-    addProperty( "translation_Y", translation_Y ).doc("");
-    addProperty( "translation_Z", translation_Z ).doc("");
+    addProperty( "joint_type", joint_type ).doc("A vector of strings specifying the type of joint. R for revolute and P for prismatic (not yet supported)");
+    addProperty( "joint_axis", joint_axis ).doc("A vector of strings specifying which axis the joint is defined to");
+    addProperty( "rotation_axis", rotation_axis ).doc("A vector of strings specifying a rotation around a fixed rotation axis with the angle specified by rotation_angle");
+    addProperty( "rotation_angle", rotation_angle ).doc("A vector of doubles specifying the amount of fixed rotation about the axis specified by rotation_axis");
+    addProperty( "translation_X", translation_X ).doc("A vector of doubles specifying the translation around the X axis");
+    addProperty( "translation_Y", translation_Y ).doc("A vector of doubles specifying the translation around the Y axis");
+    addProperty( "translation_Z", translation_Z ).doc("A vector of doubles specifying the translation around the Z axis");
 	addProperty( "masses", masses ).doc("mass vector m stored in an Eigen::MatrixXd vector");
-    addProperty( "COGx", COGx ).doc("center of gravity coordinate vector x");
-    addProperty( "COGy", COGy ).doc("center of gravity coordinate vector y");
-    addProperty( "COGz", COGz ).doc("center of gravity coordinate vector z");
+    addProperty( "COG_X", COG_X ).doc("center of gravity coordinate vector x");
+    addProperty( "COG_Y", COG_Y ).doc("center of gravity coordinate vector y");
+    addProperty( "COG_Z", COG_Z ).doc("center of gravity coordinate vector z");
     addProperty( "GravityVector", GravityVector ).doc("Gravity Vector depends on choice of base frame. (array(0.0, 0.0, -9.81) for negative z direction)");
-
 }
 
 GravityTorques::~GravityTorques(){}
 
 bool GravityTorques::configureHook()
 {
+    //! Parameter input checks
     if (nrJoints >= MAXJOINTS) {
         log(Error)<<"ARM GravityTorques: Could not configure Gravity torques component: The number of joints " << nrJoints << " exceeds the maximum number of joints " << MAXJOINTS << "!"<<endlog();
         return false;
     }
 
-    //! Parameter input checks
     if ( joint_type.size() != nrJoints || joint_axis.size() != nrJoints || rotation_angle.size() != nrJoints || rotation_axis.size() != nrJoints || translation_X.size() != nrJoints|| translation_Y.size() != nrJoints|| translation_Z.size() != nrJoints ) {
         log(Error)<<"ARM GravityTorques: Could not start Gravity torques component due to Wrongly sized arm parameters!"<<endlog();
         return false;
     }
 
-    if ( masses.size() != nrJoints || COGx.size() != nrJoints || COGy.size() != nrJoints || COGz.size() != nrJoints ) {
-        log(Error)<<"ARM GravityTorques: Could not start Gravity torques component due to Wrongly sized masses, COGx, COGy or COGz!"<<endlog();
+    if ( masses.size() != nrJoints || COG_X.size() != nrJoints || COG_Y.size() != nrJoints || COG_Z.size() != nrJoints ) {
+        log(Error)<<"ARM GravityTorques: Could not start Gravity torques component due to Wrongly sized masses, COG_X, COG_Y or COG_Z!"<<endlog();
         return false;
     }
 
@@ -75,11 +72,19 @@ bool GravityTorques::configureHook()
             index++;
         }
     }
-    log(Warning)<<"ARM GravityTorques: Number of masses: [" << nrMasses  << "]" <<endlog();
+    log(Info)<<"ARM GravityTorques: Number of masses: [" << nrMasses  << "]" <<endlog();
+
+    //! Determine vector of GravityWrenches
+    for (uint i = 0; i < nrMasses; i++) {
+        GravityWrenches[i].resize(6);
+        for (uint k=0; k<3; k++) {
+            GravityWrenches[i](k) = GravityVector[k]*masses[mass_indexes[i]];
+        }
+    }
 
     //! Construct chains and solvers for each mass
     for (uint i = 0; i < nrMasses; i++) {
-        log(Warning)<<"ARM GravityTorques: Constructing Chain and Solver to link: [" << mass_indexes[i]  << "] and with mass: [" << masses[mass_indexes[i]] << "]" <<endlog();
+        log(Info)<<"ARM GravityTorques: Constructing Chain and Solver to link: [" << mass_indexes[i]  << "] and with mass: [" << masses[mass_indexes[i]] << "]" <<endlog();
         for (uint j = 0; j < (mass_indexes[i]+1); j++) {
 
             KDL::Segment Segment_;
@@ -89,7 +94,7 @@ bool GravityTorques::configureHook()
 
             // Determine Vector of translation
             if (j == mass_indexes[i]){ // (if last segment, then frame is positioned in COG)
-                Vector_ = Vector(COGx[j],COGy[j],COGz[j]);
+                Vector_ = Vector(COG_X[j],COG_Y[j],COG_Z[j]);
                 rotation = "";
 
             }
@@ -141,11 +146,11 @@ bool GravityTorques::configureHook()
             }
             RobotArmChain[i].addSegment(Segment_);
 
-            log(Warning)<<"ARM GravityTorques: Revolute joint around " << joint_axis[j] << ", " << rotation << rotation_angle[j] << ", Translate with [" << translation_X[j] << "," << translation_Y[j] << "," << translation_Z[j] << "]" <<endlog();
+            log(Info)<<"ARM GravityTorques: Revolute joint around " << joint_axis[j] << ", " << rotation << rotation_angle[j] << ", Translate with [" << translation_X[j] << "," << translation_Y[j] << "," << translation_Z[j] << "]" <<endlog();
 
         }
 
-        log(Warning)<<"ARM GravityTorques: Size of RobotArmChain is : " << RobotArmChain[i].segments.size() << "!"<<endlog();
+        log(Info)<<"ARM GravityTorques: Size of RobotArmChain is : " << RobotArmChain[i].segments.size() << "!"<<endlog();
 
         jacobian_solver[i] = new KDL::ChainJntToJacSolver(RobotArmChain[i]);
     }
@@ -160,7 +165,7 @@ bool GravityTorques::startHook()
         log(Error)<<"ARM GravityTorques: Could not start Gravity torques component: jointAnglesPort not connected!"<<endlog();
         return false;
     }
-    if ( !gravityTorquesPort1.connected() ){
+    if ( !gravityTorquesPort.connected() ){
         log(Error)<<"ARM GravityTorques: Could not start Gravity torques component: Outputport not connected!"<<endlog();
         return false;
     }
@@ -181,92 +186,48 @@ void GravityTorques::updateHook()
         }
 
         // calculate gravityTorques
-        doubles gravityTorques1(nrJoints,0.0);
-        gravityTorques1 = ComputeGravityTorques(q_current_,0);
-
-        doubles gravityTorques2(nrJoints,0.0);
-        gravityTorques2 = ComputeGravityTorques(q_current_,1);
-
-        doubles gravityTorques3(nrJoints,0.0);
-        gravityTorques3 = ComputeGravityTorques(q_current_,2);
+        doubles gravityTorques(nrJoints,0.0);
+        gravityTorques = ComputeGravityTorques(q_current_);
 
         //write gravity torques
-        gravityTorquesPort1.write(gravityTorques1);
-        gravityTorquesPort2.write(gravityTorques2);
-        gravityTorquesPort3.write(gravityTorques3);
+        gravityTorquesPort.write(gravityTorques);        
     }
 }
 
-doubles GravityTorques::ComputeGravityTorques(KDL::JntArray q_current_, int i)
+doubles GravityTorques::ComputeGravityTorques(KDL::JntArray q_current_)
 {
     doubles gravityTorques_(nrJoints,0.0);
 
-    // Joint Torques are calculated by multiplying the wrench for each link by the corresponding partial Jacobian
-    //for (uint i=0; i<nrMasses; i++) {
+    for (uint i=0; i<nrMasses; i++) {
 
-    //! Determine Jacobian (KDL)
-    KDL::Jacobian partial_jacobian_KDL_(nrJoints);
-    jacobian_solver[i]->JntToJac(q_current_, partial_jacobian_KDL_);
+        //! Convert KDL::JntArray to size of partial Jacobian
+        KDL::JntArray q_current_partial_;
+        q_current_partial_.resize(mass_indexes[i]+1);
+        for (uint j=0; j<(mass_indexes[i]+1); j++) {
+            q_current_partial_(j) = q_current_(j);
+        }
 
-    //Convert Jacobian of type KDL to type Eigen::MatrixXd
-    Eigen::MatrixXd partial_jacobian_(partial_jacobian_KDL_.rows(), partial_jacobian_KDL_.columns());
-    for (uint jc=0; jc<partial_jacobian_KDL_.columns(); jc++) {
-        for (uint jr=0; jr<partial_jacobian_KDL_.rows(); jr++) {
-            partial_jacobian_(jr,jc) = partial_jacobian_KDL_(jr,jc);
+        //! Determine Jacobian (KDL)
+        KDL::Jacobian partial_jacobian_KDL_(mass_indexes[i]+1);
+        jacobian_solver[i]->JntToJac(q_current_partial_, partial_jacobian_KDL_);
+
+        //Convert Jacobian of type KDL to type Eigen::MatrixXd
+        Eigen::MatrixXd partial_jacobian_(partial_jacobian_KDL_.rows(), partial_jacobian_KDL_.columns());
+        for (uint j=0; j<partial_jacobian_KDL_.columns(); j++) {
+            for (uint k=0; k<partial_jacobian_KDL_.rows(); k++) {
+                partial_jacobian_(k,j) = partial_jacobian_KDL_(k,j);
+            }
+        }
+
+        //! Calculate partial gravity torque
+        Eigen::VectorXd PartialGravityTorques_ = Eigen::VectorXd::Zero((mass_indexes[i]+1));
+        PartialGravityTorques_ = partial_jacobian_.transpose()*GravityWrenches[i];
+
+        //! convert partial gravity torque to doubles and add all partial gravity torques together
+        for (uint j=0; j<(mass_indexes[i]+1); j++) {
+            gravityTorques_[j] += PartialGravityTorques_(j);
         }
     }
-
-    ///////////////////////////////
-
-
-
-    //! Determine GravityWrench_
-//    KDL::Frame Root_Frame = RobotArmChain[i].getSegment(0).getFrameToTip();
-//    KDL::Frame Link_Frame = RobotArmChain[i].getSegment(mass_indexes[i]).getFrameToTip();
-//    KDL::Twist TwistVec_;
-//     TwistVec_ = KDL::diff(Root_Frame,Link_Frame);
-
-//    KDL::Wrench GravityWrenchGlobal_ = KDL::Wrench::Zero();
- //   GravityWrenchGlobal_[2] = 9.81*masses[mass_indexes[i]];
-
-
-  //  GravityWrenchKDL_ = GravityWrenchGlobal_.RefPoint(KDL::Vector(TwistVec_.vel.x(), TwistVec_.vel.y(), TwistVec_.vel.z()));
-
-
-    //::Wrench GravityWrenchKDL_COG_ = GravityWrenchGlobal*masses[mass_indexes[i]];
-
-    // calculate COG_translation vector (vector in tip frame)
-    //KDL::Vector COG_translation_tipframe_;
-    //COG_translation_tipframe_(0) = COGx[mass_indexes[i]];
-    //COG_translation_tipframe_(1) = COGy[mass_indexes[i]];
-    //COG_translation_tipframe_(2) = COGz[mass_indexes[i]];
-
-    // transform gravityWrench in COG to centerpoint of the link frame (although still expressed relative to base frame)
-    //KDL::Wrench GravityWrenchKDL_ = GravityWrenchKDL_COG_.RefPoint(COG_translation_tipframe_);
-    //KDL::Wrench GravityWrenchKDL_ = KDL::Wrench::Zero();
-
-    // Convert KDL GravityWrench to Eigen::Vector GravityWrench
-
-
-    ///////////////////////////////////
-
-
-
-    //! Determine GravityWrench_
-    Eigen::VectorXd GravityWrench_ = Eigen::VectorXd::Zero(6);
-    for (uint l=0; l<3; l++) {
-        GravityWrench_(l) = GravityVector[l]*masses[mass_indexes[i]];
-    }
-
-    //! Calculate partial gravity torque
-    Eigen::VectorXd PartialGravityTorques_ = Eigen::VectorXd::Zero(nrJoints);
-    PartialGravityTorques_ = partial_jacobian_.transpose()*GravityWrench_;
-
-    //! convert partial gravity torque to doubles and add all partial gravity torques together
-    for (uint j=0; j<nrJoints; j++) {
-        gravityTorques_[j] = PartialGravityTorques_(j);
-    }
-   // }
 
     return gravityTorques_;
 }
