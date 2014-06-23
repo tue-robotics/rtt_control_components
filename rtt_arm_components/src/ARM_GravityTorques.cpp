@@ -74,7 +74,7 @@ bool GravityTorques::configureHook()
     }
     log(Info)<<"ARM GravityTorques: Number of masses: [" << nrMasses  << "]" <<endlog();
 
-    //! Determine vector of GravityWrenches
+    //! Construct a vector consisting of a gravity wrench vector for each mass
     for (uint i = 0; i < nrMasses; i++) {
         GravityWrenches[i].resize(6);
         for (uint k=0; k<3; k++) {
@@ -92,17 +92,16 @@ bool GravityTorques::configureHook()
             KDL::Vector Vector_;
             string rotation;
 
-            // Determine Vector of translation
-            if (j == mass_indexes[i]){ // (if last segment, then frame is positioned in COG)
+            // Construct Vector of translation (if last segment, then frame is positioned in COG)
+            if (j == mass_indexes[i]){
                 Vector_ = Vector(COG_X[j],COG_Y[j],COG_Z[j]);
                 rotation = "";
-
             }
-            else { // (else frame is positioned in next joint)
+            else {
                 Vector_ = Vector(translation_X[j],translation_Y[j],translation_Z[j]);
             }
 
-            // Determine Frame of fixed rotation and translation
+            // Construct Frame of fixed rotation and translation vector
             if (rotation_axis[j] == "X") {
                 Frame_ = Frame(Rotation::RotX(rotation_angle[j]),Vector_);
                 rotation = "Rotation around X of ";
@@ -124,7 +123,7 @@ bool GravityTorques::configureHook()
                 return false;
             }
 
-            // Construct Segment with joint, and the fixed rotation and translation of Frame_. Note that Prismatic joints are not (yet) supported.
+            // Construct Segment with joint and Frame_. Note that Prismatic joints are not (yet) supported.
             if (joint_type[j] == "R" ) {
                 if (joint_axis[j] == "X") {
                     Segment_ = Segment(Joint(Joint::RotX),Frame_);
@@ -147,7 +146,6 @@ bool GravityTorques::configureHook()
             RobotArmChain[i].addSegment(Segment_);
 
             log(Info)<<"ARM GravityTorques: Revolute joint around " << joint_axis[j] << ", " << rotation << rotation_angle[j] << ", Translate with [" << translation_X[j] << "," << translation_Y[j] << "," << translation_Z[j] << "]" <<endlog();
-
         }
 
         log(Info)<<"ARM GravityTorques: Size of RobotArmChain is : " << RobotArmChain[i].segments.size() << "!"<<endlog();

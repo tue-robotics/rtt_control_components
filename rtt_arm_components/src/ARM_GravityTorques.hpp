@@ -93,7 +93,7 @@ namespace ARM
     ints mass_indexes;
     uint nrMasses;
 
-    // Vectors of GravityWrenches, Robot Arm Chains and jacobian solvers
+    // Vectors of GravityWrenches, Robot Arm Chains and jacobian solvers. ith elemen of these vectors represent object for ith mass
     Eigen::VectorXd GravityWrenches[MAXJOINTS];
     KDL::Chain RobotArmChain[MAXJOINTS];
     KDL::ChainJntToJacSolver* jacobian_solver[MAXJOINTS];
