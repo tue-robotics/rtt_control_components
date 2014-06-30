@@ -61,15 +61,16 @@ Supervisor::~Supervisor()
 
 bool Supervisor::configureHook()
 {
+	// declaration of scalars
 	emergency = false;
 	goodToGO = false;
 	start_time = 0.0;
 	aquisition_time = 0.0;
 
+	// declaration of msgs
 	rosenabledmsg.data = true;
 	rosdisabledmsg.data = false;
 	dashboardCmdmsg.data.assign(2, 0.0);	
-	
 	StatusStalemsg.level = 0;
 	StatusIdlemsg.level = 1;
 	StatusOperationalmsg.level = 2;
@@ -77,6 +78,7 @@ bool Supervisor::configureHook()
 	StatusErrormsg.level = 4;
 	hardwareStatusmsg.status.resize(6);
 	
+	// declaration of  vectors
 	for( int partNr = 0; partNr < 6; partNr++ ) {
 		hardwareStatusmsg.status[partNr] = StatusStalemsg; 
 		homeableParts[partNr] = false;

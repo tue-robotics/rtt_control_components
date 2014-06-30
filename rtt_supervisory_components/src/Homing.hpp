@@ -8,11 +8,15 @@
 using namespace std;
 using namespace RTT;
 
-namespace SUPERVISORY // Just because it looks nice
+namespace SUPERVISORY
 {
-  // Define a new type for easy coding:
   typedef vector<double> doubles;
   typedef vector<int> ints;
+  
+   /*! \class Homing
+   *  \brief Defines Orocos component for homing hardware component
+   *
+   */
 
   class Homing
   : public RTT::TaskContext
