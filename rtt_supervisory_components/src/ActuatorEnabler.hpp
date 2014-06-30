@@ -11,40 +11,41 @@ using namespace RTT;
 
 namespace SUPERVISORY
 {
-  typedef vector<double> doubles;
-  typedef vector<int> ints;
+	typedef vector<double> doubles;
+	typedef vector<int> ints;
 
-/*! \class ActuatorEnabler
- *  \brief Defines Orocos component for enabling actuators (with brake)
- *
- * The ActuatorEnabler component monitors:
- *
- * 	* boolean safe value
- *
- * 	* No new safe = true or safe = false 
- * 		-> amplifier is disabled
- * 		-> possible brake is enabled
- */
+	/*! \class ActuatorEnabler
+	*  \brief Defines Orocos component for enabling actuators (with brake)
+	*
+	* The ActuatorEnabler component monitors:
+	*
+	* 	* boolean safe value
+	*
+	* 	* No new safe = true or safe = false 
+	* 		-> amplifier is disabled
+	* 		-> possible brake is enabled
+	*/
 
-  class ActuatorEnabler
-  : public RTT::TaskContext
-    {
-    private:
-        InputPort<bool> safe_inPort;
-        OutputPort<bool> actuatorEnablePort;
-                
-        bool safe;
-        bool ErrorWritten;
-        long double TimeLastSafeReceived;
-    public:
-    
-    ActuatorEnabler(const string& name);
-    ~ActuatorEnabler();
+	class ActuatorEnabler
+	: public RTT::TaskContext
+	{
+		private:
+		
+		InputPort<bool> safe_inPort;
+		OutputPort<bool> actuatorEnablePort;
+				
+		bool safe;
+		bool ErrorWritten;
+		long double TimeLastSafeReceived;
+		
+		public:
+		
+		ActuatorEnabler(const string& name);
+		~ActuatorEnabler();
 
-    bool configureHook();
-    bool startHook();
-    void updateHook();
-    
-    };
+		bool configureHook();
+		bool startHook();
+		void updateHook();
+	};
 }
 #endif
