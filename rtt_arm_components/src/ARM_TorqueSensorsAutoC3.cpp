@@ -10,7 +10,7 @@ using namespace ARM;
 
 SensorTorquesAutoC3::SensorTorquesAutoC3(const string& name) : TaskContext(name, PreOperational)
 {
-    addProperty( "vector_size", Nin).doc("Number of In and Outputs");
+    addProperty( "vector_size", Nin).doc("Number of inputs");
     addProperty( "obs_inputs", obs_inputs).doc("obsolete inputs, to specify which inputs are obsolete"); // example array (3, 6) will make sure the third and sixth input are discarded
     addProperty( "c1", c1).doc("Calibration Coefficien c1");
 	addProperty( "c2", c2).doc("Calibration Coefficient c2");
