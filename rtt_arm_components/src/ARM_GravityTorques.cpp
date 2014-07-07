@@ -104,6 +104,7 @@ bool GravityTorques::configureHook()
             // Construct Frame of fixed rotation and translation vector
             if (rotation_axis[j] == "X") {
                 Frame_ = Frame(Rotation::RotX(rotation_angle[j]),Vector_);
+                
                 rotation = "Rotation around X of ";
             }
             else if (rotation_axis[j] == "Y") {
@@ -133,6 +134,15 @@ bool GravityTorques::configureHook()
                 }
                 if (joint_axis[j] == "Z") {
                     Segment_ = Segment(Joint(Joint::RotZ),Frame_);
+                }
+                if (joint_axis[j] == "-X") {
+                    Segment_ = Segment(Joint(Joint::RotX,-1.0),Frame_);
+                }
+                if (joint_axis[j] == "-Y") {
+                    Segment_ = Segment(Joint(Joint::RotY,-1.0),Frame_);
+                }
+                if (joint_axis[j] == "-Z") {
+                    Segment_ = Segment(Joint(Joint::RotZ,-1.0),Frame_);
                 }
             }
             else if (joint_type[j] == "P" ) {
