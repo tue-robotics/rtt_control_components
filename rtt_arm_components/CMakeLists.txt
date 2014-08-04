@@ -30,6 +30,7 @@ include(${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake)
 
 #common commands for building c++ executables and libraries
 orocos_component(ARM_GravityTorques src/ARM_GravityTorques.cpp)
+orocos_component(ARM_GravityTorquesParser src/ARM_GravityTorquesParser.cpp)
 orocos_component(ARM_GripperControl src/ARM_GripperControl.cpp)
 orocos_component(ARM_TorqueSensors src/ARM_TorqueSensors.cpp)
 orocos_component(ARM_TorqueSensorsAutoC3 src/ARM_TorqueSensorsAutoC3.cpp)
