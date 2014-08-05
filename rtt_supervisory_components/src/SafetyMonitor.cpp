@@ -103,8 +103,7 @@ void SafetyMonitor::updateHook()
 	for ( uint i = 0; i < Nj; i++ ) {
 		if( (fabs(jointErrors[i])>MAX_ERRORS[i]) && (i != (uint) homingjoint-1) && (!reNull)) {
 			if( errors == false ){
-				ROS_ERROR_STREAM( "SafetyMonitor: Error of joint q"<<i+1<<" exceeded limit ("<<MAX_ERRORS[i]<<"). PERA output disabled." );
-				log(Error)<<"SafetyMonitor: Error of joint q"<<i+1<<" exceeded limit ("<<MAX_ERRORS[i]<<"). PERA output disabled."<<endlog();
+				ROS_ERROR_STREAM( "SafetyMonitor: Error of joint q"<<i+1<<" exceeded limit ("<<MAX_ERRORS[i]<<"). output disabled." );
 				errors = true;
 			}
 		}
@@ -128,8 +127,7 @@ void SafetyMonitor::updateHook()
 		}
 		if(fabs(timeNow-timeReachedSaturation[i])>=MAXCONSATTIME){
 			if(errors==false){ // This check makes sure it is printed only once.
-				ROS_ERROR_STREAM( "SafetyMonitor: Motor output "<<i+1<<" satured too long (absolute "<<MAXCONSATTIME<<" sec above "<<fabs(MOTORSAT[i])<<"). PERA output disabled." );
-				log(Error)<<"SafetyMonitor: Motor output "<<i+1<<" satured too long (absolute "<<MAXCONSATTIME<<" sec above "<<fabs(MOTORSAT[i])<<"). PERA output disabled."<<endlog();
+				ROS_ERROR_STREAM( "SafetyMonitor: Motor output "<<i+1<<" satured too long (absolute "<<MAXCONSATTIME<<" sec above "<<fabs(MOTORSAT[i])<<"). output disabled." );
 				errors = true;
 			}
 		}
