@@ -57,7 +57,6 @@ namespace ARM
 	//Properties
 	std::string base_link_name;
     std::string tip_link_name; 
-    std::string robot_description_namespace_name; 
 	std::string urdf_xml;
 	std::string full_urdf_xml;
     doubles GravityVector;

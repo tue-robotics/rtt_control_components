@@ -23,7 +23,6 @@ GravityTorquesParser::GravityTorquesParser(const std::string& name)
 	addEventPort("in", jointAnglesPort);
     addPort("out",gravityTorquesPort);
     
-    addProperty( "RobotDescriptionNameSpaceName", robot_description_namespace_name ).doc("string containing name of robot_description namespace (/amigo/robot_description for AMIGO)");
     addProperty( "BaseLinkName", base_link_name ).doc("Name of the Base link frame of the manipulator");
     addProperty( "TipLinkName", tip_link_name ).doc("Name of the Tip link frame of the manipulator");
     addProperty( "GravityVector", GravityVector ).doc("Gravity Vector depends on choice of base frame");
@@ -32,44 +31,44 @@ GravityTorquesParser::GravityTorquesParser(const std::string& name)
 GravityTorquesParser::~GravityTorquesParser(){}
 
 bool GravityTorquesParser::configureHook()
-{		
-	// Fetch robot_model_ from parameter server (URDF robot model)
-	ros::NodeHandle n("~");
-    n.param("urdf_xml", urdf_xml,robot_description_namespace_name);
-    n.searchParam(urdf_xml, full_urdf_xml);
+{
+    // Fetch robot_model_ from parameter server (URDF robot model)
+    ros::NodeHandle n("~");
+    std::string urdf_xml_default = "/amigo/robot_description";
+    n.param("urdf_xml",urdf_xml,urdf_xml_default);
+    n.searchParam(urdf_xml,full_urdf_xml);
     ROS_INFO("Reading xml file from parameter server");
-    std::string result_string;
-    if (!n.getParam(full_urdf_xml, result_string)) {
-        log(Error)<<"ARM GravityTorquesParser: Could not load the xml from parameter server: " << full_urdf_xml << "!" <<endlog();
+    std::string urdf_model_string;
+    if (!n.getParam(full_urdf_xml,urdf_model_string)){
+        log(Error)<<"ARM GravityTorquesParser: Could not load the xml from parameter server: " <<full_urdf_xml << "!" <<endlog();
         return false;
     }
-    log(Warning)<<"ARM GravityTorquesParser: loaded the xml from parameter server :)" <<endlog();
-        
+     
     // Construct KDL::Tree from URDF model
-    if (!kdl_parser::treeFromString(full_urdf_xml, kdl_tree_)) {
+    if (!kdl_parser::treeFromString(urdf_model_string, kdl_tree_)) {
         log(Error)<<"ARM GravityTorquesParser:Could not construct tree object from URDF model!" <<endlog();
         return false;
     }
     log(Warning)<<"ARM GravityTorquesParser: constructed tree object from URDF model :)" <<endlog();
         
     // Extract KDL::Chain from robot tree
-	if (!kdl_tree_.getChain(base_link_name, tip_link_name, kdl_chain_)) {
-		log(Error)<<"ARM GravityTorquesParser: Could not construct chain object from " << base_link_name << " to " << tip_link_name << "!" <<endlog();
-		return false;
-	}
-	log(Warning)<<"ARM GravityTorquesParser: constructed chain object from " << base_link_name << " to " << tip_link_name << " :) :) :) !" <<endlog();
-		
-	return true;
-}
+    if (!kdl_tree_.getChain(base_link_name, tip_link_name, kdl_chain_)) {
+        log(Error)<<"ARM GravityTorquesParser: Could not construct chain object from " << base_link_name << " to " << tip_link_name << "!" <<endlog();
+        return false;
+    }
+    log(Warning)<<"ARM GravityTorquesParser: constructed chain object from " << base_link_name << " to " << tip_link_name << " :) :) :) !" <<endlog();
+
+    return true;
+    }
 
 bool GravityTorquesParser::startHook()
 {
     //! Connection checks
-    if ( !jointAnglesPort.connected() ){
+    if(!jointAnglesPort.connected()){
         log(Error)<<"ARM GravityTorquesParser: Could not start Gravity torques component: jointAnglesPort not connected!"<<endlog();
         return false;
     }
-    if ( !gravityTorquesPort.connected() ){
+    if(!gravityTorquesPort.connected()){
         log(Error)<<"ARM GravityTorquesParser: Could not start Gravity torques component: Outputport not connected!"<<endlog();
         return false;
     }
