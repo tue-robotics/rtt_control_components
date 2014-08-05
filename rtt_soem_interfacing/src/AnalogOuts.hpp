@@ -28,12 +28,7 @@ namespace SOEM // Just because it looks nice
     doubles values;
     doubles wheels;
     doubles spindle;
-
-    // Specify maximum voltages:
-    doubles max_volt;
-    bool safe;
-    bool printerror;
-    
+   
     // Global variables:
     doubles output;
 
