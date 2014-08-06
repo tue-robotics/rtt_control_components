@@ -33,7 +33,7 @@ bool AnalogOutsGeneric::configureHook()
         return false;
     }
 
-    // Determine number of inputs
+    // Determine number of in- and outputs
     n_inputs = 0;
     n_outputs = 0;
     for ( uint i = 0; i < n_inports; i++ ) {
@@ -43,20 +43,18 @@ bool AnalogOutsGeneric::configureHook()
         n_outputs += output_sizes[i];
     }
 
-    // resizing of variables
+    // Resizing of inputdata, and outputdata_msgs
     inputdata.resize(n_inports);
     for ( uint i = 0; i < n_inports; i++ ) {
         inputdata[i].resize(input_sizes[i]);
     }
 
-    outputdata.resize(n_outports);
-    analog_msgs.resize(n_outports);
+    outputdata_msgs.resize(n_outports);
     for ( uint i = 0; i < n_outports; i++ ) {
-        outputdata[i].resize(output_sizes[i]);
-        analog_msgs[i].values.resize(output_sizes[i]);
+        outputdata_msgs[i].values.resize(output_sizes[i]);
     }
 
-    // Create ports
+    // Creating in- and outports
     for ( uint i = 0; i < n_inports; i++ ) {
         string name_inport = "in"+to_string(i+1);
         addEventPort( name_inport, inports[i] );
@@ -66,7 +64,7 @@ bool AnalogOutsGeneric::configureHook()
         addPort( name_outport, outports[i] );
     }
 
-    // Create mappingsmatrix
+    // Create mapping matrix
     mapping.resize(max(n_inputs,n_outputs));
     for ( uint i = 0; i < max(n_inputs,n_outputs); i++ ) {
         mapping[i].assign(4,0.0);
@@ -99,13 +97,12 @@ bool AnalogOutsGeneric::configureHook()
 
 bool AnalogOutsGeneric::startHook()
 {
-    // connection checks
+    // Connection checks
     for ( uint i = 0; i < n_inports; i++ ) {
         if ( !inports[i].connected() ) {
           log(Warning)<<"AnalogOutsGeneric:: in"<< i+1 <<" not connected!"<<endlog();
         }
     }
-    // connection checks
     for ( uint i = 0; i < n_outports; i++ ) {
         if ( !outports[i].connected() ) {
           log(Warning)<<"AnalogOutsGeneric:: out"<< i+1 <<" not connected!"<<endlog();
@@ -117,12 +114,12 @@ bool AnalogOutsGeneric::startHook()
 
 void AnalogOutsGeneric::updateHook()
 {
-    // check all ports for newdata
+    // Check all ports for newdata
     for ( uint i = 0; i < n_inports; i++ ) {
         if ( NewData == inports[i].read(inputdata[i])) { }
     }
 
-    // convert inputdata to analog_msgs
+    // Do map input structure to output structure
     uint k = 0;
     for ( uint i = 0; i < n_inports; i++ ) {
         for ( uint j = 0; j < input_sizes[i]; j++ ) {
@@ -130,14 +127,14 @@ void AnalogOutsGeneric::updateHook()
             uint map_in_2 = mapping[k][1];
             uint map_out_1 = mapping[k][2];
             uint map_out_2 = mapping[k][3];
-            analog_msgs[map_out_1].values[map_out_2] = inputdata[map_in_1][map_in_2];
+            outputdata_msgs[map_out_1].values[map_out_2] = inputdata[map_in_1][map_in_2];
             k++;
         }
     }
 
-    // sending msgs to outports
+    // Write Output
     for ( uint i = 0; i < n_outports; i++ ) {
-        outports[i].write(analog_msgs[i]);
+        outports[i].write(outputdata_msgs[i]);
     }
 }
 

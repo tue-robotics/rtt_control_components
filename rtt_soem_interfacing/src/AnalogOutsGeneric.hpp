@@ -49,22 +49,21 @@ namespace SOEM
     // ports
     OutputPort<soem_beckhoff_drivers::AnalogMsg> outports[maxN];
     InputPort<doubles> inports[maxN];
-    
+
     // Properties
+    uint n_inports;
+    uint n_outports;
     doubles input_sizes;
     doubles output_sizes;
 
     // Local variables:
-    uint n_inports;
-    uint n_outports;
     uint n_inputs;
     uint n_outputs;
-    doubless inputdata;
-    doubless outputdata;
     doubless mapping;
-   
+
     // Global variables:
-    std::vector<soem_beckhoff_drivers::AnalogMsg> analog_msgs;
+    doubless inputdata;
+    std::vector<soem_beckhoff_drivers::AnalogMsg> outputdata_msgs;
 
     public:
 
