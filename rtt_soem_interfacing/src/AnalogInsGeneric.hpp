@@ -1,5 +1,5 @@
-#ifndef ANALOGOUTSGENERIC_HPP
-#define ANALOGOUTSGENERIC_HPP
+#ifndef ANALOGINSGENERIC_HPP
+#define ANALOGINSGENERIC_HPP
 
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
@@ -22,8 +22,8 @@ namespace SOEM
   typedef std::vector<double> doubles;
   typedef std::vector< std::vector<double> > doubless;
 
-/*! \class AnalogOutsGeneric
-*  \brief Defines a configurable Orocos component for Analog Outputs
+/*! \class AnalogInsGeneric
+*  \brief Defines a configurable Orocos component for Analog Inputs
 *
 *  To configure this component, the input_sizes and the output_sizes
 *  should be provided. If for example the input consists of two ports
@@ -36,12 +36,12 @@ namespace SOEM
 *  every output is subsequent to the previous so it is not possible to
 *  skip an unused input or output.
 *
-*  Inputs of this component are doubles
-*  Outputs of this component are analog msgs
+*  Inputs of this component are analog msgs
+*  Outputs of this component are doubles
 *
 */
 
-  class AnalogOutsGeneric
+  class AnalogInsGeneric
   : public RTT::TaskContext
     {
     private:
@@ -68,8 +68,8 @@ namespace SOEM
 
     public:
 
-    AnalogOutsGeneric(const string& name);
-    ~AnalogOutsGeneric();
+    AnalogInsGeneric(const string& name);
+    ~AnalogInsGeneric();
 
     bool configureHook();
     bool startHook();

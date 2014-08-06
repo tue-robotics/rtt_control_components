@@ -2,26 +2,26 @@
 #include <rtt/Port.hpp>
 #include <rtt/Component.hpp>
 
-#include "AnalogOutsGeneric.hpp"
+#include "AnalogInsGeneric.hpp"
 
 using namespace std;
 using namespace RTT;
 using namespace SOEM;
 
-AnalogOutsGeneric::AnalogOutsGeneric(const string& name) : TaskContext(name, PreOperational)
+AnalogInsGeneric::AnalogInsGeneric(const string& name) : TaskContext(name, PreOperational)
 {
     addProperty( "numberofinports", n_inports ).doc("The number of inports");
     addProperty( "numberofoutports", n_outports ).doc("The number of outports");
     addProperty( "input_sizes", input_sizes ).doc("Vector specifying sizes of the inports");
     addProperty( "output_sizes", output_sizes ).doc("Vector specifying sizes of the outports");
 }
-AnalogOutsGeneric::~AnalogOutsGeneric(){}
+AnalogInsGeneric::~AnalogInsGeneric(){}
 
-bool AnalogOutsGeneric::configureHook()
+bool AnalogInsGeneric::configureHook()
 {
     // Verify if supplied properties are feasible
     if (input_sizes.size()  == 0 || output_sizes.size()  == 0 ) {
-        log(Error) << "AnalogOutsGeneric: Please make sure the input_sizes and output_sizes are properly set before the call to the configureHook()" << endlog();
+        log(Error) << "AnalogInsGeneric: Please make sure the input_sizes and output_sizes are properly set before the call to the configureHook()" << endlog();
         return false;
     }
     if (n_inports  > maxN || n_outports  > maxN ) {
@@ -97,25 +97,25 @@ bool AnalogOutsGeneric::configureHook()
     return true;
 }
 
-bool AnalogOutsGeneric::startHook()
+bool AnalogInsGeneric::startHook()
 {
     // connection checks
     for ( uint i = 0; i < n_inports; i++ ) {
         if ( !inports[i].connected() ) {
-          log(Warning)<<"AnalogOutsGeneric:: in"<< i+1 <<" not connected!"<<endlog();
+          log(Warning)<<"AnalogInsGeneric:: in"<< i+1 <<" not connected!"<<endlog();
         }
     }
     // connection checks
     for ( uint i = 0; i < n_outports; i++ ) {
         if ( !outports[i].connected() ) {
-          log(Warning)<<"AnalogOutsGeneric:: out"<< i+1 <<" not connected!"<<endlog();
+          log(Warning)<<"AnalogInsGeneric:: out"<< i+1 <<" not connected!"<<endlog();
         }
     }
 
 	return true;
 }
 
-void AnalogOutsGeneric::updateHook()
+void AnalogInsGeneric::updateHook()
 {
     // check all ports for newdata
     for ( uint i = 0; i < n_inports; i++ ) {
@@ -141,4 +141,4 @@ void AnalogOutsGeneric::updateHook()
     }
 }
 
-ORO_CREATE_COMPONENT(SOEM::AnalogOutsGeneric)
+ORO_CREATE_COMPONENT(SOEM::AnalogInsGeneric)
