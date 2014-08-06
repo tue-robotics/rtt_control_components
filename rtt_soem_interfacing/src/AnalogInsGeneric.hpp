@@ -6,7 +6,7 @@
 #include <soem_beckhoff_drivers/AnalogMsg.h>
 #include <std_msgs/Float32.h>
 
-#define maxN 5 // maximum number of inputs and outputs, 
+#define maxN 10 // maximum number of inputs and outputs
 
 using namespace std;
 using namespace RTT;
