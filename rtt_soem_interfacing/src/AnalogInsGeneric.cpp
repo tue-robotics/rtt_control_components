@@ -14,12 +14,13 @@ AnalogInsGeneric::AnalogInsGeneric(const string& name) : TaskContext(name, PreOp
     addProperty( "numberofoutports", n_outports ).doc("The number of outports");
     addProperty( "input_sizes", input_sizes ).doc("Vector specifying sizes of the inports");
     addProperty( "output_sizes", output_sizes ).doc("Vector specifying sizes of the outports");
+    addProperty( "direct_stream", direct_stream ).doc("Boolean specifying wether the output has to be streamed directly to ROS");
 }
 AnalogInsGeneric::~AnalogInsGeneric(){}
 
 bool AnalogInsGeneric::configureHook()
 {
-    // Verify if supplied properties are feasible
+    // Verify property feasibility
     if (input_sizes.size()  == 0 || output_sizes.size()  == 0 ) {
         log(Error) << "AnalogInsGeneric: Please make sure the input_sizes and output_sizes are properly set before the call to the configureHook()" << endlog();
         return false;
@@ -31,6 +32,14 @@ bool AnalogInsGeneric::configureHook()
     if (input_sizes.size()  != n_inports || output_sizes.size()  != n_outports ) {
         log(Error) << "AnalogInsGeneric: The size of input_sizes/output_sizes does not match the corresponding numberofinports/numberofoutports " << endlog();
         return false;
+    }
+    if (direct_stream) {
+        for ( uint i = 0; i < n_outports; i++ ) {
+            if (output_sizes[i] != 1.0) {
+                log(Error) << "AnalogInsGeneric: Direct_stream is true, But one of the output sizes is not equal to 1.0" << endlog();
+                return false;
+            }
+        }
     }
 
     // Determine number of in- and outputs
@@ -48,7 +57,6 @@ bool AnalogInsGeneric::configureHook()
     for ( uint i = 0; i < n_inports; i++ ) {
         inputdata_msgs[i].values.resize(input_sizes[i]);
     }
-
     outputdata.resize(n_outports);
     for ( uint i = 0; i < n_outports; i++ ) {
         outputdata[i].resize(output_sizes[i]);
@@ -62,6 +70,8 @@ bool AnalogInsGeneric::configureHook()
     for ( uint i = 0; i < n_outports; i++ ) {
         string name_outport = "out"+to_string(i+1);
         addPort( name_outport, outports[i] );
+        string name_outport_toROS = "outmsg"+to_string(i+1);
+        addPort( name_outport_toROS, outports_toROS[i] );
     }
 
     // Create mapping matrix
@@ -69,7 +79,6 @@ bool AnalogInsGeneric::configureHook()
     for ( uint i = 0; i < max(n_inputs,n_outputs); i++ ) {
         mapping[i].assign(4,0.0);
     }
-
     uint k = 0;
     for ( uint i = 0; i < n_inports; i++ ) {
         for ( uint j = 0; j < input_sizes[i]; j++ ) {
@@ -80,7 +89,6 @@ bool AnalogInsGeneric::configureHook()
             k++;
         }
     }
-
     k = 0;
     for ( uint i = 0; i < n_outports; i++ ) {
         for ( uint j = 0; j < output_sizes[i]; j++ ) {
@@ -132,9 +140,18 @@ void AnalogInsGeneric::updateHook()
         }
     }
 
-    // Write Output
-    for ( uint i = 0; i < n_outports; i++ ) {
-        outports[i].write(outputdata[i]);
+    if (!direct_stream) {
+        // Write output
+        for ( uint i = 0; i < n_outports; i++ ) {
+            outports[i].write(outputdata[i]);
+        }
+    }
+    else {
+        // Convert output to message and write msg
+        for ( uint i = 0; i < n_outports; i++ ) {
+            outputdata_msg.data = outputdata[i][0];
+            outports_toROS[i].write(outputdata_msg);
+        }
     }
 }
 

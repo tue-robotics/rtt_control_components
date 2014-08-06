@@ -4,6 +4,7 @@
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
 #include <soem_beckhoff_drivers/AnalogMsg.h>
+#include <std_msgs/Float32.h>
 
 #define maxN 5 // maximum number of inputs and outputs, 
 
@@ -39,6 +40,9 @@ namespace SOEM
 *  Inputs of this component are analog msgs
 *  Outputs of this component are doubles
 *
+*  This component is similar to AnalogOuts except data types of input
+*  and output ports are reversed. And this component also has the ability
+*  to directly stream the output to ROS. (different output data type)
 */
 
   class AnalogInsGeneric
@@ -47,14 +51,16 @@ namespace SOEM
     private:
 
     // ports
-    OutputPort<doubles> outports[maxN];
     InputPort<soem_beckhoff_drivers::AnalogMsg> inports[maxN];
+    OutputPort<doubles> outports[maxN];
+    OutputPort<std_msgs::Float32> outports_toROS[maxN];
 
     // Properties
     uint n_inports;
     uint n_outports;
     doubles input_sizes;
     doubles output_sizes;
+    bool direct_stream;
 
     // Local variables:
     uint n_inputs;
@@ -64,6 +70,7 @@ namespace SOEM
     // Global variables:
     std::vector<soem_beckhoff_drivers::AnalogMsg> inputdata_msgs;
     doubless outputdata;
+    std_msgs::Float32 outputdata_msg;
 
     public:
 

@@ -48,7 +48,6 @@ bool AnalogOutsGeneric::configureHook()
     for ( uint i = 0; i < n_inports; i++ ) {
         inputdata[i].resize(input_sizes[i]);
     }
-
     outputdata_msgs.resize(n_outports);
     for ( uint i = 0; i < n_outports; i++ ) {
         outputdata_msgs[i].values.resize(output_sizes[i]);
@@ -69,7 +68,6 @@ bool AnalogOutsGeneric::configureHook()
     for ( uint i = 0; i < max(n_inputs,n_outputs); i++ ) {
         mapping[i].assign(4,0.0);
     }
-
     uint k = 0;
     for ( uint i = 0; i < n_inports; i++ ) {
         for ( uint j = 0; j < input_sizes[i]; j++ ) {
@@ -80,7 +78,6 @@ bool AnalogOutsGeneric::configureHook()
             k++;
         }
     }
-
     k = 0;
     for ( uint i = 0; i < n_outports; i++ ) {
         for ( uint j = 0; j < output_sizes[i]; j++ ) {

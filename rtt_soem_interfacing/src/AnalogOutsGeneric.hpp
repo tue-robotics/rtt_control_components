@@ -39,6 +39,8 @@ namespace SOEM
 *  Inputs of this component are doubles
 *  Outputs of this component are analog msgs
 *
+*  This component is similar to AnalogIns except data types of input
+*  and output ports are reversed.
 */
 
   class AnalogOutsGeneric
@@ -47,8 +49,8 @@ namespace SOEM
     private:
 
     // ports
-    OutputPort<soem_beckhoff_drivers::AnalogMsg> outports[maxN];
     InputPort<doubles> inports[maxN];
+    OutputPort<soem_beckhoff_drivers::AnalogMsg> outports[maxN];
 
     // Properties
     uint n_inports;
