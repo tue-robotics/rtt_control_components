@@ -18,8 +18,7 @@ AnalogOutsGeneric::~AnalogOutsGeneric(){}
 bool AnalogOutsGeneric::configureHook()
 {
     if (input_vector.size()  == 0 || output_vector.size()  == 0 ) {
-        log(Error) << "AnalogOutsGeneric: Either the input_vector or the output_vector is not correctly specified. " << endlog();
-        log(Error) << "AnalogOutsGeneric: Please make sure these properties are set before the call to the configureHook()" << endlog();
+        log(Error) << "AnalogOutsGeneric: Please make sure the input_vector and output_vector are properly set before the call to the configureHook()" << endlog();
         return false;
     }
 
@@ -61,16 +60,18 @@ bool AnalogOutsGeneric::configureHook()
     }
 
     // Create mappingsmatrix
-    mapping.resize(n_inputs);
-    for ( uint i = 0; i < n_inputs; i++ ) {
+    mapping.resize(max(n_inputs,n_outputs));
+    for ( uint i = 0; i < max(n_inputs,n_outputs); i++ ) {
         mapping[i].assign(4,0.0);
     }
 
     uint k = 0;
     for ( uint i = 0; i < n_inports; i++ ) {
         for ( uint j = 0; j < input_vector[i]; j++ ) {
-            mapping[k][0] = i;
-            mapping[k][1] = j;
+            if (k < min(n_inputs,n_outputs)) {
+                mapping[k][0] = i;
+                mapping[k][1] = j;
+            }
             k++;
         }
     }
@@ -78,8 +79,10 @@ bool AnalogOutsGeneric::configureHook()
     k = 0;
     for ( uint i = 0; i < n_outports; i++ ) {
         for ( uint j = 0; j < output_vector[i]; j++ ) {
-            mapping[k][2] = i;
-            mapping[k][3] = j;
+            if (k < min(n_inputs,n_outputs)) {
+                mapping[k][2] = i;
+                mapping[k][3] = j;
+            }
             k++;
         }
     }
@@ -89,6 +92,19 @@ bool AnalogOutsGeneric::configureHook()
 
 bool AnalogOutsGeneric::startHook()
 {
+    // connection checks
+    for ( uint i = 0; i < n_inports; i++ ) {
+        if ( !inports[i].connected() ) {
+          log(Warning)<<"ReadEncoders:: in"<< i+1 <<" not connected!"<<endlog();
+        }
+    }
+    // connection checks
+    for ( uint i = 0; i < n_outports; i++ ) {
+        if ( !outports[i].connected() ) {
+          log(Warning)<<"ReadEncoders:: out"<< i+1 <<" not connected!"<<endlog();
+        }
+    }
+
 	return true;
 }
 
@@ -112,9 +128,8 @@ void AnalogOutsGeneric::updateHook()
         }
     }
 
-    // sending msgs to outports // to do test if outports.write(analog_msgs); would also work
+    // sending msgs to outports
     for ( uint i = 0; i < n_outports; i++ ) {
-        //log(Warning) << "AnalogOutsGeneric: i: [" << i << "]" << endlog();
         outports[i].write(analog_msgs[i]);
     }
 }
