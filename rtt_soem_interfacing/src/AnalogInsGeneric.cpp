@@ -14,7 +14,7 @@ AnalogInsGeneric::AnalogInsGeneric(const string& name) : TaskContext(name, PreOp
     addProperty( "numberofoutports", n_outports ).doc("The number of outports");
     addProperty( "input_sizes", input_sizes ).doc("Vector specifying sizes of the inports");
     addProperty( "output_sizes", output_sizes ).doc("Vector specifying sizes of the outports");
-    addProperty( "direct_stream", direct_stream ).doc("Boolean specifying wether the output has to be streamed directly to ROS");
+    addProperty( "direct_to_ROS", direct_to_ROS ).doc("Boolean specifying wether the output has to be streamed directly to ROS");
 }
 AnalogInsGeneric::~AnalogInsGeneric(){}
 
@@ -33,10 +33,10 @@ bool AnalogInsGeneric::configureHook()
         log(Error) << "AnalogInsGeneric: The size of input_sizes/output_sizes does not match the corresponding numberofinports/numberofoutports " << endlog();
         return false;
     }
-    if (direct_stream) {
+    if (direct_to_ROS) {
         for ( uint i = 0; i < n_outports; i++ ) {
             if (output_sizes[i] != 1.0) {
-                log(Error) << "AnalogInsGeneric: Direct_stream is true, But one of the output sizes is not equal to 1.0" << endlog();
+                log(Error) << "AnalogInsGeneric: direct_to_ROS is true, But one of the output sizes is not equal to 1.0" << endlog();
                 return false;
             }
         }
@@ -111,7 +111,7 @@ bool AnalogInsGeneric::startHook()
           log(Warning)<<"AnalogInsGeneric:: in"<< i+1 <<" not connected!"<<endlog();
         }
     }
-    if (direct_stream) {
+    if (direct_to_ROS) {
         for ( uint i = 0; i < n_outports; i++ ) {
             if ( !outports_toROS[i].connected() ) {
               log(Warning)<<"AnalogInsGeneric:: outmsg"<< i+1 <<" not connected!"<<endlog();
@@ -148,7 +148,7 @@ void AnalogInsGeneric::updateHook()
         }
     }
 
-    if (!direct_stream) {
+    if (!direct_to_ROS) {
         // Write output
         for ( uint i = 0; i < n_outports; i++ ) {
             outports[i].write(outputdata[i]);

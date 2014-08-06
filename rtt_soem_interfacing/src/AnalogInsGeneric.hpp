@@ -60,7 +60,7 @@ namespace SOEM
     uint n_outports;
     doubles input_sizes;
     doubles output_sizes;
-    bool direct_stream;
+    bool direct_to_ROS;
 
     // Local variables:
     uint n_inputs;
