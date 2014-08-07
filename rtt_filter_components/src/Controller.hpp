@@ -14,10 +14,9 @@
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
 #include <vector>
-//#include <scl/filters/DWeakIntegrator.hpp>
-//#include <scl/filters/DSecondOrderLowpass.hpp>
-//#include <scl/filters/DLeadLag.hpp>
-//#include <scl/filters/DPID.hpp>
+#include <scl/filters/DWeakIntegrator.hpp>
+#include <scl/filters/DSecondOrderLowpass.hpp>
+#include <scl/filters/DLeadLag.hpp>
 
 using namespace std;
 using namespace RTT;
@@ -26,6 +25,7 @@ namespace FILTERS
 {
 // Define a new type for easy coding:
 typedef vector<double> doubles;
+typedef vector<int> ints;
 
 /**
    * @brief A Component containing a complete controller
@@ -43,14 +43,35 @@ class Controller
 {
 private:
 
-    // ports
+    // Ports
     InputPort<doubles> inport_references;
     InputPort<doubles> inport_positions;
     OutputPort<doubles> outport_controloutput;
+    OutputPort<bool> safe_outport;
 
-    // properties
+    // Properties
+    double Ts;
     uint vector_size;
     doubles gains;
+    doubles fz_WI;
+    doubles fz_LL;
+    doubles fp_LL;
+    doubles fp_LP;
+    doubles dp_LP;
+    doubles max_errors;
+    doubles motor_saturation;
+    double max_sat_time;
+
+    // Variables
+    bool errors;
+    ints firstSatInstance;
+    ints firstErrInstance;
+    doubles timeReachedSaturation;
+
+    // Filters
+    vector<DFILTERS::DWeakIntegrator*> filters_WI;
+    vector<DFILTERS::DLeadLag*> filters_LL;
+    vector<DFILTERS::DSecondOrderLowpass*> filters_LP;
 
 public:
 
