@@ -47,7 +47,8 @@ private:
     InputPort<doubles> inport_references;
     InputPort<doubles> inport_positions;
     OutputPort<doubles> outport_controloutput;
-    OutputPort<bool> safe_outport;
+    OutputPort<bool> outport_safety;
+    OutputPort<doubles> outport_controlerrors;
 
     // Properties
     double Ts;
@@ -67,6 +68,9 @@ private:
     ints firstSatInstance;
     ints firstErrInstance;
     doubles timeReachedSaturation;
+    doubles zero_output;
+    int cntr;
+    int cntr_10hz;
 
     // Filters
     vector<DFILTERS::DWeakIntegrator*> filters_WI;

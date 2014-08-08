@@ -40,8 +40,8 @@ Controller::Controller(const string& name) :
     addPort( "ref_in",              inport_references)      .doc("Control Reference port");
     addEventPort( "pos_in",         inport_positions)       .doc("Position Port");
     addPort( "out",                 outport_controloutput)  .doc("Control output port");
-    addPort( "safe",                safe_outport)           .doc("Boolean Safety Port, safe=true means safe and safe=false disables all actuators");
-
+    addPort( "safe",                outport_safety)         .doc("Boolean Safety Port, safe=true means safe and safe=false disables all actuators");
+    addPort( "controlerrors",       outport_controlerrors)  .doc("Controlerrors output port % publishes at 10Hz");
 }
 
 Controller::~Controller(){}
@@ -51,6 +51,7 @@ bool Controller::configureHook()
     firstSatInstance.assign(vector_size,0);
     firstErrInstance.assign(vector_size,0);
     timeReachedSaturation.assign(vector_size,0.0);
+    zero_output.assign(vector_size,0.0);
 
     filters_WI.resize(vector_size);
     for (uint i = 0; i < vector_size; i++) {
@@ -79,6 +80,8 @@ bool Controller::configureHook()
 bool Controller::startHook()
 {
     errors=false;
+    cntr = 0;
+    cntr_10hz = (int) 1.0/(Ts*10.0); // determine value to which cntr has to go to publish at 10hz
 
     // Check validity of Ports:
     if ( !inport_references.connected() || !inport_positions.connected() ) {
@@ -88,17 +91,22 @@ bool Controller::startHook()
 
     if ( !outport_controloutput.connected() ) {
         log(Error)<<"Controller: Outputport not connected!"<<endlog();
-        return false;
+     //   return false;
     }
 
     if (vector_size < 1 || Ts <= 0.0) {
-        log(Error)<<"WeakIntegrator:: parameters not valid!"<<endlog();
+        log(Error)<<"Controller:: vector_size or Ts parameter is invalid!"<<endlog();
+        return false;
+    }
+    
+    if (fz_WI.size() != vector_size || fz_LL.size() != vector_size || fp_LL.size() != vector_size || fp_LP.size() != vector_size || dp_LP.size() != vector_size || gains.size() != vector_size || max_errors.size() != vector_size || motor_saturation.size() != vector_size ) {
+        log(Error)<<"Controller:: The size of one of your vector inputs is not equal to the vector_size parameter!"<<endlog();    
         return false;
     }
 
     for (uint i = 0; i < vector_size; i++) {
-        if (fz_WI[i] < 0.0) {
-            log(Error)<<"WeakIntegrator:: parameters not valid!"<<endlog();
+        if (fz_WI[i] < 0.0 || fz_LL[i] < 0.0 || fp_LL[i] < 0.0 || fp_LP[i] < 0.0 || dp_LP[i] < 0.0 ) {
+            log(Error)<<"Controller:: One of the zero's, poles or damping coefficients of your filters is below zero!"<<endlog();
             return false;
         }
     }
@@ -150,33 +158,31 @@ void Controller::updateHook()
 
     // Safety check 1 - Maximum joint error // to do check if nulling is a problem
     for ( uint i = 0; i < vector_size; i++ ) {
-        if( (fabs(controlerrors[i])>max_errors[i]) ) {
+        if( (fabs(controlerrors[i])>max_errors[i] && !errors) ) {
             firstErrInstance[i]++;
             if( errors == false && firstErrInstance[i] == 5){
                 ROS_ERROR_STREAM( "Controller: Error of joint q"<<i+1<<" exceeded limit ("<<max_errors[i]<<"). output disabled." );
                 errors = true;
-            } else {
-                firstErrInstance[i] = 0;
             }
+        } else {
+			firstErrInstance[i] = 0;
         }
     }
 
     // Safety check 2 - Motor saturation
-    doubles controllerOutputs(vector_size,0.0);
     long double timeNow = os::TimeService::Instance()->getNSecs()*1e-9;
-
     for(unsigned int i = 0;i<vector_size;i++){
         if(firstSatInstance[i]==0 && fabs(output[i])>=motor_saturation[i]){
             timeReachedSaturation[i]=timeNow;
             firstSatInstance[i]=1;
         }
-        else if(fabs(controllerOutputs[i])<motor_saturation[i]){
+        else if(fabs(output[i])<motor_saturation[i]){
             timeReachedSaturation[i]=timeNow;
             firstSatInstance[i]=0;
         }
         if(fabs(timeNow-timeReachedSaturation[i])>=max_sat_time){
             if(errors==false){
-                ROS_ERROR_STREAM( "SafetyMonitor: Motor output "<<i+1<<" satured too long (absolute "<<max_sat_time<<" sec above "<<fabs(motor_saturation[i])<<"). output disabled." );
+                ROS_ERROR_STREAM( "Controller: Motor output "<<i+1<<" satured too long (absolute "<<max_sat_time<<" sec above "<<fabs(motor_saturation[i])<<"). output disabled." );
                 errors = true;
             }
         }
@@ -184,12 +190,19 @@ void Controller::updateHook()
 
     // Write the outputs
     if (!errors) {
-        safe_outport.write(true);
+        outport_safety.write(true);
         outport_controloutput.write( output );
     }
     else {
-        safe_outport.write(false);
+        outport_safety.write(false);
+        outport_controloutput.write( zero_output );
     }
+
+    if (cntr == cntr_10hz){
+        cntr = 0;
+        outport_controlerrors.write( controlerrors );
+    }
+    cntr++;
 }
 
 ORO_CREATE_COMPONENT(FILTERS::Controller)
