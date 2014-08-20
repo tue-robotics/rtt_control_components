@@ -25,17 +25,30 @@ namespace SOEM
 /*! \class AnalogOutsGeneric
 *  \brief Defines a configurable Orocos component for Analog Outputs
 *
-*  To configure this component, the input_sizes and the output_sizes
-*  should be provided. If for example the input consists of two ports
-*  respectively of size 4 and 1. Than the input vector should be [4 1]
-*  Equally, if there are 3 outports of size 3 than the output_sizes
-*  should be [3 3 3].
-*
-*  Note that at the moment it is not possible to do completely free
-*  mapping, the order of inputs is for the in and output the same. Also
-*  every output is subsequent to the previous so it is not possible to
-*  skip an unused input or output.
-*
+*  To configure this component the following parameters should be 
+*  provided:
+* 
+*  numberofinports, numberofoutports
+*  input_sizes, output_sizes
+*  output_positions
+* 
+*  If for example the input consists of two ports respectively of size 
+*  4 and 1 than the input_sizes should be [4 1], with numberofinports 2
+*  Equally, if there are three outports of size three than output_sizes  
+*  should be [3 3 3], with numberofoutports 3
+* 
+*  Suppose we want to map as shown underneath:
+*  IN[size]:	OUT[size]:
+*  input1[4]	ouput1[3]	(First three elements of input1)
+* 				output2[3]	(Last element of input1 + two obs outputs)
+*  input2[1]	output3[3]	(First Element of input2 + two obs outputs)
+*  
+*  Than our output_positions should look like:
+*  output_positions = [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+*  
+*  Note that only sequential mapping is supported. You can not freely
+*  map inputs to outputs. Only skip certain outputs.
+*  
 *  Inputs of this component are doubles
 *  Outputs of this component are analog msgs
 *
@@ -57,6 +70,7 @@ namespace SOEM
     uint n_outports;
     doubles input_sizes;
     doubles output_sizes;
+    doubles output_positions;
 
     // Local variables:
     uint n_inputs;
