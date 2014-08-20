@@ -30,6 +30,12 @@ bool AnalogInsGeneric::configureHook()
     for ( uint i = 0; i < n_outports; i++ ) {
         n_outputs += output_sizes[i];
     }
+    uint nonobsolete_input_positions = 0;
+    for ( uint i = 0; i < input_positions.size(); i++ ) {
+        if (input_positions[i] != 0.0) {
+            nonobsolete_input_positions++;
+        }
+    }
 
     // Verify property feasibility
     if (input_sizes.size()  == 0 || output_sizes.size()  == 0 ) {
@@ -46,6 +52,10 @@ bool AnalogInsGeneric::configureHook()
     }
     if ( input_positions.size() != n_inputs) {
         log(Error) << "AnalogInsGeneric: The size of output_positions does not match n_outputs (which is the sum of all elements of output_sizes)" << endlog();
+        return false;
+    }
+    if ( nonobsolete_input_positions != n_outputs) {
+        log(Error) << "AnalogInsGeneric:  " << nonobsolete_input_positions << " non zero entries in input_positions is not equal to n_outputs: " << n_outputs << "!" << endlog();
         return false;
     }
     if (direct_to_ROS) {

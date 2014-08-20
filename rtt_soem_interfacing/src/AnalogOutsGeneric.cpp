@@ -29,6 +29,12 @@ bool AnalogOutsGeneric::configureHook()
     for ( uint i = 0; i < n_outports; i++ ) {
         n_outputs += output_sizes[i];
     }
+    uint nonobsolete_output_positions = 0;
+    for ( uint i = 0; i < output_positions.size(); i++ ) {
+        if (output_positions[i] != 0.0) {
+            nonobsolete_output_positions++;
+        }
+    }
 
     // Verify property feasibility
     if (input_sizes.size()  == 0 || output_sizes.size()  == 0 ) {
@@ -49,6 +55,10 @@ bool AnalogOutsGeneric::configureHook()
     }
     if ( n_inputs > n_outputs) {
         log(Warning) << "AnalogOutsGeneric: There are more inputs than outputs. The last inputs will be discarded!" << endlog();
+    }
+    if ( nonobsolete_output_positions != n_inputs) {
+        log(Error) << "AnalogInsGeneric:  " << nonobsolete_output_positions << " non zero entries in output_positions is not equal to n_inputs: " << n_inputs << "!" << endlog();
+        return false;
     }
 
     // Resizing of inputdata, and outputdata_msgs
