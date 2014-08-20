@@ -14,12 +14,23 @@ AnalogInsGeneric::AnalogInsGeneric(const string& name) : TaskContext(name, PreOp
     addProperty( "numberofoutports", n_outports ).doc("The number of outports");
     addProperty( "input_sizes", input_sizes ).doc("Vector specifying sizes of the inports");
     addProperty( "output_sizes", output_sizes ).doc("Vector specifying sizes of the outports");
+    addProperty( "input_positions", input_positions ).doc("Vector specifying which inputs are obsolete");
     addProperty( "direct_to_ROS", direct_to_ROS ).doc("Boolean specifying wether the output has to be streamed directly to ROS");
 }
 AnalogInsGeneric::~AnalogInsGeneric(){}
 
 bool AnalogInsGeneric::configureHook()
 {
+	// Determine number of in- and outputs
+    n_inputs = 0;
+    n_outputs = 0;
+    for ( uint i = 0; i < n_inports; i++ ) {
+        n_inputs += input_sizes[i];
+    }
+    for ( uint i = 0; i < n_outports; i++ ) {
+        n_outputs += output_sizes[i];
+    }
+
     // Verify property feasibility
     if (input_sizes.size()  == 0 || output_sizes.size()  == 0 ) {
         log(Error) << "AnalogInsGeneric: Please make sure the input_sizes and output_sizes are properly set before the call to the configureHook()" << endlog();
@@ -33,6 +44,10 @@ bool AnalogInsGeneric::configureHook()
         log(Error) << "AnalogInsGeneric: The size of input_sizes/output_sizes does not match the corresponding numberofinports/numberofoutports " << endlog();
         return false;
     }
+    if ( input_positions.size() != n_inputs) {
+        log(Error) << "AnalogInsGeneric: The size of output_positions does not match n_outputs (which is the sum of all elements of output_sizes)" << endlog();
+        return false;
+    }
     if (direct_to_ROS) {
         for ( uint i = 0; i < n_outports; i++ ) {
             if (output_sizes[i] != 1.0) {
@@ -40,16 +55,6 @@ bool AnalogInsGeneric::configureHook()
                 return false;
             }
         }
-    }
-
-    // Determine number of in- and outputs
-    n_inputs = 0;
-    n_outputs = 0;
-    for ( uint i = 0; i < n_inports; i++ ) {
-        n_inputs += input_sizes[i];
-    }
-    for ( uint i = 0; i < n_outports; i++ ) {
-        n_outputs += output_sizes[i];
     }
 
     // Resizing of inputdata_msgs, and outputdata
@@ -74,21 +79,29 @@ bool AnalogInsGeneric::configureHook()
         addPort( name_outport_toROS, outports_toROS[i] );
     }
 
-    // Create mapping matrix
+    // Create empty mapping matrix - each row maps one input to one output
     mapping.resize(max(n_inputs,n_outputs));
     for ( uint i = 0; i < max(n_inputs,n_outputs); i++ ) {
         mapping[i].assign(4,0.0);
     }
+    // Fill first two columns of mapping matrix - First column specifies which inport and the second column specifies which double from that input has to be mapped
     uint k = 0;
+    uint l = 0;
     for ( uint i = 0; i < n_inports; i++ ) {
         for ( uint j = 0; j < input_sizes[i]; j++ ) {
-            if (k < min(n_inputs,n_outputs)) {
-                mapping[k][0] = i;
-                mapping[k][1] = j;
+            if (k - l < min(n_inputs,n_outputs)) {
+                if (input_positions[k] != 0.0) {
+                    mapping[k-l][0] = i;
+                    mapping[k-l][1] = j;
+                } else {
+                    l++;
+                }
             }
             k++;
         }
     }
+
+    // Fill last two columns of mapping matrix -  Third column specifies which output and the fourth column specifies to which double in the vector of that output
     k = 0;
     for ( uint i = 0; i < n_outports; i++ ) {
         for ( uint j = 0; j < output_sizes[i]; j++ ) {
@@ -99,6 +112,10 @@ bool AnalogInsGeneric::configureHook()
             k++;
         }
     }
+    
+    for ( uint m = 0; m < max(n_inputs,n_outputs); m++ ) {
+		log(Warning) << "AI: mapping matrix is: [" << mapping[m][0] << "," << mapping[m][1] << "," << mapping[m][2] << "," << mapping[m][3] << "]" << endlog();		
+	}
 
     return true;
 }

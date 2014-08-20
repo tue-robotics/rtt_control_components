@@ -26,16 +26,33 @@ namespace SOEM
 /*! \class AnalogInsGeneric
 *  \brief Defines a configurable Orocos component for Analog Inputs
 *
-*  To configure this component, the input_sizes and the output_sizes
-*  should be provided. If for example the input consists of two ports
-*  respectively of size 4 and 1. Than the input vector should be [4 1]
-*  Equally, if there are 3 outports of size 3 than the output_sizes
-*  should be [3 3 3].
-*
-*  Note that at the moment it is not possible to do completely free
-*  mapping, the order of inputs is for the in and output the same. Also
-*  every output is subsequent to the previous so it is not possible to
-*  skip an unused input or output.
+*  To configure this component the following parameters should be 
+*  provided:
+* 
+*  numberofinports, numberofoutports
+*  input_sizes, output_sizes
+*  input_positions
+* 
+*  If for example the input consists of three ports of size three
+*  than the input_sizes should be [3 3 3], with numberofinports 3
+*  Equally, if there is one outport of size 8
+*  than output_sizes should be [8], with numberofoutports 1
+* 
+*  Suppose we want to map as shown underneath:
+*  IN[size]:	OUT[size]:
+*  input1[3]	output1[8]	(first two elements of input1 to first two elements of output1)
+*  input2[3]    output1[8]	(three elements of input2 to element 3,4,5 of output1)
+*  input3[3]	output1[8]  (three elements of input3 to element 6,7,8 of output1)
+*  
+*  Than our input_positions should look like:
+*  output_positions = [1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+*  (size of input_positions should be equal to sum of input_sizes)
+*  
+*  Note that only sequential mapping is supported. You can not freely
+*  map inputs to outputs. Only skip certain outputs.
+*  
+*  Inputs of this component are doubles
+*  Outputs of this component are analog msgs
 *
 *  Inputs of this component are analog msgs
 *  Outputs of this component are doubles
@@ -60,6 +77,7 @@ namespace SOEM
     uint n_outports;
     doubles input_sizes;
     doubles output_sizes;
+    doubles input_positions;
     bool direct_to_ROS;
 
     // Local variables:

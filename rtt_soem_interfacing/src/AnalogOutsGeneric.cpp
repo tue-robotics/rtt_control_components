@@ -29,26 +29,26 @@ bool AnalogOutsGeneric::configureHook()
     for ( uint i = 0; i < n_outports; i++ ) {
         n_outputs += output_sizes[i];
     }
-	
-    // Verify if supplied properties are feasible
+
+    // Verify property feasibility
     if (input_sizes.size()  == 0 || output_sizes.size()  == 0 ) {
         log(Error) << "AnalogOutsGeneric: Please make sure the input_sizes and output_sizes are properly set before the call to the configureHook()" << endlog();
         return false;
     }
     if (n_inports  > maxN || n_outports  > maxN ) {
-        log(Error) << "AnalogInsGeneric: The maximum number of ports has exceeded the hardcoded value maxN. Verify the number of ports and if necessary increase maxN" << endlog();
+        log(Error) << "AnalogOutsGeneric: The maximum number of ports has exceeded the hardcoded value maxN. Verify the number of ports and if necessary increase maxN" << endlog();
         return false;
     }
     if (input_sizes.size()  != n_inports || output_sizes.size()  != n_outports ) {
-        log(Error) << "AnalogInsGeneric: The size of input_sizes/output_sizes does not match the corresponding numberofinports/numberofoutports " << endlog();
+        log(Error) << "AnalogOutsGeneric: The size of input_sizes/output_sizes does not match the corresponding numberofinports/numberofoutports " << endlog();
         return false;
     }
     if ( output_positions.size() != n_outputs) {
-        log(Error) << "AnalogInsGeneric: The size of output_positions does not match n_outputs (which is the sum of all elements of output_sizes)" << endlog();
+        log(Error) << "AnalogOutsGeneric: The size of output_positions does not match n_outputs (which is the sum of all elements of output_sizes)" << endlog();
         return false;
     }
     if ( n_inputs > n_outputs) {
-        log(Warning) << "AnalogInsGeneric: There are more inputs than outputs. The last inputs will be discarded!" << endlog();
+        log(Warning) << "AnalogOutsGeneric: There are more inputs than outputs. The last inputs will be discarded!" << endlog();
     }
 
     // Resizing of inputdata, and outputdata_msgs
@@ -105,7 +105,7 @@ bool AnalogOutsGeneric::configureHook()
     }
     
     for ( uint m = 0; m < max(n_inputs,n_outputs); m++ ) {
-		log(Warning) << "AOG: mapping matrix is: [" << mapping[m][0] << "," << mapping[m][1] << "," << mapping[m][2] << "," << mapping[m][3] << "]" << endlog();		
+		log(Warning) << "AO: mapping matrix is: [" << mapping[m][0] << "," << mapping[m][1] << "," << mapping[m][2] << "," << mapping[m][3] << "]" << endlog();		
 	}
 
     return true;

@@ -45,6 +45,7 @@ namespace SOEM
 *  
 *  Than our output_positions should look like:
 *  output_positions = [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+*  (size of output_positions should be equal to sum of output_sizes)
 *  
 *  Note that only sequential mapping is supported. You can not freely
 *  map inputs to outputs. Only skip certain outputs.
