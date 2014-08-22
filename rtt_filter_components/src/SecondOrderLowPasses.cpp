@@ -51,7 +51,7 @@ bool SecondOrderLowPasses::configureHook()
     for (uint i = 0; i < vector_size; i++) {
 
         // Initialize filters, use Prewarp Tustin method for discretization
-        filters[i] = new DFILTERS::DSecondOrderLowpass(fp[i], dp[i], Ts);
+        filters[i] = new DFILTERS::DSecondOrderLowpass(fp[i], dp[i], Ts, 4);
     }
 
     return true;

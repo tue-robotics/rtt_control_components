@@ -17,6 +17,7 @@
 #include <scl/filters/DWeakIntegrator.hpp>
 #include <scl/filters/DSecondOrderLowpass.hpp>
 #include <scl/filters/DLeadLag.hpp>
+#include <scl/filters/DSkewedNotch.hpp>
 
 using namespace std;
 using namespace RTT;
@@ -54,11 +55,15 @@ private:
     double Ts;
     uint vector_size;
     doubles gains;
-    doubles fz_WI;
-    doubles fz_LL;
-    doubles fp_LL;
-    doubles fp_LP;
-    doubles dp_LP;
+    doubles fz_WeakIntegrator;
+    doubles fz_LeadLag;
+    doubles fp_LeadLag;
+    doubles fz_Notch;
+    doubles dz_Notch;
+    doubles fp_Notch;
+    doubles dp_Notch;
+    doubles fp_LowPass;
+    doubles dp_LowPass;
     doubles max_errors;
     doubles motor_saturation;
     double max_sat_time;
@@ -73,9 +78,10 @@ private:
     int cntr_10hz;
 
     // Filters
-    vector<DFILTERS::DWeakIntegrator*> filters_WI;
-    vector<DFILTERS::DLeadLag*> filters_LL;
-    vector<DFILTERS::DSecondOrderLowpass*> filters_LP;
+    vector<DFILTERS::DWeakIntegrator*> filters_WeakIntegrator;
+    vector<DFILTERS::DLeadLag*> filters_LeadLag;
+    vector<DFILTERS::DSecondOrderLowpass*> filters_LowPass;
+    vector<DFILTERS::DSkewedNotch*> filters_Notch;
 
 public:
 
