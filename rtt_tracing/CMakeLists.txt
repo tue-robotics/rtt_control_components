@@ -21,3 +21,5 @@ include(${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake)
 #common commands for building c++ executables and libraries
 orocos_component(Tracing src/Tracing.cpp)
 orocos_component(TracingOneSignal src/TracingTimeStamp.cpp)
+orocos_component(Reporter src/Reporter.cpp)
+orocos_component(ReporterTrigger src/ReporterTrigger.cpp)
