@@ -178,4 +178,4 @@ void MatrixTransform::updateHook()
 
 }
 
-ORO_CREATE_COMPONENT(MatrixTransform)
+ORO_CREATE_COMPONENT(MATH::MatrixTransform)
