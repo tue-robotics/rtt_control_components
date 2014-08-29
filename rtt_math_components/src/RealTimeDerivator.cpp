@@ -97,4 +97,4 @@ double RealTimeDerivator::determineDt()
   return dt;
 }
 
-ORO_CREATE_COMPONENT(AMIGO::RealTimeDerivator)
+ORO_CREATE_COMPONENT(MATH::RealTimeDerivator)
