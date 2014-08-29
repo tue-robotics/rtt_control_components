@@ -9,7 +9,7 @@
 using namespace std;
 using namespace RTT;
 
-namespace MSG // Just because it looks nice
+namespace ROS // Just because it looks nice
 {
   // Define a new type for easy coding:
   typedef vector<double> doubles;

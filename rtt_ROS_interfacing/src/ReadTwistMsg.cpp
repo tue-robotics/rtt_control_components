@@ -6,7 +6,7 @@
 
 using namespace std;
 using namespace RTT;
-using namespace MSG;
+using namespace ROS;
 
 ReadTwistMsg::ReadTwistMsg(const string& name) : TaskContext(name, PreOperational)
 {
@@ -145,4 +145,4 @@ void ReadTwistMsg::updateHook()
   outport.write( output );
 }
 
-ORO_CREATE_COMPONENT(MSG::ReadTwistMsg)
+ORO_CREATE_COMPONENT(ROS::ReadTwistMsg)

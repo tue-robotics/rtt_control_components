@@ -12,7 +12,7 @@
 using namespace std;
 using namespace RTT;
 
-namespace MSG
+namespace ROS
 {
 typedef std::vector<double> doubles;
 

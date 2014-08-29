@@ -10,7 +10,7 @@
 
 using namespace std;
 using namespace RTT;
-using namespace MSG;
+using namespace ROS;
 
 PublishOdometry::PublishOdometry(const std::string& name) : TaskContext(name)
 {
@@ -169,4 +169,4 @@ void PublishOdometry::resetOdometry()
     yaw_correction = -prev_pos[2];
 }
 
-ORO_CREATE_COMPONENT(MSG::PublishOdometry)
+ORO_CREATE_COMPONENT(ROS::PublishOdometry)
