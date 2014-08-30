@@ -18,7 +18,7 @@ inline string to_string (const T& t){
 
 using namespace RTT;
 
-namespace AMIGO // Just because it looks nice
+namespace MATH // Just because it looks nice
 {
   // Define a new type for easy coding:
   typedef vector<double> doubles;

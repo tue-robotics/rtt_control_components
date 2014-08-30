@@ -12,7 +12,7 @@
 
 using namespace std;
 using namespace RTT;
-using namespace AMIGO;
+using namespace MATH;
 
 MatrixTransform::MatrixTransform(const string& name) : TaskContext(name, PreOperational)
 {
