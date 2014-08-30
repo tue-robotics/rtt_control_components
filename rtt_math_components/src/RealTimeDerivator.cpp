@@ -16,7 +16,7 @@
 
 using namespace std;
 using namespace RTT;
-using namespace AMIGO;
+using namespace MATH;
 
 RealTimeDerivator::RealTimeDerivator(const string& name) : TaskContext(name, PreOperational) {
   addPort("u", inport);

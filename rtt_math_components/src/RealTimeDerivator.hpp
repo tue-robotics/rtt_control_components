@@ -21,7 +21,7 @@
 using namespace std;
 using namespace RTT;
 
-namespace AMIGO
+namespace MATH
 {
   typedef vector<double> doubles;
   
