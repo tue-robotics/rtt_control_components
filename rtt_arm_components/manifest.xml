@@ -14,7 +14,6 @@
   <depend package="tf"/>
   <depend package="kdl"/>
   <depend package="kdl_parser"/>
-  <depend package="common_rosdeps" />
   <depend package="rtt_std_msgs"/>
   <depend package="rtt_amigo_msgs"/> <!--depend package="To do Remove: Use no amigo gripper msgs in gripper component"/>-->
   <rosdep name="eigen" /> 
