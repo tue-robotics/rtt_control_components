@@ -32,32 +32,37 @@ namespace SOEM // Just because it looks nice
     private:
     // Number of encoders to read
     uint N;
+    // Number of time values to read
+    uint Nt;
 
     // Counter
     uint counter;
 
     // Declaring input- and output_ports
     InputPort<EncoderMsg> inport_enc[maxN];
-    InputPort<EncoderMsg> inport_time;
+    InputPort<EncoderMsg> inport_time[maxN];
     InputPort<bool> inport_reNull;
     OutputPort<doubles> outport;
     OutputPort<doubles> outport_enc;
+    OutputPort<doubles> outport_time;
     
 
     // Declaring message types
-    double previous_enc_position[maxN];
+    uint previous_enc_position[maxN];
     doubles SI_values;
     doubles ENC_value;
-    double time_value;
-    double previous_time_value;
+    doubles TIME_value;
+    doubles previous_time_value;
     doubles init_SI_value;
     int ienc[maxN];
     doubles enc2SI;
     doubles offset;
     uint encoderbits;
     uint timebits;
+    doubles time2enc;
     double timestep;
-    double time_shift;
+    doubles time_shift;
+    double time_correction;
     double Ts;
     
 
@@ -74,7 +79,7 @@ namespace SOEM // Just because it looks nice
     private:
 
     double readEncoder( int i );
-    double readTime();
+    double readTime( int i );
     };
 }
 #endif
