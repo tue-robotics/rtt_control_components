@@ -1,6 +1,6 @@
-/** Equals.hpp
+/** Equal.hpp
  *
- * @class Equals
+ * @class Equal
  *
  * \author Tim Clephas
  * \date March, 2011
@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef EQUALS_HPP
-#define EQUALS_HPP
+#ifndef EQUAL_HPP
+#define EQUAL_HPP
 
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
@@ -31,7 +31,7 @@ namespace MATH
 
   typedef vector<double> doubles;
 
-  class Equals
+  class Equal
   : public RTT::TaskContext
     {
     private:
@@ -46,8 +46,8 @@ namespace MATH
 	
     public:
 
-		Equals(const string& name);
-		~Equals();
+		Equal(const string& name);
+		~Equal();
 
 		bool configureHook();
 		bool startHook();

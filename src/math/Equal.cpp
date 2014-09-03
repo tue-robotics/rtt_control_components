@@ -1,6 +1,6 @@
-/** Equals.cpp
+/** Equal.cpp
  *
- * @class Equals
+ * @class Equal
  *
  * \author Tim Clephas
  * \date March, 2011
@@ -18,7 +18,7 @@ using namespace std;
 using namespace RTT;
 using namespace MATH;
 
-Equals::Equals(const string& name) :
+Equal::Equal(const string& name) :
 	    TaskContext(name, PreOperational)
 {
   // Adding property
@@ -28,16 +28,16 @@ Equals::Equals(const string& name) :
   addPort( "out", outport );
 }
 
-Equals::~Equals(){}
+Equal::~Equal(){}
 
-bool Equals::configureHook()
+bool Equal::configureHook()
 {
   return true;
 }
 
-bool Equals::startHook()
+bool Equal::startHook()
 {
-  Logger::In in("Equals::startHook()");
+  Logger::In in("Equal::startHook()");
 
   // Check validity of Ports
   if ( !inport.connected() ) {
@@ -58,7 +58,7 @@ bool Equals::startHook()
   return true;
 }
 
-void Equals::updateHook()
+void Equal::updateHook()
 {
   uint vectorsize = values.size();
 
@@ -80,4 +80,4 @@ void Equals::updateHook()
   outport.write( output );
 }
 
-ORO_CREATE_COMPONENT(MATH::Equals)
+ORO_CREATE_COMPONENT(MATH::Equal)

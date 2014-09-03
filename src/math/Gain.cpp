@@ -2,7 +2,7 @@
  * author: Tim Clephas
  * email:  t.t.g.clephas@student.tue.nl
  *
- * filename:             Gains.cpp
+ * filename:             Gain.cpp
  * Last modification:    March 2011
  */
 
@@ -16,7 +16,7 @@ using namespace std;
 using namespace RTT;
 using namespace MATH;
 
-Gains::Gains(const string& name) : TaskContext(name, PreOperational)
+Gain::Gain(const string& name) : TaskContext(name, PreOperational)
 {
   addProperty( "vectorsize", vectorsize ).doc("An unsigned integer that specifies the size of the vector");
   addProperty( "gain", gain ).doc("An array containing the gain values");
@@ -25,36 +25,36 @@ Gains::Gains(const string& name) : TaskContext(name, PreOperational)
   addEventPort( "in", inport );
   addPort( "out", outport );
 }
-Gains::~Gains(){}
+Gain::~Gain(){}
 
-bool Gains::configureHook()
+bool Gain::configureHook()
 {
   return true;
 }
 
-bool Gains::startHook()
+bool Gain::startHook()
 {
   // Check validity of Ports:
   if ( !inport.connected() )
   {
-    log(Error)<<"Gains::inputport not connected!"<<endlog();
+    log(Error)<<"Gain::inputport not connected!"<<endlog();
     // No connection was made, can't do my job !
     return false;
   }
   if ( !outport.connected() )
   {
-    log(Warning)<<"Gains::Outputport not connected!"<<endlog();
+    log(Warning)<<"Gain::Outputport not connected!"<<endlog();
   }
   if ( vectorsize != gain.size() )
   {
-    log(Error)<<"Gains::vectorsizes is "<<vectorsize<<" while gain array is "<<gain.size()<<endlog();
+    log(Error)<<"Gain::vectorsizes is "<<vectorsize<<" while gain array is "<<gain.size()<<endlog();
     // No connection was made, can't do my job !
     return false;
   }
   return true;
 }
 
-void Gains::updateHook()
+void Gain::updateHook()
 {
   // Read the inputports
   doubles input(vectorsize,0.0);
@@ -72,11 +72,11 @@ void Gains::updateHook()
   outport.write( output );
 }
 
-void Gains::stopHook()
+void Gain::stopHook()
 {
   // Close down neatly
   doubles output(vectorsize,0.0);
   outport.write( output );
 }
 
-ORO_CREATE_COMPONENT(MATH::Gains)
+ORO_CREATE_COMPONENT(MATH::Gain)

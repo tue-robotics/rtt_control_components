@@ -43,6 +43,16 @@
   <run_depend>rtt_amigo_msgs</run_depend>
   <run_depend>rtt_rosgraph_msgs</run_depend>
   <run_depend>eigen</run_depend>
+  
+  <export>
+    <rtt_ros>
+      <plugin_depend>rtt_std_msgs</plugin_depend>
+      <plugin_depend>rtt_std_msgs</plugin_depend>
+      <plugin_depend>rtt_std_msgs</plugin_depend>
+      <plugin_depend>rtt_amigo_msgs</plugin_depend>
+      <plugin_depend>rtt_rosgraph_msgs</plugin_depend>
+    </rtt_ros>
+  </export>
 </package>
 
 

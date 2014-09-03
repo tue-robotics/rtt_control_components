@@ -19,7 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
 include_directories(${catkin_INCLUDE_DIRS})
 
 include_directories( 
-	include/math 
+	include/math
 	include/arm 
 	include/discontinuities  
 	include/filters
@@ -31,9 +31,24 @@ include_directories(
 	include/ROSinterfacing
 	include ${scl_filters_INCLUDE_DIRS} ${USE_OROCOS_INCLUDE_DIRS})
 
-catkin_package(
-   CATKIN_DEPENDS rtt_ros std_msgs diagnostic_msgs amigo_ref_interpolator scl_filters roscpp tf kdl_parser rtt_std_msgs
-   DEPENDS eigen)
+orocos_install_headers(
+	DIRECTORY include/math
+	include/arm 
+	include/discontinuities  
+	include/filters
+	include/signalrouting
+	include/sources
+	include/supervisory
+	include/tracing
+	include/SOEMinterfacing
+	include/ROSinterfacing
+	)
+
+# Export package information (replaces catkin_package() macro) 
+orocos_generate_package(
+  INCLUDE_DIRS include
+  DEPENDS rtt_ros eigen
+)   
 
 ### Orocos Components - SIGNALROUTING ###
 orocos_component(Demux src/signalrouting/Demux.cpp)

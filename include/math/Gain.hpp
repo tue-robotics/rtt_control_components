@@ -2,12 +2,12 @@
  * author: Tim Clephas
  * email:  t.t.g.clephas@student.tue.nl
  *
- * filename:             Gains.hpp
+ * filename:             Gain.hpp
  * Last modification:    March 2011
  */
 
-#ifndef GAINS_HPP
-#define GAINS_HPP
+#ifndef GAIN_HPP
+#define GAIN_HPP
 
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
@@ -29,7 +29,7 @@ namespace MATH
    * The component is configured using only the 'vectorsize'-property.
    */
 
-  class Gains
+  class Gain
   : public RTT::TaskContext
     {
     private:
@@ -56,8 +56,8 @@ namespace MATH
     /**
      * Set up a component for adding two vectors.
      */
-    Gains(const string& name);
-    ~Gains();
+    Gain(const string& name);
+    ~Gain();
 
     bool configureHook();
     bool startHook();
