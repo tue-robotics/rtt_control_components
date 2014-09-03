@@ -29,10 +29,10 @@ Controller::Controller(const string& name) :
     addProperty("zero_freq_WeakIntegrator",     fz_WeakIntegrator)      .doc("zero frequency of the weak integrator");
     addProperty("zero_freq_LeadLag",            fz_LeadLag)             .doc("zero frequency of the lead lag filter");
     addProperty("pole_freq_LeadLag",            fp_LeadLag)             .doc("pole frequency of the lead lag filter");
-    addProperty("zero_frequency_Notch",         fz_Notch)               .doc("zero frequency of the Notch filter");
-    addProperty("zero_damping_Notch",           dz_Notch)               .doc("zero damping of the Notch filter");
-    addProperty("pole_frequency_Notch",         fp_Notch)               .doc("pole frequency of the Notch filter");
-    addProperty("pole_damping_Notch",           dp_Notch)               .doc("pole damping of the Notch filter");
+    addProperty("zero_freq_Notch",         		fz_Notch)               .doc("zero frequency of the Notch filter");
+    addProperty("zero_damp_Notch",           	dz_Notch)               .doc("zero damping of the Notch filter");
+    addProperty("pole_freq_Notch",         		fp_Notch)               .doc("pole frequency of the Notch filter");
+    addProperty("pole_damp_Notch",           	dp_Notch)               .doc("pole damping of the Notch filter");
     addProperty("pole_freq_LowPass",            fp_LowPass)             .doc("pole frequency of the low pass filter");
     addProperty("pole_damp_LowPass",            dp_LowPass)             .doc("pole frequency of the lead lag filter");
     addProperty("sampling_time",                Ts)                     .doc("Sampling time");
