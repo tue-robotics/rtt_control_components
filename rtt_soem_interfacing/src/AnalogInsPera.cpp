@@ -23,6 +23,8 @@ AnalogInsPera::~AnalogInsPera(){}
 
 bool AnalogInsPera::configureHook()
 {  
+	
+	log(Error) << "ANALOGINSPERA: DEPRECATED COMPONENT. Use AnalogInsGeneric" << endlog();
   output_for.assign(9, 0.0);
   output_pos.assign(9, 0.0);
 

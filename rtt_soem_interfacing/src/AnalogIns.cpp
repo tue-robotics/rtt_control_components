@@ -19,6 +19,8 @@ AnalogIns::~AnalogIns(){}
 
 bool AnalogIns::configureHook()
 {
+	log(Error) << "AnalogIns: DEPRECATED COMPONENT. Use AnalogInsGeneric" << endlog();
+	
   return true;
 }
 

@@ -18,6 +18,8 @@ AnalogInsPera2::~AnalogInsPera2(){}
 
 bool AnalogInsPera2::configureHook()
 { 
+	log(Error) << "AnalogInsPera2: DEPRECATED COMPONENT. Use AnalogInsGeneric" << endlog();
+	
 	if (N > maxN)
 	{
 		log(Error)<<"You're trying to connect "<<N<<" I/O while a maximum of "<<maxN<<" is hardcoded, please increase maxN. Apologies"<<endlog();

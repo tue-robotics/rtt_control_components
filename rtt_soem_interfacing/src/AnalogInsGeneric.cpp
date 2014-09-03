@@ -132,26 +132,6 @@ bool AnalogInsGeneric::configureHook()
 
 bool AnalogInsGeneric::startHook()
 {
-    // Connection checks
-    for ( uint i = 0; i < n_inports; i++ ) {
-        if ( !inports[i].connected() ) {
-          log(Warning)<<"AnalogInsGeneric:: in"<< i+1 <<" not connected!"<<endlog();
-        }
-    }
-    if (direct_to_ROS) {
-        for ( uint i = 0; i < n_outports; i++ ) {
-            if ( !outports_toROS[i].connected() ) {
-              log(Warning)<<"AnalogInsGeneric:: outmsg"<< i+1 <<" not connected!"<<endlog();
-            }
-        }
-    } else {
-        for ( uint i = 0; i < n_outports; i++ ) {
-            if ( !outports[i].connected() ) {
-              log(Warning)<<"AnalogInsGeneric:: out"<< i+1 <<" not connected!"<<endlog();
-            }
-        }
-    }
-
 	return true;
 }
 

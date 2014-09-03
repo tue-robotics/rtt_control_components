@@ -18,6 +18,8 @@ AnalogOuts::~AnalogOuts(){}
 
 bool AnalogOuts::configureHook()
 {
+	log(Error) << "AnalogOuts: DEPRECATED COMPONENT. Use AnalogOutsGeneric" << endlog();
+	
 	amsg.values.assign(8,0.0);
 	amsg.values[0] =  0.008;
 	amsg.values[3] = -0.008; // Leakage compensation

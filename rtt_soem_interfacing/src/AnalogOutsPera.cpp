@@ -19,15 +19,18 @@ AnalogOutsPera::~AnalogOutsPera(){}
 
 bool AnalogOutsPera::configureHook()
 {
-amsg1.values.assign(3,0.0);
-amsg2.values.assign(3,0.0);
-amsg3.values.assign(3,0.0);
-output1.assign(3,0.0);
-output2.assign(3,0.0);
-output3.assign(3,0.0);
-rpera.assign(9,0.0);
+	
+	log(Error) << "AnalogOutsPera: DEPRECATED COMPONENT. Use AnalogOutsGeneric" << endlog();
+	
+	amsg1.values.assign(3,0.0);
+	amsg2.values.assign(3,0.0);
+	amsg3.values.assign(3,0.0);
+	output1.assign(3,0.0);
+	output2.assign(3,0.0);
+	output3.assign(3,0.0);
+	rpera.assign(9,0.0);
 
-return true;
+	return true;
 }
 
 bool AnalogOutsPera::startHook()

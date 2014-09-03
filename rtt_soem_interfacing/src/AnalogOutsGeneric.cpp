@@ -123,18 +123,6 @@ bool AnalogOutsGeneric::configureHook()
 
 bool AnalogOutsGeneric::startHook()
 {
-    // Connection checks
-    for ( uint i = 0; i < n_inports; i++ ) {
-        if ( !inports[i].connected() ) {
-          log(Warning)<<"AnalogOutsGeneric:: in"<< i+1 <<" not connected!"<<endlog();
-        }
-    }
-    for ( uint i = 0; i < n_outports; i++ ) {
-        if ( !outports[i].connected() ) {
-          log(Warning)<<"AnalogOutsGeneric:: out"<< i+1 <<" not connected!"<<endlog();
-        }
-    }
-
 	return true;
 }
 
