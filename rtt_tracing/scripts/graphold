@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "Old visualisation, for component type colors use rtt_visualization graph filename.ops"
+echo "Old visualisation, for component type colors use rtt_tracing graph filename.ops"
 
 if [ $# -ne 1 ]
 then
@@ -10,7 +10,7 @@ then
 fi
 
 namegv=${1%\.*}.gv
-python `rospack find rtt_visualization`/scripts/orocosgraphold.py $1
+python `rospack find rtt_tracing`/scripts/orocosgraphold.py $1
 echo "Created $namegv"
 
 #namepng=${1%\.*}.png
