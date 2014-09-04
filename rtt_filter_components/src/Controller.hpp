@@ -27,6 +27,7 @@ namespace FILTERS
 // Define a new type for easy coding:
 typedef vector<double> doubles;
 typedef vector<int> ints;
+typedef vector<string> strings;
 
 /**
    * @brief A Component containing a complete controller
@@ -67,6 +68,11 @@ private:
     doubles max_errors;
     doubles motor_saturation;
     double max_sat_time;
+    bool WeakIntegrator;
+    bool LeadLag;
+    bool Notch;
+    bool LowPass;
+    strings controllers;
 
     // Variables
     bool errors;

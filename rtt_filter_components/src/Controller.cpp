@@ -26,15 +26,7 @@ Controller::Controller(const string& name) :
     // Properties
     addProperty("vector_size",                  vector_size)            .doc("Number of controllers");
     addProperty("gains",                        gains)                  .doc("Gains");
-    addProperty("zero_freq_WeakIntegrator",     fz_WeakIntegrator)      .doc("zero frequency of the weak integrator");
-    addProperty("zero_freq_LeadLag",            fz_LeadLag)             .doc("zero frequency of the lead lag filter");
-    addProperty("pole_freq_LeadLag",            fp_LeadLag)             .doc("pole frequency of the lead lag filter");
-    addProperty("zero_freq_Notch",         		fz_Notch)               .doc("zero frequency of the Notch filter");
-    addProperty("zero_damp_Notch",           	dz_Notch)               .doc("zero damping of the Notch filter");
-    addProperty("pole_freq_Notch",         		fp_Notch)               .doc("pole frequency of the Notch filter");
-    addProperty("pole_damp_Notch",           	dp_Notch)               .doc("pole damping of the Notch filter");
-    addProperty("pole_freq_LowPass",            fp_LowPass)             .doc("pole frequency of the low pass filter");
-    addProperty("pole_damp_LowPass",            dp_LowPass)             .doc("pole frequency of the lead lag filter");
+    addProperty("controllers",                  controllers)            .doc("List of used controllers");
     addProperty("sampling_time",                Ts)                     .doc("Sampling time");
     addProperty("max_errors",                   max_errors)             .doc("Maximum allowed joint errors");
     addProperty("motor_saturation",             motor_saturation)       .doc("Motor saturation level");
@@ -52,6 +44,44 @@ Controller::~Controller(){}
 
 bool Controller::configureHook()
 {
+	// Determine which controllers are demanded and declare their properties
+    WeakIntegrator = false;
+    LeadLag = false;
+    Notch = false;
+    LowPass = false;
+    
+    for (uint i = 0; i < controllers.size(); i++) {
+		if (controllers[i] == "WeakIntegrator") {
+			WeakIntegrator = true;
+		} else if (controllers[i] == "LeadLag") {
+			LeadLag = true;	
+		} else if (controllers[i] == "Notch") {
+			Notch = true;	
+		} else if (controllers[i] == "LowPass") {
+			LowPass = true;	
+		} else {
+			log(Error)<<"Controller: Controller number:" << i << " , " << controllers[i] << " is not supported! Choose from: [WeakIntegrator, LeadLag, Notch, LowPass]!"<<endlog();
+		}
+	}     
+	
+    if (WeakIntegrator) {
+		addProperty("zero_freq_WeakIntegrator",     fz_WeakIntegrator)      .doc("zero frequency of the weak integrator");
+	}
+	if (LeadLag) {
+		addProperty("zero_freq_LeadLag",            fz_LeadLag)             .doc("zero frequency of the lead lag filter");
+		addProperty("pole_freq_LeadLag",            fp_LeadLag)             .doc("pole frequency of the lead lag filter");
+	}
+	if (Notch) {
+		addProperty("zero_freq_Notch",         		fz_Notch)               .doc("zero frequency of the Notch filter");
+		addProperty("zero_damp_Notch",           	dz_Notch)               .doc("zero damping of the Notch filter");
+		addProperty("pole_freq_Notch",         		fp_Notch)               .doc("pole frequency of the Notch filter");
+		addProperty("pole_damp_Notch",           	dp_Notch)               .doc("pole damping of the Notch filter");
+	}
+	if (LowPass) {
+		addProperty("pole_freq_LowPass",            fp_LowPass)             .doc("pole frequency of the low pass filter");
+		addProperty("pole_damp_LowPass",            dp_LowPass)             .doc("pole frequency of the lead lag filter");
+	}
+	
     firstSatInstance.assign(vector_size,0);
     firstErrInstance.assign(vector_size,0);
     timeReachedSaturation.assign(vector_size,0.0);
@@ -126,7 +156,7 @@ void Controller::updateHook()
     doubles references(vector_size,0.0);
     doubles positions(vector_size,0.0);
     doubles controlerrors(vector_size,0.0);
-    doubles output_G(vector_size,0.0);
+    doubles output_Gains(vector_size,0.0);
     doubles output_WeakIntegrator(vector_size,0.0);
     doubles output_LeadLag(vector_size,0.0);
     doubles output_Notch(vector_size,0.0);
@@ -143,32 +173,48 @@ void Controller::updateHook()
 
     // Apply controller 1 - Gain
     for (uint i = 0; i < vector_size; i++) {
-        output_G[i] = controlerrors[i]*gains[i];
+        output_Gains[i] = controlerrors[i]*gains[i];
     }
 
     // Apply controller 2 - Weak Integrator
-    for (uint i = 0; i < vector_size; i++) {
-        filters_WeakIntegrator[i]->update( output_G[i] );
-        output_WeakIntegrator[i] = filters_WeakIntegrator[i]->getOutput();
-    }
+    if (WeakIntegrator) {
+		for (uint i = 0; i < vector_size; i++) {
+			filters_WeakIntegrator[i]->update( output_Gains[i] );
+			output_WeakIntegrator[i] = filters_WeakIntegrator[i]->getOutput();
+		}
+	} else {
+		output_WeakIntegrator = output_Gains;
+	}
 
     // Apply controller 3 - Lead Lag
-    for (uint i = 0; i < vector_size; i++) {
-        filters_LeadLag[i]->update( output_WeakIntegrator[i] );
-        output_LeadLag[i] = filters_LeadLag[i]->getOutput();
-    }
+    if (LeadLag) {
+		for (uint i = 0; i < vector_size; i++) {
+			filters_LeadLag[i]->update( output_WeakIntegrator[i] );
+			output_LeadLag[i] = filters_LeadLag[i]->getOutput();
+		}
+    } else {
+		output_LeadLag = output_WeakIntegrator;
+	}
 
     // Apply controller 4 - Notch
-    for (uint i = 0; i < vector_size; i++) {
-        filters_Notch[i]->update( output_LeadLag[i] );
-        output_Notch[i] = filters_Notch[i]->getOutput();
-    }
+    if (Notch) {
+		for (uint i = 0; i < vector_size; i++) {
+			filters_Notch[i]->update( output_LeadLag[i] );
+			output_Notch[i] = filters_Notch[i]->getOutput();
+		}
+    } else {
+		output_Notch = output_LeadLag;
+	}
 
     // Apply controller 5 - Low Pass
-    for (uint i = 0; i < vector_size; i++) {
-        filters_LowPass[i]->update( output_Notch[i] );
-        output[i] = filters_LowPass[i]->getOutput();
-    }
+    if (LowPass) {
+		for (uint i = 0; i < vector_size; i++) {
+			filters_LowPass[i]->update( output_Notch[i] );
+			output[i] = filters_LowPass[i]->getOutput();
+		}
+    } else {
+		output = output_Notch;
+	}
 
     // Safety check 1 - Maximum joint error // to do check if nulling is a problem
     for ( uint i = 0; i < vector_size; i++ ) {
