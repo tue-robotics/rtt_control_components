@@ -25,6 +25,8 @@
   <build_depend>rtt_amigo_msgs</build_depend>
   <build_depend>rtt_rosgraph_msgs</build_depend>
   <build_depend>eigen</build_depend>
+  <build_depend>control_msgs</build_depend>
+  <build_depend>diagnostic_updater</build_depend>
 
 
   <run_depend>rtt</run_depend>
@@ -43,6 +45,8 @@
   <run_depend>rtt_amigo_msgs</run_depend>
   <run_depend>rtt_rosgraph_msgs</run_depend>
   <run_depend>eigen</run_depend>
+  <run_depend>control_msgs</run_depend>
+  <run_depend>diagnostic_updater</run_depend>
   
   <export>
     <rtt_ros>
