@@ -31,6 +31,17 @@ Controller::Controller(const string& name) :
     addProperty("max_errors",                   max_errors)             .doc("Maximum allowed joint errors");
     addProperty("motor_saturation",             motor_saturation)       .doc("Motor saturation level");
     addProperty("max_sat_time",                 max_sat_time)           .doc("Maximum time the motors are allowed to exceed the motor_saturation value");
+    
+    // Properties Controllers (fill in only for the used filters)  
+	addProperty("zero_freq_WeakIntegrator",     fz_WeakIntegrator)      .doc("zero frequency of the weak integrator");
+	addProperty("zero_freq_LeadLag",            fz_LeadLag)             .doc("zero frequency of the lead lag filter");
+	addProperty("pole_freq_LeadLag",            fp_LeadLag)             .doc("pole frequency of the lead lag filter");
+	addProperty("zero_freq_Notch",         		fz_Notch)               .doc("zero frequency of the Notch filter");
+	addProperty("zero_damp_Notch",           	dz_Notch)               .doc("zero damping of the Notch filter");
+	addProperty("pole_freq_Notch",         		fp_Notch)               .doc("pole frequency of the Notch filter");
+	addProperty("pole_damp_Notch",           	dp_Notch)               .doc("pole damping of the Notch filter");
+	addProperty("pole_freq_LowPass",            fp_LowPass)             .doc("pole frequency of the low pass filter");
+	addProperty("pole_damp_LowPass",            dp_LowPass)             .doc("pole frequency of the lead lag filter");
 
     // Adding ports
     addPort( "ref_in",                          inport_references)      .doc("Control Reference port");
@@ -64,58 +75,44 @@ bool Controller::configureHook()
 		}
 	}     
 	
-    if (WeakIntegrator) {
-		addProperty("zero_freq_WeakIntegrator",     fz_WeakIntegrator)      .doc("zero frequency of the weak integrator");
-	}
-	if (LeadLag) {
-		addProperty("zero_freq_LeadLag",            fz_LeadLag)             .doc("zero frequency of the lead lag filter");
-		addProperty("pole_freq_LeadLag",            fp_LeadLag)             .doc("pole frequency of the lead lag filter");
-	}
-	if (Notch) {
-		addProperty("zero_freq_Notch",         		fz_Notch)               .doc("zero frequency of the Notch filter");
-		addProperty("zero_damp_Notch",           	dz_Notch)               .doc("zero damping of the Notch filter");
-		addProperty("pole_freq_Notch",         		fp_Notch)               .doc("pole frequency of the Notch filter");
-		addProperty("pole_damp_Notch",           	dp_Notch)               .doc("pole damping of the Notch filter");
-	}
-	if (LowPass) {
-		addProperty("pole_freq_LowPass",            fp_LowPass)             .doc("pole frequency of the low pass filter");
-		addProperty("pole_damp_LowPass",            dp_LowPass)             .doc("pole frequency of the lead lag filter");
-	}
-	
     firstSatInstance.assign(vector_size,0);
     firstErrInstance.assign(vector_size,0);
     timeReachedSaturation.assign(vector_size,0.0);
     zero_output.assign(vector_size,0.0);
-
-    filters_WeakIntegrator.resize(vector_size);
-    for (uint i = 0; i < vector_size; i++) {
-        // Default discretization method: Prewarp Tustin
-        filters_WeakIntegrator[i] = new DFILTERS::DWeakIntegrator(fz_WeakIntegrator[i], Ts, 4);
-    }
-
-    filters_LeadLag.resize(vector_size);
-    for (uint i = 0; i < vector_size; i++) {
-        // Default discretization method: Prewarp Tustin
-        filters_LeadLag[i] = new DFILTERS::DLeadLag(fz_LeadLag[i], fp_LeadLag[i], Ts, 4);
-    }
-
-    filters_Notch.resize(vector_size);
-    for (uint i = 0; i < vector_size; i++) {
-        // Default discretization method: Prewarp Tustin
-        filters_Notch[i] = new DFILTERS::DSkewedNotch(fz_Notch[i], dz_Notch[i], fp_Notch[i], dp_Notch[i], Ts, 4);
-    }
-
-    filters_LowPass.resize(vector_size);
-    for (uint i = 0; i < vector_size; i++) {
-        // Default discretization method: Prewarp Tustin
-        filters_LowPass[i] = new DFILTERS::DSecondOrderLowpass(fp_LowPass[i], dp_LowPass[i], Ts);
-    }
-
-    return true;
+	
+	return true;
 }
 
 bool Controller::startHook()
 {
+	if (WeakIntegrator) {
+		filters_WeakIntegrator.resize(vector_size);
+		for (uint i = 0; i < vector_size; i++) {
+			// Default discretization method: Prewarp Tustin
+			filters_WeakIntegrator[i] = new DFILTERS::DWeakIntegrator(fz_WeakIntegrator[i], Ts, 4);
+		}
+	}
+	if (LeadLag) {
+		filters_LeadLag.resize(vector_size);
+		for (uint i = 0; i < vector_size; i++) {
+			// Default discretization method: Prewarp Tustin
+			filters_LeadLag[i] = new DFILTERS::DLeadLag(fz_LeadLag[i], fp_LeadLag[i], Ts, 4);
+		}
+	}
+	if (Notch) {
+		filters_Notch.resize(vector_size);
+		for (uint i = 0; i < vector_size; i++) {
+			// Default discretization method: Prewarp Tustin
+			filters_Notch[i] = new DFILTERS::DSkewedNotch(fz_Notch[i], dz_Notch[i], fp_Notch[i], dp_Notch[i], Ts, 4);
+		}
+	}
+	if (LowPass) {
+		filters_LowPass.resize(vector_size);
+		for (uint i = 0; i < vector_size; i++) {
+			// Default discretization method: Prewarp Tustin
+			filters_LowPass[i] = new DFILTERS::DSecondOrderLowpass(fp_LowPass[i], dp_LowPass[i], Ts);
+		}
+	}
     errors=false;
     cntr = 0;
     cntr_10hz = (int) 1.0/(Ts*10.0); // determine value to which cntr has to go to publish at 10hz
@@ -128,25 +125,49 @@ bool Controller::startHook()
 
     if ( !outport_controloutput.connected() ) {
         log(Error)<<"Controller: Outputport not connected!"<<endlog();
-     //   return false;
+        return false;
     }
 
     if (vector_size < 1 || Ts <= 0.0) {
         log(Error)<<"Controller:: vector_size or Ts parameter is invalid!"<<endlog();
         return false;
     }
-    
-    if (fz_WeakIntegrator.size() != vector_size || fz_LeadLag.size() != vector_size || fp_LeadLag.size() != vector_size || fp_LowPass.size() != vector_size || dp_LowPass.size() != vector_size || gains.size() != vector_size || max_errors.size() != vector_size || motor_saturation.size() != vector_size ) {
-        log(Error)<<"Controller:: The size of one of your vector inputs is not equal to the vector_size parameter!"<<endlog();    
-        return false;
-    }
-
     for (uint i = 0; i < vector_size; i++) {
-        if (fz_WeakIntegrator[i] < 0.0 || fz_LeadLag[i] < 0.0 || fp_LeadLag[i] < 0.0 || fp_LowPass[i] < 0.0 || dp_LowPass[i] < 0.0 ) {
-            log(Error)<<"Controller:: One of the zero's, poles or damping coefficients of your filters is below zero!"<<endlog();
-            return false;
-        }
-    }
+		if ( gains.size() != vector_size ) {
+			log(Error)<<"Controller:: Wrong size of one of the gains!"<<endlog();    
+			return false;
+		}
+		if (WeakIntegrator) {
+			if (fz_WeakIntegrator.size() != vector_size || fz_WeakIntegrator[i] < 0.0) {
+				log(Error)<<"Controller:: Wrong size or sign of one of the WeakIntegrator Parameters!"<<endlog();    
+				return false;
+			}
+		}
+		if (LeadLag) {
+			if (fz_LeadLag.size() != vector_size || fp_LeadLag.size() != vector_size || fz_LeadLag[i] < 0.0) {
+				log(Error)<<"Controller:: Wrong size or sign of one of the LeadLag Parameters!"<<endlog();   
+				return false;
+			}
+		}
+
+		if (Notch) {
+			if ( fz_Notch.size() != vector_size || dz_Notch.size() != vector_size || fp_Notch.size() != vector_size || dp_Notch.size() != vector_size || fz_Notch[i] < 0.0 || dz_Notch[i] < 0.0 || fp_Notch[i] < 0.0 || dp_Notch[i] < 0.0) {
+				log(Error)<<"Controller:: Wrong size or sign of one of the Notch Parameters!"<<endlog();    
+				return false;
+			}
+		}
+		if (LowPass) {
+			if ( fp_LowPass.size() != vector_size || dp_LowPass.size() != vector_size || fp_LowPass[i] < 0.0 || dp_LowPass[i] < 0.0 ) {
+				log(Error)<<"Controller:: Wrong size or sign of one of the LowPass Parameters!"<<endlog();  
+				return false;
+			}
+		}    
+		
+		if ( max_errors.size() != vector_size || motor_saturation.size() != vector_size || max_errors[i] < 0.0 || motor_saturation[i] < 0.0  ) {
+			log(Error)<<"Controller:: Wrong size or sign of max_errors or motor_saturation  !"<<endlog();    
+			return false;
+		}
+	}
 
     return true;
 }
@@ -170,12 +191,10 @@ void Controller::updateHook()
     for (uint i = 0; i < vector_size; i++) {
         controlerrors[i] = references[i]-positions[i];
     }
-
     // Apply controller 1 - Gain
     for (uint i = 0; i < vector_size; i++) {
         output_Gains[i] = controlerrors[i]*gains[i];
     }
-
     // Apply controller 2 - Weak Integrator
     if (WeakIntegrator) {
 		for (uint i = 0; i < vector_size; i++) {
@@ -183,9 +202,10 @@ void Controller::updateHook()
 			output_WeakIntegrator[i] = filters_WeakIntegrator[i]->getOutput();
 		}
 	} else {
-		output_WeakIntegrator = output_Gains;
+		for (uint i = 0; i < vector_size; i++) {
+			output_WeakIntegrator[i] = output_Gains[i];
+		}
 	}
-
     // Apply controller 3 - Lead Lag
     if (LeadLag) {
 		for (uint i = 0; i < vector_size; i++) {
@@ -193,9 +213,10 @@ void Controller::updateHook()
 			output_LeadLag[i] = filters_LeadLag[i]->getOutput();
 		}
     } else {
-		output_LeadLag = output_WeakIntegrator;
+		for (uint i = 0; i < vector_size; i++) {
+			output_LeadLag[i] = output_WeakIntegrator[i];
+		}
 	}
-
     // Apply controller 4 - Notch
     if (Notch) {
 		for (uint i = 0; i < vector_size; i++) {
@@ -203,9 +224,10 @@ void Controller::updateHook()
 			output_Notch[i] = filters_Notch[i]->getOutput();
 		}
     } else {
-		output_Notch = output_LeadLag;
+		for (uint i = 0; i < vector_size; i++) {
+			output_Notch[i] = output_LeadLag[i];
+		}
 	}
-
     // Apply controller 5 - Low Pass
     if (LowPass) {
 		for (uint i = 0; i < vector_size; i++) {
@@ -213,9 +235,11 @@ void Controller::updateHook()
 			output[i] = filters_LowPass[i]->getOutput();
 		}
     } else {
-		output = output_Notch;
+		for (uint i = 0; i < vector_size; i++) {
+			output[i] = output_Notch[i];
+		}
 	}
-
+	
     // Safety check 1 - Maximum joint error // to do check if nulling is a problem
     for ( uint i = 0; i < vector_size; i++ ) {
         if( (fabs(controlerrors[i])>max_errors[i] && !errors) ) {
@@ -228,7 +252,7 @@ void Controller::updateHook()
 			firstErrInstance[i] = 0;
         }
     }
-
+    
     // Safety check 2 - Motor saturation
     long double timeNow = os::TimeService::Instance()->getNSecs()*1e-9;
     for(unsigned int i = 0;i<vector_size;i++){
@@ -247,7 +271,7 @@ void Controller::updateHook()
             }
         }
     }
-
+    
     // Write the outputs
     if (!errors) {
         outport_safety.write(true);
@@ -257,7 +281,7 @@ void Controller::updateHook()
         outport_safety.write(false);
         outport_controloutput.write( zero_output );
     }
-
+	
     if (cntr == cntr_10hz){
         cntr = 0;
         outport_controlerrors.write( controlerrors );
