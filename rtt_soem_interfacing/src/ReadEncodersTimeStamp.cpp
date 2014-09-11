@@ -90,7 +90,8 @@ bool ReadEncodersTimeStamp::configureHook()
   for ( uint i = 0; i < Nt; i++)
   {
       string name_inport = "time"+to_string(i+1)+"_in";
-      addPort( name_inport, inport_time[i] );
+      if (i != Nt-1) addPort( name_inport, inport_time[i] );
+      else if (i == Nt-1) addEventPort(name_inport, inport_time[i]);
   }
   addPort( "out", outport );
   addPort( "out_enc", outport_enc );  //TODO: remove
