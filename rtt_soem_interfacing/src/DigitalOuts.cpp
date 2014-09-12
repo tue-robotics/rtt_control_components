@@ -8,7 +8,8 @@ using namespace std;
 using namespace RTT;
 using namespace SOEM;
 
-DigitalOuts::DigitalOuts(const string& name) : TaskContext(name, PreOperational)
+DigitalOuts::DigitalOuts(const string& name) : TaskContext(name, PreOperational),
+												n_bits(8)
 {
   addProperty( "number_of_bits", n_bits ).doc("The number of bools that are sent to the slave (MAX 8).");
   addPort( "digital_out", digital_out_port );
@@ -18,8 +19,6 @@ DigitalOuts::DigitalOuts(const string& name) : TaskContext(name, PreOperational)
   //addEventPort( "red", red_port );
   //addEventPort( "green", green_port );
   //addEventPort( "blue", blue_port );
-
-  n_bits = 8;
 }
 DigitalOuts::~DigitalOuts(){}
 
