@@ -37,11 +37,13 @@ namespace SOEM // Just because it looks nice
     soem_beckhoff_drivers::DigitalMsg dmsg;
 
     // Declaring output vector to write to the stack
-    std::vector<bool> bits;
-    bool amplifiers;
-    bool tuelights;
-    bool spindlebrake;
-	// HACK
+    uint n_bits;
+    //std::vector<bool> bits;
+    //bool amplifiers;
+    //bool tuelights;
+    //bool spindlebrake;
+
+    // HACK
     long double start_time;
     // ENDHACK
 
