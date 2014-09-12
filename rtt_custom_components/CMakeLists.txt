@@ -19,7 +19,7 @@ find_package(OROCOS-RTT HINTS ${rtt_PACKAGE_PATH}/../install )
 include(${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake)
 
 #common commands for building c++ executables and libraries
-orocos_component(Reporter src/Reporter.cpp)
-orocos_component(ReporterTrigger src/ReporterTrigger.cpp)
+#orocos_component(Reporter src/Reporter.cpp)
+#orocos_component(ReporterTrigger src/ReporterTrigger.cpp)
 
 
