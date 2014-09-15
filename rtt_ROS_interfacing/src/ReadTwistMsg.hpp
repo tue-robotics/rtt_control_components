@@ -22,7 +22,8 @@ namespace ROS // Just because it looks nice
 
     // Declaring input- and output_ports
     InputPort<geometry_msgs::Twist> inport;
-    OutputPort<doubles> outport;
+    OutputPort<doubles> outport_vel;
+    OutputPort<doubles> outport_acc;
 
 
     // Declaring global variables
@@ -34,6 +35,7 @@ namespace ROS // Just because it looks nice
     uint status;                  // 0 = never received reference, 1 = reference flow interuped, 2 = receiving references
     double ref_vel[3];
     double ref_vel_prev[3];
+    double ref_acc[3];
 
 
     // variables set by properties
