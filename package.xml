@@ -12,6 +12,9 @@
   <build_depend>rtt</build_depend>
   <build_depend>ocl</build_depend>
   <build_depend>rtt_ros</build_depend>
+  <build_depend>rtt_rosnode</build_depend>
+  <build_depend>rtt_roscomm</build_depend>
+  <build_depend>rtt_rosparam</build_depend>
   <build_depend>soem_master</build_depend>
   <build_depend>std_msgs</build_depend>
   <build_depend>diagnostic_msgs</build_depend>
@@ -22,16 +25,18 @@
   <build_depend>tf</build_depend>
   <build_depend>kdl_parser</build_depend>
   <build_depend>rtt_std_msgs</build_depend>
+  <build_depend>rtt_std_srvs</build_depend>
   <build_depend>rtt_amigo_msgs</build_depend>
   <build_depend>rtt_rosgraph_msgs</build_depend>
   <build_depend>eigen</build_depend>
   <build_depend>control_msgs</build_depend>
   <build_depend>diagnostic_updater</build_depend>
-
-
   <run_depend>rtt</run_depend>
   <run_depend>ocl</run_depend>
   <run_depend>rtt_ros</run_depend>
+  <run_depend>rtt_rosnode</run_depend>  
+  <run_depend>rtt_roscomm</run_depend>  
+  <run_depend>rtt_rosparam</run_depend>  
   <run_depend>soem_master</run_depend>
   <run_depend>std_msgs</run_depend>
   <run_depend>diagnostic_msgs</run_depend>
@@ -42,17 +47,19 @@
   <run_depend>tf</run_depend>
   <run_depend>kdl_parser</run_depend>
   <run_depend>rtt_std_msgs</run_depend>
+  <run_depend>rtt_std_srvs</run_depend>
   <run_depend>rtt_amigo_msgs</run_depend>
   <run_depend>rtt_rosgraph_msgs</run_depend>
   <run_depend>eigen</run_depend>
   <run_depend>control_msgs</run_depend>
-  <run_depend>diagnostic_updater</run_depend>
-  
+  <run_depend>diagnostic_updater</run_depend>  
   <export>
     <rtt_ros>
-      <plugin_depend>rtt_std_msgs</plugin_depend>
-      <plugin_depend>rtt_std_msgs</plugin_depend>
-      <plugin_depend>rtt_std_msgs</plugin_depend>
+      <plugin_depend>rtt_rosnode</plugin_depend>
+	  <plugin_depend>rtt_roscomm</plugin_depend>
+	  <plugin_depend>rtt_rosparam</plugin_depend>
+	  <plugin_depend>rtt_std_msgs</plugin_depend>
+	  <plugin_depend>rtt_std_srvs</plugin_depend>      
       <plugin_depend>rtt_amigo_msgs</plugin_depend>
       <plugin_depend>rtt_rosgraph_msgs</plugin_depend>
     </rtt_ros>
