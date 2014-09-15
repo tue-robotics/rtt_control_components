@@ -114,9 +114,9 @@ bool AnalogOutsGeneric::configureHook()
         }
     }
     
-    //for ( uint m = 0; m < max(n_inputs,n_outputs); m++ ) {
-		//log(Warning) << "AO: mapping matrix is: [" << mapping[m][0] << "," << mapping[m][1] << "," << mapping[m][2] << "," << mapping[m][3] << "]" << endlog();		
-	//}
+    for ( uint m = 0; m < max(n_inputs,n_outputs); m++ ) {
+		log(Info) << "AO: mapping matrix is: [" << mapping[m][0] << "," << mapping[m][1] << "," << mapping[m][2] << "," << mapping[m][3] << "]" << endlog();		
+	}
 
     return true;
 }

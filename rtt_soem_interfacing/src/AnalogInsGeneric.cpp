@@ -123,9 +123,9 @@ bool AnalogInsGeneric::configureHook()
         }
     }
     
-    //for ( uint m = 0; m < max(n_inputs,n_outputs); m++ ) {
-		//log(Warning) << "AI: mapping matrix is: [" << mapping[m][0] << "," << mapping[m][1] << "," << mapping[m][2] << "," << mapping[m][3] << "]" << endlog();		
-	//}
+    for ( uint m = 0; m < max(n_inputs,n_outputs); m++ ) {
+		log(Info) << "AI: mapping matrix is: [" << mapping[m][0] << "," << mapping[m][1] << "," << mapping[m][2] << "," << mapping[m][3] << "]" << endlog();		
+	}
 
     return true;
 }
