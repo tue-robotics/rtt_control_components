@@ -20,6 +20,7 @@ include(${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake)
 
 #common commands for building c++ executables and libraries
 orocos_component(Controller src/Controller.cpp)
+orocos_component(FeedForward src/FeedForward.cpp)
 orocos_component(AddmittanceControllers src/AdmittanceControllers.cpp)
 orocos_component(AddmittanceControllersSpindle src/AdmittanceControllersSpindle.cpp)
 orocos_component(FirstOrderLowPass src/FirstOrderLowPass.cpp)
