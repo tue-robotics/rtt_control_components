@@ -19,52 +19,45 @@ using namespace RTT;
 using namespace SIGNALROUTING;
 
 VectorConcatenate::VectorConcatenate(const string& name) : 
-	TaskContext(name, PreOperational),
-		N(2)
+	TaskContext(name, PreOperational)
 {
-  addProperty( "number_of_inputs", N ).doc("An unsigned integer that specifies the number of input ports");;
+  addProperty( "vector_size", N ).doc("An unsigned integer that specifies the number of input ports");
+  addProperty( "event_port",  EventPorts ).doc("An array that specifies for each input wether it should be an eventPort. 1.0 for Event, 0.0 for non Event port");
 }
 
 VectorConcatenate::~VectorConcatenate(){}
 
 bool VectorConcatenate::configureHook()
 {
-	Logger::In in("VectorConcatenate::configureHook()");
-	
-	//inports.resize(N);
-
-	/*
-	// Adding ports
-	for (uint i = 0; i < N; i++) {
-		std::string portname("in");
-		std::ostringstream os;
-		os << (i+1);
-		portname += os.str();
-		addPort( portname, inports[i] );
-	}*/
-	
-	for ( uint i = 0; i < N-1; i++ )
-	{
-		string name_inport = "in"+to_string(i+1);
-		addEventPort( name_inport, inports[i] );
+	if (N > maxN) {
+		log(Error)<<"VectorConcatenate: N is larger than maxN, more than " << maxN << " components are not supported. Change maxN in the .hpp" <<endlog();
+		return false;
+	}	
+	if (EventPorts.size() != N) {
+		log(Error)<<"VectorConcatenate: event_port size does not match vector_size"<<endlog();
+		return false;
 	}
-	string name_inport = "in"+to_string(N)+"_event";
-	addEventPort( name_inport, inports[N-1] );
 	
+	for ( uint i = 0; i < N; i++ )
+	{
+		if (EventPorts[i] != 0.0) {
+			addEventPort( ("in"+to_string(i+1)), inports[i] );
+		}
+		else {
+			addPort( ("in"+to_string(i+1)), inports[i] );			
+		}
+	}
+
 	addPort( "out", outport );
 	
 	return true;
 }
 
 bool VectorConcatenate::startHook()
-{
-  Logger::In in("VectorConcatenate::startHook()");
-  
-  // Check validity of Ports:
+{  
   for (uint i = 0; i < N; i++) {
 	  if ( !inports[i].connected() ) {
 		  log(Error)<<"Input port "<< i <<" not connected!"<<endlog();
-		  // No connection was made, can't do my job !
 		  return false;
 	  }
   }
@@ -83,8 +76,6 @@ bool VectorConcatenate::startHook()
 
 void VectorConcatenate::updateHook()
 {
-  Logger::In in("VectorConcatenate::updateHook()");
-
   doubles output;  
   double vector_size = 0;
 
@@ -97,7 +88,6 @@ void VectorConcatenate::updateHook()
 	  }
   }
 
-  // Write the outputs
   outport.write( output );
 }
 

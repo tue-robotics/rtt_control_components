@@ -58,6 +58,7 @@ namespace SIGNALROUTING
 		/* Declaring variables set by properties */
 		// Number of input ports
 		uint N;
+		doubles EventPorts;
 		
     public:
 

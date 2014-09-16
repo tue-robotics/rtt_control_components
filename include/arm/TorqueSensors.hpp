@@ -11,7 +11,6 @@ using namespace RTT;
 namespace ARM
 {
   typedef vector<double> doubles;
-  typedef vector<int> ints;
   
   class SensorTorques
   : public RTT::TaskContext
@@ -21,9 +20,7 @@ namespace ARM
     InputPort<doubles> voltage_inport;
     OutputPort<doubles> measured_torques_outport;
 
-    unsigned int Nin;
-    unsigned int Nout;
-    ints obs_inputs;
+    unsigned int N;
 
 	doubles c1;
 	doubles c2;
