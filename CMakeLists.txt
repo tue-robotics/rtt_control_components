@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(rtt_control_components)
 
-### ROS Dependencies ###
-# Find the RTT-ROS package (this transitively includes the Orocos CMake macros)
 find_package(catkin REQUIRED COMPONENTS
   rtt_ros
   std_msgs
@@ -16,9 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   eigen
   )
 
-include_directories(${catkin_INCLUDE_DIRS})
-
-include_directories( 
+include_directories(
 	include/math
 	include/arm 
 	include/discontinuities  
@@ -29,10 +25,12 @@ include_directories(
 	include/tracing
 	include/SOEMinterfacing
 	include/ROSinterfacing
-	include ${scl_filters_INCLUDE_DIRS} ${USE_OROCOS_INCLUDE_DIRS})
+	${catkin_INCLUDE_DIRS} 
+	${scl_filters_INCLUDE_DIRS} 
+	${USE_OROCOS_INCLUDE_DIRS})
 
-orocos_install_headers(
-	DIRECTORY include/math
+orocos_install_headers( DIRECTORY 
+	include/math
 	include/arm 
 	include/discontinuities  
 	include/filters
@@ -41,8 +39,7 @@ orocos_install_headers(
 	include/supervisory
 	include/tracing
 	include/SOEMinterfacing
-	include/ROSinterfacing
-	)
+	include/ROSinterfacing)
 
 # Export package information (replaces catkin_package() macro) 
 orocos_generate_package(
