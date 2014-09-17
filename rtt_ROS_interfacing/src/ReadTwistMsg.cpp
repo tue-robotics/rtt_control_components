@@ -12,6 +12,7 @@ ReadTwistMsg::ReadTwistMsg(const string& name) : TaskContext(name, PreOperationa
 {
   // Adding Properties:
     addProperty( "max_start_vel", max_start_vel ).doc("Safety, max input velocity at startup");
+    addProperty( "max_vel", max_vel ).doc("Maximum velocities");
     addProperty( "max_acc", max_acc ).doc("Maximum acceleration");
     addProperty( "max_interval", max_interval ).doc("Safety, max interval between input messages");
 
@@ -30,13 +31,14 @@ bool ReadTwistMsg::configureHook()
   names.push_back("phi");
 
 
-  if ( max_acc.size() != 3 )
+  if ( max_acc.size() != 3 || max_vel.size() !=3 )
   {
-    log(Error)<<"ReadTwistMsg::max_acc not specified!"<<endlog();
+    log(Error)<<"ReadTwistMsg::max_acc or max_vel not well specified!"<<endlog();
     return false;
   }
 
-
+  vel_saturated.assign(3,false);
+  vel_saturated_print = true;
 
   return true;
 }
@@ -127,6 +129,33 @@ void ReadTwistMsg::updateHook()
     references[0] = cmd_veldata.linear.x;
     references[1] = cmd_veldata.linear.y;
     references[2] = cmd_veldata.angular.z;
+    // limit reference velocities
+    for ( uint i = 0; i < 3; i++ ){
+      if ( references[i] > max_vel[i] )
+      {
+        references[i] = max_vel[i];
+        vel_saturated[i] = true;
+      }
+      else if ( references[i] < -max_vel[i] )
+      {
+        references[i] = -max_vel[i];
+        vel_saturated[i] = true;
+      }
+      else
+      {
+        vel_saturated[i] = false;
+      }
+    }
+  }
+
+  // Warning, reference velocity limit exceeded
+  if (vel_saturated[0] || vel_saturated[1] || vel_saturated[2] ){
+    if (vel_saturated_print) {
+      log(Warning) << "ReadTwistMsg:: Reference velocity exceeds maximum velocity!" << endlog();
+      vel_saturated_print = false;
+    } else {
+      vel_saturated_print = true;
+    }
   }
 
   // Limit output:
