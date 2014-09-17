@@ -39,7 +39,6 @@ GripperControl::GripperControl(const std::string& name)
 		addProperty( "threshold_closed", threshold_closed);
 		addProperty( "gripper_gain", gripperGain);
 		addProperty( "max_pos", maxPos);
-		addProperty( "sensorPos", sensorPos);
 		
 		gripperHomed = false;
   }
@@ -93,9 +92,8 @@ void GripperControl::updateHook(){
 		
 		amigo_msgs::AmigoGripperMeasurement gripperMeasurement;
 		gripperMeasurement.direction = gripperCommand.direction;
-		gripperMeasurement.torque = torques[sensorPos];
-		//log(Warning)<<"GRIPPERCON: torque["<< sensorPos << "] = {"<< torques[sensorPos] << "}" <<endlog();
-		gripperMeasurement.position = measPos[GRIPPER_JOINT_INDEX_JOINTSPACE]/maxPos;
+		gripperMeasurement.torque = torques[GRIPPER_INDEX];
+		gripperMeasurement.position = measPos[GRIPPER_INDEX]/maxPos;
 		gripperMeasurement.end_position_reached = false;
 		gripperMeasurement.max_torque_reached = false;
 
@@ -110,18 +108,16 @@ void GripperControl::updateHook(){
 			}
 		} 
 		else{
-			//log(Warning)<<"gripper torques = "<<torques[sensorPos]<<endlog();
-			if ( (torques[sensorPos] >= threshold_closed && torques[sensorPos] < MAX_TORQUE) || ( gripperHomed && (gripperPos[0] < 0.0)) ){
+			if ( (torques[GRIPPER_INDEX] >= threshold_closed && torques[GRIPPER_INDEX] < MAX_TORQUE) || ( gripperHomed && (gripperPos[0] < 0.0)) ){
 				log(Info)<<"Gripper is CLOSED"<<endlog();
 				gripperMeasurement.end_position_reached = true;
 				completed = true;
 			} 
-			else if(torques[sensorPos] < threshold_closed && torques[sensorPos] < MAX_TORQUE){
-				//log(Warning)<<"GRIPPERCON: closing with torque = "<<torques[sensorPos]<<endlog();
+			else if(torques[GRIPPER_INDEX] < threshold_closed && torques[GRIPPER_INDEX] < MAX_TORQUE){
 				gripperPos[0] -= gripperGain*PI/180;
 			}
 			else {
-				log(Error)<<"Gripper torque "<<torques[sensorPos]<<" exceeds maximum torque of "<<MAX_TORQUE<<" abort close_gripper"<<endlog();
+				log(Error)<<"Gripper torque "<<torques[GRIPPER_INDEX]<<" exceeds maximum torque of "<<MAX_TORQUE<<" abort close_gripper"<<endlog();
 				completed = true;
 				gripperMeasurement.max_torque_reached = true;
 			}
