@@ -14,7 +14,7 @@ SensorTorques::SensorTorques(const string& name) : TaskContext(name, PreOperatio
     addProperty( "c1", c1).doc("Calibration Coefficien c1");
 	addProperty( "c2", c2).doc("Calibration Coefficient c2");
 	addProperty( "c3", c3).doc("Calibration Coefficient c3");
-	
+
 	addEventPort("voltage_in", voltage_inport).doc("Optical sensors voltage [V]");
 	addPort("measured_torques_out", measured_torques_outport).doc("Differential (gear) torques [Nm]");
 	

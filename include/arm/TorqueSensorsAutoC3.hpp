@@ -25,9 +25,7 @@ namespace ARM
 	bool EstimationComplete;
 	bool EstimationStarted;
 	
-	unsigned int Nin;
-    unsigned int Nout;
-    ints obs_inputs;
+	unsigned int N;
 
 	doubles c1;
 	doubles c2;
@@ -35,7 +33,7 @@ namespace ARM
 	doubles Vmeasured;
 	doubles Tmeasured;
 	doubles Tmean;
-	
+
     public:
 
     SensorTorquesAutoC3(const string& name);

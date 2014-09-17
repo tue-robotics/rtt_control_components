@@ -10,8 +10,7 @@ using namespace ARM;
 
 SensorTorquesAutoC3::SensorTorquesAutoC3(const string& name) : TaskContext(name, PreOperational)
 {
-    addProperty( "vector_size", Nin).doc("Number of inputs");
-    addProperty( "obs_inputs", obs_inputs).doc("obsolete inputs, to specify which inputs are obsolete"); // example array (3, 6) will make sure the third and sixth input are discarded
+    addProperty( "vector_size", N).doc("Number of In and Outputs");
     addProperty( "c1", c1).doc("Calibration Coefficien c1");
 	addProperty( "c2", c2).doc("Calibration Coefficient c2");
 
@@ -23,25 +22,19 @@ SensorTorquesAutoC3::~SensorTorquesAutoC3(){}
 
 bool SensorTorquesAutoC3::configureHook()
 {	
-    if (c1.size()!= Nin || c2.size()!= Nin ) {
+    if (c1.size()!= N || c2.size()!= N ) {
         log(Error)<<"ARM_TorqueSensors: Could not configure component: Erroneus parameters: c1, c2 or c3."<< endlog();
         return false;
     }
-    if (obs_inputs.size() < Nin ) {
-        log(Error)<<"ARM_TorqueSensors: Could not configure component: Erroneus parameters: obs_inputs.size() should equal the number of obsolete inputs!"<< endlog();
-        return false;
-    }
-	
-    Nout = Nin-obs_inputs.size();
-    Vmeasured.assign(0.0,Nin);
-    Tmeasured.assign(0.0,Nout);
     
-	c3.assign(Nin,0.0);
-	Tmean.assign(0.0,Nin);
+    Vmeasured.assign(N,0.0);
+    Tmeasured.assign(N,0.0);
+	c3.assign(N,0.0);
+	Tmean.assign(N,0.0);
 	cntr = 0;
 	EstimationComplete = false;
 	EstimationStarted = false;
-	
+
 	return true;
 }
 
@@ -52,26 +45,17 @@ bool SensorTorquesAutoC3::startHook()
 		return false;
 	}
 	if (!measured_torques_outport.connected()) {
-		log(Error)<<"SensorTorques: Could not start component: Motor torques outport not connected!"<<endlog();
-		return false;
+		log(Warning)<<"Motor torques outport not connected!"<<endlog();
 	}
 	return true;
 }
 
 void SensorTorquesAutoC3::updateHook()
 {
-	// Calculate Tmeasured (and clear obsolete inputs)
 	voltage_inport.read(Vmeasured);
 	    
-    unsigned int j =0;
-    unsigned int k =0;
-    for (unsigned int i=0; i<Nin; i++) {
-        if (i != (obs_inputs[k]-1)) {
-            j++;
-        } else if (k != (Nin-Nout-1)) { // if the ith input is obsolote, then j is not increased but k is increased to check for the next obsolete input. unless k equals Nin-Nout-1. then k is not increased any further
-            k++;
-        }
-		Tmeasured[j] = (c1[i]/(Vmeasured[i] + c2[i])+c3[i]);
+    for (unsigned int i=0; i<N; i++) {
+		Tmeasured[i] = (c1[i]/(Vmeasured[i] + c2[i])+c3[i]);
 	}
 	
 	// Estimation step, c3 is initialised at zero and in this step c3 is estimated
@@ -82,9 +66,9 @@ void SensorTorquesAutoC3::updateHook()
 			cntr = 0;
 		}
 		else if (EstimationStarted == true) {
-			doubles Tmean_(Nout, 0.0);
+			doubles Tmean_(N, 0.0);
 			Tmean_ = Tmean;
-			for (unsigned int i=0; i<Nin; i++) {
+			for (unsigned int i=0; i<N; i++) {
 				Tmean[i] = (Tmean_[i]*cntr + Tmeasured[i]) / (cntr + 1);
 			}
 		}
@@ -92,7 +76,7 @@ void SensorTorquesAutoC3::updateHook()
 		// step 2: set c3 to negative mean after 1.5 second (0.5s waiting and 1.5s calculating mean)
 		if (cntr >= 1000  && EstimationStarted == true) {
 			EstimationComplete = true;
-			for (unsigned int i=0; i<Nin; i++) {
+			for (unsigned int i=0; i<N; i++) {
 				c3[i] = -1.0*Tmean[i];
 			}			
 			log(Warning) << "SensorTorquesAutoC3: Calculated c3 coefficients : [" << c3[0] << "," << c3[1] << "," << c3[2] << "," << c3[3] << "," << c3[4] << "," << c3[5] << "," << c3[6] << "," << c3[7] << "]" <<endlog();
