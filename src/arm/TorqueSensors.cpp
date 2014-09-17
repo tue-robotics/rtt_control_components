@@ -28,8 +28,8 @@ bool SensorTorques::configureHook()
         return false;
     }
     
-    Vmeasured.assign(0.0,N);
-    Tmeasured.assign(0.0,N);
+    Vmeasured.assign(N,0.0);
+    Tmeasured.assign(N,0.0);
 
 	return true;
 }

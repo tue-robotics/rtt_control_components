@@ -152,16 +152,16 @@ target_link_libraries(SecondOrderLowPass ${catkin_LIBRARIES} ${USE_OROCOS_LIBRAR
 target_link_libraries(LeadLag ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 
 ### Orocos Components - ARM ###
-orocos_component(ARM_GravityTorques src/arm/GravityTorques.cpp)
-orocos_component(ARM_GravityTorquesParser src/arm/GravityTorquesParser.cpp)
-orocos_component(ARM_GripperControl src/arm/GripperControl.cpp)
-orocos_component(ARM_TorqueSensorsAutoC3 src/arm/TorqueSensorsAutoC3.cpp)
-orocos_component(ARM_TorqueSensors src/arm/TorqueSensors.cpp)
-target_link_libraries(ARM_GravityTorques ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
-target_link_libraries(ARM_GravityTorquesParser ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
-target_link_libraries(ARM_GripperControl ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
-target_link_libraries(ARM_TorqueSensorsAutoC3 ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
-target_link_libraries(ARM_TorqueSensors ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
+orocos_component(GravityTorques src/arm/GravityTorques.cpp)
+orocos_component(GravityTorquesParser src/arm/GravityTorquesParser.cpp)
+orocos_component(GripperControl src/arm/GripperControl.cpp)
+orocos_component(TorqueSensorsAutoC3 src/arm/TorqueSensorsAutoC3.cpp)
+orocos_component(TorqueSensors src/arm/TorqueSensors.cpp)
+target_link_libraries(GravityTorques ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
+target_link_libraries(GravityTorquesParser ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
+target_link_libraries(GripperControl ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
+target_link_libraries(TorqueSensorsAutoC3 ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
+target_link_libraries(TorqueSensors ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 
 ### Orocos Components - ROS_interfacing ###
 orocos_component(BenchmarkReference src/ROSinterfacing/BenchmarkReference.cpp)

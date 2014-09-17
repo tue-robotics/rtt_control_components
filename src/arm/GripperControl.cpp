@@ -11,48 +11,43 @@
 
 #include "GripperControl.hpp"
 
-
 #define MAX_TORQUE 150.0
 
 using namespace std;
 using namespace RTT;
 using namespace ARM;
 
-GripperControl::GripperControl(const std::string& name)
-	: TaskContext(name, PreOperational)
+GripperControl::GripperControl(const std::string& name) : TaskContext(name, PreOperational)
+{
+	/// Inports
+	addPort("gripper_command", gripperCommandPort);
+	addPort("torque_in", torqueInPort);
+	addPort("position_in", positionInPort);
+	addPort("reNullPort",reNullPort);
+	addEventPort("resetGripperPort",resetGripperPort);
 
-	{
-		// Creating the ports
-		
-		/// Inports
-		addPort("gripper_command", gripperCommandPort);
-		addPort("torque_in", torqueInPort);
-		addPort("position_in", positionInPort);
-		addPort("reNullPort",reNullPort);
-		addEventPort("resetGripperPort",resetGripperPort);
-		
-		/// Outports
-		addPort("gripper_ref",gripperRefPort);
-		addPort("gripper_measurement",gripperMeasurementPort);
-		
-		/// Thresholds for the gripper force
-		addProperty( "threshold_closed", threshold_closed);
-		addProperty( "gripper_gain", gripperGain);
-		addProperty( "max_pos", maxPos);
-		
-		gripperHomed = false;
-  }
+	/// Outports
+	addPort("gripper_ref",gripperRefPort);
+	addPort("gripper_measurement",gripperMeasurementPort);
 
-GripperControl::~GripperControl(){}
+	/// Properties
+	addProperty( "threshold_closed", threshold_closed);
+	addProperty( "gripper_gain", gripperGain);
+	addProperty( "max_pos", maxPos);
+}
 
-bool GripperControl::configureHook(){
-	torques.assign(8,0.0);
+GripperControl::~GripperControl() {}
+
+bool GripperControl::configureHook() {
+	torques.assign(8,0.0); 
+	measPos.assign(8,0.0);
 	gripperPos.assign(1,0.0);
 	completed = true;
+	gripperHomed = false;
 	return true;
 }
 
-bool GripperControl::startHook(){
+bool GripperControl::startHook() {
 	return true;
 }
 
@@ -108,12 +103,14 @@ void GripperControl::updateHook(){
 			}
 		} 
 		else{
+			//log(Warning)<<"gripper torques = "<<torques[GRIPPER_INDEX]<<endlog();
 			if ( (torques[GRIPPER_INDEX] >= threshold_closed && torques[GRIPPER_INDEX] < MAX_TORQUE) || ( gripperHomed && (gripperPos[0] < 0.0)) ){
 				log(Info)<<"Gripper is CLOSED"<<endlog();
 				gripperMeasurement.end_position_reached = true;
 				completed = true;
 			} 
 			else if(torques[GRIPPER_INDEX] < threshold_closed && torques[GRIPPER_INDEX] < MAX_TORQUE){
+				//log(Warning)<<"GRIPPERCON: closing with torque = "<<torques[GRIPPER_INDEX]<<endlog();
 				gripperPos[0] -= gripperGain*PI/180;
 			}
 			else {
