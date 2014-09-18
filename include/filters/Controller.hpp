@@ -38,6 +38,10 @@ typedef vector<string> strings;
    * Outputs	- Controloutput
    * 			- Enable Signal
    * 			- JointErrors
+   * 
+   * Operations - SetMaxErrors
+   * This Operation can be used to decrease the MaxErrors, usefull for 
+   * endstop homing. 
    */
 
 class Controller
@@ -93,6 +97,8 @@ public:
 
     Controller(const string& name);
     ~Controller();
+    
+    virtual void SetMaxErrors( doubles SET_MAX_ERRORS );
 
     bool configureHook();
     bool startHook();

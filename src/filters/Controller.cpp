@@ -23,6 +23,11 @@ using namespace FILTERS;
 Controller::Controller(const string& name) : 
     TaskContext(name, PreOperational)
 {
+	// Operations
+	addOperation("SetMaxErrors", &Controller::SetMaxErrors, this, OwnThread)
+		.doc("Set maximum joint errors")
+		.arg("MAX_ERRORs","the maximum joint errors");
+	
     // Properties
     addProperty("vector_size",                  vector_size)            .doc("Number of controllers");
     addProperty("gains",                        gains)                  .doc("Gains");
@@ -282,11 +287,38 @@ void Controller::updateHook()
         outport_controloutput.write( zero_output );
     }
 	
-    if (cntr == cntr_10hz){
+    if (cntr == cntr_10hz) {
         cntr = 0;
         outport_controlerrors.write( controlerrors );
     }
     cntr++;
+}
+
+void Controller::SetMaxErrors( doubles SET_MAX_ERRORS )
+{
+	if (SET_MAX_ERRORS.size() != max_errors.size() ) {
+		log(Error) << "Controller: SetMaxErrors: Could not update MAX_ERRORS due to wrongly sized SET_MAX_ERRORS" << endlog();
+		return;
+	} else {
+		// calculate totals
+		double total_max_errors = 0.0;
+		double total_SET_MAX_ERRORS = 0.0;		
+		for(unsigned int i = 0;i<max_errors.size();i++) {
+			total_max_errors += max_errors[i];
+			total_SET_MAX_ERRORS += SET_MAX_ERRORS[i];
+		} 
+				
+		if (total_SET_MAX_ERRORS > total_max_errors) {
+			log(Warning) << "Controller: SetMaxErrors: Succesfully increased max_errors" << endlog();
+		} else if (total_SET_MAX_ERRORS < total_max_errors) {
+			log(Warning) << "Controller: SetMaxErrors: Succesfully decreased max_errors" << endlog();
+		} else {
+			log(Warning) << "Controller: SetMaxErrors: updated max_errors to same values" << endlog();
+		}
+		
+		max_errors = SET_MAX_ERRORS;
+		return;
+	}
 }
 
 ORO_CREATE_COMPONENT(FILTERS::Controller)
