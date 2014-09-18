@@ -6,13 +6,24 @@
 #include <std_msgs/Bool.h>
 #include <sensor_msgs/JointState.h>
 
+#define maxN 5 // maximum number of inputs and outputs,
+
 using namespace std;
+
+template <class T>
+inline string to_string (const T& t){
+  stringstream ss;
+  ss << t;
+  return ss.str();
+};
+
 using namespace RTT;
 
 namespace SUPERVISORY
 {
 	typedef vector<double> doubles;
 	typedef vector<int> ints;
+	typedef vector<bool> bools;
 
 	/*! \class ActuatorEnabler
 	*  \brief Defines Orocos component for enabling actuators (with brake)
@@ -31,10 +42,11 @@ namespace SUPERVISORY
 	{
 		private:
 		
-		InputPort<bool> safe_inPort;
+		InputPort<bool> safe_inPort[maxN];
 		OutputPort<bool> actuatorEnablePort;
-				
-		bool safe;
+
+		uint N_safeIn;
+		bools safe;
 		bool ErrorWritten;
 		long double TimeLastSafeReceived;
 		

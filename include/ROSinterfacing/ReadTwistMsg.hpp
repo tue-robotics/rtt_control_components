@@ -14,6 +14,7 @@ namespace ROS // Just because it looks nice
   // Define a new type for easy coding:
   typedef vector<double> doubles;
   typedef vector<string> strings;
+  typedef vector<bool>   bools;
 
   class ReadTwistMsg
   : public RTT::TaskContext
@@ -22,7 +23,8 @@ namespace ROS // Just because it looks nice
 
     // Declaring input- and output_ports
     InputPort<geometry_msgs::Twist> inport;
-    OutputPort<doubles> outport;
+    OutputPort<doubles> outport_vel;
+    OutputPort<doubles> outport_acc;
 
 
     // Declaring global variables
@@ -34,11 +36,15 @@ namespace ROS // Just because it looks nice
     uint status;                  // 0 = never received reference, 1 = reference flow interuped, 2 = receiving references
     double ref_vel[3];
     double ref_vel_prev[3];
+    double ref_acc[3];
+    bools vel_saturated;
+    bool vel_saturated_print;
 
 
     // variables set by properties
     double max_start_vel;         // Maximum value of the initial velocity in the starthook
     doubles max_acc;              // maximum value of the acceleration
+    doubles max_vel;              // Maximum velocity allowed
     double max_interval;
 
     public:

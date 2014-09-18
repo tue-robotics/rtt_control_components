@@ -11,13 +11,15 @@ using namespace ROS;
 ReadTwistMsg::ReadTwistMsg(const string& name) : TaskContext(name, PreOperational)
 {
   // Adding Properties:
-  addProperty( "max_start_vel", max_start_vel );
-  addProperty( "max_acc", max_acc );
-  addProperty( "max_interval", max_interval );
+    addProperty( "max_start_vel", max_start_vel ).doc("Safety, max input velocity at startup");
+    addProperty( "max_vel", max_vel ).doc("Maximum velocities");
+    addProperty( "max_acc", max_acc ).doc("Maximum acceleration");
+    addProperty( "max_interval", max_interval ).doc("Safety, max interval between input messages");
 
   // Creating ports:
   addEventPort( "cmd_vel", inport );
-  addPort( "out", outport );
+  addPort( "out", outport_vel );
+  addPort("out_acc", outport_acc);
 }
 ReadTwistMsg::~ReadTwistMsg(){}
 
@@ -29,13 +31,14 @@ bool ReadTwistMsg::configureHook()
   names.push_back("phi");
 
 
-  if ( max_acc.size() != 3 )
+  if ( max_acc.size() != 3 || max_vel.size() !=3 )
   {
-    log(Error)<<"ReadTwistMsg::max_acc not specified!"<<endlog();
+    log(Error)<<"ReadTwistMsg::max_acc or max_vel not well specified!"<<endlog();
     return false;
   }
 
-
+  vel_saturated.assign(3,false);
+  vel_saturated_print = true;
 
   return true;
 }
@@ -48,7 +51,7 @@ bool ReadTwistMsg::startHook()
     log(Error)<<"ReadTwistMsg::Inputport not connected!"<<endlog();
     return false;
   }
-  if ( !outport.connected() ) {
+  if ( !outport_vel.connected() ) {
     log(Warning)<<"ReadTwistMsg::Outputport not connected!"<<endlog();
   }
 
@@ -97,7 +100,8 @@ void ReadTwistMsg::updateHook()
   ////log(Debug)<<"Reading cmd_vel"<<endlog();
   geometry_msgs::Twist cmd_veldata;
   doubles references(3,0.0);
-  doubles output(3,0.0);
+  doubles output_vel(3,0.0);
+  doubles output_acc(3,0.0);
 
 
   // Start fresh data check
@@ -125,14 +129,41 @@ void ReadTwistMsg::updateHook()
     references[0] = cmd_veldata.linear.x;
     references[1] = cmd_veldata.linear.y;
     references[2] = cmd_veldata.angular.z;
+    // limit reference velocities
+    for ( uint i = 0; i < 3; i++ ){
+      if ( references[i] > max_vel[i] )
+      {
+        references[i] = max_vel[i];
+        vel_saturated[i] = true;
+      }
+      else if ( references[i] < -max_vel[i] )
+      {
+        references[i] = -max_vel[i];
+        vel_saturated[i] = true;
+      }
+      else
+      {
+        vel_saturated[i] = false;
+      }
+    }
+  }
+
+  // Warning, reference velocity limit exceeded
+  if (vel_saturated[0] || vel_saturated[1] || vel_saturated[2] ){
+    if (vel_saturated_print) {
+      log(Warning) << "ReadTwistMsg:: Reference velocity exceeds maximum velocity!" << endlog();
+      vel_saturated_print = false;
+    } else {
+      vel_saturated_print = true;
+    }
   }
 
   // Limit output:
   for ( uint i = 0; i <= 2; i++ )
   {
-    double acc = (references[i] - ref_vel_prev[i])/dt;
-    acc = max(-max_acc[i], min(max_acc[i], acc));
-    ref_vel[i] = ref_vel_prev[i] + acc * dt;
+    ref_acc[i] = (references[i] - ref_vel_prev[i])/dt;
+    ref_acc[i] = max(-max_acc[i], min(max_acc[i], ref_acc[i]));
+    ref_vel[i] = ref_vel_prev[i] + ref_acc[i] * dt;
     ref_vel_prev[i] = ref_vel[i];
     //ref_vel[i] = references[i];
   }
@@ -140,9 +171,13 @@ void ReadTwistMsg::updateHook()
   //log(Debug)<<"Writing to port"<<endlog();
   // Write data to port
   for ( uint i = 0; i <= 2; i++ )
-    output[i] = ref_vel[i];
+  {
+    output_vel[i] = ref_vel[i];
+    output_acc[i] = ref_acc[i];
+  }
 
-  outport.write( output );
+  outport_vel.write( output_vel );
+  outport_acc.write( output_acc );
 }
 
 ORO_CREATE_COMPONENT(ROS::ReadTwistMsg)
