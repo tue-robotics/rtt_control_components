@@ -135,7 +135,7 @@ void ReadEncoders::reset( uint Nreset, double resetvalue )
   init_SI_value[Nreset] = 0.0;
   init_SI_value[Nreset] = readEncoder(Nreset) - resetvalue;
   if (Nreset == 1)
-    log(Warning)<<"ReadEncoders: Nulling encoders"<<endlog();
+    log(Info)<<"ReadEncoders: Nulling encoders"<<endlog();
 }
 
 ORO_CREATE_COMPONENT(SOEM::ReadEncoders)
