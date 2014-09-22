@@ -309,11 +309,11 @@ void Controller::SetMaxErrors( doubles SET_MAX_ERRORS )
 		} 
 				
 		if (total_SET_MAX_ERRORS > total_max_errors) {
-			log(Warning) << "Controller: SetMaxErrors: Succesfully increased max_errors" << endlog();
+			log(Info) << "Controller: SetMaxErrors: Succesfully increased max_errors" << endlog();
 		} else if (total_SET_MAX_ERRORS < total_max_errors) {
-			log(Warning) << "Controller: SetMaxErrors: Succesfully decreased max_errors" << endlog();
+			log(Info) << "Controller: SetMaxErrors: Succesfully decreased max_errors" << endlog();
 		} else {
-			log(Warning) << "Controller: SetMaxErrors: updated max_errors to same values" << endlog();
+			log(Info) << "Controller: SetMaxErrors: updated max_errors to same values" << endlog();
 		}
 		
 		max_errors = SET_MAX_ERRORS;
