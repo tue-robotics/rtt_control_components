@@ -84,8 +84,7 @@ bool ReadEncodersTimeStamp::configureHook()
   for ( uint i = 0; i < N; i++ )
   {
     string name_inport = "enc"+to_string(i+1)+"_in";
-    if (i != 0) addPort( name_inport, inport_enc[i] );
-    else if (i == 0) addPort( name_inport, inport_enc[i] );
+	addPort( name_inport, inport_enc[i] );
   }
   for ( uint i = 0; i < Nt; i++)
   {
@@ -110,7 +109,7 @@ bool ReadEncodersTimeStamp::startHook()
   {
     if ( !inport_enc[i].connected() )
     {
-      log(Error)<<"ReadEncodersTimeStamp::Inputport not connected!"<<endlog();
+	  log(Error)<<"ReadEncodersTimeStamp::Inputport enc"<<i+1<<"_in not connected!"<<endlog();
       return false;
     }
   }
@@ -119,7 +118,7 @@ bool ReadEncodersTimeStamp::startHook()
   }
   for ( uint i = 0; i <Nt; i++){
       if ( !inport_time[i].connected() ) {
-          log(Warning)<<"ReadEncodersTimeStamp::Inputport timeSt " << i << " not connected!"<<endlog();
+		  log(Warning)<<"ReadEncodersTimeStamp::Inputport time" << i+1 << "_in not connected!"<<endlog();
       }
   }
 
