@@ -16,7 +16,7 @@ using namespace SUPERVISORY;
 ActuatorEnabler::ActuatorEnabler(const string& name) : TaskContext(name, PreOperational), N_safeIn(1)
 {
 	//addPort( "safe_in",safe_inPort).doc("Receives safe = true if no errors are encountered");
-    addPort( "actuator_enable",actuatorEnablePort).doc("boolean port to enable amplifier");
+	addPort( "enable",actuatorEnablePort).doc("boolean port to enable amplifier");
 	addProperty( "ports_safe_in", N_safeIn).doc("number of safe inports");
 }
 
@@ -26,8 +26,15 @@ bool ActuatorEnabler::configureHook()
 {
 	if ( N_safeIn > 0 ){
 		for ( uint i = 0; i < N_safeIn; i++ ){
-			string portName = "safe_in"+ to_string(i+1);
-			addPort( portName, safe_inPort[i] );
+			if ( i==0 ){
+				string portName = "safe_in"+ to_string(i+1);
+				addPort( portName, safe_inPort[i] );
+			}
+			else {
+				string portName = "safe_in"+ to_string(i+1);
+				addEventPort( portName, safe_inPort[i] );
+			}
+
 		}
 	}
 	else {
