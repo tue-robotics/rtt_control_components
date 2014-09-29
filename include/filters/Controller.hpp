@@ -18,92 +18,72 @@
 #include <scl/filters/DSecondOrderLowpass.hpp>
 #include <scl/filters/DLeadLag.hpp>
 #include <scl/filters/DSkewedNotch.hpp>
+#include <sensor_msgs/JointState.h>
 
 using namespace std;
 using namespace RTT;
 
 namespace FILTERS
 {
-// Define a new type for easy coding:
-typedef vector<double> doubles;
-typedef vector<int> ints;
-typedef vector<string> strings;
+    typedef vector<double> doubles;
+    typedef vector<int> ints;
+    typedef vector<string> strings;
 
-/**
-   * @brief A Component containing a complete controller
-   * consising of multiple filters and a safety mechanism
-   *
-   * Inputs		- Reference 
-   * 			- Encoderpositions
-   * Outputs	- Controloutput
-   * 			- Enable Signal
-   * 			- JointErrors
-   * 
-   * Operations - SetMaxErrors
-   * This Operation can be used to decrease the MaxErrors, usefull for 
-   * endstop homing. 
-   */
+    /**
+    * @brief A Component containing a complete controller
+    * consising of multiple filters and a safety mechanism
+    *
+    * Inputs		- Reference
+    * 			- Encoderpositions
+    * Outputs	- Controloutput
+    * 			- JointErrors
+    */
 
-class Controller
-        : public RTT::TaskContext
-{
-private:
+    class Controller
+            : public RTT::TaskContext
+    {
+        private:
 
-    // Ports
-    InputPort<doubles> inport_references;
-    InputPort<doubles> inport_positions;
-    OutputPort<doubles> outport_controloutput;
-    OutputPort<bool> outport_safety;
-    OutputPort<doubles> outport_controlerrors;
+        // Ports
+        InputPort<doubles> references_inport;
+        InputPort<doubles> positions_inport;
+        OutputPort<doubles> controleffort_outport;
+        OutputPort<doubles> jointerrors_outport;
 
-    // Properties
-    double Ts;
-    uint vector_size;
-    doubles gains;
-    doubles fz_WeakIntegrator;
-    doubles fz_LeadLag;
-    doubles fp_LeadLag;
-    doubles fz_Notch;
-    doubles dz_Notch;
-    doubles fp_Notch;
-    doubles dp_Notch;
-    doubles fp_LowPass;
-    doubles dp_LowPass;
-    doubles max_errors;
-    doubles motor_saturation;
-    double max_sat_time;
-    bool WeakIntegrator;
-    bool LeadLag;
-    bool Notch;
-    bool LowPass;
-    strings controllers;
+        // Properties
+        bool WeakIntegrator;
+        bool LeadLag;
+        bool Notch;
+        bool LowPass;
+        uint vector_size;
+        double Ts;
+        doubles gains;
+        doubles fz_WeakIntegrator;
+        doubles fz_LeadLag;
+        doubles fp_LeadLag;
+        doubles fz_Notch;
+        doubles dz_Notch;
+        doubles fp_Notch;
+        doubles dp_Notch;
+        doubles fp_LowPass;
+        doubles dp_LowPass;
+        strings controllers;
 
-    // Variables
-    bool errors;
-    ints firstSatInstance;
-    ints firstErrInstance;
-    doubles timeReachedSaturation;
-    doubles zero_output;
-    int cntr;
-    int cntr_10hz;
+        // Filters
+        vector<DFILTERS::DWeakIntegrator*> filters_WeakIntegrator;
+        vector<DFILTERS::DLeadLag*> filters_LeadLag;
+        vector<DFILTERS::DSecondOrderLowpass*> filters_LowPass;
+        vector<DFILTERS::DSkewedNotch*> filters_Notch;
 
-    // Filters
-    vector<DFILTERS::DWeakIntegrator*> filters_WeakIntegrator;
-    vector<DFILTERS::DLeadLag*> filters_LeadLag;
-    vector<DFILTERS::DSecondOrderLowpass*> filters_LowPass;
-    vector<DFILTERS::DSkewedNotch*> filters_Notch;
+        public:
 
-public:
+        Controller(const string& name);
+        ~Controller();
 
-    Controller(const string& name);
-    ~Controller();
-    
-    virtual void SetMaxErrors( doubles SET_MAX_ERRORS );
+        bool configureHook();
+        bool startHook();
+        void updateHook();
 
-    bool configureHook();
-    bool startHook();
-    void updateHook();
-
-};
+    };
 }
 #endif

@@ -11,6 +11,8 @@
 
 #include <ros/ros.h>
 
+enum dashboard_cmd_t {HOMING_CMD = 21, START_CMD = 22, STOP_CMD = 23, RESET_CMD = 24};
+
 using namespace std;
 using namespace RTT;
 using namespace SUPERVISORY;
@@ -185,7 +187,7 @@ void Supervisor::updateHook()
 	if (goodToGO) {
 		if ( dashboardCmdPort.read(dashboardCmdmsg) == NewData ) {
 			if (dashboardCmdmsg.data[0] == 0) { // 0 = all bodyparts
-				if (dashboardCmdmsg.data[1] == 21 && emergency == false ) {
+                if (dashboardCmdmsg.data[1] == HOMING_CMD && emergency == false ) {
 					log(Warning) << "Supervisor: Received Homing request from dashboard for all parts" << endlog();      
 					for ( int partNr = 1; partNr < 6; partNr++ ) {
 						if (homeableParts[partNr]) { 
@@ -196,13 +198,13 @@ void Supervisor::updateHook()
 						}
 					}
 				}
-				if (dashboardCmdmsg.data[1] == 22 && emergency == false) {
+                if (dashboardCmdmsg.data[1] == START_CMD && emergency == false) {
 					log(Warning) << "Supervisor: Received Start request from dashboard for all parts" << endlog(); 
 					for ( int partNr = 1; partNr < 6; partNr++ ) {
 						GoOperational(partNr,hardwareStatusmsg);
 					}
 				}
-				if (dashboardCmdmsg.data[1] == 23 && emergency == false) {
+                if (dashboardCmdmsg.data[1] == STOP_CMD && emergency == false) {
 					log(Warning) << "Supervisor: Received Stop request from dashboard for all parts" << endlog();      
 					for ( int partNr = 1; partNr < 6; partNr++ ) {
 						GoIdle(partNr,hardwareStatusmsg);
@@ -210,19 +212,19 @@ void Supervisor::updateHook()
 				}    
 			}
 			else {  // 1 = base, 2 = spindle, 3 = lpera, 4 = rpera, 5 = head
-				if (dashboardCmdmsg.data[1] == 21 && emergency == false) {
+                if (dashboardCmdmsg.data[1] == HOMING_CMD && emergency == false) {
 					log(Warning) << "Supervisor: Received Homing request from dashboard for partNr: [" <<  (int) dashboardCmdmsg.data[0] << "]" << endlog();      
 					GoHoming((int) dashboardCmdmsg.data[0],hardwareStatusmsg);
 				}
-				if (dashboardCmdmsg.data[1] == 22 && emergency == false) {
+                if (dashboardCmdmsg.data[1] == START_CMD && emergency == false) {
 					log(Warning) << "Supervisor: Received Start request from dashboard for partNr: [" << (int) dashboardCmdmsg.data[0] << "]" << endlog(); 
 					GoOperational((int) dashboardCmdmsg.data[0],hardwareStatusmsg);
 				}
-				if (dashboardCmdmsg.data[1] == 23 && emergency == false) {
+                if (dashboardCmdmsg.data[1] == STOP_CMD && emergency == false) {
 					log(Warning) << "Supervisor: Received Stop request from dashboard for partNr: [" << (int) dashboardCmdmsg.data[0] << "]" << endlog();  
 					GoIdle((int) dashboardCmdmsg.data[0],hardwareStatusmsg);
 				}    
-				if (dashboardCmdmsg.data[1] == 24) {
+                if (dashboardCmdmsg.data[1] == RESET_CMD) {
 					log(Warning) << "Supervisor: Received Reset Error request from dashboard for partNr: [" << (int) dashboardCmdmsg.data[0] << "]" << endlog();
 					setState(dashboardCmdmsg.data[0], StatusIdlemsg);
 				}
