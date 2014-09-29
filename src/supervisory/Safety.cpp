@@ -26,8 +26,8 @@ Safety::Safety(const string& name) : TaskContext(name, PreOperational)
     addPort( "safe", safe_outport ).doc("boolean value, safe = true when safe, and safe = false when errors are detected");
     
     // Properties
-    addProperty( "vectorsize_motorspace", NM ).doc("An unsigned integer that specifies the size of the motor space");
-    addProperty( "vectorsize_jointspace", NJ ).doc("An unsigned integer that specifies the size of the joint space");
+    addProperty( "NM", NM ).doc("An unsigned integer that specifies the size of the motor space");
+    addProperty( "NJ", NJ ).doc("An unsigned integer that specifies the size of the joint space");
     addProperty( "maxJointErrors", MAX_ERRORS).doc("Maximum joint error allowed [rad]");
     addProperty( "motorSaturations", MOTORSAT ).doc("Motor saturation values");
     addProperty( "maxConSatTime", MAXCONSATTIME ).doc("Maximum time the controller is allowed to be saturated");

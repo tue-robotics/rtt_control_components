@@ -44,7 +44,7 @@ Controller::Controller(const string& name) :
     addPort( "ref_in",                          references_inport)      .doc("Control Reference port");
     addEventPort( "pos_in",                     positions_inport)       .doc("Position Port");
     addPort( "out",                             controleffort_outport)  .doc("Control output port");
-    addPort( "jointerrors",                     jointerrors_outport)  .doc("Controlerrors output port");
+    addPort( "jointErrors",                     jointerrors_outport)  	.doc("Joint Errors output port");
 }
 
 Controller::~Controller(){}
