@@ -134,5 +134,8 @@ void Safety::SetMaxErrors( doubles SET_MAX_ERRORS )
     }
 }
 
+void Safety::stopHook() {
+    safe_outport.write(false);
+}
 
 ORO_CREATE_COMPONENT(SUPERVISORY::Safety)

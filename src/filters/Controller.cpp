@@ -70,55 +70,35 @@ bool Controller::configureHook()
 			log(Error)<<"Controller: Controller number:" << i << " , " << controllers[i] << " is not supported! Choose from: [WeakIntegrator, LeadLag, Notch, LowPass]!"<<endlog();
 		}
 	}     
-	
-	return true;
-}
 
-bool Controller::startHook()
-{
-	if (WeakIntegrator) {
-		filters_WeakIntegrator.resize(vector_size);
-		for (uint i = 0; i < vector_size; i++) {
-			// Default discretization method: Prewarp Tustin
-			filters_WeakIntegrator[i] = new DFILTERS::DWeakIntegrator(fz_WeakIntegrator[i], Ts, 4);
-		}
-	}
-	if (LeadLag) {
-		filters_LeadLag.resize(vector_size);
-		for (uint i = 0; i < vector_size; i++) {
-			// Default discretization method: Prewarp Tustin
-			filters_LeadLag[i] = new DFILTERS::DLeadLag(fz_LeadLag[i], fp_LeadLag[i], Ts, 4);
-		}
-	}
-	if (Notch) {
-		filters_Notch.resize(vector_size);
-		for (uint i = 0; i < vector_size; i++) {
-			// Default discretization method: Prewarp Tustin
-			filters_Notch[i] = new DFILTERS::DSkewedNotch(fz_Notch[i], dz_Notch[i], fp_Notch[i], dp_Notch[i], Ts, 4);
-		}
-	}
-	if (LowPass) {
-		filters_LowPass.resize(vector_size);
-		for (uint i = 0; i < vector_size; i++) {
-			// Default discretization method: Prewarp Tustin
-			filters_LowPass[i] = new DFILTERS::DSecondOrderLowpass(fp_LowPass[i], dp_LowPass[i], Ts);
-		}
-	}
-
-    // Check validity of Ports:
-    if ( !references_inport.connected() || !positions_inport.connected() ) {
-        log(Error)<<"Controller: One of the inports is not connected!"<<endlog();
-        return false;
+    // create filters
+    if (WeakIntegrator) {
+        filters_WeakIntegrator.resize(vector_size);
+        for (uint i = 0; i < vector_size; i++) {
+            // Default discretization method: Prewarp Tustin
+            filters_WeakIntegrator[i] = new DFILTERS::DWeakIntegrator(fz_WeakIntegrator[i], Ts, 4);
+        }
     }
-
-    if ( !controleffort_outport.connected() ) {
-        log(Error)<<"Controller: Outputport not connected!"<<endlog();
-        return false;
+    if (LeadLag) {
+        filters_LeadLag.resize(vector_size);
+        for (uint i = 0; i < vector_size; i++) {
+            // Default discretization method: Prewarp Tustin
+            filters_LeadLag[i] = new DFILTERS::DLeadLag(fz_LeadLag[i], fp_LeadLag[i], Ts, 4);
+        }
     }
-
-    if (vector_size < 1 || Ts <= 0.0) {
-        log(Error)<<"Controller:: vector_size or Ts parameter is invalid!"<<endlog();
-        return false;
+    if (Notch) {
+        filters_Notch.resize(vector_size);
+        for (uint i = 0; i < vector_size; i++) {
+            // Default discretization method: Prewarp Tustin
+            filters_Notch[i] = new DFILTERS::DSkewedNotch(fz_Notch[i], dz_Notch[i], fp_Notch[i], dp_Notch[i], Ts, 4);
+        }
+    }
+    if (LowPass) {
+        filters_LowPass.resize(vector_size);
+        for (uint i = 0; i < vector_size; i++) {
+            // Default discretization method: Prewarp Tustin
+            filters_LowPass[i] = new DFILTERS::DSecondOrderLowpass(fp_LowPass[i], dp_LowPass[i], Ts);
+        }
     }
 
     // Check input data sizes
@@ -144,32 +124,52 @@ bool Controller::startHook()
     }
 
     // Check input data signs
+    if (vector_size < 1 || Ts <= 0.0) {
+        log(Error)<<"Controller:: vector_size or Ts parameter is invalid!"<<endlog();
+        return false;
+    }
     for (uint i = 0; i < vector_size; i++) {
-		if (WeakIntegrator) {
+        if (WeakIntegrator) {
             if ( fz_WeakIntegrator[i] < 0.0) {
                 log(Error)<<"Controller:: Wrong sign of one of the weak integrator parameters!"<<endlog();
-				return false;
-			}
-		}
-		if (LeadLag) {
+                return false;
+            }
+        }
+        if (LeadLag) {
             if ( fz_LeadLag[i] < 0.0 || fp_LeadLag[i] < 0.0 ) {
                 log(Error)<<"Controller:: Wrong sign of one of the leadlag parameters!"<<endlog();
-				return false;
-			}
-		}
-		if (Notch) {
+                return false;
+            }
+        }
+        if (Notch) {
             if ( fz_Notch[i] < 0.0 || dz_Notch[i] < 0.0 || fp_Notch[i] < 0.0 || dp_Notch[i] < 0.0) {
                 log(Error)<<"Controller:: Wrong sign of one of the notch parameters!"<<endlog();
-				return false;
-			}
-		}
-		if (LowPass) {
+                return false;
+            }
+        }
+        if (LowPass) {
             if ( fp_LowPass[i] < 0.0 || dp_LowPass[i] < 0.0 ) {
                 log(Error)<<"Controller:: Wrong sign of one of the low pass parameters!"<<endlog();
-				return false;
-			}
-		}    
-	}
+                return false;
+            }
+        }
+    }
+	
+	return true;
+}
+
+bool Controller::startHook()
+{
+    // Check validity of Ports:
+    if ( !references_inport.connected() || !positions_inport.connected() ) {
+        log(Error)<<"Controller: One of the inports is not connected!"<<endlog();
+        return false;
+    }
+
+    if ( !controleffort_outport.connected() ) {
+        log(Error)<<"Controller: Outputport not connected!"<<endlog();
+        return false;
+    }
 
     return true;
 }
