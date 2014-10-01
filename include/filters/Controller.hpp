@@ -47,6 +47,7 @@ namespace FILTERS
         // Ports
         InputPort<doubles> references_inport;
         InputPort<doubles> positions_inport;
+        InputPort<bool> safe_inport;
         OutputPort<doubles> controleffort_outport;
         OutputPort<doubles> jointerrors_outport;
 
@@ -55,6 +56,7 @@ namespace FILTERS
         bool LeadLag;
         bool Notch;
         bool LowPass;
+        bool safe;
         uint vector_size;
         double Ts;
         doubles gains;

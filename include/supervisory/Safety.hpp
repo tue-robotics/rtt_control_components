@@ -40,7 +40,8 @@ namespace SUPERVISORY
 		// ports
         InputPort<doubles> jointErrors_inport;
         InputPort<doubles> controleffort_inport;
-        OutputPort<bool> safe_outport;
+        OutputPort<bool> enable_outport;
+        OutputPort<bool> error_outport; 
         
         // properties
         uint NJ;

@@ -248,9 +248,9 @@ void Supervisor::updateHook()
 
 	//listen to error ports, once component is in error a boolean message is sent such that hardware can be brought into error state and the dashboard can be notified
 	for ( int partNr = 0; partNr < 6; partNr++ ) {
-		bool safe;
-		if ( error_port[partNr].read( safe ) == NewData ) {
-			if (safe == false) {
+		bool error;
+		if ( error_port[partNr].read( error ) == NewData ) {
+			if (error == true) {
 				GoError(partNr,hardwareStatusmsg);
 			}
 		}

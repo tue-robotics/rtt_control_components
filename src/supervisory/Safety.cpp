@@ -23,7 +23,8 @@ Safety::Safety(const string& name) : TaskContext(name, PreOperational)
     // Ports
     addPort( "jointErrors",jointErrors_inport).doc("Receives joint control errors");   
     addPort( "controlEffort",controleffort_inport).doc("Receives motorspace output of the controller");
-    addPort( "safe", safe_outport ).doc("boolean value, safe = true when safe, and safe = false when errors are detected");
+    addPort( "enable", enable_outport ).doc("boolean value, enable = true when enabled, and enable = false when errors are detected");
+    addPort( "error", error_outport ).doc("boolean value, error = true when in error, and error = false when no errors are detected");
     
     // Properties
     addProperty( "NM", NM ).doc("An unsigned integer that specifies the size of the motor space");
@@ -50,7 +51,7 @@ bool Safety::startHook()
         log(Error)<<"Safety: One of the input ports is not connected!"<<endlog();
 		return false;
 	}
-    if (!safe_outport.connected() ) {
+    if (!enable_outport.connected() ) {
         log(Error)<<"Safety: One of the output ports is not connected!"<<endlog();
 		return false;
 	}
@@ -100,10 +101,11 @@ void Safety::updateHook()
 	}
 	
 	if (!errors) {
-		safe_outport.write(true);
+		enable_outport.write(true);
 	}
 	else {
-		safe_outport.write(false);
+		enable_outport.write(false);
+		error_outport.write(true);
 	}
 }
 
@@ -135,7 +137,7 @@ void Safety::SetMaxErrors( doubles SET_MAX_ERRORS )
 }
 
 void Safety::stopHook() {
-    safe_outport.write(false);
+    enable_outport.write(false);
 }
 
 ORO_CREATE_COMPONENT(SUPERVISORY::Safety)
