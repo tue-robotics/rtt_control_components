@@ -22,7 +22,7 @@ Safety::Safety(const string& name) : TaskContext(name, PreOperational)
 
     // Ports
     addPort( "jointErrors",jointErrors_inport).doc("Receives joint control errors");   
-    addPort( "controlEffort",controleffort_inport).doc("Receives motorspace output of the controller");
+    addEventPort( "controlEffort",controleffort_inport).doc("Receives motorspace output of the controller");
     addPort( "enable", enable_outport ).doc("boolean value, enable = true when enabled, and enable = false when errors are detected");
     addPort( "error", error_outport ).doc("boolean value, error = true when in error, and error = false when no errors are detected");
     
