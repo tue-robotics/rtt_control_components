@@ -64,6 +64,7 @@ namespace SOEM // Just because it looks nice
     doubles time_shift;
     double time_correction;
     double Ts;
+    uint startup;
     
 
     public:

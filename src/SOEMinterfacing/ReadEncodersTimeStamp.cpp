@@ -142,6 +142,7 @@ bool ReadEncodersTimeStamp::startHook()
     init_SI_value[i] = (double)previous_enc_position[i] * enc2SI[i] + offset[i];
   }
 
+  startup = 0;
   return true;
 }
 
@@ -183,6 +184,10 @@ void ReadEncodersTimeStamp::updateHook()
 	  //log(Warning) << "time_correction = " << time_correction << endlog();
       counter = 0;
   }
+  
+  if ( startup < 2) {
+	  startup ++;
+  }
 }
 
 double ReadEncodersTimeStamp::readEncoder( int i )
@@ -190,7 +195,9 @@ double ReadEncodersTimeStamp::readEncoder( int i )
   // get the encoder data
   EncoderMsg encdata;
   if ( inport_enc[i].read(encdata) != NewData ) {
-      log(Warning) << " No new data recieved on encoder " << i << endlog();
+      if ( startup > 1 ){
+		  log(Warning) << " No new data recieved on encoder " << i << endlog();
+	  }
       int enc_position = ienc[i] * encoderbits + previous_enc_position[i];
       return ((double)enc_position * enc2SI[i]) - init_SI_value[i] + offset[i];
   }
@@ -221,34 +228,44 @@ double ReadEncodersTimeStamp::readEncoder( int i )
 
 double ReadEncodersTimeStamp::readTime( int i )
 {
-    // get time data
-    EncoderMsg timedata;
-    //inport_time.read(timedata);
-    if ( inport_time[i].read(timedata) != NewData ) {
-        timedata.value = previous_time_value[i]+Ts/timestep;
-        log(Warning) << " No new data recieved on time input, set to " << timedata.value << " previous = " << previous_time_value[i] << endlog();
-    }
-    
-    uint new_time_value = timedata.value;
-    double time_value = timedata.value;
-    TIME_value[i] = timedata.value;
+	
+	EncoderMsg timedata;
+	if (startup<2) {
+		time_shift[i] = 0;
+		if (inport_time[i].read(timedata) == NewData ){
+			previous_time_value[i] = timedata.value;
+		}		
+		return 1.0;
+	}
+	else {
+		// get time data
+		//inport_time.read(timedata);
+		if ( inport_time[i].read(timedata) != NewData ) {
+			timedata.value = previous_time_value[i]+Ts/timestep;
+			log(Warning) << " No new data recieved on time input, set to " << timedata.value << " previous = " << previous_time_value[i] << endlog();
+		}
+		
+		uint new_time_value = timedata.value;
+		double time_value = timedata.value;
+		TIME_value[i] = timedata.value;
 
-    // calculate the time correction value
-    double time_diff;
-    double time_cor;
-    if ( (previous_time_value[i] - new_time_value) > timebits/2) {
-        time_diff = (time_value + (double)timebits - previous_time_value[i]) * timestep;
-    } else {
-        time_diff = (time_value - previous_time_value[i]) * timestep;
-    }
-    time_cor = (Ts - time_shift[i]) / time_diff;
+		// calculate the time correction value
+		double time_diff;
+		double time_cor;
+		if ( (previous_time_value[i] - new_time_value) > timebits/2) {
+			time_diff = (time_value + (double)timebits - previous_time_value[i]) * timestep;
+		} else {
+			time_diff = (time_value - previous_time_value[i]) * timestep;
+		}
+		time_cor = (Ts - time_shift[i]) / time_diff;
 
-    // update paramters
-    time_shift[i] = time_shift[i] + time_diff - Ts;
-    previous_time_value[i] = time_value;
+		// update paramters
+		time_shift[i] = time_shift[i] + time_diff - Ts;
+		previous_time_value[i] = time_value;
 
-    // return correction paramter
-    return time_cor;
+		// return correction paramter
+		return time_cor;
+	}
 }
 
 void ReadEncodersTimeStamp::reset( uint Nreset, double resetvalue )
