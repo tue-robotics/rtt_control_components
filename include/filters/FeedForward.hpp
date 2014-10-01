@@ -46,18 +46,15 @@ private:
     InputPort<doubles> inport_velocity;
     InputPort<doubles> inport_acceleration;
     OutputPort<doubles> outport_feedforward;
-    OutputPort<bool> outport_safety;
 
     // Properties
     doubles coulomb_gain;
     doubles viscous_gain;
     doubles acceleration_gain;
     doubles direction_gain;
-    doubles motor_saturation;
     uint vector_size;
 
     // Variables
-    bool error;
 
     // Constants
     doubles zero_output;
@@ -70,6 +67,7 @@ public:
     bool configureHook();
     bool startHook();
     void updateHook();
+    void stopHook();
 
 };
 }
