@@ -234,15 +234,20 @@ double ReadEncodersTimeStamp::readTime( int i )
 		time_shift[i] = 0;
 		if (inport_time[i].read(timedata) == NewData ){
 			previous_time_value[i] = timedata.value;
-		}		
+		}
+		else {
+			startup = 0;
+		}
 		return 1.0;
 	}
 	else {
 		// get time data
 		//inport_time.read(timedata);
 		if ( inport_time[i].read(timedata) != NewData ) {
-			timedata.value = previous_time_value[i]+Ts/timestep;
-			log(Warning) << " No new data recieved on time input, set to " << timedata.value << " previous = " << previous_time_value[i] << endlog();
+			startup = 0;
+			//timedata.value = previous_time_value[i]+Ts/timestep;
+			log(Warning) << " No new data recieved on time input" << endlog();
+			return 1.0;
 		}
 		
 		uint new_time_value = timedata.value;
