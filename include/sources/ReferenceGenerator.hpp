@@ -28,20 +28,21 @@ namespace SOURCES
 
     // Declaring input- and output_ports
     InputPort<doubles> posinport;
-    InputPort< vector<doubles> > refinport;
     InputPort<doubles> actualposinport;
-    InputPort<doubles> resetPort;
     OutputPort<doubles> posoutport;
     OutputPort<doubles> veloutport;
     OutputPort<doubles> accoutport;
 
-    uint NrInterpolators;
+    // Properties
+    uint N;
+    doubles maxpos;
+    doubles maxvel;
+    doubles maxacc;
 
     // Declaring global variables
     std::vector<refgen::RefGenerator> mRefGenerators;
     std::vector<amigo_msgs::ref_point> mRefPoints;
     
-    vector<doubles> refin;
     doubles desiredPos;
     doubles desiredVel;
     doubles desiredAcc;
@@ -56,6 +57,7 @@ namespace SOURCES
     bool configureHook();
     bool startHook();
     void updateHook();
+
     };
 }
 #endif

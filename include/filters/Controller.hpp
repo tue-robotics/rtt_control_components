@@ -47,7 +47,7 @@ namespace FILTERS
         // Ports
         InputPort<doubles> references_inport;
         InputPort<doubles> positions_inport;
-        InputPort<bool> safe_inport;
+        InputPort<bool> enable_inport;
         OutputPort<doubles> controleffort_outport;
         OutputPort<doubles> jointerrors_outport;
 
