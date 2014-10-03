@@ -9,7 +9,7 @@
 using namespace std;
 using namespace RTT;
 
-namespace AMIGOGENERIC
+namespace SUPERVISORY
 {
     /*! \class Homing
     *  	\brief Defines Orocos component for homing hardware

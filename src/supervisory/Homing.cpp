@@ -9,7 +9,7 @@
 
 using namespace std;
 using namespace RTT;
-using namespace AMIGOGENERIC;
+using namespace SUPERVISORY;
 
 
 Homing::Homing(const string& name) : TaskContext(name, PreOperational)
@@ -354,4 +354,4 @@ bool Homing::evaluateHomingCriterion( uint jointNr)
     return result;
 }
 
-ORO_CREATE_COMPONENT(AMIGOGENERIC::Homing)
+ORO_CREATE_COMPONENT(SUPERVISORY::Homing)
