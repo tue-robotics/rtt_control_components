@@ -15,11 +15,6 @@ using namespace SUPERVISORY;
 
 Safety::Safety(const string& name) : TaskContext(name, PreOperational)
 {
-    // Operations
-    addOperation("SetMaxErrors", &Safety::SetMaxErrors, this, OwnThread)
-        .doc("Set maximum joint errors")
-        .arg("MAX_ERRORs","the maximum joint errors");
-
     // Ports
     addPort( "jointErrors",jointErrors_inport).doc("Receives joint control errors");   
     addEventPort( "controlEffort",controleffort_inport).doc("Receives motorspace output of the controller");
@@ -107,33 +102,6 @@ void Safety::updateHook()
 		enable_outport.write(false);
 		error_outport.write(true);
 	}
-}
-
-void Safety::SetMaxErrors( doubles SET_MAX_ERRORS )
-{
-    if (SET_MAX_ERRORS.size() != MAX_ERRORS.size() ) {
-        log(Error) << "Safety: SetMaxErrors: Could not update MAX_ERRORS due to wrongly sized SET_MAX_ERRORS" << endlog();
-        return;
-    } else {
-        // calculate totals
-        double total_MAX_ERRORS = 0.0;
-        double total_SET_MAX_ERRORS = 0.0;
-        for(unsigned int i = 0;i<MAX_ERRORS.size();i++) {
-            total_MAX_ERRORS += MAX_ERRORS[i];
-            total_SET_MAX_ERRORS += SET_MAX_ERRORS[i];
-        }
-
-        if (total_SET_MAX_ERRORS > total_MAX_ERRORS) {
-            log(Info) << "Safety: SetMaxErrors: Succesfully increased MAX_ERRORS" << endlog();
-        } else if (total_SET_MAX_ERRORS < total_MAX_ERRORS) {
-            log(Info) << "Safety: SetMaxErrors: Succesfully decreased MAX_ERRORS" << endlog();
-        } else {
-            log(Info) << "Safety: SetMaxErrors: updated MAX_ERRORS to same values" << endlog();
-        }
-
-        MAX_ERRORS = SET_MAX_ERRORS;
-        return;
-    }
 }
 
 void Safety::stopHook() {
