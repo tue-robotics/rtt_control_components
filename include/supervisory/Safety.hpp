@@ -68,9 +68,6 @@ namespace SUPERVISORY
     bool startHook();
     void updateHook();
     void stopHook();
-    
-
-    virtual void SetMaxErrors( doubles SET_MAX_ERRORS );
 
     };
 }
