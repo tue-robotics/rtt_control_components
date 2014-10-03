@@ -11,63 +11,48 @@ using namespace SOURCES;
 
 ReferenceGenerator::ReferenceGenerator(const string& name) : TaskContext(name, PreOperational)
 {
-  addProperty( "NrInterpolators", NrInterpolators );
-  addProperty( "InterpolatorDt", InterpolDt );
-  addProperty( "InterpolatorEps", InterpolEps );
+    addProperty( "vector_size", N );
+    addProperty( "InterpolatorDt", InterpolDt );
+    addProperty( "InterpolatorEps", InterpolEps );
+    addProperty( "MaxPosition", maxpos);
+    addProperty( "MaxVelocity", maxvel);
+    addProperty( "MaxAcceleration", maxacc);
 }
 
 ReferenceGenerator::~ReferenceGenerator(){}
 
 bool ReferenceGenerator::configureHook()
 {
-  addPort( "posin", posinport ); //Deprecated
-  addPort( "refin", refinport );
-  addPort( "posout", posoutport );
-  addPort( "velout", veloutport );
-  addPort( "accout", accoutport );
-  addPort( "actual_pos", actualposinport );
-  addEventPort( "resetValues", resetPort );
-  
-  mRefGenerators.resize(NrInterpolators);
-  mRefPoints.resize(NrInterpolators);
-  desiredPos.assign(NrInterpolators,0.0);
-  desiredVel.assign(NrInterpolators,0.0);
-  desiredAcc.assign(NrInterpolators,0.0);  
-  //interpolators.resize(NrInterpolators);
-  
-  for ( uint i = 0; i < NrInterpolators; i++ ){
-    string name = "interpolator"+to_string(i+1);
-    addProperty( name, interpolators[i]);
-  }
+    addPort( "posin", posinport );
+    addPort( "posout", posoutport );
+    addPort( "velout", veloutport );
+    addPort( "accout", accoutport );
+    addPort( "actual_pos", actualposinport );
 
-  return true;
+    mRefGenerators.resize(N);
+    mRefPoints.resize(N);
+    desiredPos.assign(N,0.0);
+    desiredVel.assign(N,0.0);
+    desiredAcc.assign(N,0.0);
 
+    return true;
 }
 
 bool ReferenceGenerator::startHook()
 {
   // Check validity of Ports:
-  if ( (!posinport.connected() ) && ( !refinport.connected() ) ) {
-    log(Warning)<<"ReferenceGenerator::No inputport connected! connect posin or refin"<<endlog();
+  if ( (!posinport.connected() ) ) {
+    log(Warning)<<"ReferenceGenerator::No inputport connected! connect posin"<<endlog();
   }
   if ( !posoutport.connected() ) {
     log(Warning)<<"ReferenceGenerator::Outputport not connected!"<<endlog();
   }
-  if ( !resetPort.connected() ) {
-    log(Warning)<<"ReferenceGenerator::resetPort not connected!"<<endlog();
-  }
   
   //Set the starting value to the current actual value
-  doubles actualPos(NrInterpolators,0.0);
+  doubles actualPos(N,0.0);
   actualposinport.read( actualPos );
-  for ( uint i = 0; i < NrInterpolators; i++ ){
+  for ( uint i = 0; i < N; i++ ){
 	  mRefGenerators[i].setRefGen(actualPos[i]);
-  }  
-  
-  //Initialise reference vectors
-  refin.resize(NrInterpolators);
-  for ( uint i = 0; i < NrInterpolators; i++ ){
-	  refin[i].assign(3,0.0); //pos, vel, acc
   }  
   
   // Write on the outposport to make sure the receiving components gets new data
@@ -81,69 +66,37 @@ bool ReferenceGenerator::startHook()
 
 void ReferenceGenerator::updateHook()
 {
-  // Read the inputports
-  doubles inpos(NrInterpolators,0.0);
-  doubles outpos(NrInterpolators,0.0);
-  doubles outvel(NrInterpolators,0.0);
-  doubles outacc(NrInterpolators,0.0);
-  doubles resetdata(NrInterpolators*4,0.0);
-  
-  // If new data on the channel then change the desired positions
-  if (NewData == refinport.read( refin ) ){
-	  for ( uint i = 0; i < NrInterpolators; i++ ){
-		  desiredPos[i]=refin[i][0];
-		  if ( refin[i][1] != 0.0 ){
-			  desiredVel[i]=refin[i][1];
-		  }
-		  else{
-			  desiredVel[i]=interpolators[i][1];
-		  }
-		  if ( refin[i][2] != 0.0 ){
-			  desiredAcc[i]=refin[i][2];
-		  }
-		  else{
-			  desiredAcc[i]=interpolators[i][2];
-		  }		 
-	  }
-  }
+    // Read the inputports
+    doubles inpos(N,0.0);
+    doubles outpos(N,0.0);
+    doubles outvel(N,0.0);
+    doubles outacc(N,0.0);
+    doubles resetdata(N*4,0.0);
 
-  // If new data on the channel then change the desired positions
-  if (NewData == posinport.read( inpos ) ){
-	  for ( uint i = 0; i < NrInterpolators; i++ ){
-		  desiredPos[i]=inpos[i];
-		  desiredVel[i]=interpolators[i][1];
- 	      desiredAcc[i]=interpolators[i][2];
-	  }
-	  //log(Warning)<<"New desiredPos"<<endlog();
-  } 
-  
-  // TODO: remove code below, should be a service, not a port, or remove completely
-  // If new data on the resetport [yes/no, resetpos, resetvel, resetacc] reset the according interpolator(s).
-  if (NewData == resetPort.read( resetdata ) ){
-	  for ( uint i = 0; i < NrInterpolators; i++ ){
-		  if(resetdata[i*4]==1.0){
-			  mRefGenerators[i].setRefGen(resetdata[i*4+1]);
-			  if(resetdata[i*4+2]!=0.0){
-				  interpolators[i][1]=resetdata[i*4+2];
-			  }
-			  if(resetdata[i*4+3]!=0.0){
-				  interpolators[i][2]=resetdata[i*4+3];
-			  }
-		  }
-	  }
-  }
-  
-  // Compute the next reference points
-  for ( uint i = 0; i < NrInterpolators; i++ ){
-	  mRefPoints[i] = mRefGenerators[i].generateReference(desiredPos[i], desiredVel[i], desiredAcc[i], InterpolDt, false, InterpolEps);
-      outpos[i]=mRefPoints[i].pos;
-      outvel[i]=mRefPoints[i].vel;
-      outacc[i]=mRefPoints[i].acc;
-  }
-  
-  posoutport.write( outpos );
-  veloutport.write( outvel );
-  accoutport.write( outacc );
+    // If new data on the channel then change the desired positions
+    if (NewData == posinport.read( inpos ) ){
+        for ( uint i = 0; i < N; i++ ){
+            if (maxpos[i] == 0.0 ) {
+                desiredPos[i]=(inpos[i]);
+            } else {
+                desiredPos[i]=min(inpos[i], maxpos[i]);
+            }
+            desiredVel[i]=maxvel[i];
+            desiredAcc[i]=maxacc[i];
+        }
+    }
+
+    // Compute the next reference points
+    for ( uint i = 0; i < N; i++ ){
+        mRefPoints[i] = mRefGenerators[i].generateReference(desiredPos[i], desiredVel[i], desiredAcc[i], InterpolDt, false, InterpolEps);
+        outpos[i]=mRefPoints[i].pos;
+        outvel[i]=mRefPoints[i].vel;
+        outacc[i]=mRefPoints[i].acc;
+    }
+
+    posoutport.write( outpos );
+    veloutport.write( outvel );
+    accoutport.write( outacc );
 
 }
 

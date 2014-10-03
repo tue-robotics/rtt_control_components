@@ -43,7 +43,7 @@ Controller::Controller(const string& name) :
     // Adding ports
     addPort( "ref_in",                          references_inport)      .doc("Control Reference port");
     addEventPort( "pos_in",                     positions_inport)       .doc("Position Port");
-    addPort( "safe",                     		safe_inport)  			.doc("Receives safety boolean from safety component, controller sends out zeros if boolean = false");
+    addPort( "enable",                     		enable_inport)  		.doc("Receives enable boolean from safety component, controller sends out zeros if enable = false");
     addPort( "out",                             controleffort_outport)  .doc("Control output port");
     addPort( "jointErrors",                     jointerrors_outport)  	.doc("Joint Errors output port");
 }
@@ -177,7 +177,7 @@ bool Controller::startHook()
 
 void Controller::updateHook()
 {
-	safe_inport.read(safe);
+	enable_inport.read(safe);
 	if (!safe) {
 		doubles output(vector_size,0.0);
 		controleffort_outport.write(output);
