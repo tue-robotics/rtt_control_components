@@ -39,7 +39,7 @@ namespace SUPERVISORY
         InputPort<doubles> pos_inport;
         InputPort<std_msgs::Bool> endswitch_inport;
         InputPort<doubles> jointerrors_inport;
-        InputPort<ints> absPos_inport;
+        InputPort<doubles> absPos_inport;
         InputPort<doubles> forces_inport;
 
         // outports
@@ -62,7 +62,7 @@ namespace SUPERVISORY
 
         doubles homing_forces;
         doubles homing_errors;
-        vector<uint> homing_absPos;
+        ints homing_absPos;
 
         // Constants
         bool endswitchhoming;
@@ -70,6 +70,7 @@ namespace SUPERVISORY
         bool forcehoming;
         bool errorhoming;
         doubles initial_maxerr;
+        doubles initial_minpos;
         doubles initial_maxpos;
         doubles initial_maxvel;
 
@@ -81,6 +82,7 @@ namespace SUPERVISORY
         doubles ref_out;
         doubles ref_out_prev;
         doubles updated_maxerr;
+        doubles updated_minpos;
         doubles updated_maxpos;
         doubles updated_maxvel;
 
@@ -90,6 +92,7 @@ namespace SUPERVISORY
         TaskContext* Safety;
         TaskContext* ReferenceGenerator;
         Attribute<doubles> Safety_maxJointErrors;
+        Attribute<doubles> ReferenceGenerator_minpos;
         Attribute<doubles> ReferenceGenerator_maxpos;
         Attribute<doubles> ReferenceGenerator_maxvel;
         OperationCaller<bool(string)> StartBodyPart;

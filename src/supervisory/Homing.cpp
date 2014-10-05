@@ -19,6 +19,11 @@ Homing::Homing(const string& name) : TaskContext(name, PreOperational)
     addPort( "ref_out", ref_outport );
     addPort( "homing_finished", homingfinished_outport );
 
+    addPort( "endswitch", endswitch_inport );
+    addPort( "servo_error_in", jointerrors_inport );
+    addPort( "abs_pos_in", absPos_inport );
+    addPort( "force_in", forces_inport );
+
 	// Properties
     addProperty( "vector_size",     N               ).doc("Number of joints");
     addProperty( "bodypart",        bodypart        ).doc("Name of the bodypart, (fill in BODYPARTNAME)");
@@ -54,7 +59,7 @@ bool Homing::configureHook()
         return false;
     }
 
-    // Check which types of homing are required
+    // Check which types of homing are required 
     endswitchhoming = false;
     errorhoming     = false;
     absolutehoming  = false;
@@ -78,21 +83,6 @@ bool Homing::configureHook()
     if ( (forcehoming && homing_forces.size() != N) || (errorhoming && homing_errors.size() != N) || (absolutehoming && homing_absPos.size() != N) ) {
         log(Error) << prefix <<"_Homing: size of homing_force, homing_error or homing_absPos does not match vector_size"<<endlog();
         return false;
-    }
-
-    // Define homing type specific ports
-    if (endswitchhoming) {
-        addPort( "endswitch", endswitch_inport );
-        // to do make this port inside a vector of ports such that more joints than one can use this type of homing
-    }
-    if (errorhoming) {
-        addPort( "servo_error_in", jointerrors_inport );
-    }
-    if (absolutehoming) {
-        addPort( "abs_pos_in", absPos_inport );
-    }
-    if (forcehoming) {
-        addPort( "force_in", forces_inport );
     }
 
 	return true;
@@ -136,6 +126,7 @@ bool Homing::startHook()
 
     // Fetch Property Acces
     Safety_maxJointErrors = Safety->attributes()->getAttribute("maxJointErrors");
+    ReferenceGenerator_minpos = ReferenceGenerator->attributes()->getAttribute("minpos");
     ReferenceGenerator_maxpos = ReferenceGenerator->attributes()->getAttribute("maxpos");
     ReferenceGenerator_maxvel = ReferenceGenerator->attributes()->getAttribute("maxvel");
 
@@ -199,21 +190,25 @@ bool Homing::startHook()
 
     // Increase max errors - Increase maxpos - Decresse maxvel
     initial_maxerr = Safety_maxJointErrors.get();
+    initial_minpos = ReferenceGenerator_minpos.get();
     initial_maxpos = ReferenceGenerator_maxpos.get();
     initial_maxvel = ReferenceGenerator_maxvel.get();
     updated_maxerr = Safety_maxJointErrors.get();
+    updated_minpos = ReferenceGenerator_minpos.get();
     updated_maxpos = ReferenceGenerator_maxpos.get();
     updated_maxvel = ReferenceGenerator_maxvel.get();
 
     for (uint j = 0; j<N; j++) {
-        if ( (require_homing[j] != false) ) {
+        if ( (require_homing[j] == true) ) {
             updated_maxerr[j] = 2.0*initial_maxerr[j];
-            updated_maxpos[j] = 2.0*initial_maxpos[j];
+            updated_minpos[j] -= abs(initial_minpos[j]);
+            updated_maxpos[j] += abs(initial_maxpos[j]);
             updated_maxvel[j] = homing_velocity[j];
         }
     }
 
     Safety_maxJointErrors.set(updated_maxerr);
+    ReferenceGenerator_minpos.set(updated_minpos);
     ReferenceGenerator_maxpos.set(updated_maxpos);
     ReferenceGenerator_maxvel.set(updated_maxvel);
 		
@@ -227,19 +222,30 @@ void Homing::updateHook()
 
         // Reset parameters
         updated_maxerr[jointNr] = initial_maxerr[jointNr];
+        updated_minpos[jointNr] = initial_minpos[jointNr];
         updated_maxpos[jointNr] = initial_maxpos[jointNr];
         updated_maxvel[jointNr] = initial_maxvel[jointNr];
         Safety_maxJointErrors.set(updated_maxerr);
+        ReferenceGenerator_minpos.set(updated_minpos);
         ReferenceGenerator_maxpos.set(updated_maxpos);
         ReferenceGenerator_maxvel.set(updated_maxvel);
 
+        // Go to the next joint and start over
         jointNr++;
+        return;
     }
 
     // Check if last joint is finished
     if(jointNr==N) {
-        log(Warning) << "Homing: Finished " << bodypart << "homing."<<endlog();
-        homingfinished_outport.write(true);
+        for (uint j = 0; j<N; j++) {
+            if (require_homing[jointNr] == true) {
+                log(Warning) << "Homing: Finished " << bodypart << "homing."<<endlog();
+                homingfinished_outport.write(true);
+                return;        
+            }
+            // if no joint was required to home than do not send homing finished
+            log(Error) << "Homing: Looped over all joints without at least one joint that required homing. Do not call for homing if in the ops file all required_homing are specified false!"<<endlog();
+        }    
     }
 
     // Read positions
@@ -259,9 +265,11 @@ void Homing::updateHook()
 
             // Reset parameters
             updated_maxerr[jointNr] = initial_maxerr[jointNr];
+            updated_minpos[jointNr] = initial_minpos[jointNr];
             updated_maxpos[jointNr] = initial_maxpos[jointNr];
             updated_maxvel[jointNr] = initial_maxvel[jointNr];
             Safety_maxJointErrors.set(updated_maxerr);
+            ReferenceGenerator_minpos.set(updated_minpos);
             ReferenceGenerator_maxpos.set(updated_maxpos);
             ReferenceGenerator_maxvel.set(updated_maxvel);
 
@@ -291,13 +299,13 @@ void Homing::updateHomingRef( uint jointNr)
 
     } else { // absolute sensor homing
 
-        ints absolutesensoroutput;
+        doubles absolutesensoroutput;
         absPos_inport.read(absolutesensoroutput);
 
         // determine direction using absolute sensor if positive joint direction and positive sensor direction are opposite
         // that can be corrected using the property homing_direction
         double direction = 1.0; // positive unless goal - measured < 0
-        if ( (homing_absPos[jointNr]-absolutesensoroutput[jointNr]) < 0 ) {
+        if ( (( (double) homing_absPos[jointNr])-absolutesensoroutput[jointNr]) < 0.0 ) {
             direction = -1.0*homing_direction[jointNr];
         }
 
@@ -331,9 +339,9 @@ bool Homing::evaluateHomingCriterion( uint jointNr)
             result = true;
         }
     } else if (homing_type[jointNr] == "absolutesensor" ) {
-        ints absolutesensoroutput;
+        doubles absolutesensoroutput;
         absPos_inport.read(absolutesensoroutput);
-        if (absolutesensoroutput[jointNr] == homing_absPos[jointNr]) {
+        if (absolutesensoroutput[jointNr] == (double) homing_absPos[jointNr]) {
             result = true;
         }
     } else if (homing_type[jointNr] == "forcesensor" ) {

@@ -11,7 +11,7 @@ using namespace ROS;
 JointStateToDoubles::JointStateToDoubles(const string& name) :
     TaskContext(name, PreOperational)
 {
-    addProperty( "NumberOfJoints", Ndouble_ );
+    addProperty( "vector_size", Ndouble_ );
     addEventPort( "in", inport_ );
     addPort( "pos_out", position_outport_ );
     addPort( "vel_out", velocity_outport_ );

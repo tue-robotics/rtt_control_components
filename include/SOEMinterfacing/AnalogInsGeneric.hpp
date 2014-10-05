@@ -21,7 +21,6 @@ inline string to_string (const T& t){
 namespace SOEM
 {
   typedef std::vector<double> doubles;
-  typedef std::vector< std::vector<double> > doubless;
 
 /*! \class AnalogInsGeneric
 *  \brief Defines a configurable Orocos component for Analog Inputs
@@ -83,11 +82,11 @@ namespace SOEM
     // Local variables:
     uint n_inputs;
     uint n_outputs;
-    doubless mapping;
+    vector<doubles> mapping;
 
     // Global variables:
     std::vector<soem_beckhoff_drivers::AnalogMsg> inputdata_msgs;
-    doubless outputdata;
+    vector<doubles> outputdata;
     std_msgs::Float32 outputdata_msg;
 
     public:

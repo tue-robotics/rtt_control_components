@@ -35,6 +35,7 @@ namespace SOURCES
 
     // Properties
     uint N;
+    doubles minpos;
     doubles maxpos;
     doubles maxvel;
     doubles maxacc;
@@ -42,7 +43,6 @@ namespace SOURCES
     // Declaring global variables
     std::vector<refgen::RefGenerator> mRefGenerators;
     std::vector<amigo_msgs::ref_point> mRefPoints;
-    
     doubles desiredPos;
     doubles desiredVel;
     doubles desiredAcc;
