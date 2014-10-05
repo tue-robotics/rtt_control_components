@@ -132,7 +132,7 @@ void Supervisor::updateHook()
 	if (!goodToGO) {
 		aquisition_time = os::TimeService::Instance()->getNSecs()*1e-9;
 	}
-	if (!goodToGO && (aquisition_time - start_time > 3.0)) {
+	if (!goodToGO && (aquisition_time - start_time > 7.0)) {
 		goodToGO = true;
 		for( int partNr = 1; partNr < 6; partNr++ ) {
 			if (staleParts[partNr] == false) {
