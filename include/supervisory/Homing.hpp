@@ -48,10 +48,11 @@ namespace SUPERVISORY
 
         // Properties
         uint N;
+        uint cntr;
         string bodypart;
         string prefix;
 
-        vector<string> homing_type;
+        ints homing_type;
         ints require_homing;
         ints homing_order;
         ints homing_direction;
@@ -78,6 +79,7 @@ namespace SUPERVISORY
         int jointNr;
         int state;
         bool joint_finished;
+        bool finished;
         doubles position;
         doubles ref_out;
         doubles ref_out_prev;

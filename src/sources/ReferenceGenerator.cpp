@@ -18,6 +18,11 @@ ReferenceGenerator::ReferenceGenerator(const string& name) : TaskContext(name, P
     addPort( "accout", accoutport );
     addPort( "actual_pos", actualposinport );
 
+    // Attrributes
+    addAttribute( "minPosition", minpos );
+    addAttribute( "maxPosition", maxpos );
+    addAttribute( "maxVelocity", maxvel );
+
     // Properties
     addProperty( "vector_size", N );
     addProperty( "InterpolatorDt", InterpolDt );
@@ -32,20 +37,22 @@ ReferenceGenerator::~ReferenceGenerator(){}
 
 bool ReferenceGenerator::configureHook()
 {
+	Logger::In in("ReferenceGenerator");
+	
     // Property Checks
     if ( (minpos.size() != N) || (maxpos.size() != N) || (maxvel.size() != N) || (maxacc.size() != N) ) {
-        log(Error)<<"ReferenceGenerator:: One of the input parameters minpos, maxpos, maxvel, maxacc is wrongly sized "<<endlog();
+        log(Error)<<"minpos["<< minpos.size() <<"], maxpos["<< maxpos.size() <<"], maxvel["<< maxvel.size() <<"], maxacc["<< maxacc.size() <<"] should be size " << N <<"."<<endlog();        
         return false;
     }
     for ( uint i = 0; i < N; i++ ){
         if ( minpos[i] == 0.0 && maxpos[i] == 0.0 ) {
-            log(Warning)<<"ReferenceGenerator:: minPos and maxPos both specified 0.0. Thus maxPos and minPos boundaries are not taken into account"<<endlog();
+            log(Warning)<<"minPos and maxPos both specified 0.0. Thus maxPos and minPos boundaries are not taken into account"<<endlog();
         } else if ( minpos[i] > maxpos[i]) {
-            log(Error)<<"ReferenceGenerator:: minPosition should be specified smaller than maxPosition"<<endlog();
+            log(Error)<<"minPosition should be specified smaller than maxPosition"<<endlog();
             return false;
         }
         if ( ( maxvel[i] < 0.0) || ( maxacc[i] < 0.0) ) {
-            log(Error)<<"ReferenceGenerator:: maxVelocity and maxAcceleration should be specified positive"<<endlog();
+            log(Error)<<"maxVelocity and maxAcceleration should be specified positive"<<endlog();
             return false;
         }
     }
@@ -63,10 +70,10 @@ bool ReferenceGenerator::startHook()
     {
     // Check validity of Ports:
     if ( (!posinport.connected() ) ) {
-        log(Warning)<<"ReferenceGenerator::No inputport connected! connect posin"<<endlog();
+        log(Warning)<<"No inputport connected! connect posin"<<endlog();
     }
     if ( !posoutport.connected() ) {
-        log(Warning)<<"ReferenceGenerator::Outputport not connected!"<<endlog();
+        log(Warning)<<"Outputport not connected!"<<endlog();
     }
 
     //Set the starting value to the current actual value
@@ -79,7 +86,7 @@ bool ReferenceGenerator::startHook()
     // Write on the outposport to make sure the receiving components gets new data
     posoutport.write( actualPos );
 
-    log(Info)<<"ReferenceGenerator::started at " << os::TimeService::Instance()->getNSecs()*1e-9 <<endlog();
+    log(Info)<<"started at " << os::TimeService::Instance()->getNSecs()*1e-9 <<endlog();
 
     return true;
 }
