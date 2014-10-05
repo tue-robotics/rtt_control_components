@@ -112,8 +112,8 @@ namespace SUPERVISORY
         bool startHook();
         void updateHook();
 
-        bool evaluateHomingCriterion(uint jointNr);
-        void updateHomingRef(uint jointNr);
+        bool evaluateHomingCriterion(uint jointID);
+        void updateHomingRef(uint jointID);
 
     };
 }

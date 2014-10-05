@@ -315,13 +315,13 @@ void Homing::updateHook()
     }
 }
 
-void Homing::updateHomingRef( uint jointNr)
+void Homing::updateHomingRef( uint jointID)
 {
-    if (homing_type[homing_order[jointNr]-1] != 3 ) {
+    if (homing_type[jointID] != 3 ) {
 
         // Send to homing position
         ref_out = position;
-        ref_out[homing_order[jointNr]-1] = homing_direction[homing_order[jointNr]-1]*25.0;
+        ref_out[jointID] = homing_direction[jointID]*25.0;
     } else { // absolute sensor homing
 
         doubles absolutesensoroutput;
@@ -330,49 +330,49 @@ void Homing::updateHomingRef( uint jointNr)
         // determine direction using absolute sensor if positive joint direction and positive sensor direction are opposite
         // that can be corrected using the property homing_direction
         double direction = 1.0; // positive unless goal - measured < 0
-        if ( (( (double) homing_absPos[homing_order[jointNr]-1])-absolutesensoroutput[homing_order[jointNr]-1]) < 0.0 ) {
-            direction = -1.0*homing_direction[homing_order[jointNr]-1];
+        if ( (( (double) homing_absPos[jointID])-absolutesensoroutput[jointID]) < 0.0 ) {
+            direction = -1.0*homing_direction[jointID];
         }
 
         // Send to homing position
         ref_out = position;
-        ref_out[homing_order[jointNr]-1] = direction*25.0;
+        ref_out[jointID] = direction*25.0;
     }
 
     // Write ref if a new ref has been generated
     if (ref_out_prev != ref_out) {
         ref_out_prev = ref_out;
         ref_outport.write(ref_out);
-        log(Warning) << prefix <<"_Homing: Written ref_out:" << ref_out[homing_order[jointNr]-1] << "for joint " << homing_order[jointNr] << " jointNr =" << jointNr <<endlog();
+        log(Warning) << prefix <<"_Homing: Written ref_out:" << ref_out[jointID] << "for joint " << jointID << " jointNr =" << jointNr <<endlog();
     }
 
     return;
 }
 
-bool Homing::evaluateHomingCriterion( uint jointNr)
+bool Homing::evaluateHomingCriterion( uint jointID)
 {
     bool result = false;
 
-    if (homing_type[homing_order[jointNr]-1] == 1 ) {
+    if (homing_type[jointID] == 1 ) {
         std_msgs::Bool endswitch_msg;
         endswitch_inport.read(endswitch_msg);
         result = !endswitch_msg.data;
-    } else if (homing_type[homing_order[jointNr]-1] == 2 ) {
+    } else if (homing_type[jointID] == 2 ) {
         doubles jointerrors;
         jointerrors_inport.read(jointerrors);
-        if (jointerrors[homing_order[jointNr]-1] > homing_errors[homing_order[jointNr]-1]) {
+        if (jointerrors[jointID] > homing_errors[jointID]) {
             result = true;
         }
-    } else if (homing_type[homing_order[jointNr]-1] == 3 ) {
+    } else if (homing_type[jointID] == 3 ) {
         doubles absolutesensoroutput;
         absPos_inport.read(absolutesensoroutput);
-        if (absolutesensoroutput[homing_order[jointNr]-1] == (double) homing_absPos[homing_order[jointNr]-1]) {
+        if (absolutesensoroutput[jointID] == (double) homing_absPos[jointID]) {
             result = true;
         }
-    } else if (homing_type[homing_order[jointNr]-1] == 4 ) {
+    } else if (homing_type[jointID] == 4 ) {
         doubles forces;
         forces_inport.read(forces);
-        if (forces[homing_order[jointNr]-1] > homing_forces[homing_order[jointNr]-1]) {
+        if (forces[jointID] > homing_forces[jointID]) {
             result = true;
         }
     } else {
@@ -384,7 +384,7 @@ bool Homing::evaluateHomingCriterion( uint jointNr)
     }
 
     if (result == true ) {
-        log(Warning) << prefix <<"_Homing: Homing Position reached for joint " << homing_order[jointNr]-1 << "."<<endlog();
+        log(Warning) << prefix <<"_Homing: Homing Position reached for joint " << jointID << "."<<endlog();
     }
 
     return result;
