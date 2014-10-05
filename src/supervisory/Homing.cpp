@@ -76,13 +76,15 @@ bool Homing::configureHook()
         } else if (homing_type[j] == 4) {
             forcehoming = true;
         } else {
-            log(Error) << prefix <<"_Homing: Invalid homing type provided. Choose from :['endswitch','servoerror', 'absolutesensor', 'forcesensor']"<<endlog();
+			log(Error) << prefix <<"_Homing: Invalid homing type provided. Choose 1 for endswitch homing, 2 for servoerror homing, 3 for absolute sensor homing, 4 for force sensor homing"<<endlog();
             return false;
         }
     }
 
     // Input checks specific for homing types
     if ( (forcehoming && homing_forces.size() != N) || (errorhoming && homing_errors.size() != N) || (absolutehoming && homing_absPos.size() != N) ) {
+        log(Error) << prefix <<"_Homing: homing_forces["<< homing_forces.size() <<"], homing_errors["<< homing_errors.size() <<"], homing_absPos["<< homing_absPos.size() <<"] should be size " << N <<"."<<endlog();        
+
         log(Error) << prefix <<"_Homing: size of homing_force, homing_error or homing_absPos does not match vector_size"<<endlog();
         return false;
     }
@@ -262,6 +264,8 @@ void Homing::updateHook()
         ReferenceGenerator_maxpos.set(updated_maxpos);
         ReferenceGenerator_maxvel.set(updated_maxvel);
 
+		log(Warning) << prefix <<"_Homing: Proceed from joint "<< homing_order[jointNr] << "To joint " << homing_order[jointNr]<< "!" <<endlog();
+
         // Go to the next joint and start over
         jointNr++;
         return;
@@ -339,6 +343,7 @@ void Homing::updateHomingRef( uint jointNr)
     if (ref_out_prev != ref_out) {
         ref_out_prev = ref_out;
         ref_outport.write(ref_out);
+        log(Warning) << prefix <<"_Homing: Written ref_out:" << ref_out[homing_order[jointNr]-1] << "for joint " << homing_order[jointNr] << " jointNr =" << jointNr <<endlog();
     }
 
     return;
