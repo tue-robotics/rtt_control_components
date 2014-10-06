@@ -271,7 +271,7 @@ void Homing::updateHook()
         ReferenceGenerator_maxpos.set(updated_maxpos);
         ReferenceGenerator_maxvel.set(updated_maxvel);
 
-		log(Warning) << prefix <<"_Homing: Proceed from joint "<< homing_order[jointNr] << "To joint " << homing_order[jointNr]<< "!" <<endlog();
+		log(Warning) << prefix <<"_Homing: Proceed from joint "<< homing_order[jointNr] << "To joint " << homing_order[jointNr+1]<< "!" <<endlog();
 
         // Go to the next joint and start over
         jointNr++;
@@ -289,9 +289,11 @@ void Homing::updateHook()
         joint_finished = evaluateHomingCriterion(homing_order[jointNr]-1);
         if (joint_finished) {
             // Reset encoders and send joint to midpos
+            log(Warning) << prefix <<"_Homing: Stopping body part" <<endlog();
             StopBodyPart(bodypart);
             log(Warning) << prefix <<"_Homing: Resetting Encoder "<< homing_order[jointNr]-1 << " with stroke " << homing_stroke[homing_order[jointNr]-1] << "!" <<endlog();
             ResetEncoder(homing_order[jointNr]-1,homing_stroke[homing_order[jointNr]-1]);
+            log(Warning) << prefix <<"_Homing: Starting body part" <<endlog();
             StartBodyPart(bodypart);
             
             // Send to middle position
@@ -372,9 +374,6 @@ bool Homing::evaluateHomingCriterion( uint jointID)
     } else if (homing_type[jointID] == 2 ) {
         doubles jointerrors;
         jointerrors_inport.read(jointerrors);
-        
-        log(Warning) << prefix <<"_Homing: Evaluation of jointerrors[jointID] > homing_errors[jointID]: " << jointerrors[jointID] << " > " << homing_errors[jointID] << "!" <<endlog();
-
         if (fabs(jointerrors[jointID]) > homing_errors[jointID]) {
             result = true;
         }

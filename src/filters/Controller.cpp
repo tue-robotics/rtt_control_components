@@ -198,7 +198,6 @@ void Controller::updateHook()
 	}
 	else {
 
-
 		// Compute joint errors
 		for (uint i = 0; i < vector_size; i++) {
 			jointErrors[i] = references[i]-positions[i];

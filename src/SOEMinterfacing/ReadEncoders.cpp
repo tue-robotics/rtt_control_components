@@ -124,14 +124,10 @@ void ReadEncoders::reset( uint Nreset, double resetvalue )
 {
 	// ReInitialising variables
 	ienc[Nreset] = 0;
-	previous_enc_position[Nreset] = 0.0; // obsolete
-	init_SI_value[Nreset] = 0.0;
+	previous_enc_position[Nreset] = 0.0;
 	init_SI_value[Nreset] = readEncoder(Nreset) - resetvalue;
-	log(Warning)<<"ReadEncoders: Nulling encoders"<<endlog();
-	
-	if (N>2) {
-		log(Warning)<<"ReadEncoders: [" << SI_values[0] << "," << SI_values[1] << "," << SI_values[2] << "," << SI_values[3] << "," << SI_values[4] << "," << SI_values[5] << "," << SI_values[6] << "," << SI_values[7] << "]" <<endlog();
-	} 
+	previous_enc_position[Nreset] = init_SI_value[Nreset];
+	log(Warning)<<"ReadEncoders: Resetting encoder: "<< Nreset + 1 << ", with value: " << resetvalue << "!" <<endlog();
 }
 
 ORO_CREATE_COMPONENT(SOEM::ReadEncoders)

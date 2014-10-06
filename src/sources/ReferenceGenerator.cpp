@@ -17,6 +17,7 @@ ReferenceGenerator::ReferenceGenerator(const string& name) : TaskContext(name, P
     addPort( "velout", veloutport );
     addPort( "accout", accoutport );
     addPort( "actual_pos", actualposinport );
+    addPort( "resetref", resetrefoutport );
 
     // Attrributes
     addAttribute( "minPosition", minpos );
@@ -62,6 +63,7 @@ bool ReferenceGenerator::configureHook()
     desiredPos.assign(N,0.0);
     desiredVel.assign(N,0.0);
     desiredAcc.assign(N,0.0);
+    resetRefMsg.position.assign(7,0.0);
 
     return true;
 }
@@ -80,12 +82,19 @@ bool ReferenceGenerator::startHook()
     doubles actualPos(N,0.0);
     actualposinport.read( actualPos );
     for ( uint i = 0; i < N; i++ ){
+		resetRefMsg.position[i] = actualPos[i];
+	}
+    resetrefoutport.write(resetRefMsg);
+    
+    for ( uint i = 0; i < N; i++ ){
        mRefGenerators[i].setRefGen(actualPos[i]);
     }  
-		if (N>2) log(Warning)<<"ReferenceGenerator.posout.last = [" << actualPos[0] << "," << actualPos[1] << "," << actualPos[2] << "," << actualPos[3] << "," << actualPos[4] << "," << actualPos[5] << "," << actualPos[6] << "," << actualPos[7] << "]" <<endlog();
+	
+	if (N>2) log(Warning)<<"ReferenceGenerator.posout.last = [" << actualPos[0] << "," << actualPos[1] << "," << actualPos[2] << "," << actualPos[3] << "," << actualPos[4] << "," << actualPos[5] << "," << actualPos[6] << "," << actualPos[7] << "]" <<endlog();
 
     // Write on the outposport to make sure the receiving components gets new data
     posoutport.write( actualPos );
+    
 
     log(Info)<<"started at " << os::TimeService::Instance()->getNSecs()*1e-9 <<endlog();
 

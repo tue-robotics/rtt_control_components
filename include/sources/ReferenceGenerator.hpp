@@ -5,6 +5,7 @@
 
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
+#include <sensor_msgs/JointState.h>
 
 using namespace std;
 
@@ -32,6 +33,7 @@ namespace SOURCES
     OutputPort<doubles> posoutport;
     OutputPort<doubles> veloutport;
     OutputPort<doubles> accoutport;
+    OutputPort<sensor_msgs::JointState> resetrefoutport;
 
     // Properties
     uint N;
@@ -48,6 +50,7 @@ namespace SOURCES
     doubles desiredAcc;
     doubles interpolators[maxN];
     double InterpolDt, InterpolEps;
+    sensor_msgs::JointState resetRefMsg;
 
     public:
 
