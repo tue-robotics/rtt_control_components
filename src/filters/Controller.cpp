@@ -177,6 +177,19 @@ bool Controller::startHook()
 
 void Controller::updateHook()
 {
+    doubles references(vector_size,0.0);
+    doubles positions(vector_size,0.0);
+    doubles jointErrors(vector_size,0.0);
+    doubles output_Gains(vector_size,0.0);
+    doubles output_WeakIntegrator(vector_size,0.0);
+    doubles output_LeadLag(vector_size,0.0);
+    doubles output_Notch(vector_size,0.0);
+    doubles output(vector_size,0.0);
+
+    // Read the input ports
+    references_inport.read(references);
+    positions_inport.read(positions);
+
 	enable_inport.read(safe);
 	if (!safe) {
 		doubles output(vector_size,0.0);
@@ -184,18 +197,7 @@ void Controller::updateHook()
 		return;
 	}
 	else {
-		doubles references(vector_size,0.0);
-		doubles positions(vector_size,0.0);
-		doubles jointErrors(vector_size,0.0);
-		doubles output_Gains(vector_size,0.0);
-		doubles output_WeakIntegrator(vector_size,0.0);
-		doubles output_LeadLag(vector_size,0.0);
-		doubles output_Notch(vector_size,0.0);
-		doubles output(vector_size,0.0);
 
-		// Read the input ports
-		references_inport.read(references);
-		positions_inport.read(positions);
 
 		// Compute joint errors
 		for (uint i = 0; i < vector_size; i++) {

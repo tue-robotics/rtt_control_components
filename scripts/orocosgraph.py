@@ -31,7 +31,7 @@ for line in f_in:
             components.append(s[1])
             #print s[1]
             amountofcomponents = amountofcomponents + 1
-        elif 'connect' in line:
+        elif 'connect' in line and not 'connectPeers' in line:
             s = line.split("\"")
             comp_sub1 = s[1]
             comp_sub2 = s[3]
