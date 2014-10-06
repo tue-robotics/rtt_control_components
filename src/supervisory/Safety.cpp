@@ -41,6 +41,8 @@ bool Safety::configureHook()
 
 bool Safety::startHook()
 { 
+	Logger::In in("Safety");
+	
     if (MAX_ERRORS.size()!=NJ || MOTORSAT.size()!=NM ) {
         log(Error)<<"Safety: Parameters missing! Check the sizes of maxJointErrors and motorSaturations."<< endlog();
 		return false;
@@ -64,12 +66,15 @@ bool Safety::startHook()
 
 void Safety::updateHook()
 {
+	Logger::In in("Safety");
+	
     // Joint error check
 	jointErrors_inport.read(jointErrors);
     for ( uint i = 0; i < NJ; i++ ) {
         if( (fabs(jointErrors[i])>MAX_ERRORS[i]) ) {
 			if( errors == false ){
-                ROS_ERROR_STREAM( "Safety: Error of joint q"<<i+1<<" exceeded limit ("<<MAX_ERRORS[i]<<"). output disabled." );
+                ROS_ERROR_STREAM( "Safety: Error of joint q"<<i+1<<" exceeded limit ("<<MAX_ERRORS[i]<<"). jointErrors["<<i<<"] = " << jointErrors[i] << " output disabled." );
+                log(Error)<<"Safety: Error of joint q"<<i+1<<" exceeded limit ("<<MAX_ERRORS[i]<<"). jointErrors["<<i<<"] = " << jointErrors[i] << " output disabled." <<endlog();
 				errors = true;
 			}
 		}
