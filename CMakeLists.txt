@@ -25,6 +25,7 @@ include_directories(
 	include/tracing
 	include/SOEMinterfacing
 	include/ROSinterfacing
+	include/dynamixel
 	${catkin_INCLUDE_DIRS} 
 	${scl_filters_INCLUDE_DIRS} 
 	${USE_OROCOS_INCLUDE_DIRS})
@@ -39,7 +40,8 @@ orocos_install_headers( DIRECTORY
 	include/supervisory
 	include/tracing
 	include/SOEMinterfacing
-	include/ROSinterfacing)
+	include/ROSinterfacing
+	include/dynamixel)
 
 file(GLOB_RECURSE HEADER_FILES include/*.hpp)
 
@@ -231,4 +233,8 @@ target_link_libraries(ReporterTrigger ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES
 target_link_libraries(Tracing ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(TracingOneSignal ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(TracingTimeStamp ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
+
+### Orocos Components - Dynamixel ###
+orocos_component(DynamixelController src/dynamixel/DynamixelController.cpp ${HEADER_FILES})
+target_link_libraries(DynamixelController ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 
