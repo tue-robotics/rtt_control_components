@@ -21,6 +21,8 @@ using namespace RTT;
 namespace SOURCES
 {
   typedef vector<double> doubles;
+  typedef vector<int> ints;
+  
 
   class ReferenceGenerator
   : public RTT::TaskContext
@@ -28,8 +30,8 @@ namespace SOURCES
     private:
 
     // Declaring input- and output_ports
-    InputPort<doubles> posinport;
-    InputPort<doubles> actualposinport;
+    InputPort<doubles> posinport[maxN];
+    InputPort<doubles> initialposinport;
     OutputPort<doubles> posoutport;
     OutputPort<doubles> veloutport;
     OutputPort<doubles> accoutport;
@@ -37,10 +39,12 @@ namespace SOURCES
 
     // Properties
     uint N;
+    uint N_inports;
     doubles minpos;
     doubles maxpos;
     doubles maxvel;
     doubles maxacc;
+    ints inport_sizes;
 
     // Declaring global variables
     std::vector<refgen::RefGenerator> mRefGenerators;

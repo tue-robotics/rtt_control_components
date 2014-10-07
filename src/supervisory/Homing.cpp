@@ -84,8 +84,6 @@ bool Homing::configureHook()
     // Input checks specific for homing types
     if ( (forcehoming && homing_forces.size() != N) || (errorhoming && homing_errors.size() != N) || (absolutehoming && homing_absPos.size() != N) ) {
         log(Error) << prefix <<"_Homing: homing_forces["<< homing_forces.size() <<"], homing_errors["<< homing_errors.size() <<"], homing_absPos["<< homing_absPos.size() <<"] should be size " << N <<"."<<endlog();        
-
-        log(Error) << prefix <<"_Homing: size of homing_force, homing_error or homing_absPos does not match vector_size"<<endlog();
         return false;
     }
 

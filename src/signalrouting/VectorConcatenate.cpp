@@ -21,8 +21,8 @@ using namespace SIGNALROUTING;
 VectorConcatenate::VectorConcatenate(const string& name) : 
 	TaskContext(name, PreOperational)
 {
-  addProperty( "vector_size", N ).doc("An unsigned integer that specifies the number of input ports");
-  addProperty( "event_port",  EventPorts ).doc("An array that specifies for each input wether it should be an eventPort. 1.0 for Event, 0.0 for non Event port");
+	addProperty( "vector_size", N ).doc("An unsigned integer that specifies the number of input ports");
+	addProperty( "event_port",  EventPorts ).doc("An array that specifies for each input wether it should be an eventPort. 1.0 for Event, 0.0 for non Event port");
 }
 
 VectorConcatenate::~VectorConcatenate(){}
@@ -55,40 +55,43 @@ bool VectorConcatenate::configureHook()
 
 bool VectorConcatenate::startHook()
 {  
-  for (uint i = 0; i < N; i++) {
-	  if ( !inports[i].connected() ) {
-		  log(Error)<<"Input port "<< i <<" not connected!"<<endlog();
-		  return false;
-	  }
-  }
-  
-  if ( !outport.connected() ) {
-    log(Warning)<<"Outputport not connected!"<<endlog();
-  }
-  
-  if (N < 1 ) {
-    log(Error)<<"VectorConcatenate parameters not valid!"<<endlog();
-    return false;
-  }
+	for (uint i = 0; i < N; i++) {
+		if ( !inports[i].connected() ) {
+			log(Error)<<"Input port "<< i <<" not connected!"<<endlog();
+			return false;
+		}
+	}
 
-  return true;
+	if ( !outport.connected() ) {
+		log(Warning)<<"Outputport not connected!"<<endlog();
+	}
+
+	if (N < 1 ) {
+		log(Error)<<"VectorConcatenate parameters not valid!"<<endlog();
+		return false;
+	}
+
+	return true;
 }
 
 void VectorConcatenate::updateHook()
 {
-  doubles output;  
-  double vector_size = 0;
+	doubles output;  
+	double vector_size = 0;
 
-  for ( uint i = 0; i < N; i++ ) {
-	  doubles input;
-	  inports[i].read( input );
-	  vector_size = input.size();
-	  for ( uint j = 0; j < vector_size; j++ ) {
-		  output.push_back(input[j]);
-	  }
-  }
+	for ( uint i = 0; i < N; i++ ) {
+		doubles input;
+		if (inports[i].read( input ) == NewData ) {
+			log(Error)<<"VectorConcatenate Received new data from port number: [" << i+1 << "]!"<<endlog();
+		}
+		vector_size = input.size();
+		for ( uint j = 0; j < vector_size; j++ ) {
+			output.push_back(input[j]);
+		}
+	}
 
-  outport.write( output );
+	log(Error)<<"VectorConcatenate parameters not valid!"<<endlog();
+	outport.write( output );
 }
 
 ORO_CREATE_COMPONENT(SIGNALROUTING::VectorConcatenate)
