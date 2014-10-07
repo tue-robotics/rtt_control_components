@@ -45,6 +45,7 @@ namespace SOURCES
     doubles desiredPos;
     doubles desiredVel;
     doubles desiredAcc;
+    doubles outpos;
     doubles interpolators[maxN];
     double InterpolDt, InterpolEps;
 
