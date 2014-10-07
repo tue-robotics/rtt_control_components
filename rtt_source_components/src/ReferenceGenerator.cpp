@@ -164,7 +164,7 @@ void ReferenceGenerator::updateHook()
           desiredAcc[i]=interpolators[i][2];
       }
       
-      
+      /// MAX, Copy from here
       
       // find out how long it will take to reach the point
       // taking into account acceleration and deceleration
@@ -204,13 +204,12 @@ void ReferenceGenerator::updateHook()
         }
              
         // scale the maximum velocity and acceleration of each joint based on the longest duration
-        //log(Warning) << "Original velocity: " << desiredVel[1] << " " << desiredVel[3] << endlog();
         for( uint i = 0; i < NrInterpolators; i++ ){           
             double time_factor = durations[i] / max_duration;
             desiredAcc[i] = desiredAcc[i] * time_factor * time_factor;
             desiredVel[i] = desiredVel[i] * time_factor;
         }
-        //log(Warning) << "Newestes velocity: " << desiredVel[1] << " " << desiredVel[3] << endlog();
+        /// Untill here
   } 
   
   // TODO: remove code below, should be a service, not a port, or remove completely
