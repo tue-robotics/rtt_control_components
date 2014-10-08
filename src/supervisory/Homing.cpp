@@ -308,7 +308,7 @@ void Homing::updateHook()
 
             // Send to reset position
             ref_out = position;           
-            ref_out[homing_order[jointNr]-1] -= homing_stroke[homing_order[jointNr]-1];
+            ref_out[homing_order[jointNr]-1] += homing_stroke[homing_order[jointNr]-1];
             homing_stroke_goal = ref_out[homing_order[jointNr]-1];
 
             sendRef(ref_out);
