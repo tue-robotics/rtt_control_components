@@ -36,6 +36,8 @@ Tracing::~Tracing(){}
 
 bool Tracing::configureHook()
 {
+	Logger::In in("Tracing::Configure");	
+	
 	columns = 0;
 
 	// Create ports based on the number of vector sizes given
@@ -74,10 +76,7 @@ bool Tracing::configureHook()
 
 bool Tracing::startHook()
 {
-	/*if ( !inports[0].connected() ) {
-		log(Error)<<"Input port not connected!"<<endlog();
-		return false;
-	}*/
+	Logger::In in("Tracing::Start");
 	
 	printed = false;
 	
@@ -86,6 +85,8 @@ bool Tracing::startHook()
 
 void Tracing::updateHook()
 {
+	Logger::In in("Tracing::Update");	
+	
 	// First updatehook is useless
 	if(counter == -1){counter = 0;return;}
 	// TODO: if ( !this->isRunning() ) return; (Check if this also works, counter can become a uint

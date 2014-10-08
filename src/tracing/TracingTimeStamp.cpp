@@ -36,6 +36,8 @@ TracingTimeStamp::~TracingTimeStamp(){}
 
 bool TracingTimeStamp::configureHook()
 {
+	Logger::In in("TracingTimeStamp::Configure");	
+	
 	columns = 0;
 
 	// Create ports based on the number of vector sizes given
@@ -71,16 +73,16 @@ bool TracingTimeStamp::configureHook()
 
 bool TracingTimeStamp::startHook()
 {
-	/*if ( !inports[0].connected() ) {
-		log(Error)<<"Input port not connected!"<<endlog();
-		return false;
-	}*/
+	Logger::In in("TracingTimeStamp::Start");	
+	
     start_ticks = RTT::os::TimeService::Instance()->getTicks();
 	return true;
 }
 
 void TracingTimeStamp::updateHook()
 {
+	Logger::In in("TracingTimeStamp::Update");	
+	
 	// First updatehook is useless
 	if(counter == -1){counter = 0;return;}
 	// TODO: if ( !this->isRunning() ) return; (Check if this also works, counter can become a uint
@@ -127,6 +129,8 @@ void TracingTimeStamp::updateHook()
 
 void TracingTimeStamp::stopHook()
 {
+	Logger::In in("TracingTimeStamp::Stop");
+		
 	FILE * pFile;
 	pFile = fopen (filename.c_str(),"w");
 

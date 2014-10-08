@@ -36,6 +36,8 @@ TracingOneSignal::~TracingOneSignal(){}
 
 bool TracingOneSignal::configureHook()
 {
+	Logger::In in("TracingOneSignal::Configure");	
+	
 	columns = 0;
 
 	// Create ports based on the number of vector sizes given
@@ -76,10 +78,8 @@ bool TracingOneSignal::configureHook()
 
 bool TracingOneSignal::startHook()
 {
-	/*if ( !inports[0].connected() ) {
-		log(Error)<<"Input port not connected!"<<endlog();
-		return false;
-	}*/
+	Logger::In in("TracingOneSignal::Start");	
+
 	current_ticks = 0;
     previous_ticks = RTT::os::TimeService::Instance()->getTicks();
 	return true;
@@ -87,6 +87,8 @@ bool TracingOneSignal::startHook()
 
 void TracingOneSignal::updateHook()
 {
+	Logger::In in("TracingOneSignal::Update");	
+	
 	// First updatehook is useless
 	if(counter == -1){counter = 0;return;}
 	// TODO: if ( !this->isRunning() ) return; (Check if this also works, counter can become a uint
@@ -132,6 +134,8 @@ void TracingOneSignal::updateHook()
 
 void TracingOneSignal::stopHook()
 {
+	Logger::In in("TracingOneSignal::Stop");	
+	
 	FILE * pFile;
 	pFile = fopen (filename.c_str(),"w");
 

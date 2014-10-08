@@ -32,7 +32,7 @@ Reporter::~Reporter(){}
 
 bool Reporter::configureHook()
 {
-	Logger::In in("Reporter::configureHook()");
+	Logger::In in("Reporter::Configure");
 
 	for ( uint i = 0; i < N; i++ )
 	{
@@ -46,54 +46,54 @@ bool Reporter::configureHook()
 
 bool Reporter::startHook()
 {
-  Logger::In in("Reporter::startHook()");
+	Logger::In in("Reporter::Start");
 
-  // Check validity of Ports:
-  for (uint i = 0; i <= N; i++) {
-	  if ( !inports[i].connected() ) {
-		  log(Error)<<"Input port "<< i <<" not connected!"<<endlog();
-		  // No connection was made, can't do my job !
-		  return false;
-	  }
-  }
+	// Check validity of Ports:
+	for (uint i = 0; i <= N; i++) {
+		if ( !inports[i].connected() ) {
+			log(Error)<<"Input port "<< i <<" not connected!"<<endlog();
+			return false;
+		}
+	}
 
-  if (N < 1 ) {
-    log(Error)<<"Reporter parameters not valid!"<<endlog();
-    return false;
-  }
+	if (N < 1 ) {
+		log(Error)<<"Reporter parameters not valid!"<<endlog();
+		return false;
+	}
 
-  // Create file
-  file.open (filename.c_str());
-  file << firstline << "\n";
+	// Create file
+	file.open (filename.c_str());
+	file << firstline << "\n";
 
-  starttime = os::TimeService::Instance()->getTicks();
-  return true;
+	starttime = os::TimeService::Instance()->getTicks();
+	return true;
 }
 
 void Reporter::updateHook()
 {
-  Logger::In in("Reporter::updateHook()");
-  stringstream ss;
-  doubles output;
-  double vector_size = 0;
+	Logger::In in("Reporter::Update");
 
-  for ( uint i = 0; i < N; i++ ) {
-	  doubles input;
-	  inports[i].read( input );
-	  vector_size = input.size();
-	  for ( uint j = 0; j < vector_size; j++ ) {
-		  output.push_back(input[j]);
-	  }
-  }
+	stringstream ss;
+	doubles output;
+	double vector_size = 0;
+
+	for ( uint i = 0; i < N; i++ ) {
+		doubles input;
+		inports[i].read( input );
+		vector_size = input.size();
+		for ( uint j = 0; j < vector_size; j++ ) {
+			output.push_back(input[j]);
+		}
+	}
 
 
-  timestamp = os::TimeService::Instance()->secondsSince( starttime );
-  ss << timestamp;
-  for ( uint i = 0; i < output.size(); i++ ) {
+	timestamp = os::TimeService::Instance()->secondsSince( starttime );
+	ss << timestamp;
+	for ( uint i = 0; i < output.size(); i++ ) {
 		ss << " " << output[i];
-  }
-  ss << "\n";
-  file << ss.str();
+	}
+	ss << "\n";
+	file << ss.str();
 }
 
 void Reporter::stopHook()

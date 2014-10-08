@@ -29,6 +29,8 @@ ReporterTrigger::~ReporterTrigger(){}
 
 bool ReporterTrigger::configureHook()
 {
+	Logger::In in("ReporterTrigger::Configure");	
+	
       if( ! hasPeer("Reporter") )
     {
         log(Error) << "You can't trigger a component that is not your peer !" << endlog();
@@ -39,25 +41,29 @@ bool ReporterTrigger::configureHook()
 
 bool ReporterTrigger::startHook()
 {
-	  if ( !inport.connected() ) {
-		  log(Error)<<"Input port not connected!"<<endlog();
-		  return false;
-	  }
-	  if ( !outport.connected() ) {
+	Logger::In in("ReporterTrigger::Start");	
+
+	if ( !inport.connected() ) {
+		log(Error)<<"Input port not connected!"<<endlog();
+		return false;
+	}
+	
+	if ( !outport.connected() ) {
 		log(Warning)<<"Output port not connected!"<<endlog();
-		
-	  }
-  return true;
+	}
+	
+	return true;
 }
 
 void ReporterTrigger::updateHook()
 {
-  doubles input;
-  
-    inport.read( input );
-    outport.write( input );
-    getPeer("Reporter")->trigger();
+	Logger::In in("ReporterTrigger::Update");	
+	
+	doubles input;
 
+	inport.read( input );
+	outport.write( input );
+	getPeer("Reporter")->trigger();
 }
 
 ORO_CREATE_COMPONENT(CUSTOM::ReporterTrigger)

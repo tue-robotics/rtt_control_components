@@ -66,7 +66,7 @@ namespace SUPERVISORY
         ints homing_direction;
         doubles homing_velocity;
         doubles homing_stroke;
-        doubles homing_midpos;
+        doubles reset_stroke;
         doubles homing_endpos;
 
         doubles homing_forces;
@@ -88,6 +88,7 @@ namespace SUPERVISORY
         int state;
         bool joint_finished;
         bool finished;
+        double homing_stroke_goal;
         doubles position;
         doubles ref_out;
         doubles ref_out_prev;

@@ -34,8 +34,8 @@ Homing::Homing(const string& name) : TaskContext(name, PreOperational)
     addProperty( "homing_order",    	homing_order    ).doc("The order in which the joints are homed, for example: array [2 3 1]");
     addProperty( "homing_direction",	homing_direction).doc("Homing direction");
     addProperty( "homing_velocity", 	homing_velocity ).doc("Homing velocities");
-    addProperty( "homing_stroke",   	homing_stroke   ).doc("Stroke from homing point to zero positions (encoders are resetted using this value)");
-    addProperty( "homing_midpos",   	homing_midpos   ).doc("position that the joint should have during homing. To avoid collisions with other bodies/ itself");
+    addProperty( "homing_stroke",   	homing_stroke   ).doc("Stroke from endstop to reset position (This distance is provided as delta goal after homing position is reached)");
+    addProperty( "reset_stroke",        reset_stroke    ).doc("Stroke from resetposition to zero position (also the position the bodypart will assume when the rest of the joints are homed)");
     addProperty( "homing_endpos",   	homing_endpos   ).doc("position that the body should go to after homing is finished.");
 
     addProperty( "homing_forces",   	homing_forces    ).doc("Force threshold for force sensor homing");
@@ -56,8 +56,8 @@ bool Homing::configureHook()
         log(Error) << prefix <<"_Homing: size of homing_type, require_homing or homing_order does not match vector_size"<<endlog();
         return false;
     }
-    if (homing_direction.size() != N || homing_velocity.size() != N || homing_stroke.size() != N || homing_midpos.size() != N || homing_endpos.size() != N  ) {
-        log(Error) << prefix <<"_Homing: size of homing_direction, homing_velocity, homing_stroke, homing_midpos or homing_endpos does not match vector_size"<<endlog();
+    if (homing_direction.size() != N || homing_velocity.size() != N || homing_stroke.size() != N || reset_stroke.size() != N || homing_endpos.size() != N  ) {
+        log(Error) << prefix <<"_Homing: size of homing_direction, homing_velocity, homing_stroke, reset_stroke or homing_endpos does not match vector_size"<<endlog();
         return false;
     }
     
@@ -105,6 +105,7 @@ bool Homing::startHook()
     cntr = 5000;
     joint_finished = false;
     finished = false;
+    homing_stroke_goal = 0.0;
 
     position.assign(N,0.0);
     ref_out_prev.assign(N,0.0);
@@ -245,9 +246,25 @@ void Homing::updateHook()
     if(jointNr==N) {
         for (uint j = 0; j<N; j++) {
             if (require_homing[j] != 0) {
-				if (!finished) {
+                if (!finished) {
+
+                    // Reset encoders and send joint to endpos
+                    finished = true;
+
+                    log(Warning) << prefix <<"_Homing: Stopping body part" <<endlog();
+                    StopBodyPart(bodypart);
+                    log(Warning) << prefix <<"_Homing: Stopped body part" <<endlog();
+
+                    for (uint j = 0; j<N; j++) {
+                        log(Warning) << prefix <<"_Homing: Resetting Encoder "<< homing_order[jointNr] << " with stroke " << homing_stroke[homing_order[jointNr]-1] << "!" <<endlog();
+                        ResetEncoder(homing_order[jointNr]-1,homing_stroke[homing_order[jointNr]-1]);
+                    }
+
+                    log(Warning) << prefix <<"_Homing: Starting body part" <<endlog();
+                    StartBodyPart(bodypart);
+                    log(Warning) << prefix <<"_Homing: Started body part" <<endlog();
+
 					sendRef(homing_endpos);
-					finished = true;
 					log(Warning) << prefix <<"_Homing: Finished " << bodypart << " homing."<<endlog();
 					homingfinished_outport.write(true);
 				}
@@ -288,17 +305,12 @@ void Homing::updateHook()
         // Check homing criterion
         joint_finished = evaluateHomingCriterion(homing_order[jointNr]-1);
         if (joint_finished) {
-            // Reset encoders and send joint to midpos
-            log(Warning) << prefix <<"_Homing: Stopping body part" <<endlog();
-            StopBodyPart(bodypart);
-            log(Warning) << prefix <<"_Homing: Resetting Encoder "<< homing_order[jointNr] << " with stroke " << homing_stroke[homing_order[jointNr]-1] << "!" <<endlog();
-            ResetEncoder(homing_order[jointNr]-1,homing_stroke[homing_order[jointNr]-1]);
-            log(Warning) << prefix <<"_Homing: Starting body part" <<endlog();
-            StartBodyPart(bodypart);
-            
-            // Send to middle position
-            ref_out = position;
-            ref_out[homing_order[jointNr]-1] = homing_midpos[homing_order[jointNr]-1];
+
+            // Send to reset position
+            ref_out = position;           
+            ref_out[homing_order[jointNr]-1] -= homing_stroke[homing_order[jointNr]-1];
+            homing_stroke_goal = ref_out[homing_order[jointNr]-1];
+
             sendRef(ref_out);
             
             // Reset parameters            
@@ -315,13 +327,13 @@ void Homing::updateHook()
         }
     }
     if (state == 1) {
-        if ( (position[homing_order[jointNr]-1] > (homing_midpos[homing_order[jointNr]-1]*0.99) ) && (position[homing_order[jointNr]-1] < (homing_midpos[homing_order[jointNr]-1]*1.01) ) ) {
+        if ( (position[homing_order[jointNr]-1] > (homing_stroke_goal*0.99) ) && (position[homing_order[jointNr]-1] < (homing_stroke_goal*1.01) ) ) {
             
             // set error back to normal value
 			updated_maxerr[homing_order[jointNr]-1] = initial_maxerr[homing_order[jointNr]-1];
 			Safety_maxJointErrors.set(updated_maxerr);
             
-            log(Warning) << prefix <<"_Homing: Midpos reached proceeded to the next joint!"<<endlog();
+            log(Warning) << prefix <<"_Homing: reset position, reached proceeded to the next joint!"<<endlog();
             jointNr++;
             state = 0;
         }
