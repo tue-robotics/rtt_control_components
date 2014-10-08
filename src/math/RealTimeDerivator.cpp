@@ -19,22 +19,28 @@ using namespace RTT;
 using namespace MATH;
 
 RealTimeDerivator::RealTimeDerivator(const string& name) : TaskContext(name, PreOperational) {
-  addPort("u", inport);
-  addPort("ue", ue_port);  
-  addPort("ude", ude_port);  
-  addPort("udde", udde_port);
-  addPort("derivatives", msg_port);
-  addProperty( "vector_size", vector_size ).doc("Specifies the size of the input and output vectors");
-  addProperty( "bw", f).doc("Bandwidth of the filter in Hz");
+	addPort("u", inport);
+	addPort("ue", ue_port);  
+	addPort("ude", ude_port);  
+	addPort("udde", udde_port);
+	addPort("derivatives", msg_port);
+	addProperty( "vector_size", vector_size ).doc("Specifies the size of the input and output vectors");
+	addProperty( "bw", f).doc("Bandwidth of the filter in Hz");
 }
 
 RealTimeDerivator::~RealTimeDerivator(){}
 
-bool RealTimeDerivator::configureHook() {
+bool RealTimeDerivator::configureHook() 
+{
+	Logger::In in("RealTimeDerivator::Configure");
+
 	return true;
 }
 
-bool RealTimeDerivator::startHook() {
+bool RealTimeDerivator::startHook() 
+{	
+	Logger::In in("RealTimeDerivator::Start");
+
 	if (vector_size>MAX_SIZE) vector_size=MAX_SIZE;
 
 	k1 = (2*PI*f)*(2*PI*f);
@@ -50,7 +56,10 @@ bool RealTimeDerivator::startHook() {
 }
 
 void RealTimeDerivator::updateHook()
-{
+{	
+	Logger::In in("RealTimeDerivator::Update");
+
+	
 	doubles u(vector_size,0.0), ue(vector_size,0.0), ued(vector_size,0.0), uedd(vector_size,0.0);
 	
 	std_msgs::Float32MultiArray msgx;
@@ -91,10 +100,10 @@ void RealTimeDerivator::updateHook()
 
 double RealTimeDerivator::determineDt()
 {
-  long double new_time = os::TimeService::Instance()->getNSecs()*1e-9;
-  double dt = (double)(new_time - old_time);
-  old_time = new_time;
-  return dt;
+	long double new_time = os::TimeService::Instance()->getNSecs()*1e-9;
+	double dt = (double)(new_time - old_time);
+	old_time = new_time;
+	return dt;
 }
 
 ORO_CREATE_COMPONENT(MATH::RealTimeDerivator)

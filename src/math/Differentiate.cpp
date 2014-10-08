@@ -31,49 +31,48 @@ Differentiate::~Differentiate(){}
 
 bool Differentiate::configureHook()
 {
-  Logger::In in("Differentiate::configureHook()");
+	Logger::In in("Differentiate::Configure");
 
-  // Adding ports
-  addEventPort( "in", inport );
-  addPort( "out", outport );
+	// Adding ports
+	addEventPort( "in", inport );
+	addPort( "out", outport );
 
-  previous_input.resize(vector_size);
-  
-  return true;
+	previous_input.resize(vector_size);
+
+	return true;
 }
 
 bool Differentiate::startHook()
 {
-  Logger::In in("Differentiate::startHook()");
-  
-  old_time = os::TimeService::Instance()->getNSecs()*1e-9;
+	Logger::In in("Differentiate::Start");
 
-  // Check validity of Ports:
-  if ( !inport.connected() ) {
-    log(Error)<<"Input port not connected!"<<endlog();
-    // No connection was made, can't do my job !
-    return false;
-  }
-  
-  if ( !outport.connected() ) {
-    log(Warning)<<"Outputport not connected!"<<endlog();
-  }
-   
-  if (vector_size < 1) {
-    log(Error)<<"Differentiate parameters not valid!"<<endlog();
-    return false;
-  }
-  
-  for (uint i = 0; i < vector_size; i++) {
-	previous_input[i]  = 0.0;
-  }
-  
-  return true;
+	old_time = os::TimeService::Instance()->getNSecs()*1e-9;
+
+	// Check validity of Ports:
+	if ( !inport.connected() ) {
+		log(Error)<<"Input port not connected!"<<endlog();
+		return false;
+	}
+
+	if ( !outport.connected() ) {
+		log(Warning)<<"Outputport not connected!"<<endlog();
+	}
+
+	if (vector_size < 1) {
+		log(Error)<<"Differentiate parameters not valid!"<<endlog();
+		return false;
+	}
+
+	for (uint i = 0; i < vector_size; i++) {
+		previous_input[i]  = 0.0;
+	}
+
+	return true;
 }
 
 void Differentiate::updateHook()
 {
-	Logger::In in("Differentiate::updateHook()");
+	Logger::In in("Differentiate::Update");
 
  	// Read the input port
 	doubles input(vector_size,0.0);
@@ -94,9 +93,9 @@ void Differentiate::updateHook()
 
 void Differentiate::determineDt()
 {
-  long double new_time = os::TimeService::Instance()->getNSecs()*1e-9;
-  dt = (new_time - old_time);
-  old_time = new_time;
+	long double new_time = os::TimeService::Instance()->getNSecs()*1e-9;
+	dt = (new_time - old_time);
+	old_time = new_time;
 }
 
 ORO_CREATE_COMPONENT(MATH::Differentiate)

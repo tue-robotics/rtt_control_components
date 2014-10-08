@@ -33,74 +33,73 @@ DotProduct::~DotProduct(){}
 
 bool DotProduct::configureHook()
 {
-	Logger::In in("DotProduct::configureHook()");
+	Logger::In in("DotProduct::Configure");
+
 	N = list_of_operators.size();
-	
+
 	// Creating ports
-	for ( uint i = 0; i < N; i++ )
-	{
-		string name_inport = "in"+to_string(i+1);
-		addEventPort( name_inport, inports[i]);
+	for ( uint i = 0; i < N; i++ ) {
+		addEventPort( ("in"+to_string(i+1)), inports[i]);
 	}
 	addPort( "out", outport );
 
 	return true;
-
 }
 
 bool DotProduct::startHook()
 {
-  Logger::In in("DotProduct::startHook()");
+	Logger::In in("DotProduct::Start");
 
-  for (uint i = 0; i < N; i++) {
-	  if ( !inports[i].connected() ) {
-		  log(Error)<<"Input port "<< i+1 <<" not connected!"<<endlog();
-	  }
-  }
+	for (uint i = 0; i < N; i++) {
+		if ( !inports[i].connected() ) {
+			log(Error)<<"Input port "<< i+1 <<" not connected!"<<endlog();
+		}
+	}
 
-  if ( !outport.connected() ) {
-    log(Warning)<<"Output port not connected!"<<endlog();
-    return false;
-  }
-  
-  for ( uint j = 0; j < vector_size; j++ ) {
-	  if (list_of_operators[j]!=multiply && list_of_operators[j]!=divide) {
-		  log(Error)<<"list_of_operators can only consist of operators multiply and divide!"<<endlog();
-	  }
-  }		  
-  
-  if ( N > maxN ) {
-    log(Error)<<"Max number of ports exceeded!"<<endlog();
-    return false;
-  }
+	if ( !outport.connected() ) {
+		log(Warning)<<"Output port not connected!"<<endlog();
+		return false;
+	}
 
-  if ( N < 1 ) {
-    log(Error)<<"Number of ports must be at least 1!"<<endlog();
-    return false;
-  }
+	for ( uint j = 0; j < vector_size; j++ ) {
+		if (list_of_operators[j]!=multiply && list_of_operators[j]!=divide) {
+			log(Error)<<"list_of_operators can only consist of operators multiply and divide!"<<endlog();
+		}
+	}		  
 
-  return true;
+	if ( N > maxN ) {
+		log(Error)<<"Max number of ports exceeded!"<<endlog();
+		return false;
+	}
+
+	if ( N < 1 ) {
+		log(Error)<<"Number of ports must be at least 1!"<<endlog();
+		return false;
+	}
+
+	return true;
 }
 
 void DotProduct::updateHook()
 {
-  doubles input(vector_size,0.0);
-  doubles output(vector_size,1.0);
+	Logger::In in("DotProduct::Update");
 
-  for ( uint i = 0; i < N; i++ ) {
-	  inports[i].read( input );
-	  for ( uint j = 0; j < vector_size; j++ ) {
-		  if (list_of_operators[i]==multiply) {
-			  output[j] *= input[j];
-		  }
-		  if (list_of_operators[i]==divide) {
-			  output[j] /= input[j];
-		  }
-	  }
-  }
+	doubles input(vector_size,0.0);
+	doubles output(vector_size,1.0);
 
-  /*** Write the outputs ***/
-  outport.write( output );
+	for ( uint i = 0; i < N; i++ ) {
+		inports[i].read( input );
+		for ( uint j = 0; j < vector_size; j++ ) {
+			if (list_of_operators[i]==multiply) {
+				output[j] *= input[j];
+			}
+			if (list_of_operators[i]==divide) {
+				output[j] /= input[j];
+			}
+		}
+	}
+
+	outport.write( output );
 }
 
 ORO_CREATE_COMPONENT(MATH::DotProduct)

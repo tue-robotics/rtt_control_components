@@ -30,8 +30,8 @@ Abs::~Abs(){}
 
 bool Abs::configureHook()
 {
-	Logger::In in("Abs::configureHook()");
-	
+ 	Logger::In in("Abs::Configure");
+ 		
 	// Creating ports
 	for ( uint i = 0; i < N; i++ )
 	{
@@ -46,44 +46,45 @@ bool Abs::configureHook()
 
 bool Abs::startHook()
 {
-  Logger::In in("Abs::startHook()");
-  
- 
-  for (uint i = 0; i < N; i++) {
-	  if ( !inports[i].connected() ) {
-		  log(Error)<<"Input port "<< i+1 <<" not connected!"<<endlog();
-	  }
-	  if ( !outports[i].connected() ) {
-		log(Warning)<<"Output port "<< i+1 <<" not connected!"<<endlog();
+	Logger::In in("Abs::Start");
+
+	for (uint i = 0; i < N; i++) {
+		if ( !inports[i].connected() ) {
+			log(Error)<<"Input port "<< i+1 <<" not connected!"<<endlog();
+		}
+		if ( !outports[i].connected() ) {
+			log(Warning)<<"Output port "<< i+1 <<" not connected!"<<endlog();
+			return false;
+		}
+	} 
+
+	if ( N > maxN ) {
+		log(Error)<<"Max number of ports exceeded!"<<endlog();
 		return false;
-	  }
-  } 
-  
-  if ( N > maxN ) {
-    log(Error)<<"Max number of ports exceeded!"<<endlog();
-    return false;
-  }
+	}
 
-  if ( N < 1 ) {
-    log(Error)<<"Number of ports must be at least 1!"<<endlog();
-    return false;
-  }
+	if ( N < 1 ) {
+		log(Error)<<"Number of ports must be at least 1!"<<endlog();
+		return false;
+	}
 
-  return true;
+	return true;
 }
 
 void Abs::updateHook()
 {
-  doubles input(vector_size,0.0);
-  doubles output(vector_size,0.0);
-  
-  for ( uint i = 0; i < N; i++ ) {
-	  inports[i].read( input );
-	  for ( uint j = 0; j < vector_size; j++ ) {
-		  output[j] = fabs(input[j]);
-	  }
-	  outports[i].write( output );
-  }
+ 	Logger::In in("Abs::Update");	
+	
+	doubles input(vector_size,0.0);
+	doubles output(vector_size,0.0);
+
+	for ( uint i = 0; i < N; i++ ) {
+		inports[i].read( input );
+		for ( uint j = 0; j < vector_size; j++ ) {
+			output[j] = fabs(input[j]);
+		}
+		outports[i].write( output );
+	}
 
 }
 

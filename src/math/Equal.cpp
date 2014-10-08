@@ -21,63 +21,63 @@ using namespace MATH;
 Equal::Equal(const string& name) :
 	    TaskContext(name, PreOperational)
 {
-  // Adding property
-  addProperty( "values", values );
-  // Adding ports
-  addEventPort( "in", inport );
-  addPort( "out", outport );
+	// Adding property
+	addProperty( "values", values );
+	// Adding ports
+	addEventPort( "in", inport );
+	addPort( "out", outport );
 }
 
 Equal::~Equal(){}
 
 bool Equal::configureHook()
 {
-  return true;
+	Logger::In in("Equal::Configure");	
+	
+	return true;
 }
 
 bool Equal::startHook()
 {
-  Logger::In in("Equal::startHook()");
+	Logger::In in("Equal::Start");
 
-  // Check validity of Ports
-  if ( !inport.connected() ) {
-    log(Error)<<"Input port not connected!"<<endlog();
-    // No connection was made, can't do my job !
-    return false;
-  }
+	// Check validity of Ports
+	if ( !inport.connected() ) {
+		log(Error)<<"Input port not connected!"<<endlog();
+		return false;
+	}
 
-  if ( !outport.connected() ) {
-    log(Warning)<<"Output port not connected!"<<endlog();
-  }
+	if ( !outport.connected() ) {
+		log(Warning)<<"Output port not connected!"<<endlog();
+	}
 
-  if ( values.size() == 0 ) {
-    log(Error)<<"Property values not valid!"<<endlog();
-    return false;
-  }
+	if ( values.size() == 0 ) {
+		log(Error)<<"Property values not valid!"<<endlog();
+		return false;
+	}
 
-  return true;
+	return true;
 }
 
 void Equal::updateHook()
 {
-  uint vectorsize = values.size();
+	Logger::In in("Equal::Configure");
 
-  doubles input(vectorsize,0.0);
-  inport.read( input );
+	uint vectorsize = values.size();
 
-  doubles output(vectorsize,0.0);
+	doubles input(vectorsize,0.0);
+	inport.read( input );
 
-  for (uint i = 0; i < vectorsize; i++)
-  {
-    if (input[i] == values[i]) {
-      output[i] = 1.0 ;
-    }
-    else
-    {
-      output[i] = 0.0 ;
-    }
-  }
-  outport.write( output );
+	doubles output(vectorsize,0.0);
+
+	for (uint i = 0; i < vectorsize; i++) {
+		if (input[i] == values[i]) {
+			output[i] = 1.0 ;
+		} else {
+			output[i] = 0.0 ;
+		}
+	}
+	outport.write( output );
 }
 
 ORO_CREATE_COMPONENT(MATH::Equal)

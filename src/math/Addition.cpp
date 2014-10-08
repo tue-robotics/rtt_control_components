@@ -28,6 +28,8 @@ Addition::~Addition(){}
 
 bool Addition::configureHook()
 {
+	Logger::In in("Addition::Configure");	
+	
 	// Adding inports
 	addEventPort( "in1_ev", inports[0]);
 	for ( uint j = 1; j < numberofinputs; j++ ) {
@@ -46,22 +48,26 @@ bool Addition::configureHook()
 
 bool Addition::startHook()
 {
+	Logger::In in("Addition::Start");	
+	
 	// Check validity of Ports:
 	for ( uint i = 1; i < numberofinputs; i++ ) {
 		if (!inports[i].connected()) {
-			log(Error)<<"Addition::Inputport[" << i << "] not connected!"<<endlog();
+			log(Error)<<"Inputport[" << i << "] not connected!"<<endlog();
 			return false;
 		}
 	}
 	
 	if ( !outport.connected() ) {
-		log(Warning)<<"Addition::Outputport not connected!"<<endlog();
+		log(Warning)<<"Outputport not connected!"<<endlog();
 	}
 	return true;
 }
 
 void Addition::updateHook()
 {
+	Logger::In in("Addition::Update");	
+	
 	// Read the inputports
 	for ( uint j = 0; j < numberofinputs; j++ ) {
 		doubles tempinput(vectorsize,0.0); 

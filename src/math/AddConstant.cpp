@@ -18,54 +18,57 @@ using namespace MATH;
 
 AddConstant::AddConstant(const string& name) : TaskContext(name, PreOperational)
 {
-  addProperty( "vectorsize", vectorsize ).doc("An unsigned integer that specifies the size of the vector");
-  addProperty( "additions", addconstants ).doc("Float64 values to be added to the input of the component");
+	addProperty( "vectorsize", vectorsize ).doc("An unsigned integer that specifies the size of the vector");
+	addProperty( "additions", addconstants ).doc("Float64 values to be added to the input of the component");
 
-  // Adding ports
-  addEventPort( "in", inport );
-  addPort( "out", outport );
+	// Adding ports
+	addEventPort( "in", inport );
+	addPort( "out", outport );
 }
 AddConstant::~AddConstant(){}
 
 bool AddConstant::configureHook()
 {
-  return true;
+	Logger::In in("AddConstant::Configure");
+
+	return true;
 }
 
 bool AddConstant::startHook()
 {
-  Logger::In in("AddConstant::startHook()");
+	Logger::In in("AddConstant::Start");
 
-  // Check validity of Ports:
-  if ( !inport.connected() )
-  {
-    log(Error)<<"The inputport is not connected!"<<endlog();
-    // No connection was made, can't do my job !
-    return false;
-  }
-  if ( !outport.connected() ) {
-    log(Warning)<<"Outputport not connected!"<<endlog();
-  }
-  return true;
+	// Check validity of Ports:
+	if ( !inport.connected() ) {
+		log(Error)<<"The inputport is not connected!"<<endlog();
+		return false;
+	}
+	if ( !outport.connected() ) {
+		log(Warning)<<"Outputport not connected!"<<endlog();
+	}
+	
+	return true;
 }
 
 void AddConstant::updateHook()
 {
-  // Read the inputports
-  doubles input(vectorsize,0.0);
+	Logger::In in("AddConstant::Update");	
 
-  inport.read( input );
+	// Read the inputports
+	doubles input(vectorsize,0.0);
 
-  // Calculate the output:
-  doubles output(vectorsize,0.0);
-  
-  for ( uint i = 0; i < vectorsize; i++ )
-  {
-    output[i] = input[i] + addconstants[i];
-  }
+	inport.read( input );
 
-  // Write the outputs
-  outport.write( output );
+	// Calculate the output:
+	doubles output(vectorsize,0.0);
+
+	for ( uint i = 0; i < vectorsize; i++ )
+	{
+		output[i] = input[i] + addconstants[i];
+	}
+
+	// Write the outputs
+	outport.write( output );
 }
 
 ORO_CREATE_COMPONENT(MATH::AddConstant)

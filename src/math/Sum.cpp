@@ -33,7 +33,8 @@ Sum::~Sum(){}
 
 bool Sum::configureHook()
 {
-	Logger::In in("Sum::configureHook()");
+	Logger::In in("Sum::Configure");
+	
 	N = list_of_signs.size();
 	
 	// Creating ports
@@ -49,58 +50,58 @@ bool Sum::configureHook()
 
 bool Sum::startHook()
 {
-  Logger::In in("Sum::startHook()");
-  
-  for (uint i = 0; i < N; i++) {
-	  if ( !inports[i].connected() ) {
-		  log(Error)<<"Input port "<< i+1 <<" not connected!"<<endlog();
-	  }
-  }
+	Logger::In in("Sum::Start");
 
-  if ( !outport.connected() ) {
-    log(Warning)<<"Output port not connected!"<<endlog();
-    return false;
-  }
-  
-  for ( uint j = 0; j < vector_size; j++ ) {
-	  if (list_of_signs[j]!=plus && list_of_signs[j]!=minus) {
-		  log(Error)<<"list_of_sings can only consist of pluses and minuses!"<<endlog();
-	  }
-  }		  
-  
-  if ( N > maxN ) {
-    log(Error)<<"Max number of ports exceeded!"<<endlog();
-    return false;
-  }
+	for (uint i = 0; i < N; i++) {
+		if ( !inports[i].connected() ) {
+			log(Error)<<"Input port "<< i+1 <<" not connected!"<<endlog();
+		}
+	}
 
-  if ( N < 1 ) {
-    log(Error)<<"Number of ports must be at least 1!"<<endlog();
-    return false;
-  }
+	if ( !outport.connected() ) {
+		log(Warning)<<"Output port not connected!"<<endlog();
+		return false;
+	}
 
-  return true;
+	for ( uint j = 0; j < vector_size; j++ ) {
+		if (list_of_signs[j]!=plus && list_of_signs[j]!=minus) {
+			log(Error)<<"list_of_sings can only consist of pluses and minuses!"<<endlog();
+		}
+	}		  
+
+	if ( N > maxN ) {
+		log(Error)<<"Max number of ports exceeded!"<<endlog();
+		return false;
+	}
+
+	if ( N < 1 ) {
+		log(Error)<<"Number of ports must be at least 1!"<<endlog();
+		return false;
+	}
+
+	return true;
 }
 
 void Sum::updateHook()
 {
-  Logger::In in("Sum::updateHook()");
-  
-  doubles input(vector_size,0.0);
-  doubles output(vector_size,0.0);
-  
-  for ( uint i = 0; i < N; i++ ) {
-	  inports[i].read( input );
-	  for ( uint j = 0; j < vector_size; j++ ) {
-		  if (list_of_signs[i]==plus) {
-			  output[j] += input[j];
-		  }
-		  if (list_of_signs[i]==minus) {
-			  output[j] -= input[j];
-		  }
-	  }
-  }
-  
-  outport.write( output );
+	Logger::In in("Sum::Update");
+
+	doubles input(vector_size,0.0);
+	doubles output(vector_size,0.0);
+
+	for ( uint i = 0; i < N; i++ ) {
+		inports[i].read( input );
+		for ( uint j = 0; j < vector_size; j++ ) {
+			if (list_of_signs[i]==plus) {
+				output[j] += input[j];
+			}
+			if (list_of_signs[i]==minus) {
+				output[j] -= input[j];
+			}
+		}
+	}
+
+	outport.write( output );
 
 }
 

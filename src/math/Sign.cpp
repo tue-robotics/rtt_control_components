@@ -30,7 +30,7 @@ Sign::~Sign(){}
 
 bool Sign::configureHook()
 {
-	Logger::In in("Sign::configureHook()");
+	Logger::In in("Sign::Configure");
 	
 	// Creating ports
 	for ( uint i = 0; i < N; i++ )
@@ -46,50 +46,50 @@ bool Sign::configureHook()
 
 bool Sign::startHook()
 {
-  Logger::In in("Sign::startHook()");
-  
-  for (uint i = 0; i < N; i++) {
-	  if ( !inports[i].connected() ) {
-		  log(Error)<<"Input port "<< i+1 <<" not connected!"<<endlog();
-	  }
-	  if ( !outports[i].connected() ) {
-		log(Warning)<<"Output port "<< i+1 <<" not connected!"<<endlog();
+	Logger::In in("Sign::Start");
+
+	for (uint i = 0; i < N; i++) {
+		if ( !inports[i].connected() ) {
+			log(Error)<<"Input port "<< i+1 <<" not connected!"<<endlog();
+		}
+		if ( !outports[i].connected() ) {
+			log(Warning)<<"Output port "<< i+1 <<" not connected!"<<endlog();
+			return false;
+		}
+	} 
+
+	if ( N > maxN ) {
+		log(Error)<<"Max number of ports exceeded!"<<endlog();
 		return false;
-	  }
-  } 
-  
-  if ( N > maxN ) {
-    log(Error)<<"Max number of ports exceeded!"<<endlog();
-    return false;
-  }
+	}
 
-  if ( N < 1 ) {
-    log(Error)<<"Number of ports must be at least 1!"<<endlog();
-    return false;
-  }
+	if ( N < 1 ) {
+		log(Error)<<"Number of ports must be at least 1!"<<endlog();
+		return false;
+	}
 
-  return true;
+	return true;
 }
 
 void Sign::updateHook()
 {
-  Logger::In in("Sign::updateHook()");
+	Logger::In in("Sign::Update");
 
-  doubles input(vector_size,0.0);
-  doubles output(vector_size,0.0);
-  
-  for ( uint i = 0; i < N; i++ ) {
-	  inports[i].read( input );
-	  for ( uint j = 0; j < vector_size; j++ ) {
-		  if (input[j] > 0.0) {
-			  output[j] = 1.0;
-		  }
-		  if (input[j] < 0.0) {
-			  output[j] = -1.0;
-		  }
-	  }
-	  outports[i].write( output );
-  }
+	doubles input(vector_size,0.0);
+	doubles output(vector_size,0.0);
+
+	for ( uint i = 0; i < N; i++ ) {
+		inports[i].read( input );
+		for ( uint j = 0; j < vector_size; j++ ) {
+			if (input[j] > 0.0) {
+				output[j] = 1.0;
+			}
+			if (input[j] < 0.0) {
+				output[j] = -1.0;
+			}
+		}
+		outports[i].write( output );
+	}
 
 }
 
