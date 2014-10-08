@@ -31,8 +31,9 @@ DoublesToROS::~DoublesToROS(){}
 
 bool DoublesToROS::configureHook()
 {
-	for ( uint i = 0; i < Ndouble; i++ )
-	{
+	Logger::In in("DoublesToROS::Configure");	
+	
+	for ( uint i = 0; i < Ndouble; i++ ) { 
 		string name_outport = "out"+to_string(i+1);
 		addPort( name_outport, doubleoutports[i] );
 	}
@@ -41,16 +42,18 @@ bool DoublesToROS::configureHook()
 
 bool DoublesToROS::startHook()
 {
+	Logger::In in("DoublesToROS::Start");	
+	
 	return true;
 }
 
 void DoublesToROS::updateHook()
 {
+	Logger::In in("DoublesToROS::Update");	
+	
 	doubles values;
-	if ( doubleinport.read( values ) == NewData )
-	{
-		for ( uint i = 0; i < Ndouble; i++ )
-		{
+	if ( doubleinport.read( values ) == NewData ) {
+		for ( uint i = 0; i < Ndouble; i++ ) {
 			std_msgs::Float32 msg;
 			msg.data = values[i];
 			doubleoutports[i].write( msg );

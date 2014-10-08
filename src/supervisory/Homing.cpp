@@ -11,7 +11,6 @@ using namespace std;
 using namespace RTT;
 using namespace SUPERVISORY;
 
-
 Homing::Homing(const string& name) : TaskContext(name, PreOperational)
 {  
     // Ports
@@ -49,7 +48,7 @@ Homing::~Homing()
 
 bool Homing::configureHook()
 {
-	Logger::In in("Homing");
+	Logger::In in("Homing::Configure");
 	
     // Input checks generic
     if (homing_type.size() != N || require_homing.size() != N || homing_order.size() != N  ) {
@@ -92,7 +91,7 @@ bool Homing::configureHook()
 
 bool Homing::startHook()
 {
-	Logger::In in("Homing");
+	Logger::In in("Homing::Start");
 	
     // Set variables
     state = 0;
@@ -234,7 +233,7 @@ bool Homing::startHook()
 
 void Homing::updateHook()
 {
-	Logger::In in("Homing");
+	Logger::In in("Homing::Update");
 	
 	// Check if finished
     if(jointNr==N) {
@@ -329,6 +328,8 @@ void Homing::updateHook()
 
 void Homing::updateHomingRef( uint jointID)
 {
+	Logger::In in("Homing::updateHomingRef");
+	
     if (homing_type[jointID] != 3 ) {
 
         // Send to homing position
@@ -363,6 +364,8 @@ void Homing::updateHomingRef( uint jointID)
 
 bool Homing::evaluateHomingCriterion( uint jointID)
 {
+	Logger::In in("Homing::evaluateHomingCriterion");
+	
     bool result = false;
 
     if (homing_type[jointID] == 1 ) {

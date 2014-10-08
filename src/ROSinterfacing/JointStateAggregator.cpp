@@ -28,27 +28,26 @@ JointStateAggregator::~JointStateAggregator(){}
 
 bool JointStateAggregator::configureHook()
 {
-    
+	Logger::In in("JointStateAggregator::Configure");		
+	
     return true;
 }
 
 bool JointStateAggregator::startHook()
 {
+	Logger::In in("JointStateAggregator::Start");	
+	
 	/// Check which ports are connected
-    for (unsigned int i = 0; i < number_inports_; i++)
-    {
-        if (!inports_[i].connected())
-        {
+    for (unsigned int i = 0; i < number_inports_; i++) {
+        if (!inports_[i].connected()) {
             log(Warning)<<"Inputport "<<i<<" is not connected"<<endlog();
         }
     }
-    if (!outport_.connected())
-    {
+    if (!outport_.connected()) {
         log(Warning)<<"WriteJointState: Outport not connected"<<endlog();
     }
     
-    for (std::map<std::string, unsigned int>::iterator iter = joint_name_to_index_.begin(); iter != joint_name_to_index_.end(); ++iter)
-    {
+    for (std::map<std::string, unsigned int>::iterator iter = joint_name_to_index_.begin(); iter != joint_name_to_index_.end(); ++iter) {
 		log(Warning)<<"Joint name = "<<iter->first<<", index = "<<iter->second<<endlog();
 	}
     return true;
@@ -56,20 +55,18 @@ bool JointStateAggregator::startHook()
 
 void JointStateAggregator::updateHook()
 {
+	Logger::In in("JointStateAggregator::Update");		
+	
     //log(Warning)<<"JSA: UpdateHook"<<endlog();
     sensor_msgs::JointState in_msg;
     /// Loop over input ports
-    for (unsigned int i = 0; i < number_inports_; i++ )
-    {
+    for (unsigned int i = 0; i < number_inports_; i++ ) {
         /// Only fill in if there's new data
-        if ( inports_[i].read(in_msg) == NewData)
-        {
+        if ( inports_[i].read(in_msg) == NewData) {
             /// Loop over input message
-            for (unsigned int j = 0; j < in_msg.name.size(); j++)
-            {
+            for (unsigned int j = 0; j < in_msg.name.size(); j++) {
 				std::map<std::string, unsigned int>::iterator it = joint_name_to_index_.find(in_msg.name[j]);
-				if (it != joint_name_to_index_.end())
-				{
+				if (it != joint_name_to_index_.end()) {
 					
 					unsigned int index = it->second;
 					//log(Warning)<<"Joint name = "<<in_msg.name[j]<<", index = "<<index<<endlog();
@@ -98,19 +95,20 @@ void JointStateAggregator::updateHook()
 
     out_msg_.header.stamp = ros::Time::now();
     outport_.write(out_msg_);
-    //log(Warning)<<"Running!"<<endlog();
 
 }
 
 bool JointStateAggregator::addAggregationPort(const std::string& port_name)
 {
+	Logger::In in("JointStateAggregator::addAggregationPort");		
+	
     /// Check whether number of inports does not exceed maximum
     ++number_inports_;
-    if ( number_inports_ > maxN )
-    {
+    if ( number_inports_ > maxN ) {
         log(Error)<<"JointStateAggregator: Number of inports "<<number_inports_<<" exceeds maximum of "<<maxN<<endlog();
         return false;
     }
+    
 	log(Info)<<"JointStateAggregator: Adding port "<<port_name<<endlog();
     addPort( port_name, inports_[number_inports_ - 1] );
 
@@ -120,8 +118,9 @@ bool JointStateAggregator::addAggregationPort(const std::string& port_name)
 
 bool JointStateAggregator::addJointNames(const std::vector<std::string>& joint_names)
 {
-	for (unsigned int i = 0; i < joint_names.size(); i++)
-	{
+	Logger::In in("JointStateAggregator::addJointNames");
+	
+	for (unsigned int i = 0; i < joint_names.size(); i++) {
 		out_msg_.name.push_back(joint_names[i]);
 		out_msg_.position.push_back(0.0);
 		out_msg_.velocity.push_back(0.0);
@@ -136,6 +135,7 @@ bool JointStateAggregator::addJointNames(const std::vector<std::string>& joint_n
 		    log(Error) << "ERROR ERROR! " << joint_names[i] << endlog();
 		}
 	}
+	
 	return true;
 }
 

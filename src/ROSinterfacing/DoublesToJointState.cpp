@@ -22,6 +22,8 @@ DoublesToJointState::~DoublesToJointState(){}
 
 bool DoublesToJointState::configureHook()
 {
+	Logger::In in("DoublesToJointState::Configure");
+	
     Ndouble_ = out_msg_.name.size();
     log(Info)<<"Size of arrays = "<<Ndouble_<<endlog();
     out_msg_.position.assign(Ndouble_, 0.0);
@@ -32,21 +34,19 @@ bool DoublesToJointState::configureHook()
 
 bool DoublesToJointState::startHook()
 {
+	Logger::In in("DoublesToJointState::Start");
+	
     /// Check which ports are connected
-    if (!position_inport_.connected())
-    {
+    if (!position_inport_.connected()) {
         log(Warning)<<"WriteJointState: Position inport not connected"<<endlog();
     }
-    if (!velocity_inport_.connected())
-    {
+    if (!velocity_inport_.connected()) {
         log(Info)<<"WriteJointState: Velocity inport not connected"<<endlog();
     }
-    if (!effort_inport_.connected())
-    {
+    if (!effort_inport_.connected()) {
         log(Info)<<"WriteJointState: Effort inport not connected"<<endlog();
     }
-    if (!outport_.connected())
-    {
+    if (!outport_.connected()) {
         log(Warning)<<"WriteJointState: Outport not connected"<<endlog();
     }
 
@@ -55,6 +55,8 @@ bool DoublesToJointState::startHook()
 
 void DoublesToJointState::updateHook()
 {
+	Logger::In in("DoublesToJointState::Update");	
+	
     // ToDo: how can we do this nicely?
     doubles pos, vel, eff;
     if ( position_inport_.read( pos ) == NewData)

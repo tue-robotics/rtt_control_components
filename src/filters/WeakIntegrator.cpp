@@ -46,6 +46,8 @@ WeakIntegrators::~WeakIntegrators()
 
 bool WeakIntegrators::configureHook()
 {
+ 	Logger::In in("WeakIntegrators::Configure");	
+	
     /* Guaranteeing Real-Time data flow */
     // create an example data sample of vector_size:
     doubles example(vector_size, 0.0);
@@ -74,10 +76,11 @@ bool WeakIntegrators::configureHook()
 
 bool WeakIntegrators::startHook()
 {
+ 	Logger::In in("WeakIntegrators::Start");	
+	
     // Check validity of Ports:
     if ( !inport.connected() ) {
         log(Error)<<"WeakIntegrators::inputport not connected!"<<endlog();
-        // No connection was made, can't do my job !
         return false;
     }
 
@@ -108,6 +111,8 @@ bool WeakIntegrators::startHook()
 
 void WeakIntegrators::updateHook()
 {
+ 	Logger::In in("WeakIntegrators::Update");	
+	
     // Read the input port
     doubles input(vector_size,0.0);
     doubles output(vector_size,0.0);

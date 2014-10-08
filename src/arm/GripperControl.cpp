@@ -38,21 +38,30 @@ GripperControl::GripperControl(const std::string& name) : TaskContext(name, PreO
 
 GripperControl::~GripperControl() {}
 
-bool GripperControl::configureHook() {
+bool GripperControl::configureHook() 
+{
+	Logger::In in("GripperControl::Configure");
+	
 	torques.assign(8,0.0); 
 	measPos.assign(8,0.0);
 	gripperPos.assign(1,0.0);
 	completed = true;
 	gripperHomed = false;
-	return true;
-}
-
-bool GripperControl::startHook() {
-	return true;
-}
-
-void GripperControl::updateHook(){
 	
+	return true;
+}
+
+bool GripperControl::startHook() 
+{
+	Logger::In in("GripperControl::Start");	
+	
+	return true;
+}
+
+void GripperControl::updateHook()
+{
+	Logger::In in("GripperControl::Update");
+		
 	bool resetGripper;
 	
 	if (resetGripperPort.read(resetGripper) == NewData){

@@ -28,11 +28,15 @@ PublishOdometry::~PublishOdometry(){}
 
 bool PublishOdometry::configureHook()
 {
+	Logger::In in("PublishOdometry::Configure");		
+	
     return true;
 }
 
 bool PublishOdometry::startHook()
 {
+	Logger::In in("PublishOdometry::Start");		
+	
     old_time = os::TimeService::Instance()->getNSecs()*1e-9;
     prev_pos.assign(3,0.0);
     global_px = 0.0;
@@ -48,6 +52,8 @@ bool PublishOdometry::startHook()
 
 void PublishOdometry::updateHook()
 {
+	Logger::In in("PublishOdometry::Update");		
+	
     ros::Time current_time = ros::Time::now(); // Change to wall-time?
     long double new_time = os::TimeService::Instance()->getNSecs()*1e-9;
     double dt = new_time - old_time;

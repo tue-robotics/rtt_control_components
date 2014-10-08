@@ -41,6 +41,8 @@ FirstOrderLowPass::~FirstOrderLowPass()
 
 bool FirstOrderLowPass::configureHook()
 {
+	Logger::In in("FirstOrderLowPass::Configure");	
+	
     // Adding ports
     addEventPort( "in", inport );
     addPort( "out", outport );
@@ -63,10 +65,11 @@ bool FirstOrderLowPass::configureHook()
 
 bool FirstOrderLowPass::startHook()
 {
+	Logger::In in("FirstOrderLowPass::Start");	
+	
     // Check validity of Ports:
     if ( !inport.connected() ) {
         log(Error)<<"FirstOrderLowPass::inputport not connected!"<<endlog();
-        // No connection was made, can't do my job !
         return false;
     }
 
@@ -97,6 +100,8 @@ bool FirstOrderLowPass::startHook()
 
 void FirstOrderLowPass::updateHook()
 {
+	Logger::In in("FirstOrderLowPass::Update");	
+	
     // Read the input port
     doubles input(vector_size,0.0);
     doubles output(vector_size,0.0);

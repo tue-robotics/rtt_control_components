@@ -22,6 +22,8 @@ JointStateToDoubles::~JointStateToDoubles(){}
 
 bool JointStateToDoubles::configureHook()
 {
+	Logger::In in("JointStateToDoubles::Configure");		
+	
     pos_out_.assign(Ndouble_, 0.0);
     vel_out_.assign(Ndouble_, 0.0);
     eff_out_.assign(Ndouble_, 0.0);
@@ -30,21 +32,19 @@ bool JointStateToDoubles::configureHook()
 
 bool JointStateToDoubles::startHook()
 {
+	Logger::In in("JointStateToDoubles::Start");	
+	
     /// Check which ports are connected
-    if (!position_outport_.connected())
-    {
+    if (!position_outport_.connected()) {
         log(Warning)<<"ReadJointState: Position outport not connected"<<endlog();
     }
-    if (!velocity_outport_.connected())
-    {
+    if (!velocity_outport_.connected()) {
         log(Info)<<"ReadJointState: Velocity outport not connected"<<endlog();
     }
-    if (!effort_outport_.connected())
-    {
+    if (!effort_outport_.connected()) {
         log(Info)<<"ReadJointState: Effort outport not connected"<<endlog();
     }
-    if (!inport_.connected())
-    {
+    if (!inport_.connected()) {
         log(Warning)<<"ReadJointState: Inport not connected"<<endlog();
     }
     log(Info)<<"JointStateToDoubles can only handle jointstate messages with the correct length"<<endlog();
@@ -60,30 +60,25 @@ bool JointStateToDoubles::startHook()
 
 void JointStateToDoubles::updateHook()
 {
+	Logger::In in("JointStateToDoubles::Update");	
+	
     // ToDo: can't we do this any nicer?
     sensor_msgs::JointState in_msg;
-    if (inport_.read(in_msg) == NewData)
-    {
-        if (in_msg.position.size() == Ndouble_)
-        {
-            for (uint i = 0; i < Ndouble_; i++)
-            {
+    if (inport_.read(in_msg) == NewData) {
+        if (in_msg.position.size() == Ndouble_) {
+            for (uint i = 0; i < Ndouble_; i++) {
                 pos_out_[i] = in_msg.position[i];
             }
             position_outport_.write(pos_out_);
         }
-        if (in_msg.velocity.size() == Ndouble_)
-        {
-            for (uint i = 0; i < Ndouble_; i++)
-            {
+        if (in_msg.velocity.size() == Ndouble_) {
+            for (uint i = 0; i < Ndouble_; i++) {
                 vel_out_[i] = in_msg.velocity[i];
             }
             velocity_outport_.write(vel_out_);
         }
-        if (in_msg.effort.size() == Ndouble_)
-        {
-            for (uint i = 0; i < Ndouble_; i++)
-            {
+        if (in_msg.effort.size() == Ndouble_) {
+            for (uint i = 0; i < Ndouble_; i++) {
                 eff_out_[i] = in_msg.effort[i];
             }
             effort_outport_.write(eff_out_);

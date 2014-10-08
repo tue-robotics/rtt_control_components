@@ -35,55 +35,56 @@ RosDiagnostics::~RosDiagnostics(){}
 
 bool RosDiagnostics::configureHook()
 {
-	for ( uint i = 0; i < Nvec; i++ )
-	{
+	Logger::In in("RosDiagnostics::Configure");	
+	
+	for ( uint i = 0; i < Nvec; i++ ) {
 		string name_inport = "vec"+to_string(i+1);
 		log(Info)<<"Trying to create port "<<name_inport<<endlog();
 		addPort( name_inport, vectorports[i] );
 		string name_prop = "vecname"+to_string(i+1);
 		addProperty( name_prop, vectornames[i] );
 	}
-	for ( uint i = 0; i < Nbool; i++ )
-	{
+	
+	for ( uint i = 0; i < Nbool; i++ ) {
 		string name_inport = "bool"+to_string(i+1);
 		log(Info)<<"Trying to create port "<<name_inport<<endlog();
 		addPort( name_inport, boolports[i] );
 		string name_prop = "boolname"+to_string(i+1);
 		addProperty( name_prop, boolnames[i] );
 	}
+	
 	return true;
 }
 
 bool RosDiagnostics::startHook()
 {
+	Logger::In in("RosDiagnostics::Start");		
+	
 	return true;
 }
 
 void RosDiagnostics::updateHook()
 {
-
+	Logger::In in("RosDiagnostics::Update");	
+	
 	vector<diagnostic_msgs::DiagnosticStatus> statuses;
 
 	diagnostic_updater::DiagnosticStatusWrapper status;
 	status.name = statusname;
-	for ( uint i = 0; i < Nvec; i++ )
-	{
+	for ( uint i = 0; i < Nvec; i++ ) {
 		doubles values;
 		vectorports[i].read( values );
-		for ( uint j = 0; j < values.size(); j++ )
-		{
+		for ( uint j = 0; j < values.size(); j++ ) {
 			status.add(vectornames[i],values[j]);
 		}
 	}
-	for ( uint i = 0; i < Nbool; i++ )
-	{
+	for ( uint i = 0; i < Nbool; i++ ) {
 		bool value;
 		boolports[i].read( value );
 		status.add(boolnames[i],value);
 	}
 
 	statuses.push_back(status);
-
 
 	diagnostic_msgs::DiagnosticArray msg;
 

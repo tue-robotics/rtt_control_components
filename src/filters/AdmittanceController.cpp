@@ -50,6 +50,8 @@ AdmittanceControllers::~AdmittanceControllers()
 
 bool AdmittanceControllers::configureHook()
 {
+	Logger::In in("AdmittanceControllers::Configure");	
+	
     // Compute fp and dp for first order lowpass filter
     // and Construct filters
     fp.resize(vector_size);
@@ -75,16 +77,16 @@ bool AdmittanceControllers::configureHook()
 
 bool AdmittanceControllers::startHook()
 {
+	Logger::In in("AdmittanceControllers::Start");	
+		
     // Check validity of Ports:
     if ( !position_inport.connected() ) {
         log(Error)<<"AdmittanceControllers::position_inputport not connected!"<<endlog();
-        // No connection was made, can't do my job !
         return false;
     }
 
     if ( !force_inport.connected() ) {
         log(Error)<<"AdmittanceControllers::force_inputport not connected!"<<endlog();
-        // No connection was made, can't do my job !
         return false;
     }
 
@@ -113,6 +115,8 @@ bool AdmittanceControllers::startHook()
 
 void AdmittanceControllers::updateHook()
 {
+	Logger::In in("AdmittanceControllers::Update");	
+		
     // Read inports
     position_inport.read(position_input);
     if (force_inport.read(force_input) == NewData)

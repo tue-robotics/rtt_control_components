@@ -42,6 +42,8 @@ FeedForward::~FeedForward(){}
 
 bool FeedForward::configureHook()
 {
+	Logger::In in("FeedForward::Configure");	
+	
     if (vector_size < 1) {
         log(Error) << "FeedForward:: wrong vector_size specified" << endlog();
         return false;
@@ -68,6 +70,8 @@ bool FeedForward::configureHook()
 
 bool FeedForward::startHook()
 {
+	Logger::In in("FeedForward::Start");	
+	
     // check validity of properties
     if ( coulomb_gain.size() != vector_size || viscous_gain.size() != vector_size || acceleration_gain.size() != vector_size || direction_gain.size() != vector_size){
         log(Error) << "FeedForward:: One of the gain properties is not set correctly" << endlog();
@@ -84,6 +88,8 @@ bool FeedForward::startHook()
 
 void FeedForward::updateHook()
 {
+	Logger::In in("FeedForward::Update");	
+	
     doubles velocities(vector_size,0.0);
     doubles accelerations(vector_size,0.0);
     doubles output(vector_size,0.0);

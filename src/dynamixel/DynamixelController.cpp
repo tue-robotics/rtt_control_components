@@ -41,7 +41,10 @@ DynamixelController::DynamixelController(const std::string& name) :
 	log(Debug) << "DynamixelController constructor done." << endlog();
 }
 
-bool DynamixelController::configureHook() {
+bool DynamixelController::configureHook() 
+{
+	Logger::In in("DynamixelController::Configure");	
+	
 	// Get the number of dynamixels
 	n_dynamixels = dynamixel_ids.size();
 
@@ -90,7 +93,10 @@ bool DynamixelController::configureHook() {
 	return true;
 }
 
-bool DynamixelController::startHook() {
+bool DynamixelController::startHook() 
+{
+	Logger::In in("DynamixelController::Start");	
+	
 	for ( uint i=0; i<n_dynamixels; i++ ){
 		log(Debug) << "dynamixel_ids " << dynamixel_ids[i] << endlog();
 		log(Debug) << "dynamixel_max " << dynamixel_max[i] << endlog();
@@ -102,7 +108,10 @@ bool DynamixelController::startHook() {
 	return true;
 }
 
-bool DynamixelController::readReference() {
+bool DynamixelController::readReference() 
+{
+	Logger::In in("DynamixelController::readReference");	
+	
 	sensor_msgs::JointState goalPos;
 	//goalPos = sensor_msgs::JointState();
 	if (goalPosPort.read(goalPos) == NewData) {
@@ -134,7 +143,10 @@ bool DynamixelController::readReference() {
 	return false;
 }
 
-void DynamixelController::updateHook() {
+void DynamixelController::updateHook() 
+{
+	Logger::In in("DynamixelController::Update");	
+	
 	enablerPort.read(enable);
 	if (enable == false) {
 		currentPos.header.stamp = ros::Time::now();
@@ -213,7 +225,8 @@ void DynamixelController::updateHook() {
 	}
 }
 
-void DynamixelController::create_pos_goal_packet(void){
+void DynamixelController::create_pos_goal_packet(void)
+{
 	int L = 4;	// Number of addresses to change
 	dxl_set_txpacket_id(BROADCAST_ID);
 	dxl_set_txpacket_instruction(INST_SYNC_WRITE);
@@ -232,7 +245,8 @@ void DynamixelController::create_pos_goal_packet(void){
 	dxl_set_txpacket_length((L+1)*n_dynamixels+4);		// length = (L+1)*N+4, L:=Number of addresses, N:=Number of dynamixels
 }
 
-void DynamixelController::dxl_tx_rx_packet(void) {
+void DynamixelController::dxl_tx_rx_packet(void) 
+{
 	dxl_tx_packet();
 	if (commStatus == COMM_TXSUCCESS) {
 		dxl_rx_packet();
@@ -241,6 +255,8 @@ void DynamixelController::dxl_tx_rx_packet(void) {
 
 void DynamixelController::dxl_tx_packet(void)
 {
+	Logger::In in("DynamixelController::dxl_tx_packet");	
+	
 	commStatus = COMM_TXSUCCESS;
 
 	unsigned char TxNumByte;
@@ -270,7 +286,10 @@ void DynamixelController::dxl_tx_packet(void)
 	instructionPort.write(instruction);
 }
 
-void DynamixelController::dxl_rx_packet(void) {
+void DynamixelController::dxl_rx_packet(void) 
+{
+	Logger::In in("DynamixelController::dxl_rx_packet");	
+	
 	if (gbInstructionPacket[ID] == BROADCAST_ID) {
 		log(Debug) << "DynamixelController: broadcast id, no status packet"<< endlog();
 		commStatus = COMM_RXSUCCESS;
@@ -337,12 +356,15 @@ void DynamixelController::dxl_set_txpacket_length( int length )
 	gbInstructionPacket[LENGTH] = (unsigned char)length;
 }
 
-int DynamixelController::dxl_get_rxpacket_id(void) {
+int DynamixelController::dxl_get_rxpacket_id(void) 
+{
 	return (int)gbStatusPacket[ID];
 }
 
 int DynamixelController::dxl_rxpacket_isError(void)
 {
+	Logger::In in("DynamixelController::dxl_rxpacket_isError");	
+	
 	if(gbStatusPacket[ERRBIT]){
 		errortosupervisorPort.write(true);
 		return 1;
@@ -462,6 +484,8 @@ void DynamixelController::dxl_write_word( int id, int address, int value )
 
 void DynamixelController::printErrorCode(void)
 {
+	Logger::In in("DynamixelController::printErrorCode");	
+	
 	int id = dxl_get_rxpacket_id();
 	if (dxl_rxpacket_isError()) {
 		bool unknown_id = true;

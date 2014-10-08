@@ -1,6 +1,6 @@
-/** LeadLags.cpp
+/** LeadLag.cpp
 *
-* @class LeadLags
+* @class LeadLag
 *
 * \author Boris Mrkajic, Janno Lunenburg
 * \date August, 2013
@@ -21,7 +21,7 @@ using namespace std;
 using namespace RTT;
 using namespace FILTERS;
 
-LeadLags::LeadLags(const string& name) : 
+LeadLag::LeadLag(const string& name) : 
     TaskContext(name, PreOperational),
     vector_size(0), Ts(0.0)
 {
@@ -36,7 +36,7 @@ LeadLags::LeadLags(const string& name) :
     addPort( "out", outport );
 }
 
-LeadLags::~LeadLags()
+LeadLag::~LeadLag()
 {
     for (unsigned int i = 0; i < vector_size; i++)
     {
@@ -45,8 +45,9 @@ LeadLags::~LeadLags()
     }
 }
 
-bool LeadLags::configureHook()
+bool LeadLag::configureHook()
 {
+	Logger::In in("LeadLag::Configure");
 
     filters.resize(vector_size);
     for (uint i = 0; i < vector_size; i++) {
@@ -58,27 +59,28 @@ bool LeadLags::configureHook()
     return true;
 }
 
-bool LeadLags::startHook()
+bool LeadLag::startHook()
 {
+	Logger::In in("LeadLag::Start");
+		
     // Check validity of ports:
     if ( !inport.connected() ) {
-        log(Error)<<"LeadLags::Input port not connected!"<<endlog();
-        // No connection was made, can't do my job !
+        log(Error)<<"LeadLag::Input port not connected!"<<endlog();
         return false;
     }
 
     if ( !outport.connected() ) {
-        log(Warning)<<"LeadLags::Output port not connected!"<<endlog();
+        log(Warning)<<"LeadLag::Output port not connected!"<<endlog();
     }
 
     if (vector_size < 1 || Ts <= 0.0) {
-        log(Error)<<"LeadLags parameters not valid!"<<endlog();
+        log(Error)<<"LeadLag parameters not valid!"<<endlog();
         return false;
     }
 
     for (uint i = 0; i < vector_size; i++) {
         if (fz[i] <= 0.0 || fp[i] <= 0.0){
-            log(Error)<<"LeadLags parameters not valid!"<<endlog();
+            log(Error)<<"LeadLag parameters not valid!"<<endlog();
             return false;
         }
     }
@@ -86,14 +88,16 @@ bool LeadLags::startHook()
     /// Print debug info
     for (uint i = 0; i < vector_size; i++)
     {
-        log(Debug)<<"LeadLags: output[i] = "<<filters[i]->getOutput()<<endlog();
+        log(Debug)<<"LeadLag: output[i] = "<<filters[i]->getOutput()<<endlog();
     }
 
     return true;
 }
 
-void LeadLags::updateHook()
+void LeadLag::updateHook()
 {
+	Logger::In in("LeadLag::Update");
+		
     // Read the input port
     doubles input(vector_size,0.0);
     doubles output(vector_size,0.0);
@@ -109,4 +113,4 @@ void LeadLags::updateHook()
     outport.write( output );
 }
 
-ORO_CREATE_COMPONENT(FILTERS::LeadLags)
+ORO_CREATE_COMPONENT(FILTERS::LeadLag)

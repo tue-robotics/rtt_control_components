@@ -29,23 +29,9 @@ Demux::~Demux(){}
 
 bool Demux::configureHook()
 {
-	Logger::In in("Demux::configureHook()");
-	
-	//outports.resize(N);
+	Logger::In in("Demux::Configure");
 	
 	addEventPort( "in", inport);
-	
-	/*
-	// Adding ports
-	for (uint i = 0; i < N; i++) {
-		string outportname = "out"+to_string(i+1);
-		OutputPort<double> outport(outportname);
-		outports[i] = outport;
-		addPort( outports[i] );
-	}
-	 */
-	 
-    //	outports.resize(N);
 	
 	// Creating ports
 	for ( uint i = 0; i < N; i++ )
@@ -59,42 +45,43 @@ bool Demux::configureHook()
 
 bool Demux::startHook()
 {
-  Logger::In in("Demux::startHook()");
+	Logger::In in("Demux::Start");
 
-  if ( !inport.connected() ) {
-    log(Error)<<"Input port not connected!"<<endlog();
-    return false;
-  }
+	if ( !inport.connected() ) {
+		log(Error)<<"Input port not connected!"<<endlog();
+		return false;
+	}
 
-  if ( N > maxN ) {
-    log(Error)<<"Max number of ports exceeded!"<<endlog();
-    return false;
-  }
+	if ( N > maxN ) {
+		log(Error)<<"Max number of ports exceeded!"<<endlog();
+		return false;
+	}
 
-  if ( N < 1 ) {
-    log(Error)<<"Number of ports must be at least 1!"<<endlog();
-    return false;
-  }
+	if ( N < 1 ) {
+		log(Error)<<"Number of ports must be at least 1!"<<endlog();
+		return false;
+	}
 
-  // Check validity of Ports:
-  for (uint i = 0; i < N; i++) {
-	  if ( !outports[i].connected() ) {
-		  log(Warning)<<"Output port "<< i+1 <<" not connected!"<<endlog();
-	  }
-  }
+	// Check validity of Ports:
+	for (uint i = 0; i < N; i++) {
+		if ( !outports[i].connected() ) {
+			log(Warning)<<"Output port "<< i+1 <<" not connected!"<<endlog();
+		}
+	}
 
-  return true;
+	return true;
 }
 
 void Demux::updateHook()
 {
-  doubles input(N,0.0);
-  
-  inport.read( input );
-  for ( uint i = 0; i < N; i++ ) {
-	  outports[i].write( input[i] );
-  }
-  
+	Logger::In in("Demux::Update");	
+
+	doubles input(N,0.0);
+
+	inport.read( input );
+	for ( uint i = 0; i < N; i++ ) {
+		outports[i].write( input[i] );
+	}
 }
 
 ORO_CREATE_COMPONENT(SIGNALROUTING::Demux)

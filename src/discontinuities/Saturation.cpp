@@ -36,49 +36,52 @@ Saturation::~Saturation(){}
 
 bool Saturation::configureHook()
 {
+	Logger::In in("Saturation::Configure");
+
    return true;
 }
 
 bool Saturation::startHook()
 {
-  Logger::In in("Saturation::startHook()");
-  
-  if ( !inport.connected() ) {
-    log(Error)<<"Input port not connected!"<<endlog();
-    return false;
-  }
+	Logger::In in("Saturation::Start");
 
-  if ( !outport.connected() ) {
-	log(Warning)<<"Output port not connected!"<<endlog();
-  }
- 
-  for (uint i = 0; i < vector_size; i++) {
-	if (upper_limit[i] < lower_limit[i]) {
-		log(Error)<<"Parameters not valid!"<<endlog();
+	if ( !inport.connected() ) {
+		log(Error)<<"Input port not connected!"<<endlog();
 		return false;
 	}
-  }
 
-  return true;
+	if ( !outport.connected() ) {
+		log(Warning)<<"Output port not connected!"<<endlog();
+	}
+
+	for (uint i = 0; i < vector_size; i++) {
+		if (upper_limit[i] < lower_limit[i]) {
+			log(Error)<<"Parameters not valid!"<<endlog();
+			return false;
+		}
+	}
+
+	return true;
 }
 
 void Saturation::updateHook()
 {
+	Logger::In in("Saturation::Update");
 
 	doubles values(vector_size,0.0);
 
-  inport.read( values );
-  
-  for (uint i = 0; i < vector_size; i++) {
-	  if (values[i] > upper_limit[i]) {
-		  values[i] = upper_limit[i];
-	  }
-	  if (values[i] < lower_limit[i]) {
-		  values[i] = lower_limit[i];
-	  }
-  }
-  
-  outport.write( values );
+	inport.read( values );
+
+	for (uint i = 0; i < vector_size; i++) {
+		if (values[i] > upper_limit[i]) {
+			values[i] = upper_limit[i];
+		}
+		if (values[i] < lower_limit[i]) {
+			values[i] = lower_limit[i];
+		}
+	}
+
+	outport.write( values );
 }
 
 ORO_CREATE_COMPONENT(DISCONTINUITIES::Saturation)

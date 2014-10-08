@@ -29,6 +29,8 @@ Switch::~Switch(){}
 
 bool Switch::configureHook()
 {
+	Logger::In in("Switch::Configure");		
+	
     log(Warning)<<"Switch: Start of configureHook()"<<endlog();
 	addEventPort( "in_def", inport_default );
 	addEventPort( "in_swi", inport_switched );
@@ -45,49 +47,46 @@ bool Switch::configureHook()
 
 bool Switch::startHook()
 {
-  log(Warning)<<"Switch: Start of startHook()"<<endlog();
+	Logger::In in("Switch::Start");	
 
-  if ( !inport_default.connected() ) {
-    log(Error)<<"Switch: inport_default not connected!"<<endlog();
-    return false;
-  }
-  
-  if ( !inport_switched.connected() ) {
-    log(Error)<<"Switch: inport_switched not connected!"<<endlog();
-    return false;
-  }
-  
-  if ( !outport.connected() ) {
-    log(Error)<<"Switch: Outputport not connected!"<<endlog();
-    return false;
-  }
+	if ( !inport_default.connected() ) {
+		log(Error)<<"Switch: inport_default not connected!"<<endlog();
+		return false;
+	}
 
-  log(Warning)<<"Switch: End of startHook()"<<endlog();
-  return true;
+	if ( !inport_switched.connected() ) {
+		log(Error)<<"Switch: inport_switched not connected!"<<endlog();
+		return false;
+	}
+
+	if ( !outport.connected() ) {
+		log(Error)<<"Switch: Outputport not connected!"<<endlog();
+		return false;
+	}
+
+	return true;
 }
 
 void Switch::updateHook()
 {
-  inport_default.read(input_default);
-  inport_switched.read(input_switched);
-	
-  if ( NewData == inport_switchParam.read(switch_param))
-  {
-	  log(Warning)<< "Switch: New SwitchingParam received" << endlog(); // TO DO set to info
-  }
-  
-  if (switch_param == false )
-  {
-	  output = input_default;
-  }
-	
-  if (switch_param == true )
-  {
-	  output = input_switched;
-  }
+	Logger::In in("Switch::Update");
 
+	inport_default.read(input_default);
+	inport_switched.read(input_switched);
 
-  outport.write( output );
+	if ( NewData == inport_switchParam.read(switch_param)) {
+		log(Warning)<< "Switch: New SwitchingParam received" << endlog();
+	}
+
+	if (switch_param == false )	{
+		output = input_default;
+	}
+
+	if (switch_param == true ) {
+		output = input_switched;
+	}
+
+	outport.write( output );
 }
 
 ORO_CREATE_COMPONENT(SIGNALROUTING::Switch)

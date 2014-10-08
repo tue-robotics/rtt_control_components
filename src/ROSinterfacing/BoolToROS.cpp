@@ -30,8 +30,9 @@ BoolToROS::~BoolToROS(){}
 
 bool BoolToROS::configureHook()
 {
-	for ( uint i = 0; i < Nbool; i++ )
-	{
+	Logger::In in("BoolToROS::Configure");		
+	
+	for ( uint i = 0; i < Nbool; i++ ) {
 		string name_inport = "bool_in"+to_string(i+1);
 		string name_outport = "bool_out"+to_string(i+1);
 		log(Info)<<"Trying to create port "<<name_inport<<endlog();
@@ -43,16 +44,18 @@ bool BoolToROS::configureHook()
 
 bool BoolToROS::startHook()
 {
+	Logger::In in("BoolToROS::Start");	
+	
 	return true;
 }
 
 void BoolToROS::updateHook()
 {
-	for ( uint i = 0; i < Nbool; i++ )
-	{
+	Logger::In in("BoolToROS::Update");		
+	
+	for ( uint i = 0; i < Nbool; i++ ) {
 		bool value;
-		if ( boolinports[i].read( value ) == NewData )
-		{
+		if ( boolinports[i].read( value ) == NewData ) {
 			std_msgs::Bool msg;
 			msg.data = value;
 			booloutports[i].write( msg );

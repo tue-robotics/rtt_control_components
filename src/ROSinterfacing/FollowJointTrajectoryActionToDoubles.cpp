@@ -27,6 +27,8 @@ FollowJointTrajectoryActionToDoubles::~FollowJointTrajectoryActionToDoubles(){}
 
 bool FollowJointTrajectoryActionToDoubles::configureHook()
 {
+	Logger::In in("FollowJointTrajectoryActionToDoubles::Configure");
+	
     pos.assign(Nj, 0.0);
     vel.assign(Nj, 0.0);
     goal_pos.assign(Nj, 0.0);
@@ -37,13 +39,13 @@ bool FollowJointTrajectoryActionToDoubles::configureHook()
 
 bool FollowJointTrajectoryActionToDoubles::startHook()
 {
+	Logger::In in("FollowJointTrajectoryActionToDoubles::Start");	
+	
     /// Check which ports are connected
-    if (!position_outport_.connected())
-    {
+    if (!position_outport_.connected()) {
         log(Warning)<<"ReadJointState: Position outport not connected"<<endlog();
     }
-    if (!goalport.connected())
-    {
+    if (!goalport.connected()) {
         log(Warning)<<"ReadJointState: Inport not connected"<<endlog();
     }
             
@@ -57,19 +59,18 @@ bool FollowJointTrajectoryActionToDoubles::startHook()
 
 void FollowJointTrajectoryActionToDoubles::updateHook()
 {
+	Logger::In in("FollowJointTrajectoryActionToDoubles::Update");	
+	
 	doubles resetdata;
-	if (resetPort.read( resetdata ) == NewData) // Following the trajectory is interupted and the actual joints may be moved
-	{
-		for(unsigned int j = 0; j < Nj; ++j) 
-		{
+	if (resetPort.read( resetdata ) == NewData) { // Following the trajectory is interupted and the actual joints may be moved
+		for(unsigned int j = 0; j < Nj; ++j) {
 			pos[j] = resetdata[j];
 		}
 		playing_trajectory = false;        
 		return;
 	}
 
-    if ( goalport.read(goalmsg) == NewData) 
-    {
+    if ( goalport.read(goalmsg) == NewData) {
 		tp = 0;
         playing_trajectory = true;
         playing_trajectory_point = false;
@@ -78,8 +79,7 @@ void FollowJointTrajectoryActionToDoubles::updateHook()
 		//TODO: Check feasibility of trajectory
 	}
 	
-	if ( playing_trajectory && ! playing_trajectory_point ) // Lets calculate the speeds to the next point
-	{
+	if ( playing_trajectory && ! playing_trajectory_point ) { // Lets calculate the speeds to the next point
 		log(Debug)<<"Calculating new trajectory initiated." << endlog();
 		log(Debug)<<"Max vel: " << 
 		max_vels[0] << "  " << max_vels[1] << "  " << max_vels[2] << "  " << max_vels[3] << endlog();
@@ -122,8 +122,7 @@ void FollowJointTrajectoryActionToDoubles::updateHook()
             durations[j] = duration;
 
             max_duration = std::max(max_duration, duration);
-            if (max_duration == duration)
-            {
+            if (max_duration == duration) {
 				slowest = j;
 			}
             
@@ -151,12 +150,10 @@ void FollowJointTrajectoryActionToDoubles::updateHook()
 		log(Info)<<"New trajectory to next point calculated"<<endlog();
 	}
 	
-	if ( playing_trajectory && playing_trajectory_point && std::abs(goal_pos[slowest] - pos[slowest]) < EPS ) //(Criterium goal reached)
-	{
+	if ( playing_trajectory && playing_trajectory_point && std::abs(goal_pos[slowest] - pos[slowest]) < EPS ) { //(Criterium goal reached)
 		playing_trajectory_point = false;
 		
-		if (tp >= goalmsg.goal.trajectory.points.size())
-		{
+		if (tp >= goalmsg.goal.trajectory.points.size()) {
 			// Send action result
 			control_msgs::FollowJointTrajectoryActionResult resultmsg;
 			resultmsg.result.error_code = 0; // SUCCESSFUL
@@ -164,15 +161,12 @@ void FollowJointTrajectoryActionToDoubles::updateHook()
 			resultport.write(resultmsg);
 			playing_trajectory = false;
 			log(Info)<<"Trajectory finished"<<endlog();
-		}
-		else
-		{
+		} else {
 			log(Info)<<"Intermediate trajectory point reached, moving to the next"<<endlog();
 		}
 	}
 
-	if (playing_trajectory && playing_trajectory_point)
-	{
+	if (playing_trajectory && playing_trajectory_point) {
 		for(unsigned int j = 0; j < Nj; ++j) {
 			
 			double v_abs = std::abs(vel[j]);

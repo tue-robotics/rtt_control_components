@@ -32,6 +32,8 @@ GravityTorquesParser::~GravityTorquesParser(){}
 
 bool GravityTorquesParser::configureHook()
 {
+	Logger::In in("GravityTorquesParser::Configure");	
+	
     // Fetch robot_model_ from parameter server (URDF robot model)
     ros::NodeHandle n("~");
     std::string urdf_xml_default = "/amigo/robot_description";
@@ -63,6 +65,8 @@ bool GravityTorquesParser::configureHook()
 
 bool GravityTorquesParser::startHook()
 {
+	Logger::In in("GravityTorquesParser::Start");	
+	
     //! Connection checks
     if(!jointAnglesPort.connected()){
         log(Error)<<"ARM GravityTorquesParser: Could not start Gravity torques component: jointAnglesPort not connected!"<<endlog();
@@ -78,6 +82,8 @@ bool GravityTorquesParser::startHook()
 
 void GravityTorquesParser::updateHook()
 {
+	Logger::In in("GravityTorquesParser::Update");
+		
     // read jointAngles
     jointAngles.assign(nrJoints,0.0);
 
@@ -99,6 +105,8 @@ void GravityTorquesParser::updateHook()
 
 doubles GravityTorquesParser::ComputeGravityTorques(KDL::JntArray q_current_)
 {
+	Logger::In in("GravityTorquesParser::ComputeGravityTorques");	
+	
     doubles gravityTorques_(nrJoints,0.0);
 
     for (uint i=0; i<nrMasses; i++) {

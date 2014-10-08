@@ -32,8 +32,8 @@ Polynomials::~Polynomials(){}
 
 bool Polynomials::configureHook()
 {
-    Logger::In in("Polynomials::configureHook()");
-
+    Logger::In in("Polynomials::Configure");
+    
     if (vector_size != orders.size())
     {
         log(Error)<<"Vector size ("<<vector_size<<") does not correspond with size of vector with orders ("<<orders.size()<<")"<<endlog();
@@ -86,12 +86,11 @@ bool Polynomials::configureHook()
 
 bool Polynomials::startHook()
 {
-    Logger::In in("Polynomials::startHook()");
+    Logger::In in("Polynomials::Start");
 
     // Check validity of Ports:
     if ( !inport.connected() ) {
         log(Error)<<"inputport not connected!"<<endlog();
-        // No connection was made, can't do my job !
         return false;
     }
 
@@ -109,6 +108,8 @@ bool Polynomials::startHook()
 
 void Polynomials::updateHook()
 {
+    Logger::In in("Polynomials::Update");	
+	
     /// Read the input port
     inport.read( input );
 

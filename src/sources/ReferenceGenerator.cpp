@@ -39,7 +39,7 @@ ReferenceGenerator::~ReferenceGenerator(){}
 
 bool ReferenceGenerator::configureHook()
 {
-	Logger::In in("ReferenceGenerator");
+	Logger::In in("ReferenceGenerator::Configure");
 
     // Property Checks
 	if ( (N_inports <= 0) || (N_inports > N)) {
@@ -91,7 +91,9 @@ bool ReferenceGenerator::configureHook()
 }
 
 bool ReferenceGenerator::startHook()
-    {
+{
+	Logger::In in("ReferenceGenerator::Start");
+	
     // Check validity of Ports:
     for ( uint i = 0; i < N_inports; i++ ){
 		if ( (!posinport[i].connected() ) ) {
@@ -128,6 +130,8 @@ bool ReferenceGenerator::startHook()
 
 void ReferenceGenerator::updateHook()
 {
+	Logger::In in("ReferenceGenerator::Update");
+	
     // Read the inputports
     doubles outpos(N,0.0);
     doubles outvel(N,0.0);

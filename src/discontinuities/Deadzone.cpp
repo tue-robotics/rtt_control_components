@@ -36,58 +36,58 @@ Deadzone::~Deadzone(){}
 
 bool Deadzone::configureHook()
 {
+	Logger::In in("Deadzone::Configure");		
+	
    return true;
 }
 
 bool Deadzone::startHook()
 {
-  Logger::In in("Deadzone::startHook()");
-  
-  if ( !inport.connected() ) {
-    log(Error)<<"Input port not connected!"<<endlog();
-    return false;
-  }
+	Logger::In in("Deadzone::Start");
 
-  if ( !outport.connected() ) {
-	log(Warning)<<"Output port not connected!"<<endlog();
-  }
- 
-  for (uint i = 0; i < vector_size; i++) {
-	if (end_deadzone[i] < 0.0 || start_deadzone[i] > 0.0) {
-		log(Error)<<"Parameters not valid!"<<endlog();
+	if ( !inport.connected() ) {
+		log(Error)<<"Input port not connected!"<<endlog();
 		return false;
 	}
-  }
 
-  return true;
+	if ( !outport.connected() ) {
+	log(Warning)<<"Output port not connected!"<<endlog();
+	}
+
+	for (uint i = 0; i < vector_size; i++) {
+		if (end_deadzone[i] < 0.0 || start_deadzone[i] > 0.0) {
+			log(Error)<<"Parameters not valid!"<<endlog();
+			return false;
+		}
+	}
+
+	return true;
 }
 
 void Deadzone::updateHook()
 {
-  Logger::In in("Deadzone::updateHook()");
+	Logger::In in("Deadzone::Update");
 
 	doubles input(vector_size,0.0);
 	doubles output(vector_size,0.0);
 
-  inport.read( input );
-  
-  output = input;
-  for (uint i = 0; i < vector_size; i++) {
-	  
-	  if (input[i] <= start_deadzone[i]) {
-		  output[i] = start_deadzone[i] + input[i];
-	  }
-	  else if (input[i] >= end_deadzone[i]) {
-		  output[i] = end_deadzone[i] + input[i];
-	  }
-	  else if ( (input[i] > start_deadzone[i]) && (input[i] < end_deadzone[i]) ) {
-		  output[i] = 0;
-	  }
-	  //log(Error)<<"Deadzone output"<<output[7]<<endlog();
+	inport.read( input );
 
-  }
-  
-  outport.write( output );
+	output = input;
+	for (uint i = 0; i < vector_size; i++) {
+		
+		if (input[i] <= start_deadzone[i]) {
+			output[i] = start_deadzone[i] + input[i];
+		}
+		else if (input[i] >= end_deadzone[i]) {
+			output[i] = end_deadzone[i] + input[i];
+		}
+		else if ( (input[i] > start_deadzone[i]) && (input[i] < end_deadzone[i]) ) {
+			output[i] = 0;
+		}
+	}
+
+	outport.write( output );
 }
 
 ORO_CREATE_COMPONENT(DISCONTINUITIES::Deadzone)
