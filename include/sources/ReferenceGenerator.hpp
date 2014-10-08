@@ -53,6 +53,7 @@ namespace SOURCES
     doubles desiredVel;
     doubles desiredAcc;
     doubles interpolators[maxN];
+    doubles outpos;
     double InterpolDt, InterpolEps;
     sensor_msgs::JointState resetRefMsg;
 
@@ -64,6 +65,7 @@ namespace SOURCES
     bool configureHook();
     bool startHook();
     void updateHook();
+    void stopHook();
 
     };
 }

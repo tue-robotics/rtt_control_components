@@ -116,11 +116,10 @@ bool ReferenceGenerator::startHook()
        mRefGenerators[i].setRefGen(actualPos[i]);
     }  
 	
-	if (N>2) log(Warning)<<"ReferenceGenerator.posout.last = [" << actualPos[0] << "," << actualPos[1] << "," << actualPos[2] << "," << actualPos[3] << "," << actualPos[4] << "," << actualPos[5] << "," << actualPos[6] << "," << actualPos[7] << "]" <<endlog();
+	if (N>2) log(Warning)<<"ReferenceGenerator Starting with Position = [" << actualPos[0] << "," << actualPos[1] << "," << actualPos[2] << "," << actualPos[3] << "," << actualPos[4] << "," << actualPos[5] << "," << actualPos[6] << "," << actualPos[7] << "]" <<endlog();
 
     // Write on the outposport to make sure the receiving components gets new data
     posoutport.write( actualPos );
-    
 
     log(Info)<<"started at " << os::TimeService::Instance()->getNSecs()*1e-9 <<endlog();
 
@@ -133,7 +132,7 @@ void ReferenceGenerator::updateHook()
 	Logger::In in("ReferenceGenerator::Update");
 	
     // Read the inputports
-    doubles outpos(N,0.0);
+    outpos.assign(N,0.0);
     doubles outvel(N,0.0);
     doubles outacc(N,0.0);
     doubles resetdata(N*4,0.0);
@@ -145,7 +144,8 @@ void ReferenceGenerator::updateHook()
     for ( uint j = 0; j < N_inports; j++ ){
 		doubles inpos(inport_sizes[j],0.0);
 		if (NewData == posinport[j].read( inpos ) ){
-			log(Warning)<<"Received new reference on posin"<<j+1<<"!" <<endlog();
+			if(j==0)	log(Warning)<<"Received new reference on posin"<<j+1<<": ["<<inpos[0]<<","<<inpos[1]<<","<<inpos[2]<<","<<inpos[3]<<","<<inpos[4]<<","<<inpos[5]<<","<<inpos[6]<<"]" <<endlog();
+			if(j==1)	log(Warning)<<"Received new reference on posin"<<j+1<<": ["<<inpos[0]<<"]" <<endlog();		
 			// if new data then use inpos
 			for ( uint k = 0; k < inport_sizes[j]; k++ ){
 				if ( minpos[i] == 0.0 && maxpos[i] == 0.0 ) {
@@ -189,5 +189,11 @@ void ReferenceGenerator::updateHook()
     accoutport.write( outacc );
 
 }
+
+void ReferenceGenerator::stopHook()
+{
+	if (N>2) log(Warning)<<" Stopping Reference Generator with position = [" << outpos[0] << "," << outpos[1] << "," << outpos[2] << "," << outpos[3] << "," << outpos[4] << "," << outpos[5] << "," << outpos[6] << "," << outpos[7] << "]" <<endlog();
+}
+
 
 ORO_CREATE_COMPONENT(SOURCES::ReferenceGenerator)

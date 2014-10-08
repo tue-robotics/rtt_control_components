@@ -9,6 +9,13 @@
 using namespace std;
 using namespace RTT;
 
+template <class T>
+inline string to_string (const T& t){
+  stringstream ss;
+  ss << t;
+  return ss.str();
+};
+
 namespace SUPERVISORY
 {
     /*! \class Homing
@@ -42,11 +49,13 @@ namespace SUPERVISORY
         InputPort<doubles> forces_inport;
 
         // outports
-        OutputPort< doubles > ref_outport;
-        OutputPort< bool > homingfinished_outport;
+        OutputPort<doubles> ref_outport[5];
+        OutputPort<bool> homingfinished_outport;
 
         // Properties
         uint N;
+        uint N_outports;
+        ints outport_sizes;
         uint cntr;
         string bodypart;
         string prefix;
@@ -111,6 +120,7 @@ namespace SUPERVISORY
 
         bool evaluateHomingCriterion(uint jointID);
         void updateHomingRef(uint jointID);
+        void sendRef(doubles output_total);
 
     };
 }

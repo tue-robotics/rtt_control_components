@@ -15,7 +15,6 @@ Homing::Homing(const string& name) : TaskContext(name, PreOperational)
 {  
     // Ports
 	addPort( "position",pos_inport );
-    addPort( "ref_out", ref_outport );
     addPort( "homing_finished", homingfinished_outport );
 
     addPort( "endswitch", endswitch_inport );
@@ -24,22 +23,24 @@ Homing::Homing(const string& name) : TaskContext(name, PreOperational)
     addPort( "force_in", forces_inport );
 
 	// Properties
-    addProperty( "vector_size",     N               ).doc("Number of joints");
-    addProperty( "bodypart",        bodypart        ).doc("Name of the bodypart, (fill in BODYPARTNAME)");
-    addProperty( "prefix",          prefix          ).doc("Prefix of components (for example: SPINDLE or RPERA)");
+    addProperty( "vector_size",     	N               ).doc("Number of joints");
+    addProperty( "number_of_outports",  N_outports      ).doc("Number of out ports");
+    addProperty( "outport_sizes",  		outport_sizes   ).doc("Outport vector sizes");    
+    addProperty( "bodypart",        	bodypart        ).doc("Name of the bodypart, (fill in BODYPARTNAME)");
+    addProperty( "prefix",          	prefix          ).doc("Prefix of components (for example: SPINDLE or RPERA)");
 
-    addProperty( "homing_type",     homing_type     ).doc("Type of homing choose from: ['endswitch','servoerror', 'absolutesensor', 'forcesensor']");    
-    addProperty( "require_homing",  require_homing  ).doc("Vector of boolean values to specify which joints should be homed");
-    addProperty( "homing_order",    homing_order    ).doc("The order in which the joints are homed, for example: array [2 3 1]");
-    addProperty( "homing_direction",homing_direction).doc("Homing direction");
-    addProperty( "homing_velocity", homing_velocity ).doc("Homing velocities");
-    addProperty( "homing_stroke",   homing_stroke   ).doc("Stroke from homing point to zero positions (encoders are resetted using this value)");
-    addProperty( "homing_midpos",   homing_midpos   ).doc("position that the joint should have during homing. To avoid collisions with other bodies/ itself");
-    addProperty( "homing_endpos",   homing_endpos   ).doc("position that the body should go to after homing is finished.");
+    addProperty( "homing_type",     	homing_type     ).doc("Type of homing choose from: ['endswitch','servoerror', 'absolutesensor', 'forcesensor']");    
+    addProperty( "require_homing",  	require_homing  ).doc("Vector of boolean values to specify which joints should be homed");
+    addProperty( "homing_order",    	homing_order    ).doc("The order in which the joints are homed, for example: array [2 3 1]");
+    addProperty( "homing_direction",	homing_direction).doc("Homing direction");
+    addProperty( "homing_velocity", 	homing_velocity ).doc("Homing velocities");
+    addProperty( "homing_stroke",   	homing_stroke   ).doc("Stroke from homing point to zero positions (encoders are resetted using this value)");
+    addProperty( "homing_midpos",   	homing_midpos   ).doc("position that the joint should have during homing. To avoid collisions with other bodies/ itself");
+    addProperty( "homing_endpos",   	homing_endpos   ).doc("position that the body should go to after homing is finished.");
 
-    addProperty( "homing_forces",   homing_forces    ).doc("Force threshold for force sensor homing");
-    addProperty( "homing_errors",   homing_errors   ).doc("Error threshold for endstop homing");
-    addProperty( "homing_absPos",   homing_absPos   ).doc("Value of the absolute sensor at qi=0 for absolute sensor homing");
+    addProperty( "homing_forces",   	homing_forces    ).doc("Force threshold for force sensor homing");
+    addProperty( "homing_errors",   	homing_errors   ).doc("Error threshold for endstop homing");
+    addProperty( "homing_absPos",   	homing_absPos   ).doc("Value of the absolute sensor at qi=0 for absolute sensor homing");
 }
 
 Homing::~Homing()
@@ -59,6 +60,11 @@ bool Homing::configureHook()
         log(Error) << prefix <<"_Homing: size of homing_direction, homing_velocity, homing_stroke, homing_midpos or homing_endpos does not match vector_size"<<endlog();
         return false;
     }
+    
+    // add outports
+    for ( uint j = 0; j < N_outports; j++ ) {
+        this->addPort( ("refout"+to_string(j+1)), ref_outport[j] ); 
+	}
 
     // Check which types of homing are required 
     endswitchhoming = false;
@@ -240,7 +246,7 @@ void Homing::updateHook()
         for (uint j = 0; j<N; j++) {
             if (require_homing[j] != 0) {
 				if (!finished) {
-					ref_outport.write(homing_endpos);
+					sendRef(homing_endpos);
 					finished = true;
 					log(Warning) << prefix <<"_Homing: Finished " << bodypart << " homing."<<endlog();
 					homingfinished_outport.write(true);
@@ -251,9 +257,6 @@ void Homing::updateHook()
             log(Error) << prefix <<"_Homing: Looped over all joints without at least one joint that required homing. Do not call for homing if in the ops file all required_homing are specified false!"<<endlog();
         }    
     }
-	
-	//log(Error) << prefix <<"_Homing: require_homing[homing_order[jointNr]-1] = ! " << require_homing[homing_order[jointNr]-1] << ", homing_order[jointNr]-1 =" << homing_order[jointNr]-1 << "jointNr" << jointNr << "!" <<endlog();
-
 	
     // Check if homing is required for this joint
     if (require_homing[homing_order[jointNr]-1] == 0) {
@@ -288,7 +291,7 @@ void Homing::updateHook()
             // Reset encoders and send joint to midpos
             log(Warning) << prefix <<"_Homing: Stopping body part" <<endlog();
             StopBodyPart(bodypart);
-            log(Warning) << prefix <<"_Homing: Resetting Encoder "<< homing_order[jointNr]-1 << " with stroke " << homing_stroke[homing_order[jointNr]-1] << "!" <<endlog();
+            log(Warning) << prefix <<"_Homing: Resetting Encoder "<< homing_order[jointNr] << " with stroke " << homing_stroke[homing_order[jointNr]-1] << "!" <<endlog();
             ResetEncoder(homing_order[jointNr]-1,homing_stroke[homing_order[jointNr]-1]);
             log(Warning) << prefix <<"_Homing: Starting body part" <<endlog();
             StartBodyPart(bodypart);
@@ -296,9 +299,8 @@ void Homing::updateHook()
             // Send to middle position
             ref_out = position;
             ref_out[homing_order[jointNr]-1] = homing_midpos[homing_order[jointNr]-1];
-            ref_outport.write(ref_out);
-            log(Warning) << prefix <<"_Homing: Written ref_out:" << ref_out[homing_order[jointNr]-1] << "for joint " << homing_order[jointNr] << " jointNr =" << jointNr <<endlog();
-
+            sendRef(ref_out);
+            
             // Reset parameters            
             updated_minpos[homing_order[jointNr]-1] = initial_minpos[homing_order[jointNr]-1];
             updated_maxpos[homing_order[jointNr]-1] = initial_maxpos[homing_order[jointNr]-1];
@@ -355,8 +357,7 @@ void Homing::updateHomingRef( uint jointID)
     // Write ref if a new ref has been generated
     if (ref_out_prev[jointID] != ref_out[jointID]) {
         ref_out_prev = ref_out;
-        ref_outport.write(ref_out);
-        log(Warning) << prefix <<"_Homing: Written ref_out:" << ref_out[jointID] << "for joint " << jointID +1 << " jointNr =" << jointNr <<endlog();
+        sendRef(ref_out);
     }
 
     return;
@@ -403,6 +404,29 @@ bool Homing::evaluateHomingCriterion( uint jointID)
     }
 
     return result;
+}
+
+void Homing::sendRef(doubles output_total)
+{
+	uint m = 0;
+    for ( uint n = 0; n < N_outports; n++ ) {
+		doubles output(outport_sizes[n], 0.0);
+		for ( uint p = 0; p < outport_sizes[n]; p++ ) {
+			output[p] = output_total[m];
+			m++;
+		}
+		
+		if ((N_outports > 1) && (n == 0)) {
+			log(Warning) << prefix <<"_Homing: Sending Ref [" << output[0] << "," << output[1] << "," << output[2] << "," << output[3] << "," << output[4] << "," << output[5] << "," << output[6] << "]" <<endlog();
+		}
+		if ((N_outports > 1) && (n == 1)) {
+			log(Warning) << prefix <<"_Homing: Sending Ref [" << output[0] << "]" <<endlog();
+		}
+				
+        ref_outport[n].write(output);
+	}
+	
+	return;
 }
 
 ORO_CREATE_COMPONENT(SUPERVISORY::Homing)
