@@ -5,7 +5,7 @@
 #include <rtt/Port.hpp>
 #include <soem_beckhoff_drivers/AnalogMsg.h>
 
-#define maxN 5 // maximum number of inputs and outputs, 
+#define maxN 5 // maximum number of inputs and outputs
 
 using namespace std;
 using namespace RTT;

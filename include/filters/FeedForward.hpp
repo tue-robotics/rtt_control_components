@@ -20,55 +20,54 @@ using namespace RTT;
 
 namespace FILTERS
 {
-// Define a new type for easy coding:
-typedef vector<double> doubles;
-typedef vector<int> ints;
-typedef vector<string> strings;
+	typedef vector<double> doubles;
+	typedef vector<int> ints;
+	typedef vector<string> strings;
 
-/**
-   * @brief A Component containing a complete feed forward
-   * consisting of coulomb and viscous friction compensation,
-   * acceleration compensation and a direction dependant
-   * friction compensation.
-   *
-   * Inputs		- Reference velocity
-   * 			- Reference acceleration
-   * Outputs	- Feed forward output
-   *              Safety
-   */
+	/**
+	   * @brief A Component containing a complete feed forward
+	   * consisting of coulomb and viscous friction compensation,
+	   * acceleration compensation and a direction dependant
+	   * friction compensation.
+	   *
+	   * Inputs		- Reference velocity
+	   * 			- Reference acceleration
+	   * Outputs	- Feed forward output
+	   *              Safety
+	   */
 
-class FeedForward
-        : public RTT::TaskContext
-{
-private:
+	class FeedForward
+			: public RTT::TaskContext
+	{
+	private:
 
-    // Ports
-    InputPort<doubles> inport_velocity;
-    InputPort<doubles> inport_acceleration;
-    OutputPort<doubles> outport_feedforward;
+		// Ports
+		InputPort<doubles> inport_velocity;
+		InputPort<doubles> inport_acceleration;
+		OutputPort<doubles> outport_feedforward;
 
-    // Properties
-    doubles coulomb_gain;
-    doubles viscous_gain;
-    doubles acceleration_gain;
-    doubles direction_gain;
-    uint vector_size;
+		// Properties
+		doubles coulomb_gain;
+		doubles viscous_gain;
+		doubles acceleration_gain;
+		doubles direction_gain;
+		uint vector_size;
 
-    // Variables
+		// Variables
 
-    // Constants
-    doubles zero_output;
+		// Constants
+		doubles zero_output;
 
-public:
+	public:
 
-    FeedForward(const string& name);
-    ~FeedForward();
+		FeedForward(const string& name);
+		~FeedForward();
 
-    bool configureHook();
-    bool startHook();
-    void updateHook();
-    void stopHook();
+		bool configureHook();
+		bool startHook();
+		void updateHook();
+		void stopHook();
 
-};
+	};
 }
 #endif

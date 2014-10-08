@@ -22,24 +22,23 @@ using namespace RTT;
 
 namespace DISCONTINUITIES
 {
-  // Define a new type for easy coding:
-  typedef vector<double> doubles;
-  
-  /**
-   * @brief A Component that saturates the input signal
-   *
-   * The component has one input port that should receive vector of doubles.
-   * The output is saturated between upper and lower limit.
-   *
-   * @param * upper_limit [-] - upper saturation limits
-   *        * lower_limit [-] - lower saturation limits
-   *        * vector_size [0] - size of the input vector
-   */
-   
-  class Saturation
-  : public RTT::TaskContext
-    {
-    private:
+	typedef vector<double> doubles;
+
+	/**
+	* @brief A Component that saturates the input signal
+	*
+	* The component has one input port that should receive vector of doubles.
+	* The output is saturated between upper and lower limit.
+	*
+	* @param * upper_limit [-] - upper saturation limits
+	*        * lower_limit [-] - lower saturation limits
+	*        * vector_size [0] - size of the input vector
+	*/
+
+	class Saturation
+	: public RTT::TaskContext
+	{
+	private:
 
 		/* Declaring and output port*/
 		InputPort<doubles> inport;
@@ -50,7 +49,7 @@ namespace DISCONTINUITIES
 		doubles lower_limit;
 		uint vector_size;
 		
-    public:
+	public:
 
 		Saturation(const string& name);
 		~Saturation();
@@ -59,6 +58,6 @@ namespace DISCONTINUITIES
 		bool startHook();
 		void updateHook();
 
-    };
+	};
 }
 #endif

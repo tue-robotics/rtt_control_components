@@ -22,24 +22,23 @@ using namespace RTT;
 
 namespace DISCONTINUITIES
 {
-  // Define a new type for easy coding:
-  typedef vector<double> doubles;
+	typedef vector<double> doubles;
   
-  /**
-   * @brief Output zero for inputs within the deadzone. Offsets the input signals by either the Start or End value when outside of the deadzone
-   *
-   * The component has one input port that should receive vector of doubles.
-   * Output signals are input signals with offset specified by deadzone
-   *
-   * @param * start_deadzone [-] - start of the deadzone
-   *        * end_deadzone [-] - end of the deadzone
-   *        * vector_size [0] - size of the input vector
-   */
-   
-  class Deadzone
-  : public RTT::TaskContext
-    {
-    private:
+	/**
+	* @brief Output zero for inputs within the deadzone. Offsets the input signals by either the Start or End value when outside of the deadzone
+	*
+	* The component has one input port that should receive vector of doubles.
+	* Output signals are input signals with offset specified by deadzone
+	*
+	* @param * start_deadzone [-] - start of the deadzone
+	*        * end_deadzone [-] - end of the deadzone
+	*        * vector_size [0] - size of the input vector
+	*/
+
+	class Deadzone
+	: public RTT::TaskContext
+	{
+	private:
 
 		/* Declaring and output port*/
 		InputPort<doubles> inport;
@@ -50,7 +49,7 @@ namespace DISCONTINUITIES
 		doubles end_deadzone;
 		uint vector_size;
 		
-    public:
+	public:
 
 		Deadzone(const string& name);
 		~Deadzone();
@@ -59,7 +58,7 @@ namespace DISCONTINUITIES
 		bool startHook();
 		void updateHook();
 
-    };
+	};
 }
 #endif
 

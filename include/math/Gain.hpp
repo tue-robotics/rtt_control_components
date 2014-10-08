@@ -34,9 +34,6 @@ namespace MATH
     {
     private:
 
-    /**
-     * Define a new type doubles for easy coding.
-     */
     typedef vector<double> doubles;
 
 

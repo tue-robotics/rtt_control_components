@@ -4,10 +4,6 @@
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
 
-
-//#define maxN 10 //Maximum matrix size. Still a workaround.
-
-
 using namespace std;
 using namespace RTT;
 

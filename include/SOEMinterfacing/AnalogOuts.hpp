@@ -9,7 +9,7 @@
 using namespace std;
 using namespace RTT;
 
-namespace SOEM // Just because it looks nice
+namespace SOEM
 {
   typedef std::vector<double> doubles;
 

@@ -17,7 +17,7 @@ inline string to_string (const T& t){
   return ss.str();
 };
 
-namespace SOEM // Just because it looks nice
+namespace SOEM
 {
 
   class DigitalOuts
@@ -26,26 +26,13 @@ namespace SOEM // Just because it looks nice
     private:
 
     OutputPort<soem_beckhoff_drivers::DigitalMsg> digital_out_port;
-    //InputPort<bool> amplifiers_port;
-    //InputPort<bool> tuelights_port;
-    //InputPort<bool> spindlebrake_port;
-    //InputPort<bool> red_port;
-    //InputPort<bool> green_port;
-    //InputPort<bool> blue_port;
     InputPort<bool> inport[8];
      
     soem_beckhoff_drivers::DigitalMsg dmsg;
 
     // Declaring output vector to write to the stack
     uint n_bits;
-    //std::vector<bool> bits;
-    //bool amplifiers;
-    //bool tuelights;
-    //bool spindlebrake;
-
-    // HACK
     long double start_time;
-    // ENDHACK
 
     public:
 

@@ -18,7 +18,7 @@
 
 #include <rtt/os/Timer.hpp>
 
-#define maxN 10 //Maximum number of ports that can be created. Still a workaround.
+#define maxN 10 //Maximum number of ports that can be created.
 
 
 using namespace std;
@@ -26,7 +26,6 @@ using namespace RTT;
 
 namespace Signal
 {
-  // Define a new type for easy coding:
   typedef vector<double> doubles;
   typedef vector<uint> uints;
 

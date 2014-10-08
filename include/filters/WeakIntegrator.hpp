@@ -21,8 +21,7 @@ using namespace RTT;
 
 namespace FILTERS
 {
-// Define a new type for easy coding:
-typedef vector<double> doubles;
+	typedef vector<double> doubles;
 
 /**
    * @brief A Component that acts as a weak-integrator filter

@@ -34,7 +34,6 @@ namespace SUPERVISORY
     : public RTT::TaskContext
     {
         private:
-
         // inports
         InputPort<doubles> pos_inport;
         InputPort<std_msgs::Bool> endswitch_inport;
@@ -102,8 +101,6 @@ namespace SUPERVISORY
         OperationCaller<void(int,double)> ResetEncoder;
 
         public:
-
-
 
         Homing(const string& name);
         ~Homing();

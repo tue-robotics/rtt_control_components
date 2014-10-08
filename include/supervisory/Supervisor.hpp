@@ -125,4 +125,4 @@ namespace SUPERVISORY
       };
 }
 
-#endif /* Supervisor_HPP_ */
+#endif

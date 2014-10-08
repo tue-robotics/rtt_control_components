@@ -20,7 +20,6 @@ using namespace RTT;
 
 namespace SOURCES
 {
-  // Define a new type for easy coding:
   typedef vector<double> doubles;
   
   /**

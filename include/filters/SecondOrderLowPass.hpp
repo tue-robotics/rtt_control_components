@@ -22,47 +22,46 @@ using namespace RTT;
 namespace FILTERS
 {
 
-// Define a new type for easy coding:
-typedef vector<double> doubles;
+	typedef vector<double> doubles;
 
-/**
-   * @brief A Component that acts as a 2nd order low-pass filter
-   *
-   * The component has one input port that should receive scalar.
-   *
-   * @param * fp [100 Hz] - pole frequency of the filter
-   *        * dp [0.1] - pole damping
-   */
+	/**
+	   * @brief A Component that acts as a 2nd order low-pass filter
+	   *
+	   * The component has one input port that should receive scalar.
+	   *
+	   * @param * fp [100 Hz] - pole frequency of the filter
+	   *        * dp [0.1] - pole damping
+	   */
 
-class SecondOrderLowPasses
-        : public RTT::TaskContext
-{
-private:
+	class SecondOrderLowPasses
+			: public RTT::TaskContext
+	{
+	private:
 
-    /* Declaring input and output ports*/
-    InputPort<doubles> inport;
-    OutputPort<doubles> outport;
+		/* Declaring input and output ports*/
+		InputPort<doubles> inport;
+		OutputPort<doubles> outport;
 
-    /* Declaring global variables */
-    // Vector of pointers to filters
-    vector<DFILTERS::DSecondOrderLowpass*> filters;
+		/* Declaring global variables */
+		// Vector of pointers to filters
+		vector<DFILTERS::DSecondOrderLowpass*> filters;
 
-    /* Declaring variables set by properties */
-    // Filter parameters
-    doubles fp;
-    doubles dp;
-    uint vector_size;
-    double Ts;
+		/* Declaring variables set by properties */
+		// Filter parameters
+		doubles fp;
+		doubles dp;
+		uint vector_size;
+		double Ts;
 
-public:
+	public:
 
-    SecondOrderLowPasses(const string& name);
-    ~SecondOrderLowPasses();
+		SecondOrderLowPasses(const string& name);
+		~SecondOrderLowPasses();
 
-    bool configureHook();
-    bool startHook();
-    void updateHook();
+		bool configureHook();
+		bool startHook();
+		void updateHook();
 
-};
+	};
 }
 #endif

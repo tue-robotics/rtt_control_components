@@ -6,7 +6,11 @@
 #include <rtt/Component.hpp>
 #include <soem_beckhoff_drivers/EncoderMsg.h>
 
+#define maxN 10 //Maximum number of ports that can be created
+
 using namespace std;
+using namespace RTT;
+using namespace soem_beckhoff_drivers;
 
 template <class T>
 inline string to_string (const T& t){
@@ -15,14 +19,7 @@ inline string to_string (const T& t){
   return ss.str();
 };
 
-
-#define maxN 10 //Maximum number of ports that can be created. Still a workaround.
-
-
-using namespace RTT;
-using namespace soem_beckhoff_drivers;
-
-namespace SOEM // Just because it looks nice
+namespace SOEM
 {
   typedef vector<double> doubles;
 

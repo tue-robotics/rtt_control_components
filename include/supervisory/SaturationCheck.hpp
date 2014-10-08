@@ -6,7 +6,7 @@
 #include <std_msgs/Bool.h>
 #include <sensor_msgs/JointState.h>
 
-#define maxN 5 // maximum number of inputs and outputs,
+#define maxN 5 // maximum number of inputs and outputs
 
 using namespace std;
 

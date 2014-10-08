@@ -20,8 +20,7 @@ using namespace RTT;
 
 namespace MATH
 {
-  // Define a new type for easy coding:
-  typedef vector<double> doubles;
+	typedef vector<double> doubles;
   
   /**
    * @brief A Component that does the derivation of the input signal

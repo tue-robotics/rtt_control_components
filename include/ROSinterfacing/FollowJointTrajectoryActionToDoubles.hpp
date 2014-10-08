@@ -17,21 +17,13 @@
 #include <trajectory_msgs/JointTrajectoryPoint.h>
 #include <control_msgs/FollowJointTrajectoryAction.h>
 
-#define maxN 40 //Maximum  size. Still a workaround.
-
-using namespace std;
-
-/*template <class T>
-inline string to_string (const T& t){
-  stringstream ss;
-  ss << t;
-  return ss.str();
-};*/
+#define maxN 40 //Maximum  size
 
 template <typename T> int sgn(T val) {
 return (T(0) < val) - (val < T(0));
 }
 
+using namespace std;
 using namespace RTT;
 
 namespace ROS

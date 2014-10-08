@@ -16,17 +16,9 @@
 #include <trajectory_msgs/JointTrajectory.h>
 #include <trajectory_msgs/JointTrajectoryPoint.h>
 
-#define maxN 40 //Maximum  size. Still a workaround.
+#define maxN 40 //Maximum  size
 
 using namespace std;
-
-/*template <class T>
-inline string to_string (const T& t){
-  stringstream ss;
-  ss << t;
-  return ss.str();
-};*/
-
 using namespace RTT;
 
 namespace ROS
@@ -43,7 +35,6 @@ namespace ROS
     private:
 
     typedef vector<double> doubles;
-    //typedef vector<string> strings;
 
     /* Declaring and output ports*/
     InputPort<trajectory_msgs::JointTrajectory> inport_;

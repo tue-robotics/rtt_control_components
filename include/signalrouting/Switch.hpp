@@ -17,15 +17,14 @@
 #include <iostream>
 #include <sstream>
 
-#define maxN 10 //Maximum number of ports that can be created. Still a workaround.
+#define maxN 10 //Maximum number of ports that can be created
 
 using namespace std;
 using namespace RTT;
 namespace SIGNALROUTING
 {
-  // Define a new type for easy coding:
-  typedef vector<double> doubles;
-  
+	typedef vector<double> doubles;
+
     /**
    * @brief A Component that Switches the input signals, i.e. 
    *        switches two input signals to one port. Usefull for

@@ -1,7 +1,7 @@
 #ifndef REFERENCEGENERATOR_HPP
 #define REFERENCEGENERATOR_HPP
 
-#define maxN 10 //Maximum matrix size. Still a workaround.
+#define maxN 10 //Maximum matrix size
 
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
@@ -30,7 +30,7 @@ namespace SOURCES
     private:
 
     // Declaring input- and output_ports
-    InputPort<doubles> posinport[maxN];
+    InputPort<doubles> posinport[5];
     InputPort<doubles> initialposinport;
     OutputPort<doubles> posoutport;
     OutputPort<doubles> veloutport;

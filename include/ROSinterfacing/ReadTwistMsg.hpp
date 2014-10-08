@@ -9,9 +9,8 @@
 using namespace std;
 using namespace RTT;
 
-namespace ROS // Just because it looks nice
+namespace ROS
 {
-  // Define a new type for easy coding:
   typedef vector<double> doubles;
   typedef vector<string> strings;
   typedef vector<bool>   bools;

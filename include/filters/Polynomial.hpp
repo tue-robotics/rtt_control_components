@@ -28,52 +28,51 @@ inline string to_string (const T& t){
 
 namespace FILTERS
 {
-// Define a new type for easy coding:
-typedef vector<double> doubles;
+	typedef vector<double> doubles;
 
-/**
-   * @brief A Component that acts filters inputs periodically
-   *
-   * The component has one input port that should a vector with doubles.
-   *
-   *ToDo: update
-   * @param * kp [-] - proportional gain
-   *        * kv [-] - derivative gain
-   *        * ki [-] - integral gain
-   *        * kaw [-] - anti-windup gain
-   *        * init [-] - initial value of the integrator
-   *        * limit [-] - output limit (saturation value)
-   *        * Ts [0.0 sec] - sampling time
-   *        * vector_size [0] - size of input vector
-   */
+	/**
+	   * @brief A Component that acts filters inputs periodically
+	   *
+	   * The component has one input port that should a vector with doubles.
+	   *
+	   *ToDo: update
+	   * @param * kp [-] - proportional gain
+	   *        * kv [-] - derivative gain
+	   *        * ki [-] - integral gain
+	   *        * kaw [-] - anti-windup gain
+	   *        * init [-] - initial value of the integrator
+	   *        * limit [-] - output limit (saturation value)
+	   *        * Ts [0.0 sec] - sampling time
+	   *        * vector_size [0] - size of input vector
+	   */
 
-class Polynomials
-        : public RTT::TaskContext
-{
-private:
+	class Polynomials
+			: public RTT::TaskContext
+	{
+	private:
 
-    /* Declaring input and output ports*/
-    InputPort<doubles> inport;
-    OutputPort<doubles> outport;
+		/* Declaring input and output ports*/
+		InputPort<doubles> inport;
+		OutputPort<doubles> outport;
 
-    /* Declaring global variables */
-    vector<Polynomial> polynomials;
+		/* Declaring global variables */
+		vector<Polynomial> polynomials;
 
-    /* Declaring variables set by properties */
-    // Filter parameters
-    uint vector_size; // Number of polynomials/size of inputs and outputs
-    vector<unsigned int> orders; // Order of the various polynomials
-    doubles input, output;
+		/* Declaring variables set by properties */
+		// Filter parameters
+		uint vector_size; // Number of polynomials/size of inputs and outputs
+		vector<unsigned int> orders; // Order of the various polynomials
+		doubles input, output;
 
-public:
+	public:
 
-    Polynomials(const string& name);
-    ~Polynomials();
+		Polynomials(const string& name);
+		~Polynomials();
 
-    bool configureHook();
-    bool startHook();
-    void updateHook();
+		bool configureHook();
+		bool startHook();
+		void updateHook();
 
-};
+	};
 }
 #endif

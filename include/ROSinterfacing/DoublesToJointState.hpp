@@ -15,17 +15,9 @@
 #include <rtt/Port.hpp>
 #include <sensor_msgs/JointState.h>
 
-#define maxN 40 //Maximum  size. Still a workaround.
+#define maxN 40 //Maximum  size
 
 using namespace std;
-
-/*template <class T>
-inline string to_string (const T& t){
-  stringstream ss;
-  ss << t;
-  return ss.str();
-};*/
-
 using namespace RTT;
 
 namespace ROS

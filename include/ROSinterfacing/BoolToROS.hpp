@@ -15,7 +15,7 @@
 #include <rtt/Port.hpp>
 #include <std_msgs/Bool.h>
 
-#define maxN 40 //Maximum  size. Still a workaround.
+#define maxN 40 //Maximum  size
 
 using namespace std;
 

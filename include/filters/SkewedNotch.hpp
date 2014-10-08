@@ -21,53 +21,52 @@ using namespace RTT;
 
 namespace FILTERS
 {
-// Define a new type for easy coding:
-typedef vector<double> doubles;
+	typedef vector<double> doubles;
 
-/**
-   * @brief A Component that acts as a skewed-notch filter
-   *
-   * The component has one input port that should receive vector of doubles.
-   *
-   * @param * fz [Hz] - zero frequency of the filter
-   *        * dz [-] - zero damping
-   *        * fp [Hz] - pole frequency of the filter
-   *        * dp [-] - pole damping
-   *        * vector_size [0] - size of input vector
-   *        * Ts [0.0 sec] - sampling time
-   */
+	/**
+	   * @brief A Component that acts as a skewed-notch filter
+	   *
+	   * The component has one input port that should receive vector of doubles.
+	   *
+	   * @param * fz [Hz] - zero frequency of the filter
+	   *        * dz [-] - zero damping
+	   *        * fp [Hz] - pole frequency of the filter
+	   *        * dp [-] - pole damping
+	   *        * vector_size [0] - size of input vector
+	   *        * Ts [0.0 sec] - sampling time
+	   */
 
-class SkewedNotch
-        : public RTT::TaskContext
-{
-private:
+	class SkewedNotch
+			: public RTT::TaskContext
+	{
+	private:
 
-    /* Declaring input and output ports*/
-    InputPort<doubles> inport;
-    OutputPort<doubles> outport;
+		/* Declaring input and output ports*/
+		InputPort<doubles> inport;
+		OutputPort<doubles> outport;
 
-    /* Declaring global variables */
-    // Vector of pointers to filters
-    vector<DFILTERS::DSkewedNotch*> filters;
+		/* Declaring global variables */
+		// Vector of pointers to filters
+		vector<DFILTERS::DSkewedNotch*> filters;
 
-    /* Declaring variables set by properties */
-    // Filter parameters
-    doubles fz;
-    doubles dz;
-    doubles fp;
-    doubles dp;
-    uint vector_size;
-    double Ts;
+		/* Declaring variables set by properties */
+		// Filter parameters
+		doubles fz;
+		doubles dz;
+		doubles fp;
+		doubles dp;
+		uint vector_size;
+		double Ts;
 
-public:
+	public:
 
-    SkewedNotch(const string& name);
-    ~SkewedNotch();
+		SkewedNotch(const string& name);
+		~SkewedNotch();
 
-    bool configureHook();
-    bool startHook();
-    void updateHook();
+		bool configureHook();
+		bool startHook();
+		void updateHook();
 
-};
+	};
 }
 #endif

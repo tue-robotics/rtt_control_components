@@ -16,7 +16,7 @@
 #include <diagnostic_updater/DiagnosticStatusWrapper.h>
 #include <diagnostic_msgs/DiagnosticArray.h>
 
-#define maxN 40 //Maximum  size. Still a workaround.
+#define maxN 40 //Maximum  size
 
 using namespace std;
 

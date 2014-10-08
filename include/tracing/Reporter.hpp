@@ -19,7 +19,7 @@
 #include <sstream>
 #include <rtt/os/TimeService.hpp>
 
-#define maxN 10 //Maximum number of ports that can be created. Still a workaround.
+#define maxN 10 //Maximum number of ports that can be created.
 
 using namespace std;
 
@@ -34,7 +34,6 @@ using namespace RTT;
 
 namespace CUSTOM
 {
-  // Define a new type for easy coding:
   typedef vector<double> doubles;
 
     /**

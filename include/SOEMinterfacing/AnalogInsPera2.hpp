@@ -5,7 +5,7 @@
 #include <rtt/Port.hpp>
 #include <soem_beckhoff_drivers/AnalogMsg.h>
 
-#define maxN 10 //Maximum number of PERA boards that is supported that can be created. Still a workaround.
+#define maxN 10 //Maximum number of PERA boards that is supported that can be created.
 
 using namespace std;
 using namespace RTT;
