@@ -256,8 +256,8 @@ void Homing::updateHook()
                     log(Warning) << prefix <<"_Homing: Stopped body part" <<endlog();
 
                     for (uint j = 0; j<N; j++) {
-                        log(Warning) << prefix <<"_Homing: Resetting Encoder "<< homing_order[jointNr] << " with stroke " << homing_stroke[homing_order[jointNr]-1] << "!" <<endlog();
-                        ResetEncoder(homing_order[jointNr]-1,homing_stroke[homing_order[jointNr]-1]);
+                        log(Warning) << prefix <<"_Homing: Resetting Encoder "<< homing_order[j] << " with stroke " << reset_stroke[homing_order[j]-1] << ", j = "<<j<<"!" <<endlog();
+                        ResetEncoder(homing_order[j]-1,reset_stroke[homing_order[j]-1]);
                     }
 
                     log(Warning) << prefix <<"_Homing: Starting body part" <<endlog();
@@ -307,11 +307,17 @@ void Homing::updateHook()
         if (joint_finished) {
 
             // Send to reset position
-            ref_out = position;           
-            ref_out[homing_order[jointNr]-1] += homing_stroke[homing_order[jointNr]-1];
-            homing_stroke_goal = ref_out[homing_order[jointNr]-1];
+            ref_out = position;         
+            
+            log(Warning) << prefix <<"_Homing: PreHomingStroke Ref = [" << ref_out[0] << "," << ref_out[1] << "," << ref_out[2] << "," << ref_out[3] << "," << ref_out[4] << "," << ref_out[5] << "," << ref_out[6] << "]" <<endlog();
 
+              
+            ref_out[homing_order[jointNr]-1] -= homing_stroke[homing_order[jointNr]-1];
+            homing_stroke_goal = ref_out[homing_order[jointNr]-1];
             sendRef(ref_out);
+            
+            log(Warning) << prefix <<"_Homing: PostHomingStroke Ref = [" << ref_out[0] << "," << ref_out[1] << "," << ref_out[2] << "," << ref_out[3] << "," << ref_out[4] << "," << ref_out[5] << "," << ref_out[6] << "]" <<endlog();
+
             
             // Reset parameters            
             updated_minpos[homing_order[jointNr]-1] = initial_minpos[homing_order[jointNr]-1];
@@ -321,13 +327,13 @@ void Homing::updateHook()
             ReferenceGenerator_maxpos.set(updated_maxpos);
             ReferenceGenerator_maxvel.set(updated_maxvel);
             
-            log(Warning) << prefix <<"_Homing: Proceeded to the next state!"<<endlog();
+            log(Warning) << prefix <<"_Homing: Proceeded to the next state with bounds HSG-0.01 = "<< homing_stroke_goal-0.01 <<"  ,  and HSG+0.01 = [" << homing_stroke_goal+0.01 << "]"<<endlog();
 
             state++;
         }
     }
     if (state == 1) {
-        if ( (position[homing_order[jointNr]-1] > (homing_stroke_goal*0.99) ) && (position[homing_order[jointNr]-1] < (homing_stroke_goal*1.01) ) ) {
+        if ( (position[homing_order[jointNr]-1] > (homing_stroke_goal-0.01) ) && (position[homing_order[jointNr]-1] < (homing_stroke_goal+0.01) ) ) {
             
             // set error back to normal value
 			updated_maxerr[homing_order[jointNr]-1] = initial_maxerr[homing_order[jointNr]-1];
@@ -440,5 +446,7 @@ void Homing::sendRef(doubles output_total)
 	
 	return;
 }
+
+
 
 ORO_CREATE_COMPONENT(SUPERVISORY::Homing)

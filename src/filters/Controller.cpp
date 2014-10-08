@@ -48,7 +48,20 @@ Controller::Controller(const string& name) :
     addPort( "jointErrors",                     jointerrors_outport)  	.doc("Joint Errors output port");
 }
 
-Controller::~Controller(){}
+Controller::~Controller()
+{
+    for (unsigned int i = 0; i < vector_size; i++)
+    {
+        delete filters_WeakIntegrator[i];
+        delete filters_LeadLag[i];
+        delete filters_LowPass[i];
+        delete filters_Notch[i];
+        filters_WeakIntegrator[i];
+        filters_LeadLag[i]= NULL;
+        filters_LowPass[i]= NULL;
+        filters_Notch[i]= NULL;
+    }
+}
 
 bool Controller::configureHook()
 {

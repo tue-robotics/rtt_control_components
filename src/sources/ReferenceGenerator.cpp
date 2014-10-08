@@ -144,8 +144,6 @@ void ReferenceGenerator::updateHook()
     for ( uint j = 0; j < N_inports; j++ ){
 		doubles inpos(inport_sizes[j],0.0);
 		if (NewData == posinport[j].read( inpos ) ){
-			if(j==0)	log(Warning)<<"Received new reference on posin"<<j+1<<": ["<<inpos[0]<<","<<inpos[1]<<","<<inpos[2]<<","<<inpos[3]<<","<<inpos[4]<<","<<inpos[5]<<","<<inpos[6]<<"]" <<endlog();
-			if(j==1)	log(Warning)<<"Received new reference on posin"<<j+1<<": ["<<inpos[0]<<"]" <<endlog();		
 			// if new data then use inpos
 			for ( uint k = 0; k < inport_sizes[j]; k++ ){
 				if ( minpos[i] == 0.0 && maxpos[i] == 0.0 ) {
@@ -157,10 +155,15 @@ void ReferenceGenerator::updateHook()
 				desiredVel[i]=maxvel[i];
 				desiredAcc[i]=maxacc[i];
 				
+				if(j==0) log(Warning)<<"RefGen: Received new reference on posin"<<j+1<<": ["<<inpos[0]<<","<<inpos[1]<<","<<inpos[2]<<","<<inpos[3]<<","<<inpos[4]<<","<<inpos[5]<<","<<inpos[6]<<"]" <<endlog();
+				if(j==1) log(Warning)<<"RefGen: Received new reference on posin"<<j+1<<": ["<<inpos[0]<<"]" <<endlog();		
+
 				i++;
 			}
 		} else {
 			// if no new data then use actual pos
+			log(Warning)<<"RefGen: Actual pos used" <<endlog();
+		
 			for ( uint k = 0; k < inport_sizes[j]; k++ ){
 				if ( minpos[i] == 0.0 && maxpos[i] == 0.0 ) {
 					desiredPos[i]=(inpos[k]);
