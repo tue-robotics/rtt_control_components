@@ -52,14 +52,23 @@ Controller::~Controller()
 {
     for (unsigned int i = 0; i < vector_size; i++)
     {
-        delete filters_WeakIntegrator[i];
-        delete filters_LeadLag[i];
-        delete filters_LowPass[i];
-        delete filters_Notch[i];
-        filters_WeakIntegrator[i];
-        filters_LeadLag[i]= NULL;
-        filters_LowPass[i]= NULL;
-        filters_Notch[i]= NULL;
+		
+		if (WeakIntegrator) {
+			delete filters_WeakIntegrator[i];
+			filters_WeakIntegrator[i] = NULL;
+		}
+		if (LeadLag) {
+			delete filters_LeadLag[i];
+			filters_LeadLag[i]= NULL;
+		}
+		if (LowPass) {
+			delete filters_LowPass[i];
+			filters_LowPass[i]= NULL;
+		}
+		if (Notch) {
+			delete filters_Notch[i];
+			filters_Notch[i]= NULL;
+		}
     }
 }
 
