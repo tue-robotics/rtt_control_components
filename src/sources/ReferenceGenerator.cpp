@@ -160,22 +160,6 @@ void ReferenceGenerator::updateHook()
 
 				i++;
 			}
-		} else {
-			// if no new data then use actual pos
-			log(Warning)<<"RefGen: Actual pos used" <<endlog();
-		
-			for ( uint k = 0; k < inport_sizes[j]; k++ ){
-				if ( minpos[i] == 0.0 && maxpos[i] == 0.0 ) {
-					desiredPos[i]=(inpos[k]);
-				} else {
-					desiredPos[i]=min(inpos[k], maxpos[i]);
-					desiredPos[i]=max(minpos[i], desiredPos[i]);
-				}
-				desiredVel[i]=maxvel[i];
-				desiredAcc[i]=maxacc[i];
-				
-				i++;
-			}
 		}
 	}
 
