@@ -117,6 +117,7 @@ void Tracing::updateHook()
 			{
 				buffers[counter][column] = -1;
 			}
+			//if (i==1) log(Warning)<<"tracing:: no new data recieved on event port"<<endlog();
 		}
 		startcolumn += vectorsizes[i];
 	}
