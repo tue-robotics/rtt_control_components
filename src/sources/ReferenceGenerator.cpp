@@ -19,9 +19,9 @@ ReferenceGenerator::ReferenceGenerator(const string& name) : TaskContext(name, P
     addPort( "resetref", resetrefoutport );
 
     // Attrributes
-    addAttribute( "minPosition", minpos );
-    addAttribute( "maxPosition", maxpos );
-    addAttribute( "maxVelocity", maxvel );
+    //addAttribute( "minPosition", minpos );
+    //addAttribute( "maxPosition", maxpos );
+    //addAttribute( "maxVelocity", maxvel );
 
     // Properties
     addProperty( "number_of_inports", N_inports );
@@ -35,7 +35,10 @@ ReferenceGenerator::ReferenceGenerator(const string& name) : TaskContext(name, P
     addProperty( "maxAcceleration", maxacc);
 }
 
-ReferenceGenerator::~ReferenceGenerator(){}
+ReferenceGenerator::~ReferenceGenerator()
+{
+	ROS_ERROR_STREAM( "ReferenceGenerator: Deconstructed" );
+}
 
 bool ReferenceGenerator::configureHook()
 {
@@ -177,10 +180,9 @@ void ReferenceGenerator::updateHook()
 
 }
 
-void ReferenceGenerator::stopHook()
+void ReferenceGenerator::stopHook() 
 {
-	if (N>2) log(Warning)<<" Stopping Reference Generator with position = [" << outpos[0] << "," << outpos[1] << "," << outpos[2] << "," << outpos[3] << "," << outpos[4] << "," << outpos[5] << "," << outpos[6] << "," << outpos[7] << "]" <<endlog();
+	ROS_ERROR_STREAM( "ReferenceGenerator: Stopped" );
 }
-
 
 ORO_CREATE_COMPONENT(SOURCES::ReferenceGenerator)
