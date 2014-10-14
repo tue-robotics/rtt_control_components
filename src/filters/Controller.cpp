@@ -51,8 +51,7 @@ Controller::Controller(const string& name) :
 Controller::~Controller()
 {
     for (unsigned int i = 0; i < vector_size; i++)
-    {
-		
+    {		
 		if (WeakIntegrator) {
 			delete filters_WeakIntegrator[i];
 			filters_WeakIntegrator[i] = NULL;

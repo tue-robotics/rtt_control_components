@@ -43,9 +43,7 @@ Homing::Homing(const string& name) : TaskContext(name, PreOperational)
     addProperty( "homing_absPos",   	homing_absPos   ).doc("Value of the absolute sensor at qi=0 for absolute sensor homing");
 }
 
-Homing::~Homing()
-{
-}
+Homing::~Homing(){}
 
 bool Homing::configureHook()
 {
@@ -224,8 +222,8 @@ bool Homing::startHook()
     for (uint j = 0; j<N; j++) {
         if ( (require_homing[j] != 0) ) {
             updated_maxerr[j] = 2.0*initial_maxerr[j];
-            updated_minpos[j] -= fabs(initial_minpos[j]);
-            updated_maxpos[j] += fabs(initial_maxpos[j]);
+            updated_minpos[j] = -50.0;
+            updated_maxpos[j] += 50.0;
             updated_maxvel[j] = homing_velocity[j];
         }
     }
@@ -447,6 +445,9 @@ void Homing::sendRef(doubles output_total)
 	return;
 }
 
-
+void Homing::stopHook() 
+{
+	// To do: add reset of all parameters to avoid problems when homing component is stopped during homing
+}
 
 ORO_CREATE_COMPONENT(SUPERVISORY::Homing)

@@ -67,8 +67,6 @@ namespace ARM
 	  bool configureHook();
 	  bool startHook();
 	  void updateHook();
-	  void stopHook();
-	  	  
 	};
 	
 };

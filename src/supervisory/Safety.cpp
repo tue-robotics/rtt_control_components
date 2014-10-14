@@ -112,7 +112,8 @@ void Safety::updateHook()
 	}
 }
 
-void Safety::stopHook() {
+void Safety::stopHook() 
+{
     enable_outport.write(false);
 }
 

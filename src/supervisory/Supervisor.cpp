@@ -20,6 +20,7 @@ using namespace SUPERVISORY;
 Supervisor::Supervisor(const string& name) :
     TaskContext(name, PreOperational)
 {
+	//Operations
     addOperation("AddAllwaysOnPeer", &Supervisor::AddAllwaysOnPeer, this, OwnThread)
             .doc("Add a peer to the AllwaysOnList, all these components are always on!")
             .arg("peerName","Name of the peer to add to the list");
@@ -47,17 +48,17 @@ Supervisor::Supervisor(const string& name) :
             .arg("partName","The name of the bodypart");  
     addOperation("DisplaySupervisoredPeers", &Supervisor::displaySupervisoredPeers, this, ClientThread)
             .doc("Display the list of peers");
-  addPort( "rosemergency", rosemergencyport );
-  addPort( "rosshutdown", rosshutdownport );
-  addPort( "rosetherCATenabled", enabled_rosport );
-  addPort( "serialRunning", serialRunningPort ).doc("Serial device running port");
-  addPort( "dashboardCmd", dashboardCmdPort ).doc("To receive dashboard commands ");  
-  addPort("hardware_status", hardwareStatusPort ).doc("To send status to dashboard ");
+            
+	// Ports
+	addPort( "rosemergency", rosemergencyport );
+	addPort( "rosshutdown", rosshutdownport );
+	addPort( "rosetherCATenabled", enabled_rosport );
+	addPort( "serialRunning", serialRunningPort ).doc("Serial device running port");
+	addPort( "dashboardCmd", dashboardCmdPort ).doc("To receive dashboard commands ");  
+	addPort("hardware_status", hardwareStatusPort ).doc("To send status to dashboard ");
 }
 
-Supervisor::~Supervisor()
-{
-}
+Supervisor::~Supervisor(){}
 
 //------------------------------------------------------------------------------------------------------------------
 
@@ -275,23 +276,6 @@ void Supervisor::updateHook()
 		ROS_INFO_STREAM( "Shutdown requested" );
 		stop();
 	}
-}
-
-void Supervisor::stopHook()
-{
-    Logger::In in("Supervisor::Stop");
-
-	for( int partNr = 0; partNr < 6; partNr++ )   // Loop over the bodyparts
-	{
-		if ( ! isEmpty( EnabledList[partNr] ) )  // That exist
-		{
-			stopList( OpOnlyList[partNr] );
-			stopList( EnabledList[partNr] );
-			stopList( HomingOnlyList[partNr] ); 
-		}
-	}
-	stopList( AllwaysOnList );
-	enabled_rosport.write( rosdisabledmsg );
 }
 
 //-----------------------------------------------------
@@ -608,5 +592,20 @@ void Supervisor::displaySupervisoredPeers()
 	}  
 }
 
+void Supervisor::stopHook()
+{
+	// remove operations
+	remove("AddAllwaysOnPeer");
+	remove("AddOpOnlyPeer");
+	remove("AddHomingOnlyPeer");
+	remove("AddEnabledPeer");
+	remove("NameBodyPart");
+	remove("StartBodyPart");
+	remove("StopBodyPart");
+	remove("DisplaySupervisoredPeers");	
+
+	// send disabled msg
+	enabled_rosport.write( rosdisabledmsg );
+}
 
 ORO_CREATE_COMPONENT(SUPERVISORY::Supervisor)

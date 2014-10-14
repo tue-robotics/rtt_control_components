@@ -133,7 +133,5 @@ void GripperControl::updateHook()
 	}
 }
 
-void GripperControl::stopHook(){}
-
 ORO_CREATE_COMPONENT(ARM::GripperControl)
 

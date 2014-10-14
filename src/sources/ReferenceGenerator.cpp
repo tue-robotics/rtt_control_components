@@ -16,12 +16,11 @@ ReferenceGenerator::ReferenceGenerator(const string& name) : TaskContext(name, P
     addPort( "velout", veloutport );
     addPort( "accout", accoutport );
     addPort( "initial_pos", initialposinport );
-    addPort( "resetref", resetrefoutport );
 
     // Attrributes
-    //addAttribute( "minPosition", minpos );
-    //addAttribute( "maxPosition", maxpos );
-    //addAttribute( "maxVelocity", maxvel );
+    addAttribute( "minPosition", minpos );
+    addAttribute( "maxPosition", maxpos );
+    addAttribute( "maxVelocity", maxvel );
 
     // Properties
     addProperty( "number_of_inports", N_inports );
@@ -35,10 +34,7 @@ ReferenceGenerator::ReferenceGenerator(const string& name) : TaskContext(name, P
     addProperty( "maxAcceleration", maxacc);
 }
 
-ReferenceGenerator::~ReferenceGenerator()
-{
-	ROS_ERROR_STREAM( "ReferenceGenerator: Deconstructed" );
-}
+ReferenceGenerator::~ReferenceGenerator(){}
 
 bool ReferenceGenerator::configureHook()
 {
@@ -88,7 +84,6 @@ bool ReferenceGenerator::configureHook()
     desiredPos.assign(N,0.0);
     desiredVel.assign(N,0.0);
     desiredAcc.assign(N,0.0);
-    resetRefMsg.position.assign(7,0.0);
 
     return true;
 }
@@ -111,20 +106,11 @@ bool ReferenceGenerator::startHook()
     doubles actualPos(N,0.0);
     initialposinport.read( actualPos );
     for ( uint i = 0; i < N; i++ ){
-		resetRefMsg.position[i] = actualPos[i];
-	}
-    resetrefoutport.write(resetRefMsg);
-    
-    for ( uint i = 0; i < N; i++ ){
        mRefGenerators[i].setRefGen(actualPos[i]);
     }  
 	
-	if (N>2) log(Warning)<<"ReferenceGenerator Starting with Position = [" << actualPos[0] << "," << actualPos[1] << "," << actualPos[2] << "," << actualPos[3] << "," << actualPos[4] << "," << actualPos[5] << "," << actualPos[6] << "," << actualPos[7] << "]" <<endlog();
-
     // Write on the outposport to make sure the receiving components gets new data
     posoutport.write( actualPos );
-
-    log(Info)<<"started at " << os::TimeService::Instance()->getNSecs()*1e-9 <<endlog();
 
     return true;
 }
@@ -178,11 +164,6 @@ void ReferenceGenerator::updateHook()
     veloutport.write( outvel );
     accoutport.write( outacc );
 
-}
-
-void ReferenceGenerator::stopHook() 
-{
-	ROS_ERROR_STREAM( "ReferenceGenerator: Stopped" );
 }
 
 ORO_CREATE_COMPONENT(SOURCES::ReferenceGenerator)
