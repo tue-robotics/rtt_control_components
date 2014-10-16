@@ -38,8 +38,6 @@ ReferenceGenerator::~ReferenceGenerator(){}
 
 bool ReferenceGenerator::configureHook()
 {
-	Logger::In in("ReferenceGenerator::Configure");
-
     // Property Checks
 	if ( (N_inports <= 0) || (N_inports > N)) {
         log(Error)<<"Could not start component: size or N_inports is incorrect. N_inports and N should satisfy (0 < N_inports <= N)"<<endlog();        
@@ -90,8 +88,6 @@ bool ReferenceGenerator::configureHook()
 
 bool ReferenceGenerator::startHook()
 {
-	Logger::In in("ReferenceGenerator::Start");
-	
     // Check validity of Ports:
     for ( uint i = 0; i < N_inports; i++ ){
 		if ( (!posinport[i].connected() ) ) {
@@ -118,8 +114,6 @@ bool ReferenceGenerator::startHook()
 
 void ReferenceGenerator::updateHook()
 {
-	Logger::In in("ReferenceGenerator::Update");
-	
     // Read the inputports
     outpos.assign(N,0.0);
     doubles outvel(N,0.0);
@@ -142,10 +136,7 @@ void ReferenceGenerator::updateHook()
 					desiredPos[i]=max(minpos[i], desiredPos[i]);
 				}
 				desiredVel[i]=maxvel[i];
-				desiredAcc[i]=maxacc[i];
-				
-				if(j==0) log(Warning)<<"RefGen: Received new reference on posin"<<j+1<<": ["<<inpos[0]<<","<<inpos[1]<<","<<inpos[2]<<","<<inpos[3]<<","<<inpos[4]<<","<<inpos[5]<<","<<inpos[6]<<"]" <<endlog();
-				if(j==1) log(Warning)<<"RefGen: Received new reference on posin"<<j+1<<": ["<<inpos[0]<<"]" <<endlog();		
+				desiredAcc[i]=maxacc[i];	
 
 				i++;
 			}

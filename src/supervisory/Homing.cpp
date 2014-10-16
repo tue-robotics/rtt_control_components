@@ -47,8 +47,6 @@ Homing::~Homing(){}
 
 bool Homing::configureHook()
 {
-	Logger::In in("Homing::Configure");
-	
     // Input checks generic
     if (homing_type.size() != N || require_homing.size() != N || homing_order.size() != N  ) {
         log(Error) << prefix <<"_Homing: size of homing_type, require_homing or homing_order does not match vector_size"<<endlog();
@@ -95,8 +93,6 @@ bool Homing::configureHook()
 
 bool Homing::startHook()
 {
-	Logger::In in("Homing::Start");
-	
     // Set variables
     state = 0;
     jointNr = 0;
@@ -238,8 +234,6 @@ bool Homing::startHook()
 
 void Homing::updateHook()
 {
-	Logger::In in("Homing::Update");
-	
 	// Check if finished
     if(jointNr==N) {
         for (uint j = 0; j<N; j++) {
@@ -273,7 +267,7 @@ void Homing::updateHook()
         }    
     }
 	
-    // Check if homing is required for this joint
+    // Check if homing is required for this joint else skip this joint
     if (require_homing[homing_order[jointNr]-1] == 0) {
 
         // Reset parameters 
@@ -286,7 +280,7 @@ void Homing::updateHook()
         ReferenceGenerator_maxpos.set(updated_maxpos);
         ReferenceGenerator_maxvel.set(updated_maxvel);
 
-		log(Warning) << prefix <<"_Homing: Proceed from joint "<< homing_order[jointNr] << "To joint " << homing_order[jointNr+1]<< "!" <<endlog();
+		log(Warning) << prefix <<"_Homing: Skipped homing of joint "<< homing_order[jointNr] << ". Proceeding to joint " << homing_order[jointNr+1]<< "!" <<endlog();
 
         // Go to the next joint and start over
         jointNr++;
@@ -306,17 +300,11 @@ void Homing::updateHook()
 
             // Send to reset position
             ref_out = position;         
-            
-            log(Warning) << prefix <<"_Homing: PreHomingStroke Ref = [" << ref_out[0] << "," << ref_out[1] << "," << ref_out[2] << "," << ref_out[3] << "," << ref_out[4] << "," << ref_out[5] << "," << ref_out[6] << "]" <<endlog();
-
-              
+                         
             ref_out[homing_order[jointNr]-1] -= homing_stroke[homing_order[jointNr]-1];
             homing_stroke_goal = ref_out[homing_order[jointNr]-1];
             sendRef(ref_out);
-            
-            log(Warning) << prefix <<"_Homing: PostHomingStroke Ref = [" << ref_out[0] << "," << ref_out[1] << "," << ref_out[2] << "," << ref_out[3] << "," << ref_out[4] << "," << ref_out[5] << "," << ref_out[6] << "]" <<endlog();
-
-            
+                       
             // Reset parameters            
             updated_minpos[homing_order[jointNr]-1] = initial_minpos[homing_order[jointNr]-1];
             updated_maxpos[homing_order[jointNr]-1] = initial_maxpos[homing_order[jointNr]-1];
@@ -325,8 +313,6 @@ void Homing::updateHook()
             ReferenceGenerator_maxpos.set(updated_maxpos);
             ReferenceGenerator_maxvel.set(updated_maxvel);
             
-            log(Warning) << prefix <<"_Homing: Proceeded to the next state with bounds HSG-0.01 = "<< homing_stroke_goal-0.01 <<"  ,  and HSG+0.01 = [" << homing_stroke_goal+0.01 << "]"<<endlog();
-
             state++;
         }
     }
@@ -336,8 +322,8 @@ void Homing::updateHook()
             // set error back to normal value
 			updated_maxerr[homing_order[jointNr]-1] = initial_maxerr[homing_order[jointNr]-1];
 			Safety_maxJointErrors.set(updated_maxerr);
-            
-            log(Warning) << prefix <<"_Homing: reset position, reached proceeded to the next joint!"<<endlog();
+
+            log(Warning) << prefix <<"_Homing: Finished homing of joint "<< homing_order[jointNr] << ". Proceeding to joint " << homing_order[jointNr+1]<< "!" <<endlog();
             jointNr++;
             state = 0;
         }
@@ -346,8 +332,6 @@ void Homing::updateHook()
 
 void Homing::updateHomingRef( uint jointID)
 {
-	Logger::In in("Homing::updateHomingRef");
-	
     if (homing_type[jointID] != 3 ) {
 
         // Send to homing position
@@ -381,8 +365,6 @@ void Homing::updateHomingRef( uint jointID)
 
 bool Homing::evaluateHomingCriterion( uint jointID)
 {
-	Logger::In in("Homing::evaluateHomingCriterion");
-	
     bool result = false;
 
     if (homing_type[jointID] == 1 ) {

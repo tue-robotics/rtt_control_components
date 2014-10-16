@@ -18,8 +18,6 @@ MatrixTransform::~MatrixTransform(){}
 
 bool MatrixTransform::configureHook()
 {
-	Logger::In in("MatrixTransform::Configure");
-
 	for ( uint i = 0; i < Nrows; i++ ) {
 		string name = "function"+to_string(i+1);
 		addProperty( name, function[i]);
@@ -34,8 +32,6 @@ bool MatrixTransform::configureHook()
 
 bool MatrixTransform::startHook()
 {
-	Logger::In in("MatrixTransform::Start");
-
 	// Check validity of Ports:
 	if ( !inport.connected() ) {
 		log(Error)<<"MatrixTransform::Inputport not connected!"<<endlog();
@@ -50,8 +46,6 @@ bool MatrixTransform::startHook()
 
 void MatrixTransform::updateHook()
 {
-	Logger::In in("MatrixTransform::Update");
-
 	// Read the inputports
 	doubles input(Nrows,0.0);
 	inport.read( input );

@@ -73,8 +73,6 @@ Controller::~Controller()
 
 bool Controller::configureHook()
 {
-	Logger::In in("Controller::Configure");	
-	
 	// Determine which controllers are demanded and declare their properties
     WeakIntegrator = false;
     LeadLag = false;
@@ -184,8 +182,6 @@ bool Controller::configureHook()
 
 bool Controller::startHook()
 {
-	Logger::In in("Controller::Start");	
-	
     // Check validity of Ports:
     if ( !references_inport.connected() || !positions_inport.connected() ) {
         log(Error)<<"Controller: One of the inports is not connected!"<<endlog();
@@ -202,8 +198,6 @@ bool Controller::startHook()
 
 void Controller::updateHook()
 {
-	Logger::In in("Controller::Update");	
-	
     doubles references(vector_size,0.0);
     doubles positions(vector_size,0.0);
     doubles jointErrors(vector_size,0.0);

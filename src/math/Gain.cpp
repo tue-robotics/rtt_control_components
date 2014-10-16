@@ -29,15 +29,11 @@ Gain::~Gain(){}
 
 bool Gain::configureHook()
 {
-	Logger::In in("Gain::Configure");	
-
 	return true;
 }
 
 bool Gain::startHook()
 {
-	Logger::In in("Gain::Start");	
-	
 	// Check validity of Ports:
 	if ( !inport.connected() ) {
 		log(Error)<<"Gain::inputport not connected!"<<endlog();
@@ -56,8 +52,6 @@ bool Gain::startHook()
 
 void Gain::updateHook()
 {
-	Logger::In in("Gain::Update");		
-	
 	// Read the inputports
 	doubles input(vectorsize,0.0);
 	inport.read( input );

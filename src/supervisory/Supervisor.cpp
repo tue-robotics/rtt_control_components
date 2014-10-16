@@ -64,8 +64,6 @@ Supervisor::~Supervisor(){}
 
 bool Supervisor::configureHook()
 {
-    Logger::In in("Supervisor::Configure");
-
 	// declaration of scalars
 	emergency = false;
 	goodToGO = false;
@@ -102,8 +100,6 @@ bool Supervisor::configureHook()
 
 bool Supervisor::startHook()
 {
-    Logger::In in("Supervisor::Start");
-
 	bodyParts[0] = "all";
 	hardwareStatusmsg.status[0].name = bodyParts[0];
 	
@@ -133,8 +129,6 @@ bool Supervisor::startHook()
 
 void Supervisor::updateHook()
 {
-    Logger::In in("Supervisor::Update");
-
 	// time out for dashboard calls
 	if (!goodToGO) {
 		aquisition_time = os::TimeService::Instance()->getNSecs()*1e-9;
@@ -282,8 +276,6 @@ void Supervisor::updateHook()
 
 bool Supervisor::AddPeerCheckList( std::string peerName, vector<TaskContext*> List )
 {    
-    Logger::In in("Supervisor::Stop");
-
     if( ! hasPeer(peerName) )
     {
         log(Error) << "Supervisor: " << peerName <<": You can't Supervisor a component that is not your peer !" << endlog();

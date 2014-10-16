@@ -43,8 +43,6 @@ DynamixelController::DynamixelController(const std::string& name) :
 
 bool DynamixelController::configureHook() 
 {
-	Logger::In in("DynamixelController::Configure");	
-	
 	// Get the number of dynamixels
 	n_dynamixels = dynamixel_ids.size();
 
@@ -95,8 +93,6 @@ bool DynamixelController::configureHook()
 
 bool DynamixelController::startHook() 
 {
-	Logger::In in("DynamixelController::Start");	
-	
 	for ( uint i=0; i<n_dynamixels; i++ ){
 		log(Debug) << "dynamixel_ids " << dynamixel_ids[i] << endlog();
 		log(Debug) << "dynamixel_max " << dynamixel_max[i] << endlog();
@@ -110,8 +106,6 @@ bool DynamixelController::startHook()
 
 bool DynamixelController::readReference() 
 {
-	Logger::In in("DynamixelController::readReference");	
-	
 	sensor_msgs::JointState goalPos;
 	//goalPos = sensor_msgs::JointState();
 	if (goalPosPort.read(goalPos) == NewData) {
@@ -145,8 +139,6 @@ bool DynamixelController::readReference()
 
 void DynamixelController::updateHook() 
 {
-	Logger::In in("DynamixelController::Update");	
-	
 	enablerPort.read(enable);
 	if (enable == false) {
 		currentPos.header.stamp = ros::Time::now();
@@ -255,8 +247,6 @@ void DynamixelController::dxl_tx_rx_packet(void)
 
 void DynamixelController::dxl_tx_packet(void)
 {
-	Logger::In in("DynamixelController::dxl_tx_packet");	
-	
 	commStatus = COMM_TXSUCCESS;
 
 	unsigned char TxNumByte;
@@ -288,8 +278,6 @@ void DynamixelController::dxl_tx_packet(void)
 
 void DynamixelController::dxl_rx_packet(void) 
 {
-	Logger::In in("DynamixelController::dxl_rx_packet");	
-	
 	if (gbInstructionPacket[ID] == BROADCAST_ID) {
 		log(Debug) << "DynamixelController: broadcast id, no status packet"<< endlog();
 		commStatus = COMM_RXSUCCESS;
@@ -363,8 +351,6 @@ int DynamixelController::dxl_get_rxpacket_id(void)
 
 int DynamixelController::dxl_rxpacket_isError(void)
 {
-	Logger::In in("DynamixelController::dxl_rxpacket_isError");	
-	
 	if(gbStatusPacket[ERRBIT]){
 		errortosupervisorPort.write(true);
 		return 1;
@@ -484,8 +470,6 @@ void DynamixelController::dxl_write_word( int id, int address, int value )
 
 void DynamixelController::printErrorCode(void)
 {
-	Logger::In in("DynamixelController::printErrorCode");	
-	
 	int id = dxl_get_rxpacket_id();
 	if (dxl_rxpacket_isError()) {
 		bool unknown_id = true;
