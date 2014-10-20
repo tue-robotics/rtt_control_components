@@ -12,15 +12,15 @@
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
 
+using namespace std;
+using namespace RTT;
+
 template <class T>
 inline string to_string (const T& t){
   stringstream ss;
   ss << t;
   return ss.str();
 };
-
-using namespace std;
-using namespace RTT;
 
 namespace MATH
 {
