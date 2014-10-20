@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   )
 
 include_directories(
+	include
 	include/math
 	include/arm 
 	include/discontinuities  
@@ -30,7 +31,8 @@ include_directories(
 	${scl_filters_INCLUDE_DIRS} 
 	${USE_OROCOS_INCLUDE_DIRS})
 
-orocos_install_headers( DIRECTORY 
+orocos_install_headers( DIRECTORY
+	include
 	include/math
 	include/arm 
 	include/discontinuities  

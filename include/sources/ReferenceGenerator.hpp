@@ -3,9 +3,14 @@
 
 #define maxN 10 //Maximum matrix size
 
+#include <rtt/Component.hpp>
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
+#include <rtt/Logger.hpp>
+
+#include <amigo_ref_interpolator/interpolator.h>
 #include <sensor_msgs/JointState.h>
+#include "printLog.hpp"
 
 using namespace std;
 
@@ -20,51 +25,52 @@ using namespace RTT;
 
 namespace SOURCES
 {
-  typedef vector<double> doubles;
-  typedef vector<int> ints;
-  
+	typedef vector<double> doubles;
+	typedef vector<int> ints;
 
-  class ReferenceGenerator
-  : public RTT::TaskContext
-    {
-    private:
 
-    // Declaring input- and output_ports
-    InputPort<doubles> posinport[5];
-    InputPort<doubles> initialposinport;
-    OutputPort<doubles> posoutport;
-    OutputPort<doubles> veloutport;
-    OutputPort<doubles> accoutport;
-    OutputPort<sensor_msgs::JointState> resetrefoutport;
+	class ReferenceGenerator
+		: public RTT::TaskContext
+		{
+		private:
 
-    // Properties
-    uint N;
-    uint N_inports;
-    doubles minpos;
-    doubles maxpos;
-    doubles maxvel;
-    doubles maxacc;
-    ints inport_sizes;
+			// Declaring input- and output_ports
+			InputPort<doubles> posinport[5];
+			InputPort<doubles> initialposinport;
+			OutputPort<doubles> posoutport;
+			OutputPort<doubles> veloutport;
+			OutputPort<doubles> accoutport;
+			OutputPort<sensor_msgs::JointState> resetrefoutport;
 
-    // Declaring global variables
-    std::vector<refgen::RefGenerator> mRefGenerators;
-    std::vector<amigo_msgs::ref_point> mRefPoints;
-    doubles desiredPos;
-    doubles desiredVel;
-    doubles desiredAcc;
-    doubles interpolators[maxN];
-    doubles outpos;
-    double InterpolDt, InterpolEps;
+			// Properties
+			uint N;
+			uint N_inports;
+			doubles minpos;
+			doubles maxpos;
+			doubles maxvel;
+			doubles maxacc;
+			ints inport_sizes;
 
-    public:
+			// Declaring global variables
+			std::vector<refgen::RefGenerator> mRefGenerators;
+			std::vector<amigo_msgs::ref_point> mRefPoints;
+			doubles desiredPos;
+			doubles desiredVel;
+			doubles desiredAcc;
+			doubles interpolators[maxN];
+			doubles outpos;
+			double InterpolDt, InterpolEps;
+			TueLog printer;
 
-    ReferenceGenerator(const string& name);
-    ~ReferenceGenerator();
+		public:
 
-    bool configureHook();
-    bool startHook();
-    void updateHook();
+			ReferenceGenerator(const string& name);
+			~ReferenceGenerator();
 
-    };
+			bool configureHook();
+			bool startHook();
+			void updateHook();
+
+	};
 }
 #endif
