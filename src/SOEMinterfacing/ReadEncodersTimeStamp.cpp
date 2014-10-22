@@ -233,6 +233,7 @@ double ReadEncodersTimeStamp::readTime( int i )
 	if (startup<2) {
 		time_shift[i] = 0;
 		if (inport_time[i].read(timedata) == NewData ){
+			log(Warning) << " No new data recieved on time input" << endlog();
 			previous_time_value[i] = timedata.value;
 		}
 		else {

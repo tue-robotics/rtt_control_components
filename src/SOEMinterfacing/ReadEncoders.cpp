@@ -107,7 +107,9 @@ void ReadEncoders::updateHook()
 double ReadEncoders::readEncoder( int i )
 {
 	EncoderMsg encdata;
-	inport_enc[i].read(encdata);
+	if (inport_enc[i].read(encdata) != NewData )
+		log(Error)<<"ReadEncoder: no data enc "<<i<<endlog();
+		
 	uint new_enc_position = encdata.value;
 	ENC_value[i] = encdata.value;
 	if( (previous_enc_position[i] - new_enc_position) > encoderbits/2)
