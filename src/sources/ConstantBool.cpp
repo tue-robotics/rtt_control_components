@@ -28,7 +28,6 @@ ConstantBool::~ConstantBool(){}
 
 bool ConstantBool::configureHook()
 {
-  Logger::In in("ConstantSignal::configureHook()");
   
   // Adding ports
   addPort( "out", outport ).doc("Bool");
@@ -40,7 +39,6 @@ bool ConstantBool::configureHook()
 
 bool ConstantBool::startHook()
 {
-  Logger::In in("ConstantSignal::startHook()");
   
   if ( !outport.connected() ) {
     log(Warning)<<"Output port not connected!"<<endlog();

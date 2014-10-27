@@ -32,7 +32,6 @@ Product::~Product(){}
 
 bool Product::configureHook()
 {
-	Logger::In in("Product::Configure");
 
 	Ts = getPeriod();	
 	N = list_of_operators.size();
@@ -54,7 +53,6 @@ bool Product::configureHook()
 
 bool Product::startHook()
 {
-	Logger::In in("Product::Start");
 
 	// Check validity of Ports:
 	for (uint i = 0; i < N; i++) {
@@ -85,7 +83,6 @@ bool Product::startHook()
 
 void Product::updateHook()
 {
-	Logger::In in("Product::Update");
 
 	/*** Calculate outputs ***/
 	double input = 0.0;

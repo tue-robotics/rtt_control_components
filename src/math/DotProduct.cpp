@@ -33,7 +33,6 @@ DotProduct::~DotProduct(){}
 
 bool DotProduct::configureHook()
 {
-	Logger::In in("DotProduct::Configure");
 
 	N = list_of_operators.size();
 
@@ -48,7 +47,6 @@ bool DotProduct::configureHook()
 
 bool DotProduct::startHook()
 {
-	Logger::In in("DotProduct::Start");
 
 	for (uint i = 0; i < N; i++) {
 		if ( !inports[i].connected() ) {
@@ -82,7 +80,6 @@ bool DotProduct::startHook()
 
 void DotProduct::updateHook()
 {
-	Logger::In in("DotProduct::Update");
 
 	doubles input(vector_size,0.0);
 	doubles output(vector_size,1.0);

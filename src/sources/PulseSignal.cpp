@@ -44,7 +44,6 @@ bool PulseSignal::configureHook()
 
 bool PulseSignal::startHook()
 {
-  Logger::In in("PulseSignal::startHook()");
 
   if ( !outport.connected() ) {
     log(Warning)<<"Outputport not connected!"<<endlog();
@@ -76,7 +75,6 @@ bool PulseSignal::startHook()
 
 void PulseSignal::updateHook()
 {
-  Logger::In in("PulseSignal::updateHook()");
   
   doubles output(vector_size,0.0);
   

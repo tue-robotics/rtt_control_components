@@ -48,7 +48,6 @@ SkewedNotch::~SkewedNotch()
 
 bool SkewedNotch::configureHook()
 {
- 	Logger::In in("SkewedNotch::Configure");
  	
     /* Guaranteeing Real-Time data flow */
     // create an example data sample of vector_size:
@@ -70,7 +69,6 @@ bool SkewedNotch::configureHook()
 
 bool SkewedNotch::startHook()
 { 	
-	Logger::In in("SkewedNotch::Start");
     
     // Check validity of Ports:
     if ( !inport.connected() ) {
@@ -105,7 +103,6 @@ bool SkewedNotch::startHook()
 
 void SkewedNotch::updateHook()
 {
-	Logger::In in("SkewedNotch::Update");
 	
     // Read the input port
     doubles input(vector_size,0.0);

@@ -36,7 +36,6 @@ TracingTimeStamp::~TracingTimeStamp(){}
 
 bool TracingTimeStamp::configureHook()
 {
-	Logger::In in("TracingTimeStamp::Configure");	
 	
 	columns = 0;
 
@@ -73,7 +72,6 @@ bool TracingTimeStamp::configureHook()
 
 bool TracingTimeStamp::startHook()
 {
-	Logger::In in("TracingTimeStamp::Start");	
 	
     start_ticks = RTT::os::TimeService::Instance()->getTicks();
 	return true;
@@ -81,7 +79,6 @@ bool TracingTimeStamp::startHook()
 
 void TracingTimeStamp::updateHook()
 {
-	Logger::In in("TracingTimeStamp::Update");	
 	
 	// First updatehook is useless
 	if(counter == -1){counter = 0;return;}
@@ -129,7 +126,6 @@ void TracingTimeStamp::updateHook()
 
 void TracingTimeStamp::stopHook()
 {
-	Logger::In in("TracingTimeStamp::Stop");
 		
 	FILE * pFile;
 	pFile = fopen (filename.c_str(),"w");

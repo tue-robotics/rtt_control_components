@@ -29,7 +29,6 @@ Switch::~Switch(){}
 
 bool Switch::configureHook()
 {
-	Logger::In in("Switch::Configure");		
 	
     log(Warning)<<"Switch: Start of configureHook()"<<endlog();
 	addEventPort( "in_def", inport_default );
@@ -47,7 +46,6 @@ bool Switch::configureHook()
 
 bool Switch::startHook()
 {
-	Logger::In in("Switch::Start");	
 
 	if ( !inport_default.connected() ) {
 		log(Error)<<"Switch: inport_default not connected!"<<endlog();
@@ -69,7 +67,6 @@ bool Switch::startHook()
 
 void Switch::updateHook()
 {
-	Logger::In in("Switch::Update");
 
 	inport_default.read(input_default);
 	inport_switched.read(input_switched);

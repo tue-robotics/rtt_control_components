@@ -30,7 +30,6 @@ Abs::~Abs(){}
 
 bool Abs::configureHook()
 {
- 	Logger::In in("Abs::Configure");
  		
 	// Creating ports
 	for ( uint i = 0; i < N; i++ )
@@ -46,7 +45,6 @@ bool Abs::configureHook()
 
 bool Abs::startHook()
 {
-	Logger::In in("Abs::Start");
 
 	for (uint i = 0; i < N; i++) {
 		if ( !inports[i].connected() ) {
@@ -73,7 +71,6 @@ bool Abs::startHook()
 
 void Abs::updateHook()
 {
- 	Logger::In in("Abs::Update");	
 	
 	doubles input(vector_size,0.0);
 	doubles output(vector_size,0.0);

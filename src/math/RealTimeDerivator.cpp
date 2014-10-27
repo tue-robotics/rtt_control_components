@@ -32,14 +32,12 @@ RealTimeDerivator::~RealTimeDerivator(){}
 
 bool RealTimeDerivator::configureHook() 
 {
-	Logger::In in("RealTimeDerivator::Configure");
 
 	return true;
 }
 
 bool RealTimeDerivator::startHook() 
 {	
-	Logger::In in("RealTimeDerivator::Start");
 
 	if (vector_size>MAX_SIZE) vector_size=MAX_SIZE;
 
@@ -57,7 +55,6 @@ bool RealTimeDerivator::startHook()
 
 void RealTimeDerivator::updateHook()
 {	
-	Logger::In in("RealTimeDerivator::Update");
 
 	
 	doubles u(vector_size,0.0), ue(vector_size,0.0), ued(vector_size,0.0), uedd(vector_size,0.0);

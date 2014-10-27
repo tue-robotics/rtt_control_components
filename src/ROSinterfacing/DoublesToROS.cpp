@@ -31,7 +31,6 @@ DoublesToROS::~DoublesToROS(){}
 
 bool DoublesToROS::configureHook()
 {
-	Logger::In in("DoublesToROS::Configure");	
 	
 	for ( uint i = 0; i < Ndouble; i++ ) { 
 		string name_outport = "out"+to_string(i+1);
@@ -42,14 +41,12 @@ bool DoublesToROS::configureHook()
 
 bool DoublesToROS::startHook()
 {
-	Logger::In in("DoublesToROS::Start");	
 	
 	return true;
 }
 
 void DoublesToROS::updateHook()
 {
-	Logger::In in("DoublesToROS::Update");	
 	
 	doubles values;
 	if ( doubleinport.read( values ) == NewData ) {

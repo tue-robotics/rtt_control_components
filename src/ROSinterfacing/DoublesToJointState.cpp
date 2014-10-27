@@ -22,7 +22,6 @@ DoublesToJointState::~DoublesToJointState(){}
 
 bool DoublesToJointState::configureHook()
 {
-	Logger::In in("DoublesToJointState::Configure");
 	
     Ndouble_ = out_msg_.name.size();
     log(Info)<<"Size of arrays = "<<Ndouble_<<endlog();
@@ -34,7 +33,6 @@ bool DoublesToJointState::configureHook()
 
 bool DoublesToJointState::startHook()
 {
-	Logger::In in("DoublesToJointState::Start");
 	
     /// Check which ports are connected
     if (!position_inport_.connected()) {
@@ -55,7 +53,6 @@ bool DoublesToJointState::startHook()
 
 void DoublesToJointState::updateHook()
 {
-	Logger::In in("DoublesToJointState::Update");	
 	
     // ToDo: how can we do this nicely?
     doubles pos, vel, eff;

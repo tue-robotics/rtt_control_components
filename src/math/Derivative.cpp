@@ -30,7 +30,6 @@ Derivative::~Derivative(){}
 
 bool Derivative::configureHook()
 {
-	Logger::In in("Derivative::Configure");
 
 	// Adding ports
 	addEventPort( "in", inport );
@@ -56,7 +55,6 @@ bool Derivative::configureHook()
 
 bool Derivative::startHook()
 {  
-	Logger::In in("Derivative::Start");
 
 	// Check validity of Ports:
 	if ( !inport.connected() ) {
@@ -83,7 +81,6 @@ bool Derivative::startHook()
 
 void Derivative::updateHook()
 {
-	Logger::In in("Derivative::Update");
 	
 	doubles input(vector_size,0.0);
 	doubles output(vector_size,0.0);
@@ -112,7 +109,6 @@ void Derivative::updateHook()
 
 void Derivative::determineDt()
 {
-	Logger::In in("Derivative");	
 
 	long double new_time = os::TimeService::Instance()->getNSecs()*1e-9;
 	dt = (new_time - old_time);

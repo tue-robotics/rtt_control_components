@@ -30,7 +30,6 @@ Clock::~Clock(){}
 
 bool Clock::configureHook()
 {
-  Logger::In in("Clock::configureHook()");
   
   // Adding ports
   addPort( "out", outport ).doc("Vector of double values");
@@ -40,7 +39,6 @@ bool Clock::configureHook()
 
 bool Clock::startHook()
 {
-  Logger::In in("Clock::startHook()");
   
   if ( !outport.connected() ) {
     log(Warning)<<"Output port not connected!"<<endlog();

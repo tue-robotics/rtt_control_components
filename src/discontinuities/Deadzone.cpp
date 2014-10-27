@@ -36,14 +36,12 @@ Deadzone::~Deadzone(){}
 
 bool Deadzone::configureHook()
 {
-	Logger::In in("Deadzone::Configure");		
 	
    return true;
 }
 
 bool Deadzone::startHook()
 {
-	Logger::In in("Deadzone::Start");
 
 	if ( !inport.connected() ) {
 		log(Error)<<"Input port not connected!"<<endlog();
@@ -66,7 +64,6 @@ bool Deadzone::startHook()
 
 void Deadzone::updateHook()
 {
-	Logger::In in("Deadzone::Update");
 
 	doubles input(vector_size,0.0);
 	doubles output(vector_size,0.0);

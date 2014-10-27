@@ -33,7 +33,6 @@ Sum::~Sum(){}
 
 bool Sum::configureHook()
 {
-	Logger::In in("Sum::Configure");
 	
 	N = list_of_signs.size();
 	
@@ -50,7 +49,6 @@ bool Sum::configureHook()
 
 bool Sum::startHook()
 {
-	Logger::In in("Sum::Start");
 
 	for (uint i = 0; i < N; i++) {
 		if ( !inports[i].connected() ) {
@@ -84,7 +82,6 @@ bool Sum::startHook()
 
 void Sum::updateHook()
 {
-	Logger::In in("Sum::Update");
 
 	doubles input(vector_size,0.0);
 	doubles output(vector_size,0.0);

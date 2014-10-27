@@ -32,7 +32,6 @@ Reporter::~Reporter(){}
 
 bool Reporter::configureHook()
 {
-	Logger::In in("Reporter::Configure");
 
 	for ( uint i = 0; i < N; i++ )
 	{
@@ -46,7 +45,6 @@ bool Reporter::configureHook()
 
 bool Reporter::startHook()
 {
-	Logger::In in("Reporter::Start");
 
 	// Check validity of Ports:
 	for (uint i = 0; i <= N; i++) {
@@ -71,7 +69,6 @@ bool Reporter::startHook()
 
 void Reporter::updateHook()
 {
-	Logger::In in("Reporter::Update");
 
 	stringstream ss;
 	doubles output;

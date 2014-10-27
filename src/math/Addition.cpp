@@ -28,7 +28,6 @@ Addition::~Addition(){}
 
 bool Addition::configureHook()
 {
-	Logger::In in("Addition::Configure");	
 	
 	// Adding inports
 	addEventPort( "in1_ev", inports[0]);
@@ -48,7 +47,6 @@ bool Addition::configureHook()
 
 bool Addition::startHook()
 {
-	Logger::In in("Addition::Start");	
 	
 	// Check validity of Ports:
 	for ( uint i = 1; i < numberofinputs; i++ ) {
@@ -66,7 +64,6 @@ bool Addition::startHook()
 
 void Addition::updateHook()
 {
-	Logger::In in("Addition::Update");	
 	
 	// Read the inputports
 	for ( uint j = 0; j < numberofinputs; j++ ) {

@@ -32,14 +32,12 @@ Equal::~Equal(){}
 
 bool Equal::configureHook()
 {
-	Logger::In in("Equal::Configure");	
 	
 	return true;
 }
 
 bool Equal::startHook()
 {
-	Logger::In in("Equal::Start");
 
 	// Check validity of Ports
 	if ( !inport.connected() ) {
@@ -61,7 +59,6 @@ bool Equal::startHook()
 
 void Equal::updateHook()
 {
-	Logger::In in("Equal::Configure");
 
 	uint vectorsize = values.size();
 

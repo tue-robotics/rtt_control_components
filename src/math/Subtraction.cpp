@@ -29,14 +29,12 @@ Subtraction::~Subtraction(){}
 
 bool Subtraction::configureHook()
 {
-	Logger::In in("Subtraction::Configure");	
 	
 	return true;
 }
 
 bool Subtraction::startHook()
 {
-	Logger::In in("Subtraction::Start");
 	
 	// Check validity of Ports:
 	if ( !inport_plus.connected() || !inport_minus.connected() ) {
@@ -51,7 +49,6 @@ bool Subtraction::startHook()
 
 void Subtraction::updateHook()
 {
-	Logger::In in("Subtraction::Update");	
 	
 	// Read the inputports
 	doubles input_plus(vectorsize,0.0);

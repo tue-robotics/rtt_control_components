@@ -47,7 +47,6 @@ LeadLag::~LeadLag()
 
 bool LeadLag::configureHook()
 {
-	Logger::In in("LeadLag::Configure");
 
     filters.resize(vector_size);
     for (uint i = 0; i < vector_size; i++) {
@@ -61,7 +60,6 @@ bool LeadLag::configureHook()
 
 bool LeadLag::startHook()
 {
-	Logger::In in("LeadLag::Start");
 		
     // Check validity of ports:
     if ( !inport.connected() ) {
@@ -96,7 +94,6 @@ bool LeadLag::startHook()
 
 void LeadLag::updateHook()
 {
-	Logger::In in("LeadLag::Update");
 		
     // Read the input port
     doubles input(vector_size,0.0);

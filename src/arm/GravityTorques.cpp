@@ -41,7 +41,6 @@ GravityTorques::~GravityTorques(){}
 
 bool GravityTorques::configureHook()
 {
-	Logger::In in("GravityTorques::Configure");
 	
     //! Parameter input checks
     if (nrJoints >= MAXJOINTS) {
@@ -170,7 +169,6 @@ bool GravityTorques::configureHook()
 
 bool GravityTorques::startHook()
 {
-	Logger::In in("GravityTorques::Start");	
 	
     //! Connection checks
     if ( !jointAnglesPort.connected() ){
@@ -187,7 +185,6 @@ bool GravityTorques::startHook()
 
 void GravityTorques::updateHook()
 {
-	Logger::In in("GravityTorques::Update");	
 	
     // read jointAngles
     jointAngles.assign(nrJoints,0.0);
@@ -210,7 +207,6 @@ void GravityTorques::updateHook()
 
 doubles GravityTorques::ComputeGravityTorques(KDL::JntArray q_current_)
 {
-	Logger::In in("GravityTorques::ComputeGravityTorques");
 	
     doubles gravityTorques_(nrJoints,0.0);
 

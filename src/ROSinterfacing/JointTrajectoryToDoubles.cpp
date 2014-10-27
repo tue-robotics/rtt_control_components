@@ -22,7 +22,6 @@ JointTrajectoryToDoubles::~JointTrajectoryToDoubles(){}
 
 bool JointTrajectoryToDoubles::configureHook()
 {
-	Logger::In in("JointTrajectoryToDoubles::Configure");		
 	
     eff_out_.assign(Ndouble_, 0.0);
     pos_out_.assign(Ndouble_, 0.0);
@@ -32,7 +31,6 @@ bool JointTrajectoryToDoubles::configureHook()
 
 bool JointTrajectoryToDoubles::startHook()
 {
-	Logger::In in("JointTrajectoryToDoubles::Start");		
 	
     /// Check which ports are connected
     if (!position_outport_.connected())
@@ -54,7 +52,6 @@ bool JointTrajectoryToDoubles::startHook()
 
 void JointTrajectoryToDoubles::updateHook()
 {
-	Logger::In in("JointTrajectoryToDoubles::Update");		
 	
     if ( (!playing_trajectory) && inport_.read(in_msg) == NewData) // For now, do not listen if busy
     {

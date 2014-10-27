@@ -36,7 +36,6 @@ TraceCrash::~TraceCrash(){}
 
 bool TraceCrash::configureHook()
 {
-    Logger::In in("TraceCrash::Configure");
 
     columns = 0;
 
@@ -76,7 +75,6 @@ bool TraceCrash::configureHook()
 
 bool TraceCrash::startHook()
 {
-    Logger::In in("TraceCrash::Start");
 
     printed = false;
 
@@ -85,7 +83,6 @@ bool TraceCrash::startHook()
 
 void TraceCrash::updateHook()
 {
-    Logger::In in("TraceCrash::Update");
 
     // First updatehook is useless
     if(counter == -1){counter = 0;return;}

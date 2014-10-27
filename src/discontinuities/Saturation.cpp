@@ -36,14 +36,12 @@ Saturation::~Saturation(){}
 
 bool Saturation::configureHook()
 {
-	Logger::In in("Saturation::Configure");
 
    return true;
 }
 
 bool Saturation::startHook()
 {
-	Logger::In in("Saturation::Start");
 
 	if ( !inport.connected() ) {
 		log(Error)<<"Input port not connected!"<<endlog();
@@ -66,7 +64,6 @@ bool Saturation::startHook()
 
 void Saturation::updateHook()
 {
-	Logger::In in("Saturation::Update");
 
 	doubles values(vector_size,0.0);
 

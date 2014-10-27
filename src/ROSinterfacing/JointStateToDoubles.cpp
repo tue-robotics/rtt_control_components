@@ -22,7 +22,6 @@ JointStateToDoubles::~JointStateToDoubles(){}
 
 bool JointStateToDoubles::configureHook()
 {
-	Logger::In in("JointStateToDoubles::Configure");		
 	
     pos_out_.assign(Ndouble_, 0.0);
     vel_out_.assign(Ndouble_, 0.0);
@@ -32,7 +31,6 @@ bool JointStateToDoubles::configureHook()
 
 bool JointStateToDoubles::startHook()
 {
-	Logger::In in("JointStateToDoubles::Start");	
 	
     /// Check which ports are connected
     if (!position_outport_.connected()) {
@@ -60,7 +58,6 @@ bool JointStateToDoubles::startHook()
 
 void JointStateToDoubles::updateHook()
 {
-	Logger::In in("JointStateToDoubles::Update");	
 	
     // ToDo: can't we do this any nicer?
     sensor_msgs::JointState in_msg;

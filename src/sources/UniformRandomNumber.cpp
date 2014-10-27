@@ -37,7 +37,6 @@ UniformRandomNumber::~UniformRandomNumber(){}
 
 bool UniformRandomNumber::configureHook()
 {
-  Logger::In in("UniformRandomNumber::configureHook()");
   
   Ts = getPeriod();
   return true;
@@ -45,7 +44,6 @@ bool UniformRandomNumber::configureHook()
 
 bool UniformRandomNumber::startHook()
 {
-  Logger::In in("UniformRandomNumber::startHook()");
   
   if ( !outport.connected() ) {
     log(Warning)<<"Output port not connected!"<<endlog();
@@ -73,7 +71,6 @@ bool UniformRandomNumber::startHook()
 
 void UniformRandomNumber::updateHook()
 {
-  Logger::In in("UniformRandomNumber::updateHook()");
 
   doubles output(vector_size,0.0);
 

@@ -45,7 +45,6 @@ PID::~PID()
 
 bool PID::configureHook()
 {
-    Logger::In in("PID::Configure");
 
     // Adding ports
     addEventPort( "in", inport );
@@ -71,7 +70,6 @@ bool PID::configureHook()
 
 bool PID::startHook()
 {
-    Logger::In in("PID::Start");
 
     // Check validity of Ports:
     if ( !inport.connected() ) {
@@ -106,7 +104,6 @@ bool PID::startHook()
 
 void PID::updateHook()
 {
-    Logger::In in("PID::Update");
 
     // Read the input port
     doubles input(vector_size,0.0);

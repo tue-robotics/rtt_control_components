@@ -46,7 +46,6 @@ SecondOrderLowPasses::~SecondOrderLowPasses()
 
 bool SecondOrderLowPasses::configureHook()
 {
-	Logger::In in("SecondOrderLowPasses::Configure");
 
     filters.resize(vector_size);
     for (uint i = 0; i < vector_size; i++) {
@@ -60,7 +59,6 @@ bool SecondOrderLowPasses::configureHook()
 
 bool SecondOrderLowPasses::startHook()
 {
-	Logger::In in("SecondOrderLowPasses::Start");	
 	
     // Check validity of Ports:
     if ( !inport.connected() ) {
@@ -95,7 +93,6 @@ bool SecondOrderLowPasses::startHook()
 
 void SecondOrderLowPasses::updateHook()
 {
-	Logger::In in("SecondOrderLowPasses::Update");	
 	
     // Read the input port
     doubles input(vector_size,0.0);

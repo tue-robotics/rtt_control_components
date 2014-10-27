@@ -32,7 +32,6 @@ Polynomials::~Polynomials(){}
 
 bool Polynomials::configureHook()
 {
-    Logger::In in("Polynomials::Configure");
     
     if (vector_size != orders.size())
     {
@@ -86,7 +85,6 @@ bool Polynomials::configureHook()
 
 bool Polynomials::startHook()
 {
-    Logger::In in("Polynomials::Start");
 
     // Check validity of Ports:
     if ( !inport.connected() ) {
@@ -108,7 +106,6 @@ bool Polynomials::startHook()
 
 void Polynomials::updateHook()
 {
-    Logger::In in("Polynomials::Update");	
 	
     /// Read the input port
     inport.read( input );

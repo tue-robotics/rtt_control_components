@@ -29,14 +29,12 @@ AddConstant::~AddConstant(){}
 
 bool AddConstant::configureHook()
 {
-	Logger::In in("AddConstant::Configure");
 
 	return true;
 }
 
 bool AddConstant::startHook()
 {
-	Logger::In in("AddConstant::Start");
 
 	// Check validity of Ports:
 	if ( !inport.connected() ) {
@@ -52,7 +50,6 @@ bool AddConstant::startHook()
 
 void AddConstant::updateHook()
 {
-	Logger::In in("AddConstant::Update");	
 
 	// Read the inputports
 	doubles input(vectorsize,0.0);

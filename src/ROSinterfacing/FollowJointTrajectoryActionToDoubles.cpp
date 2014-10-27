@@ -27,7 +27,6 @@ FollowJointTrajectoryActionToDoubles::~FollowJointTrajectoryActionToDoubles(){}
 
 bool FollowJointTrajectoryActionToDoubles::configureHook()
 {
-	Logger::In in("FollowJointTrajectoryActionToDoubles::Configure");
 	
     pos.assign(Nj, 0.0);
     vel.assign(Nj, 0.0);
@@ -39,7 +38,6 @@ bool FollowJointTrajectoryActionToDoubles::configureHook()
 
 bool FollowJointTrajectoryActionToDoubles::startHook()
 {
-	Logger::In in("FollowJointTrajectoryActionToDoubles::Start");	
 	
     /// Check which ports are connected
     if (!position_outport_.connected()) {
@@ -59,7 +57,6 @@ bool FollowJointTrajectoryActionToDoubles::startHook()
 
 void FollowJointTrajectoryActionToDoubles::updateHook()
 {
-	Logger::In in("FollowJointTrajectoryActionToDoubles::Update");	
 	
 	doubles resetdata;
 	if (resetPort.read( resetdata ) == NewData) { // Following the trajectory is interupted and the actual joints may be moved

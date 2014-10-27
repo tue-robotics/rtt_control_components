@@ -30,7 +30,6 @@ BoolToROS::~BoolToROS(){}
 
 bool BoolToROS::configureHook()
 {
-	Logger::In in("BoolToROS::Configure");		
 	
 	for ( uint i = 0; i < Nbool; i++ ) {
 		string name_inport = "bool_in"+to_string(i+1);
@@ -44,14 +43,12 @@ bool BoolToROS::configureHook()
 
 bool BoolToROS::startHook()
 {
-	Logger::In in("BoolToROS::Start");	
 	
 	return true;
 }
 
 void BoolToROS::updateHook()
 {
-	Logger::In in("BoolToROS::Update");		
 	
 	for ( uint i = 0; i < Nbool; i++ ) {
 		bool value;

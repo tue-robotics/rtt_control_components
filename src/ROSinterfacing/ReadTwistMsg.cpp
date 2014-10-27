@@ -25,7 +25,6 @@ ReadTwistMsg::~ReadTwistMsg(){}
 
 bool ReadTwistMsg::configureHook()
 {
-	Logger::In in("ReadTwistMsg::Configure");		
 	
 	// Declare names for logging purpose:
 	names.push_back("x");
@@ -46,7 +45,6 @@ bool ReadTwistMsg::configureHook()
 
 bool ReadTwistMsg::startHook()
 {
-	Logger::In in("ReadTwistMsg::Start");		
 	
 	// Check validity of Ports:
 	if ( !inport.connected() ) {
@@ -90,7 +88,6 @@ bool ReadTwistMsg::startHook()
 
 void ReadTwistMsg::updateHook()
 {
-	Logger::In in("ReadTwistMsg::Update");		
 	
 	// Determine timestamp:
 	long double new_time = os::TimeService::Instance()->getNSecs()*1e-9;

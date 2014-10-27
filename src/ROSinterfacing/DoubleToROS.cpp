@@ -30,7 +30,6 @@ DoubleToROS::~DoubleToROS(){}
 
 bool DoubleToROS::configureHook()
 {
-	Logger::In in("DoubleToROS::Configure");	
 	
 	for ( uint i = 0; i < Ndouble; i++ ) {
 		string name_inport = "double_in"+to_string(i+1);
@@ -43,14 +42,12 @@ bool DoubleToROS::configureHook()
 
 bool DoubleToROS::startHook()
 {
-	Logger::In in("DoubleToROS::Start");	
 	
 	return true;
 }
 
 void DoubleToROS::updateHook()
 {
-	Logger::In in("DoubleToROS::Update");
 		
 	for ( uint i = 0; i < Ndouble; i++ ) {
 		double value;

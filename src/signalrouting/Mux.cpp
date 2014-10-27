@@ -29,7 +29,6 @@ Mux::~Mux(){}
 
 bool Mux::configureHook()
 {
-	Logger::In in("Mux::Configure");
 
 	for ( uint i = 0; i < N; i++ ) {
 		string name_inport = "in"+to_string(i+1);
@@ -43,7 +42,6 @@ bool Mux::configureHook()
 
 bool Mux::startHook()
 {
-	Logger::In in("Mux::Start");
 
 	if ( N > maxN ) {
 		log(Error)<<"Max number of ports exceeded!"<<endlog();
@@ -73,7 +71,6 @@ bool Mux::startHook()
 
 void Mux::updateHook()
 {
-	Logger::In in("Mux::Update");
 	
 	doubles output(N,0.0);  
 

@@ -26,7 +26,6 @@ Integrator::~Integrator(){}
 
 bool Integrator::configureHook()
 {
-	Logger::In in("Integrator::Configure");	
 	
 	/* Guaranteeing Real-Time data flow */
 	doubles example(N, 0.0);
@@ -40,7 +39,6 @@ bool Integrator::configureHook()
 
 bool Integrator::startHook()
 {
-	Logger::In in("Integrator::Start");		
 	
 	// Check validity of Ports:
 	if ( !inport.connected() ) {
@@ -71,7 +69,6 @@ bool Integrator::startHook()
 
 void Integrator::updateHook()
 {
-	Logger::In in("Integrator::Update");		
 	
 	doubles input(N,0.0);
 	doubles output(N,0.0);

@@ -29,7 +29,6 @@ VectorConcatenate::~VectorConcatenate(){}
 
 bool VectorConcatenate::configureHook()
 {
-	Logger::In in("VectorConcatenate::Configure");	
 	
 	if (N > maxN) {
 		log(Error)<<"VectorConcatenate: N is larger than maxN, more than " << maxN << " components are not supported. Change maxN in the .hpp" <<endlog();
@@ -57,7 +56,6 @@ bool VectorConcatenate::configureHook()
 
 bool VectorConcatenate::startHook()
 {  
-	Logger::In in("VectorConcatenate::Start");	
 		
 	for (uint i = 0; i < N; i++) {
 		if ( !inports[i].connected() ) {
@@ -80,7 +78,6 @@ bool VectorConcatenate::startHook()
 
 void VectorConcatenate::updateHook()
 {
-	Logger::In in("VectorConcatenate::Update");		
 	
 	doubles output;  
 	double vector_size = 0;

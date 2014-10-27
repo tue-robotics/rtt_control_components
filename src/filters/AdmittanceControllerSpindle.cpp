@@ -50,7 +50,6 @@ AdmittanceControllersSpindle::~AdmittanceControllersSpindle()
 
 bool AdmittanceControllersSpindle::configureHook()
 {
-	Logger::In in("AdmittanceControllerSpindle::Configure");	
 	
 	finishedhoming = false;	
     // Compute fp and dp for first order lowpass filter
@@ -77,7 +76,6 @@ bool AdmittanceControllersSpindle::configureHook()
 
 bool AdmittanceControllersSpindle::startHook()
 {
-	Logger::In in("AdmittanceControllerSpindle::Start");	
 	
     // Check validity of Ports:
     if ( !position_inport.connected() ) {
@@ -115,7 +113,6 @@ bool AdmittanceControllersSpindle::startHook()
 
 void AdmittanceControllersSpindle::updateHook()
 {
-	Logger::In in("AdmittanceControllerSpindle::Update");	
 	
 	/*
 	// Read inports

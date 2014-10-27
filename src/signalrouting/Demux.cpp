@@ -29,7 +29,6 @@ Demux::~Demux(){}
 
 bool Demux::configureHook()
 {
-	Logger::In in("Demux::Configure");
 	
 	addEventPort( "in", inport);
 	
@@ -45,7 +44,6 @@ bool Demux::configureHook()
 
 bool Demux::startHook()
 {
-	Logger::In in("Demux::Start");
 
 	if ( !inport.connected() ) {
 		log(Error)<<"Input port not connected!"<<endlog();
@@ -74,7 +72,6 @@ bool Demux::startHook()
 
 void Demux::updateHook()
 {
-	Logger::In in("Demux::Update");	
 
 	doubles input(N,0.0);
 

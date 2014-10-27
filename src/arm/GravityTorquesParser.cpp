@@ -32,7 +32,6 @@ GravityTorquesParser::~GravityTorquesParser(){}
 
 bool GravityTorquesParser::configureHook()
 {
-	Logger::In in("GravityTorquesParser::Configure");	
 	
     // Fetch robot_model_ from parameter server (URDF robot model)
     ros::NodeHandle n("~");
@@ -65,7 +64,6 @@ bool GravityTorquesParser::configureHook()
 
 bool GravityTorquesParser::startHook()
 {
-	Logger::In in("GravityTorquesParser::Start");	
 	
     //! Connection checks
     if(!jointAnglesPort.connected()){

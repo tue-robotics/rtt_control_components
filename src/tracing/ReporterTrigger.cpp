@@ -29,7 +29,6 @@ ReporterTrigger::~ReporterTrigger(){}
 
 bool ReporterTrigger::configureHook()
 {
-	Logger::In in("ReporterTrigger::Configure");	
 	
       if( ! hasPeer("Reporter") )
     {
@@ -41,7 +40,6 @@ bool ReporterTrigger::configureHook()
 
 bool ReporterTrigger::startHook()
 {
-	Logger::In in("ReporterTrigger::Start");	
 
 	if ( !inport.connected() ) {
 		log(Error)<<"Input port not connected!"<<endlog();
@@ -57,7 +55,6 @@ bool ReporterTrigger::startHook()
 
 void ReporterTrigger::updateHook()
 {
-	Logger::In in("ReporterTrigger::Update");	
 	
 	doubles input;
 

@@ -50,7 +50,6 @@ AdmittanceControllers::~AdmittanceControllers()
 
 bool AdmittanceControllers::configureHook()
 {
-	Logger::In in("AdmittanceControllers::Configure");	
 	
     // Compute fp and dp for first order lowpass filter
     // and Construct filters
@@ -77,7 +76,6 @@ bool AdmittanceControllers::configureHook()
 
 bool AdmittanceControllers::startHook()
 {
-	Logger::In in("AdmittanceControllers::Start");	
 		
     // Check validity of Ports:
     if ( !position_inport.connected() ) {
@@ -115,7 +113,6 @@ bool AdmittanceControllers::startHook()
 
 void AdmittanceControllers::updateHook()
 {
-	Logger::In in("AdmittanceControllers::Update");	
 		
     // Read inports
     position_inport.read(position_input);

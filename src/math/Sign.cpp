@@ -30,7 +30,6 @@ Sign::~Sign(){}
 
 bool Sign::configureHook()
 {
-	Logger::In in("Sign::Configure");
 	
 	// Creating ports
 	for ( uint i = 0; i < N; i++ )
@@ -46,7 +45,6 @@ bool Sign::configureHook()
 
 bool Sign::startHook()
 {
-	Logger::In in("Sign::Start");
 
 	for (uint i = 0; i < N; i++) {
 		if ( !inports[i].connected() ) {
@@ -73,7 +71,6 @@ bool Sign::startHook()
 
 void Sign::updateHook()
 {
-	Logger::In in("Sign::Update");
 
 	doubles input(vector_size,0.0);
 	doubles output(vector_size,0.0);

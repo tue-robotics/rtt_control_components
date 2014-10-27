@@ -30,7 +30,6 @@ Sqrt::~Sqrt(){}
 
 bool Sqrt::configureHook()
 {
-	Logger::In in("Sqrt::Configure");
 	
 	// Creating ports
 	for ( uint i = 0; i < N; i++ )
@@ -46,7 +45,6 @@ bool Sqrt::configureHook()
 
 bool Sqrt::startHook()
 {
-	Logger::In in("Sqrt::Start");
 
 	for (uint i = 0; i < N; i++) {
 		if ( !inports[i].connected() ) {
@@ -73,7 +71,6 @@ bool Sqrt::startHook()
 
 void Sqrt::updateHook()
 {
-	Logger::In in("Sqrt::Update");
 
 	doubles input(vector_size,0.0);
 	doubles output(vector_size,0.0);

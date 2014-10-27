@@ -36,7 +36,6 @@ Tracing::~Tracing(){}
 
 bool Tracing::configureHook()
 {
-	Logger::In in("Tracing::Configure");	
 	
 	columns = 0;
 
@@ -76,7 +75,6 @@ bool Tracing::configureHook()
 
 bool Tracing::startHook()
 {
-	Logger::In in("Tracing::Start");
 	
 	printed = false;
 	
@@ -85,7 +83,6 @@ bool Tracing::startHook()
 
 void Tracing::updateHook()
 {
-	Logger::In in("Tracing::Update");	
 	
 	// First updatehook is useless
 	if(counter == -1){counter = 0;return;}

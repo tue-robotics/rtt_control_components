@@ -42,7 +42,6 @@ bool SawtoothSignal::configureHook()
 
 bool SawtoothSignal::startHook()
 {
-  Logger::In in("SawtoothSignal::startHook()");
   
   if ( !outport.connected() ) {
     log(Warning)<<"Outputport not connected!"<<endlog();
@@ -76,7 +75,6 @@ bool SawtoothSignal::startHook()
 
 void SawtoothSignal::updateHook()
 {
-  Logger::In in("SawtoothSignal::updateHook()");
 
   doubles output(vector_size,0.0);
   

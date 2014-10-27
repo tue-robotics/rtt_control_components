@@ -37,7 +37,6 @@ GaussianRandomNumber::~GaussianRandomNumber(){}
 
 bool GaussianRandomNumber::configureHook()
 {
-  Logger::In in("GaussianRandomNumber::configureHook()");
    
   Ts = getPeriod();
   return true;
@@ -45,7 +44,6 @@ bool GaussianRandomNumber::configureHook()
 
 bool GaussianRandomNumber::startHook()
 {
-  Logger::In in("GaussianRandomNumber::startHook()");
   
   if ( !outport.connected() ) {
     log(Warning)<<"Output port not connected!"<<endlog();

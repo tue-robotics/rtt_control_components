@@ -41,7 +41,6 @@ bool StepSignal::configureHook()
 
 bool StepSignal::startHook()
 {
-  Logger::In in("StepSignal::startHook()");
   
   if ( !outport.connected() ) {
     log(Warning)<<"Outputport not connected!"<<endlog();
@@ -71,7 +70,6 @@ bool StepSignal::startHook()
 
 void StepSignal::updateHook()
 {
-  Logger::In in("StepSignal::updateHook()");
 
   doubles output(vector_size,0.0);
   

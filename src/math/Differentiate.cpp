@@ -31,7 +31,6 @@ Differentiate::~Differentiate(){}
 
 bool Differentiate::configureHook()
 {
-	Logger::In in("Differentiate::Configure");
 
 	// Adding ports
 	addEventPort( "in", inport );
@@ -44,7 +43,6 @@ bool Differentiate::configureHook()
 
 bool Differentiate::startHook()
 {
-	Logger::In in("Differentiate::Start");
 
 	old_time = os::TimeService::Instance()->getNSecs()*1e-9;
 
@@ -72,7 +70,6 @@ bool Differentiate::startHook()
 
 void Differentiate::updateHook()
 {
-	Logger::In in("Differentiate::Update");
 
  	// Read the input port
 	doubles input(vector_size,0.0);

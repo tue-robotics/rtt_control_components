@@ -35,7 +35,6 @@ RosDiagnostics::~RosDiagnostics(){}
 
 bool RosDiagnostics::configureHook()
 {
-	Logger::In in("RosDiagnostics::Configure");	
 	
 	for ( uint i = 0; i < Nvec; i++ ) {
 		string name_inport = "vec"+to_string(i+1);
@@ -58,14 +57,12 @@ bool RosDiagnostics::configureHook()
 
 bool RosDiagnostics::startHook()
 {
-	Logger::In in("RosDiagnostics::Start");		
 	
 	return true;
 }
 
 void RosDiagnostics::updateHook()
 {
-	Logger::In in("RosDiagnostics::Update");	
 	
 	vector<diagnostic_msgs::DiagnosticStatus> statuses;
 

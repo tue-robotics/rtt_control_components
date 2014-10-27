@@ -17,7 +17,6 @@ BenchmarkReference::~BenchmarkReference(){}
 
 bool BenchmarkReference::configureHook()
 {
-	Logger::In in("BenchmarkReference::Configure");		
 	
 	REF0_.assign(N,0.0);
 	REF1_.assign(N,0.0);
@@ -66,7 +65,6 @@ bool BenchmarkReference::configureHook()
 
 bool BenchmarkReference::startHook()
 {	
-	Logger::In in("BenchmarkReference::Start");			
 	
 	cntr = 0;
     return true;
@@ -74,7 +72,6 @@ bool BenchmarkReference::startHook()
 
 void BenchmarkReference::updateHook()
 {
-	Logger::In in("BenchmarkReference::Update");			
 	
 	log(Warning)<< "UPDATEHOOK BENCHMARK TOOL" <<endlog();
 	if (cntr < 1) {

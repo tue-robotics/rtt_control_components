@@ -30,7 +30,6 @@ ConstantSignal::~ConstantSignal(){}
 
 bool ConstantSignal::configureHook()
 {
-  Logger::In in("ConstantSignal::configureHook()");
   
   // Adding ports
   addPort( "out", outport ).doc("Vector of double values");
@@ -42,7 +41,6 @@ bool ConstantSignal::configureHook()
 
 bool ConstantSignal::startHook()
 {
-  Logger::In in("ConstantSignal::startHook()");
   
   if ( !outport.connected() ) {
     log(Warning)<<"Output port not connected!"<<endlog();

@@ -33,7 +33,6 @@ RampSignal::~RampSignal(){}
 
 bool RampSignal::configureHook()
 {
-  Logger::In in("RampSignal::configureHook()");
   
   // Adding ports
   addPort( "out", outport ).doc("Vector of double values");
@@ -45,7 +44,6 @@ bool RampSignal::configureHook()
 
 bool RampSignal::startHook()
 {
-  Logger::In in("RampSignal::startHook()");
   
   if ( !outport.connected() ) {
     log(Warning)<<"Output port not connected!"<<endlog();

@@ -36,7 +36,6 @@ TracingOneSignal::~TracingOneSignal(){}
 
 bool TracingOneSignal::configureHook()
 {
-	Logger::In in("TracingOneSignal::Configure");	
 	
 	columns = 0;
 
@@ -78,7 +77,6 @@ bool TracingOneSignal::configureHook()
 
 bool TracingOneSignal::startHook()
 {
-	Logger::In in("TracingOneSignal::Start");	
 
 	current_ticks = 0;
     previous_ticks = RTT::os::TimeService::Instance()->getTicks();
@@ -87,7 +85,6 @@ bool TracingOneSignal::startHook()
 
 void TracingOneSignal::updateHook()
 {
-	Logger::In in("TracingOneSignal::Update");	
 	
 	// First updatehook is useless
 	if(counter == -1){counter = 0;return;}
@@ -134,7 +131,6 @@ void TracingOneSignal::updateHook()
 
 void TracingOneSignal::stopHook()
 {
-	Logger::In in("TracingOneSignal::Stop");	
 	
 	FILE * pFile;
 	pFile = fopen (filename.c_str(),"w");

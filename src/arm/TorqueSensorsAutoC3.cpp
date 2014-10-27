@@ -22,7 +22,6 @@ SensorTorquesAutoC3::~SensorTorquesAutoC3(){}
 
 bool SensorTorquesAutoC3::configureHook()
 {
-	Logger::In in("SensorTorquesAutoC3:Configure");	
 		
     if (c1.size()!= N || c2.size()!= N ) {
         log(Error)<<"ARM_TorqueSensors: Could not configure component: Erroneus parameters: c1, c2 or c3."<< endlog();
@@ -42,7 +41,6 @@ bool SensorTorquesAutoC3::configureHook()
 
 bool SensorTorquesAutoC3::startHook()
 {
-	Logger::In in("SensorTorquesAutoC3::Start");	
 	
 	if (!voltage_inport.connected()) {
 		log(Error)<<"SensorTorques: Could not start component: Inputport not connected!"<<endlog();
@@ -56,7 +54,6 @@ bool SensorTorquesAutoC3::startHook()
 
 void SensorTorquesAutoC3::updateHook()
 {
-	Logger::In in("SensorTorquesAutoC3::Update");	
 	
 	voltage_inport.read(Vmeasured);
 	    

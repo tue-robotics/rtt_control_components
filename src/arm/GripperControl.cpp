@@ -40,7 +40,6 @@ GripperControl::~GripperControl() {}
 
 bool GripperControl::configureHook() 
 {
-	Logger::In in("GripperControl::Configure");
 	
 	torques.assign(8,0.0); 
 	measPos.assign(8,0.0);
@@ -53,14 +52,12 @@ bool GripperControl::configureHook()
 
 bool GripperControl::startHook() 
 {
-	Logger::In in("GripperControl::Start");	
 	
 	return true;
 }
 
 void GripperControl::updateHook()
 {
-	Logger::In in("GripperControl::Update");
 		
 	bool resetGripper;
 	

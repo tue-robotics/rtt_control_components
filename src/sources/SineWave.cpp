@@ -37,7 +37,6 @@ SineWave::~SineWave(){}
 
 bool SineWave::configureHook()
 {
-  Logger::In in("SineWave::configureHook()");
   
   /*** Adding ports ***/
   addPort( "out", outport ).doc("Vector of double values");
@@ -64,7 +63,6 @@ bool SineWave::configureHook()
 
 bool SineWave::startHook()
 {
-  Logger::In in("SineWave::startHook()");
   
   if ( !outport.connected() ) {
     log(Warning)<<"Output port not connected!"<<endlog();
@@ -94,7 +92,6 @@ bool SineWave::startHook()
 
 void SineWave::updateHook()
 {
-  Logger::In in("SineWave::updateHook()");
   
   doubles output(vector_size,0.0);
   //double step = 2*PI/256;//remove
