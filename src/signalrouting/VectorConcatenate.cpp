@@ -88,7 +88,7 @@ void VectorConcatenate::updateHook()
 	for ( uint i = 0; i < N; i++ ) {
 		doubles input;
 		if (inports[i].read( input ) == NewData ) {
-			log(Error)<<"VectorConcatenate Received new data from port number: [" << i+1 << "]!"<<endlog();
+			//log(Error)<<"VectorConcatenate Received new data from port number: [" << i+1 << "]!"<<endlog();
 		}
 		vector_size = input.size();
 		for ( uint j = 0; j < vector_size; j++ ) {
@@ -96,7 +96,6 @@ void VectorConcatenate::updateHook()
 		}
 	}
 
-	log(Error)<<"VectorConcatenate parameters not valid!"<<endlog();
 	outport.write( output );
 }
 

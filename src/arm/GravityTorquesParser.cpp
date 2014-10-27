@@ -82,8 +82,6 @@ bool GravityTorquesParser::startHook()
 
 void GravityTorquesParser::updateHook()
 {
-	Logger::In in("GravityTorquesParser::Update");
-		
     // read jointAngles
     jointAngles.assign(nrJoints,0.0);
 
@@ -105,8 +103,6 @@ void GravityTorquesParser::updateHook()
 
 doubles GravityTorquesParser::ComputeGravityTorques(KDL::JntArray q_current_)
 {
-	Logger::In in("GravityTorquesParser::ComputeGravityTorques");	
-	
     doubles gravityTorques_(nrJoints,0.0);
 
     for (uint i=0; i<nrMasses; i++) {
