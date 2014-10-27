@@ -230,11 +230,13 @@ orocos_component(ReporterTrigger src/tracing/ReporterTrigger.cpp ${HEADER_FILES}
 orocos_component(Tracing src/tracing/Tracing.cpp ${HEADER_FILES})
 orocos_component(TracingOneSignal src/tracing/TracingOneSignal.cpp ${HEADER_FILES})
 orocos_component(TracingTimeStamp src/tracing/TracingTimeStamp.cpp ${HEADER_FILES})
+orocos_component(TraceCrash src/tracing/TraceCrash.cpp ${HEADER_FILES})
 target_link_libraries(Reporter ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(ReporterTrigger ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(Tracing ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(TracingOneSignal ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(TracingTimeStamp ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
+target_link_libraries(TraceCrash ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 
 ### Orocos Components - Dynamixel ###
 orocos_component(DynamixelController src/dynamixel/DynamixelController.cpp ${HEADER_FILES})
