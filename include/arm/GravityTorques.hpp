@@ -45,7 +45,7 @@ namespace ARM
      * Rewrite to parse urdf in stead of declaring parameters in ops file
 	 */
 	
-	class GravityTorquesParser : 
+	class GravityTorques : 
 	
 	public RTT::TaskContext
 	{
@@ -81,8 +81,8 @@ namespace ARM
 
 	public:
 	
-	GravityTorquesParser(const std::string& name);
-	~GravityTorquesParser();
+	GravityTorques(const std::string& name);
+	~GravityTorques();
 	
 	bool configureHook();
 	bool startHook();

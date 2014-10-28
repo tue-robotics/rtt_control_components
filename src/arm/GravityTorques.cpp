@@ -10,13 +10,13 @@
 #include <ros/ros.h>
 #include <kdl/chainjnttojacsolver.hpp>
 #include <urdf/model.h>
-#include "GravityTorquesParser.hpp"
+#include "GravityTorques.hpp"
 
 using namespace std;
 using namespace KDL;
 using namespace ARM;
 
-GravityTorquesParser::GravityTorquesParser(const std::string& name)
+GravityTorques::GravityTorques(const std::string& name)
 	: TaskContext(name, PreOperational)
 {
 	// declaration of ports
@@ -28,9 +28,9 @@ GravityTorquesParser::GravityTorquesParser(const std::string& name)
     addProperty( "GravityVector", GravityVector ).doc("Gravity Vector depends on choice of base frame");
 }
 
-GravityTorquesParser::~GravityTorquesParser(){}
+GravityTorques::~GravityTorques(){}
 
-bool GravityTorquesParser::configureHook()
+bool GravityTorques::configureHook()
 {
 	
     // Fetch robot_model_ from parameter server (URDF robot model)
@@ -41,24 +41,24 @@ bool GravityTorquesParser::configureHook()
     ROS_INFO("Reading xml file from parameter server");
     std::string urdf_model_string;
     if (!n.getParam(full_urdf_xml,urdf_model_string)){
-        log(Error)<<"ARM GravityTorquesParser: Could not load the xml from parameter server: " <<full_urdf_xml << "!" <<endlog();
+        log(Error)<<"ARM GravityTorques: Could not load the xml from parameter server: " <<full_urdf_xml << "!" <<endlog();
         return false;
     }
      
     // Construct KDL::Tree from URDF model
     if (!kdl_parser::treeFromString(urdf_model_string, kdl_tree_)) {
-        log(Error)<<"ARM GravityTorquesParser:Could not construct tree object from URDF model!" <<endlog();
+        log(Error)<<"ARM GravityTorques:Could not construct tree object from URDF model!" <<endlog();
         return false;
     }
         
     // Extract KDL::Chain from robot tree
     if (!kdl_tree_.getChain(base_link_name, tip_link_name, kdl_chain_)) {
-        log(Error)<<"ARM GravityTorquesParser: Could not construct chain object from " << base_link_name << " to " << tip_link_name << "!" <<endlog();
+        log(Error)<<"ARM GravityTorques: Could not construct chain object from " << base_link_name << " to " << tip_link_name << "!" <<endlog();
         return false;
     }
 
     uint nrJoints = kdl_chain_.getNrOfSegments();
-    log(Error)<<"ARM GravityTorquesParser: NrJoints:! " << nrJoints <<endlog();
+    log(Error)<<"ARM GravityTorques: NrJoints:! " << nrJoints <<endlog();
 
     nrMasses = 1;
     KDL::Vector kdlvectorzero;
@@ -72,7 +72,7 @@ bool GravityTorquesParser::configureHook()
         if (segmFrameVector != kdlvectorzero) {
             mass_indexes[nrMasses-1] = i;
             nrMasses++;
-            log(Warning)<<"ARM GravityTorquesParser: Vector [" << segmFrameVector[0] << "," << segmFrameVector[1] << "," << segmFrameVector[2] << "]" <<endlog();
+            log(Warning)<<"ARM GravityTorques: Vector [" << segmFrameVector[0] << "," << segmFrameVector[1] << "," << segmFrameVector[2] << "]" <<endlog();
          }
     }
 
@@ -84,27 +84,27 @@ bool GravityTorquesParser::configureHook()
         }
     }
 
-    log(Error)<<"ARM GravityTorquesParser: End Configure: nrMasses:! " << nrMasses <<endlog();
+    log(Error)<<"ARM GravityTorques: End Configure: nrMasses:! " << nrMasses <<endlog();
 
     return true;
     }
 
-bool GravityTorquesParser::startHook()
+bool GravityTorques::startHook()
 {
 	
     //! Connection checks
     if(!jointAnglesPort.connected()){
-        log(Error)<<"ARM GravityTorquesParser: Could not start Gravity torques component: jointAnglesPort not connected!"<<endlog();
+        log(Error)<<"ARM GravityTorques: Could not start Gravity torques component: jointAnglesPort not connected!"<<endlog();
         return false;
     }
     if(!gravityTorquesPort.connected()){
-        log(Error)<<"ARM GravityTorquesParser: Could not start Gravity torques component: Outputport not connected!"<<endlog();
+        log(Error)<<"ARM GravityTorques: Could not start Gravity torques component: Outputport not connected!"<<endlog();
     }
 
     return true;
 }
 
-void GravityTorquesParser::updateHook()
+void GravityTorques::updateHook()
 {
     // read jointAngles
     jointAngles.assign(nrJoints,0.0);
@@ -125,7 +125,7 @@ void GravityTorquesParser::updateHook()
     }
 }
 
-doubles GravityTorquesParser::ComputeGravityTorques(KDL::JntArray q_current_)
+doubles GravityTorques::ComputeGravityTorques(KDL::JntArray q_current_)
 {
     doubles gravityTorques_(nrJoints,0.0);
 
@@ -163,4 +163,4 @@ doubles GravityTorquesParser::ComputeGravityTorques(KDL::JntArray q_current_)
     return gravityTorques_;
 }
 
-ORO_CREATE_COMPONENT(ARM::GravityTorquesParser)
+ORO_CREATE_COMPONENT(ARM::GravityTorques)
