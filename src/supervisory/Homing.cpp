@@ -344,7 +344,7 @@ void Homing::updateHomingRef( uint jointID)
 
         // determine direction using absolute sensor if positive joint direction and positive sensor direction are opposite
         // that can be corrected using the property homing_direction
-        double direction = 1.0; // positive unless goal - measured < 0
+        double direction = 1.0*homing_direction[jointID]; // positive unless goal - measured < 0
         if ( (( (double) homing_absPos[jointID])-absolutesensoroutput[jointID]) < 0.0 ) {
             direction = -1.0*homing_direction[jointID];
         }
@@ -380,7 +380,7 @@ bool Homing::evaluateHomingCriterion( uint jointID)
     } else if (homing_type[jointID] == 3 ) {
         doubles absolutesensoroutput;
         absPos_inport.read(absolutesensoroutput);
-        if (absolutesensoroutput[jointID] == (double) homing_absPos[jointID]) {
+        if (abs(absolutesensoroutput[jointID] - (double) homing_absPos[jointID]) <= 1) {
             result = true;
         }
     } else if (homing_type[jointID] == 4 ) {
