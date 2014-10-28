@@ -30,7 +30,7 @@ namespace ARM
     typedef std::vector<uint> ints;
     typedef std::vector<string> strings;
 	
-    /*! \class GravityTorques
+    /*! \class GravityTorquesManual
      * \brief Defines Orocos component for computation of joint torques
      * as a result of gravity. Note that only positive revolute joints are
      * supported however support of prismatic joints joints could be easily
@@ -62,7 +62,7 @@ namespace ARM
      * Rewrite to parse urdf in stead of declaring parameters in ops file
 	 */
 	
-	class GravityTorques : 
+	class GravityTorquesManual : 
 	
 	public RTT::TaskContext
 	{
@@ -100,8 +100,8 @@ namespace ARM
 
 	public:
 	
-	GravityTorques(const std::string& name);
-	~GravityTorques();
+	GravityTorquesManual(const std::string& name);
+	~GravityTorquesManual();
 	
 	bool configureHook();
 	bool startHook();

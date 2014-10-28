@@ -21,9 +21,9 @@ GravityTorquesParser::GravityTorquesParser(const std::string& name)
 {
 	// declaration of ports
 	addEventPort("in", jointAnglesPort);
-    addPort("out",gravityTorquesPort);
+    addPort("out",gravityTorquesPort); 
     
-    addProperty( "BaseLinkName", base_link_name ).doc("Name of the Base link frame of the manipulator");
+    addProperty( "BaseLinkName", base_link_name ).doc("Name of the Base link frame of the manipulator"); 
     addProperty( "TipLinkName", tip_link_name ).doc("Name of the Tip link frame of the manipulator");
     addProperty( "GravityVector", GravityVector ).doc("Gravity Vector depends on choice of base frame");
 }
@@ -50,14 +50,41 @@ bool GravityTorquesParser::configureHook()
         log(Error)<<"ARM GravityTorquesParser:Could not construct tree object from URDF model!" <<endlog();
         return false;
     }
-    log(Warning)<<"ARM GravityTorquesParser: constructed tree object from URDF model :)" <<endlog();
         
     // Extract KDL::Chain from robot tree
     if (!kdl_tree_.getChain(base_link_name, tip_link_name, kdl_chain_)) {
         log(Error)<<"ARM GravityTorquesParser: Could not construct chain object from " << base_link_name << " to " << tip_link_name << "!" <<endlog();
         return false;
     }
-    log(Warning)<<"ARM GravityTorquesParser: constructed chain object from " << base_link_name << " to " << tip_link_name << " :) :) :) !" <<endlog();
+
+    uint nrJoints = kdl_chain_.getNrOfSegments();
+    log(Error)<<"ARM GravityTorquesParser: NrJoints:! " << nrJoints <<endlog();
+
+    nrMasses = 1;
+    KDL::Vector kdlvectorzero;
+    kdlvectorzero.Zero();
+    mass_indexes.resize(nrJoints);
+    for (uint i=0; i<nrJoints; i++) {
+        mass_indexes[i] = 0;     
+        KDL::Segment segm = kdl_chain_.getSegment(i);
+        KDL::Frame segmFrame = segm.getFrameToTip();
+        KDL::Vector segmFrameVector = segmFrame.p;
+        if (segmFrameVector != kdlvectorzero) {
+            mass_indexes[nrMasses-1] = i;
+            nrMasses++;
+            log(Warning)<<"ARM GravityTorquesParser: Vector [" << segmFrameVector[0] << "," << segmFrameVector[1] << "," << segmFrameVector[2] << "]" <<endlog();
+         }
+    }
+
+    //! Construct a vector consisting of a gravity wrench vector for each mass
+    for (uint i = 0; i < nrMasses; i++) {
+        GravityWrenches[i].resize(6);
+        for (uint k=0; k<3; k++) {
+            GravityWrenches[i](k) = GravityVector[k]*masses[mass_indexes[i]];
+        }
+    }
+
+    log(Error)<<"ARM GravityTorquesParser: End Configure: nrMasses:! " << nrMasses <<endlog();
 
     return true;
     }
@@ -72,7 +99,6 @@ bool GravityTorquesParser::startHook()
     }
     if(!gravityTorquesPort.connected()){
         log(Error)<<"ARM GravityTorquesParser: Could not start Gravity torques component: Outputport not connected!"<<endlog();
-        return false;
     }
 
     return true;

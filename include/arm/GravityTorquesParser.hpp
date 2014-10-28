@@ -59,6 +59,7 @@ namespace ARM
     std::string tip_link_name; 
 	std::string urdf_xml;
 	std::string full_urdf_xml;
+	doubles masses;
     doubles GravityVector;
 
     // input variable

@@ -10,11 +10,11 @@
 #include <ros/ros.h>
 #include <kdl/chainjnttojacsolver.hpp>
 
-#include "GravityTorques.hpp"
+#include "GravityTorquesManual.hpp"
 
 using namespace ARM;
 
-GravityTorques::GravityTorques(const std::string& name)
+GravityTorquesManual::GravityTorquesManual(const std::string& name)
 	: TaskContext(name, PreOperational)
 {
 	// declaration of ports
@@ -37,24 +37,24 @@ GravityTorques::GravityTorques(const std::string& name)
     addProperty( "GravityVector", GravityVector ).doc("Gravity Vector depends on choice of base frame. (array(0.0, 0.0, -9.81) for negative z direction)");
 }
 
-GravityTorques::~GravityTorques(){}
+GravityTorquesManual::~GravityTorquesManual(){}
 
-bool GravityTorques::configureHook()
+bool GravityTorquesManual::configureHook()
 {
 	
     //! Parameter input checks
     if (nrJoints >= MAXJOINTS) {
-        log(Error)<<"ARM GravityTorques: Could not configure Gravity torques component: The number of joints " << nrJoints << " exceeds the maximum number of joints " << MAXJOINTS << "!"<<endlog();
+        log(Error)<<"ARM GravityTorquesManual: Could not configure Gravity torques component: The number of joints " << nrJoints << " exceeds the maximum number of joints " << MAXJOINTS << "!"<<endlog();
         return false;
     }
 
     if ( joint_type.size() != nrJoints || joint_axis.size() != nrJoints || rotation_angle.size() != nrJoints || rotation_axis.size() != nrJoints || translation_X.size() != nrJoints|| translation_Y.size() != nrJoints|| translation_Z.size() != nrJoints ) {
-        log(Error)<<"ARM GravityTorques: Could not start Gravity torques component due to Wrongly sized arm parameters!"<<endlog();
+        log(Error)<<"ARM GravityTorquesManual: Could not start Gravity torques component due to Wrongly sized arm parameters!"<<endlog();
         return false;
     }
 
     if ( masses.size() != nrJoints || COG_X.size() != nrJoints || COG_Y.size() != nrJoints || COG_Z.size() != nrJoints ) {
-        log(Error)<<"ARM GravityTorques: Could not start Gravity torques component due to Wrongly sized masses, COG_X, COG_Y or COG_Z!"<<endlog();
+        log(Error)<<"ARM GravityTorquesManual: Could not start Gravity torques component due to Wrongly sized masses, COG_X, COG_Y or COG_Z!"<<endlog();
         return false;
     }
 
@@ -73,7 +73,7 @@ bool GravityTorques::configureHook()
             index++;
         }
     }
-    log(Info)<<"ARM GravityTorques: Number of masses: [" << nrMasses  << "]" <<endlog();
+    log(Info)<<"ARM GravityTorquesManual: Number of masses: [" << nrMasses  << "]" <<endlog();
 
     //! Construct a vector consisting of a gravity wrench vector for each mass
     for (uint i = 0; i < nrMasses; i++) {
@@ -85,7 +85,7 @@ bool GravityTorques::configureHook()
 
     //! Construct chains and solvers for each mass
     for (uint i = 0; i < nrMasses; i++) {
-        log(Info)<<"ARM GravityTorques: Constructing Chain and Solver to link: [" << mass_indexes[i]  << "] and with mass: [" << masses[mass_indexes[i]] << "]" <<endlog();
+        log(Info)<<"ARM GravityTorquesManual: Constructing Chain and Solver to link: [" << mass_indexes[i]  << "] and with mass: [" << masses[mass_indexes[i]] << "]" <<endlog();
         for (uint j = 0; j < (mass_indexes[i]+1); j++) {
 
             KDL::Segment Segment_;
@@ -121,7 +121,7 @@ bool GravityTorques::configureHook()
                 rotation = "";
             }
             else {
-                log(Error)<<"ARM GravityTorques: Could not start Gravity torques component: wrong rotation_axis for joint " << j << "!"<<endlog();
+                log(Error)<<"ARM GravityTorquesManual: Could not start Gravity torques component: wrong rotation_axis for joint " << j << "!"<<endlog();
                 return false;
             }
 
@@ -147,19 +147,19 @@ bool GravityTorques::configureHook()
                 }
             }
             else if (joint_type[j] == "P" ) {
-                log(Error)<<"ARM GravityTorques: Could not start Gravity torques component: Prismatic Joints are not yet supported!"<<endlog();
+                log(Error)<<"ARM GravityTorquesManual: Could not start Gravity torques component: Prismatic Joints are not yet supported!"<<endlog();
                 return false;
             }
             else {
-                log(Error)<<"ARM GravityTorques: Could not start Gravity torques component: wrong joint type for joint " << j << "!"<<endlog();
+                log(Error)<<"ARM GravityTorquesManual: Could not start Gravity torques component: wrong joint type for joint " << j << "!"<<endlog();
                 return false;
             }
             RobotArmChain[i].addSegment(Segment_);
 
-            log(Info)<<"ARM GravityTorques: Revolute joint around " << joint_axis[j] << ", " << rotation << rotation_angle[j] << ", Translate with [" << translation_X[j] << "," << translation_Y[j] << "," << translation_Z[j] << "]" <<endlog();
+            log(Info)<<"ARM GravityTorquesManual: Revolute joint around " << joint_axis[j] << ", " << rotation << rotation_angle[j] << ", Translate with [" << translation_X[j] << "," << translation_Y[j] << "," << translation_Z[j] << "]" <<endlog();
         }
 
-        log(Info)<<"ARM GravityTorques: Size of RobotArmChain is : " << RobotArmChain[i].segments.size() << "!"<<endlog();
+        log(Info)<<"ARM GravityTorquesManual: Size of RobotArmChain is : " << RobotArmChain[i].segments.size() << "!"<<endlog();
 
         jacobian_solver[i] = new KDL::ChainJntToJacSolver(RobotArmChain[i]);
     }
@@ -167,23 +167,23 @@ bool GravityTorques::configureHook()
     return true;
 }
 
-bool GravityTorques::startHook()
+bool GravityTorquesManual::startHook()
 {
 	
     //! Connection checks
     if ( !jointAnglesPort.connected() ){
-        log(Error)<<"ARM GravityTorques: Could not start Gravity torques component: jointAnglesPort not connected!"<<endlog();
+        log(Error)<<"ARM GravityTorquesManual: Could not start Gravity torques component: jointAnglesPort not connected!"<<endlog();
         return false;
     }
     if ( !gravityTorquesPort.connected() ){
-        log(Error)<<"ARM GravityTorques: Could not start Gravity torques component: Outputport not connected!"<<endlog();
+        log(Error)<<"ARM GravityTorquesManual: Could not start Gravity torques component: Outputport not connected!"<<endlog();
         return false;
     }
 
     return true;
 }
 
-void GravityTorques::updateHook()
+void GravityTorquesManual::updateHook()
 {
 	
     // read jointAngles
@@ -205,7 +205,7 @@ void GravityTorques::updateHook()
     }
 }
 
-doubles GravityTorques::ComputeGravityTorques(KDL::JntArray q_current_)
+doubles GravityTorquesManual::ComputeGravityTorques(KDL::JntArray q_current_)
 {
 	
     doubles gravityTorques_(nrJoints,0.0);
@@ -244,4 +244,4 @@ doubles GravityTorques::ComputeGravityTorques(KDL::JntArray q_current_)
     return gravityTorques_;
 }
 
-ORO_CREATE_COMPONENT(ARM::GravityTorques)
+ORO_CREATE_COMPONENT(ARM::GravityTorquesManual)
