@@ -7,6 +7,7 @@ find_package(catkin REQUIRED COMPONENTS
   diagnostic_msgs
   amigo_ref_interpolator
   scl_filters
+  soem_beckhoff_drivers
   roscpp
   tf
   kdl_parser
