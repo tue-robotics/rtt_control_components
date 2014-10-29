@@ -176,8 +176,7 @@ bool GravityTorquesManual::startHook()
         return false;
     }
     if ( !gravityTorquesPort.connected() ){
-        log(Error)<<"ARM GravityTorquesManual: Could not start Gravity torques component: Outputport not connected!"<<endlog();
-        return false;
+        log(Warning)<<"ARM GravityTorquesManual: Gravity torques component: Outputport not connected!"<<endlog();
     }
 
     return true;
