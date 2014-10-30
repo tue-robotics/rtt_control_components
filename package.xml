@@ -16,7 +16,6 @@
   <build_depend>rtt_roscomm</build_depend>
   <build_depend>rtt_rosparam</build_depend>
   <build_depend>soem_master</build_depend>
-  <build_depend>soem_beckhoff_drivers</build_depend>
   <build_depend>std_msgs</build_depend>
   <build_depend>diagnostic_msgs</build_depend>
   <build_depend>orogen</build_depend>
@@ -42,7 +41,6 @@
   <run_depend>rtt_roscomm</run_depend>  
   <run_depend>rtt_rosparam</run_depend>  
   <run_depend>soem_master</run_depend>
-  <run_depend>soem_beckhoff_drivers</run_depend>
   <run_depend>std_msgs</run_depend>
   <run_depend>diagnostic_msgs</run_depend>
   <run_depend>orogen</run_depend>
@@ -73,7 +71,6 @@
       <plugin_depend>rtt_diagnostic_msgs</plugin_depend>
       <plugin_depend>rtt_sensor_msgs</plugin_depend>
       <plugin_depend>rtt_nav_msgs</plugin_depend>
-      <plugin_depend>soem_beckhoff_drivers</plugin_depend>
     </rtt_ros>
   </export>
 </package>

@@ -116,6 +116,10 @@ bool GravityTorques::configureHook()
         log(Warning)<<"ARM GravityTorques: Created Gravity Wrench [" << GravityWrenches[m](0) << "," << GravityWrenches[m](1) << "," << GravityWrenches[m](2) << "," << GravityWrenches[m](3) << "," << GravityWrenches[m](4) << "," << GravityWrenches[m](5) << "]" <<endlog();
     }
 
+	if (mass_indexes.size() >= 2 ) { 
+		log(Warning)<<"ARM GravityTorques: Mass indexes are [" << mass_indexes[0] << "," << mass_indexes[1] << "," << mass_indexes[2] << "]" <<endlog(); 
+	}
+
     return true;
 }
 

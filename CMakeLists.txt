@@ -7,7 +7,6 @@ find_package(catkin REQUIRED COMPONENTS
   diagnostic_msgs
   amigo_ref_interpolator
   scl_filters
-  soem_beckhoff_drivers
   roscpp
   tf
   kdl_parser
@@ -242,4 +241,18 @@ target_link_libraries(TraceCrash ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 ### Orocos Components - Dynamixel ###
 orocos_component(DynamixelController src/dynamixel/DynamixelController.cpp ${HEADER_FILES})
 target_link_libraries(DynamixelController ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
+
+### Add dependencies for all components making use of messages inside soem_beckhoff_drivers
+add_dependencies(Supervisor soem_beckhoff_drivers_generate_messages_cpp)
+add_dependencies(DynamixelController soem_beckhoff_drivers_generate_messages_cpp)
+add_dependencies(DigitalOuts soem_beckhoff_drivers_generate_messages_cpp)
+add_dependencies(AnalogInsPera soem_beckhoff_drivers_generate_messages_cpp)
+add_dependencies(ReadEncodersTimeStamp soem_beckhoff_drivers_generate_messages_cpp)
+add_dependencies(ReadEncoders soem_beckhoff_drivers_generate_messages_cpp)
+add_dependencies(AnalogInsGeneric soem_beckhoff_drivers_generate_messages_cpp)
+add_dependencies(AnalogOutsGeneric soem_beckhoff_drivers_generate_messages_cpp)
+add_dependencies(AnalogInsPera2 soem_beckhoff_drivers_generate_messages_cpp)
+add_dependencies(AnalogIns soem_beckhoff_drivers_generate_messages_cpp)
+add_dependencies(AnalogOutsPera soem_beckhoff_drivers_generate_messages_cpp)
+add_dependencies(AnalogOuts soem_beckhoff_drivers_generate_messages_cpp)
 
