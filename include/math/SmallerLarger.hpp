@@ -57,6 +57,7 @@ namespace MATH
     typedef vector<double> doubles;
     typedef vector<bool>   bools;
     typedef vector<string> strings;
+	typedef std::vector<int> ints;
 
     /* Declaring in and output ports*/
     InputPort<doubles> inports[maxN];
@@ -74,7 +75,7 @@ namespace MATH
     doubles     input_sizes; // sizes of the inputports
     doubles     output_sizes; // sizes of the outputports
     doubles     bound_values; // boundary values
-    bools       smaller; // comparison smaller or larger
+    ints       	smaller; // comparison smaller or larger
     bool        direct_to_ROS; // direct outputs to ros
 
     /* Declaring global variables */

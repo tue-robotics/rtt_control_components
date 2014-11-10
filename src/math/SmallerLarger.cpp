@@ -23,7 +23,7 @@ SmallerLarger::SmallerLarger(const string& name) :
     direct_to_ROS(false)
 {
     // Adding ports
-    addProperty( "numberofinports", n_signals ).doc("The number of inports");
+    addProperty( "numberofinports", n_inports ).doc("The number of inports");
     addProperty( "numberofoutports", n_outports ).doc("The number of outports");
     addProperty( "input_sizes", input_sizes ).doc("Vector specifying sizes of the inports");
     addProperty( "output_sizes", output_sizes ).doc("Vector specifying sizes of the outports");
@@ -42,7 +42,7 @@ bool SmallerLarger::configureHook()
         n_signals += input_sizes[i];
     }
     outputs.assign(n_signals,false);
-
+    
     // Verify property feasibility
     if (input_sizes.size()  == 0 || output_sizes.size()  == 0 ) {
         log(Error) << "SmallerLarger: Please make sure the input_sizes and output_sizes are properly set before the call to the configureHook()" << endlog();
