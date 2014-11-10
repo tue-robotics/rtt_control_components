@@ -16,7 +16,7 @@
 
 using namespace std;
 using namespace RTT;
-using namespace ROS;
+using namespace MATH;
 
 SmallerLarger::SmallerLarger(const string& name) :
     TaskContext(name, PreOperational),
@@ -144,4 +144,4 @@ void SmallerLarger::updateHook()
     }
 }
 
-ORO_CREATE_COMPONENT(ROS::SmallerLarger)
+ORO_CREATE_COMPONENT(MATH::SmallerLarger)

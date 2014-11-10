@@ -28,7 +28,7 @@ inline string to_string (const T& t){
 
 using namespace RTT;
 
-namespace ROS
+namespace MATH
 {
   /*! \class SmallerLarger
    * @brief Check if an input signal is smaller/larger than a constant value
