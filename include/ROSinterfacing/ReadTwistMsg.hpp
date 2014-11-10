@@ -54,6 +54,7 @@ namespace ROS
     bool configureHook();
     bool startHook();
     void updateHook();
+    void stopHook();
     };
 }
 #endif

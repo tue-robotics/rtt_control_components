@@ -162,4 +162,11 @@ void ReadTwistMsg::updateHook()
 	outport_acc.write( output_acc );
 }
 
+void ReadTwistMsg::stopHook()
+{
+    doubles output_zero(3,0.0);
+    outport_vel.write(output_zero);
+    outport_acc.write(output_zero);
+}
+
 ORO_CREATE_COMPONENT(ROS::ReadTwistMsg)
