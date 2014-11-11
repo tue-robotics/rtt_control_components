@@ -212,70 +212,79 @@ void Controller::updateHook()
     positions_inport.read(positions);
 
 	enable_inport.read(safe);
-	if (!safe) {
-		doubles output(vector_size,0.0);
-		controleffort_outport.write(output);
-		return;
-	}
-	else {
 
+	if (!safe) {
+        // Joint errors set to zero
+        for (uint i = 0; i < vector_size; i++) {
+            jointErrors[i] = 0.0;
+        }
+    } else {
 		// Compute joint errors
 		for (uint i = 0; i < vector_size; i++) {
 			jointErrors[i] = references[i]-positions[i];
 		}
-		// Apply Gain
-		for (uint i = 0; i < vector_size; i++) {
-			output_Gains[i] = jointErrors[i]*gains[i];
-		}
-		// Apply Weak Integrator
-		if (WeakIntegrator) {
-			for (uint i = 0; i < vector_size; i++) {
-				filters_WeakIntegrator[i]->update( output_Gains[i] );
-				output_WeakIntegrator[i] = filters_WeakIntegrator[i]->getOutput();
-			}
-		} else {
-			for (uint i = 0; i < vector_size; i++) {
-				output_WeakIntegrator[i] = output_Gains[i];
-			}
-		}
-		// Apply Lead Lag
-		if (LeadLag) {
-			for (uint i = 0; i < vector_size; i++) {
-				filters_LeadLag[i]->update( output_WeakIntegrator[i] );
-				output_LeadLag[i] = filters_LeadLag[i]->getOutput();
-			}
-		} else {
-			for (uint i = 0; i < vector_size; i++) {
-				output_LeadLag[i] = output_WeakIntegrator[i];
-			}
-		}
-		// Apply Notch
-		if (Notch) {
-			for (uint i = 0; i < vector_size; i++) {
-				filters_Notch[i]->update( output_LeadLag[i] );
-				output_Notch[i] = filters_Notch[i]->getOutput();
-			}
-		} else {
-			for (uint i = 0; i < vector_size; i++) {
-				output_Notch[i] = output_LeadLag[i];
-			}
-		}
-		// Apply Low Pass
-		if (LowPass) {
-			for (uint i = 0; i < vector_size; i++) {
-				filters_LowPass[i]->update( output_Notch[i] );
-				output[i] = filters_LowPass[i]->getOutput();
-			}
-		} else {
-			for (uint i = 0; i < vector_size; i++) {
-				output[i] = output_Notch[i];
-			}
-		}
-			
-		// Write the outputs
-		controleffort_outport.write(output);
-		jointerrors_outport.write(jointErrors);
-	}
+    }
+
+    // Apply Gain
+    for (uint i = 0; i < vector_size; i++) {
+        output_Gains[i] = jointErrors[i]*gains[i];
+    }
+    // Apply Weak Integrator
+    if (WeakIntegrator) {
+        for (uint i = 0; i < vector_size; i++) {
+            filters_WeakIntegrator[i]->update( output_Gains[i] );
+            output_WeakIntegrator[i] = filters_WeakIntegrator[i]->getOutput();
+        }
+    } else {
+        for (uint i = 0; i < vector_size; i++) {
+            output_WeakIntegrator[i] = output_Gains[i];
+        }
+    }
+    // Apply Lead Lag
+    if (LeadLag) {
+        for (uint i = 0; i < vector_size; i++) {
+            filters_LeadLag[i]->update( output_WeakIntegrator[i] );
+            output_LeadLag[i] = filters_LeadLag[i]->getOutput();
+        }
+    } else {
+        for (uint i = 0; i < vector_size; i++) {
+            output_LeadLag[i] = output_WeakIntegrator[i];
+        }
+    }
+    // Apply Notch
+    if (Notch) {
+        for (uint i = 0; i < vector_size; i++) {
+            filters_Notch[i]->update( output_LeadLag[i] );
+            output_Notch[i] = filters_Notch[i]->getOutput();
+        }
+    } else {
+        for (uint i = 0; i < vector_size; i++) {
+            output_Notch[i] = output_LeadLag[i];
+        }
+    }
+    // Apply Low Pass
+    if (LowPass) {
+        for (uint i = 0; i < vector_size; i++) {
+            filters_LowPass[i]->update( output_Notch[i] );
+            output[i] = filters_LowPass[i]->getOutput();
+        }
+    } else {
+        for (uint i = 0; i < vector_size; i++) {
+            output[i] = output_Notch[i];
+        }
+    }
+
+    if (safe){
+        // Write the outputs
+        jointerrors_outport.write(jointErrors);
+        controleffort_outport.write(output);
+    } else {
+        // Write zero outputs
+        doubles zero_output(vector_size,0.0);
+        jointerrors_outport.write(jointErrors);
+        controleffort_outport.write(zero_output);
+    }
+
 
 }
 
