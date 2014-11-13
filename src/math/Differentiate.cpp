@@ -23,10 +23,14 @@ using namespace MATH;
 Differentiate::Differentiate(const string& name) : 
 	TaskContext(name, PreOperational),
 		vector_size(0),
-		Ts(0.001)
+		Ts(0.001),
+		epsTs(0.0001),
+		time_check(false)
 {
   addProperty( "vector_size", vector_size );
   addProperty( "sampling_time", Ts );
+  addProperty( "allowed_variation_Ts", epsTs );
+  addProperty( "use_Ts_check", time_check );
 }
 
 Differentiate::~Differentiate(){}
@@ -83,13 +87,17 @@ void Differentiate::updateHook()
 
 	determineDt();
 	
-	if (dt > Ts*0.9 && dt < Ts*1.1) {
-		for (uint i = 0; i < vector_size; i++) {
-			output[i] = (input[i] - previous_input[i])/dt;
-		}
-	} else {
-		output = previous_output;
+	for (uint i = 0; i < vector_size; i++) {
+		output[i] = (input[i] - previous_input[i])/dt;
 	}
+	
+	if (time_check) {
+		// user previous output if update time isn't reached
+		if (dt < (Ts-epsTs) || dt > (Ts+epsTs)) {
+			output = previous_output;
+		} 
+	}
+	
 	previous_input = input;
 	previous_output = output;
 

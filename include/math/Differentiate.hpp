@@ -44,6 +44,8 @@ namespace MATH
 		doubles previous_input;
 		doubles previous_output;
 		double Ts;
+		double epsTs;
+		bool time_check;
 
 		double dt;
 		long double old_time;
