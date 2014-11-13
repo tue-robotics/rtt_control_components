@@ -42,6 +42,8 @@ namespace MATH
 		/* Declaring global variables */
 		// Variables for history storage
 		doubles previous_input;
+		doubles previous_output;
+		double Ts;
 
 		double dt;
 		long double old_time;

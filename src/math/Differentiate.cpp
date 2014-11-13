@@ -22,9 +22,11 @@ using namespace MATH;
 
 Differentiate::Differentiate(const string& name) : 
 	TaskContext(name, PreOperational),
-		vector_size(0)
+		vector_size(0),
+		Ts(0.001)
 {
   addProperty( "vector_size", vector_size );
+  addProperty( "sampling_time", Ts );
 }
 
 Differentiate::~Differentiate(){}
@@ -37,12 +39,14 @@ bool Differentiate::configureHook()
 	addPort( "out", outport );
 
 	previous_input.resize(vector_size);
+	previous_output.resize(vector_size);
 
 	return true;
 }
 
 bool Differentiate::startHook()
 {
+
 
 	old_time = os::TimeService::Instance()->getNSecs()*1e-9;
 
@@ -63,8 +67,8 @@ bool Differentiate::startHook()
 
 	for (uint i = 0; i < vector_size; i++) {
 		previous_input[i]  = 0.0;
+		previous_output[i] = 0.0;
 	}
-
 	return true;
 }
 
@@ -78,11 +82,16 @@ void Differentiate::updateHook()
 	inport.read( input );
 
 	determineDt();
-
-	for (uint i = 0; i < vector_size; i++) {
+	
+	if (dt > Ts*0.9 && dt < Ts*1.1) {
+		for (uint i = 0; i < vector_size; i++) {
 			output[i] = (input[i] - previous_input[i])/dt;
+		}
+	} else {
+		output = previous_output;
 	}
 	previous_input = input;
+	previous_output = output;
 
 	// Write the outputs
 	outport.write( output );
