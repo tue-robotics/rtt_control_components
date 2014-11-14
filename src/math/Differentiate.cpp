@@ -6,6 +6,9 @@
 * \date March, 2011
 * \version 1.0
 *
+* \Modified by Ton Peters
+* \date November, 2014
+* \version 1.1
 */
 
 #include <rtt/TaskContext.hpp>
@@ -23,14 +26,16 @@ using namespace MATH;
 Differentiate::Differentiate(const string& name) : 
 	TaskContext(name, PreOperational),
 		vector_size(0),
-		Ts(0.001),
-		epsTs(0.0001),
-		time_check(false)
+		Ts(0),
+		epsTs(0),
+		time_check(false),
+		discrete(false)
 {
-  addProperty( "vector_size", vector_size );
-  addProperty( "sampling_time", Ts );
-  addProperty( "allowed_variation_Ts", epsTs );
-  addProperty( "use_Ts_check", time_check );
+  addProperty( "vector_size", 			vector_size )	.doc("Size of the input vector.");
+  addProperty( "sampling_time", 		Ts)				.doc("Optional: Sample time (used for time check and discrete calculation.");
+  addProperty( "use_time_check", 			time_check)		.doc("Optional: Bool, use a time check on 2 consecutive updatehooks.");
+  addProperty( "allowed_variation_Ts", 	epsTs) 			.doc("Optional: Ts +/- epsTs, used as time check.");
+  addProperty( "use_discrete", 			discrete) 		.doc("Optional: Bool, se sampling time for calculation.");
 }
 
 Differentiate::~Differentiate(){}
@@ -68,6 +73,10 @@ bool Differentiate::startHook()
 		log(Error)<<"Differentiate parameters not valid!"<<endlog();
 		return false;
 	}
+	if ( (discrete || time_check) && Ts <= 0) {
+		log(Error)<<"Differentiate, sampling_time not valid!"<<endlog();
+		return false;
+	}
 
 	for (uint i = 0; i < vector_size; i++) {
 		previous_input[i]  = 0.0;
@@ -86,13 +95,18 @@ void Differentiate::updateHook()
 	inport.read( input );
 
 	determineDt();
-	
+
+	// use discrete or continuous time calculation (dt or Ts)
+	double dt_used = dt;
+	if (discrete) dt_used = Ts;
+
+	// calculate output
 	for (uint i = 0; i < vector_size; i++) {
-		output[i] = (input[i] - previous_input[i])/dt;
+		output[i] = (input[i] - previous_input[i])/dt_used;
 	}
-	
+
+	// user previous output if update time isn't reached
 	if (time_check) {
-		// user previous output if update time isn't reached
 		if (dt < (Ts-epsTs) || dt > (Ts+epsTs)) {
 			output = previous_output;
 		} 
