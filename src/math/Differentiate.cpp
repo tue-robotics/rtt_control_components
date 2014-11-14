@@ -33,7 +33,7 @@ Differentiate::Differentiate(const string& name) :
 {
   addProperty( "vector_size", 			vector_size )	.doc("Size of the input vector.");
   addProperty( "sampling_time", 		Ts)				.doc("Optional: Sample time (used for time check and discrete calculation.");
-  addProperty( "use_time_check", 			time_check)		.doc("Optional: Bool, use a time check on 2 consecutive updatehooks.");
+  addProperty( "use_time_check", 		time_check)		.doc("Optional: Bool, use a time check on 2 consecutive updatehooks.");
   addProperty( "allowed_variation_Ts", 	epsTs) 			.doc("Optional: Ts +/- epsTs, used as time check.");
   addProperty( "use_discrete", 			discrete) 		.doc("Optional: Bool, se sampling time for calculation.");
 }
