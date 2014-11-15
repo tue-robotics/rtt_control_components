@@ -27,6 +27,7 @@ include_directories(
 	include/SOEMinterfacing
 	include/ROSinterfacing
 	include/dynamixel
+	include/lighting
 	${catkin_INCLUDE_DIRS} 
 	${scl_filters_INCLUDE_DIRS} 
 	${USE_OROCOS_INCLUDE_DIRS})
@@ -43,7 +44,8 @@ orocos_install_headers( DIRECTORY
 	include/tracing
 	include/SOEMinterfacing
 	include/ROSinterfacing
-	include/dynamixel)
+	include/dynamixel
+	include/lighting)
 
 file(GLOB_RECURSE HEADER_FILES include/*.hpp)
 
@@ -243,6 +245,10 @@ target_link_libraries(TraceCrash ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 ### Orocos Components - Dynamixel ###
 orocos_component(DynamixelController src/dynamixel/DynamixelController.cpp ${HEADER_FILES})
 target_link_libraries(DynamixelController ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
+
+### Orocos Components - Lighting ###
+orocos_component(rgb_controller src/lighting/rgb_controller.cpp ${HEADER_FILES})
+target_link_libraries(rgb_controller ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 
 ### Add dependencies for all components making use of messages inside soem_beckhoff_drivers
 add_dependencies(Supervisor soem_beckhoff_drivers_generate_messages_cpp)
