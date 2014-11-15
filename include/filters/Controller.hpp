@@ -85,6 +85,7 @@ namespace FILTERS
         bool configureHook();
         bool startHook();
         void updateHook();
+        void stopHook();
 
     };
 }

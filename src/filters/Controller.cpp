@@ -29,7 +29,7 @@ Controller::Controller(const string& name) :
     addProperty("controllers",                  controllers)            .doc("List of used controllers");
     addProperty("sampling_time",                Ts)                     .doc("Sampling time");
     
-    // Properties Controllers (fill in only for the used filters)  
+    // Properties Controllers (fill in only for the used filters)
     addProperty("zero_freq_WeakIntegrator",     fz_WeakIntegrator)      .doc("zero frequency of the weak integrator");
     addProperty("zero_freq_LeadLag",            fz_LeadLag)             .doc("zero frequency of the lead lag filter");
     addProperty("pole_freq_LeadLag",            fp_LeadLag)             .doc("pole frequency of the lead lag filter");
@@ -51,47 +51,47 @@ Controller::Controller(const string& name) :
 Controller::~Controller()
 {
     for (unsigned int i = 0; i < vector_size; i++)
-    {		
-		if (WeakIntegrator) {
-			delete filters_WeakIntegrator[i];
-			filters_WeakIntegrator[i] = NULL;
-		}
-		if (LeadLag) {
-			delete filters_LeadLag[i];
-			filters_LeadLag[i]= NULL;
-		}
-		if (LowPass) {
-			delete filters_LowPass[i];
-			filters_LowPass[i]= NULL;
-		}
-		if (Notch) {
-			delete filters_Notch[i];
-			filters_Notch[i]= NULL;
-		}
+    {
+        if (WeakIntegrator) {
+            delete filters_WeakIntegrator[i];
+            filters_WeakIntegrator[i] = NULL;
+        }
+        if (LeadLag) {
+            delete filters_LeadLag[i];
+            filters_LeadLag[i]= NULL;
+        }
+        if (LowPass) {
+            delete filters_LowPass[i];
+            filters_LowPass[i]= NULL;
+        }
+        if (Notch) {
+            delete filters_Notch[i];
+            filters_Notch[i]= NULL;
+        }
     }
 }
 
 bool Controller::configureHook()
 {
-	// Determine which controllers are demanded and declare their properties
+    // Determine which controllers are demanded and declare their properties
     WeakIntegrator = false;
     LeadLag = false;
     Notch = false;
     LowPass = false;
     
     for (uint i = 0; i < controllers.size(); i++) {
-		if (controllers[i] == "WeakIntegrator") {
-			WeakIntegrator = true;
-		} else if (controllers[i] == "LeadLag") {
-			LeadLag = true;	
-		} else if (controllers[i] == "Notch") {
-			Notch = true;	
-		} else if (controllers[i] == "LowPass") {
-			LowPass = true;	
-		} else {
-			log(Error)<<"Controller: Controller number:" << i << " , " << controllers[i] << " is not supported! Choose from: [WeakIntegrator, LeadLag, Notch, LowPass]!"<<endlog();
-		}
-	}     
+        if (controllers[i] == "WeakIntegrator") {
+            WeakIntegrator = true;
+        } else if (controllers[i] == "LeadLag") {
+            LeadLag = true;
+        } else if (controllers[i] == "Notch") {
+            Notch = true;
+        } else if (controllers[i] == "LowPass") {
+            LowPass = true;
+        } else {
+            log(Error)<<"Controller: Controller number:" << i << " , " << controllers[i] << " is not supported! Choose from: [WeakIntegrator, LeadLag, Notch, LowPass]!"<<endlog();
+        }
+    }
 
     // create filters
     if (WeakIntegrator) {
@@ -176,8 +176,8 @@ bool Controller::configureHook()
             }
         }
     }
-	
-	return true;
+
+    return true;
 }
 
 bool Controller::startHook()
@@ -192,6 +192,9 @@ bool Controller::startHook()
         log(Error)<<"Controller: Outputport not connected!"<<endlog();
         return false;
     }
+
+    // initialize variables
+    safe = false;
 
     return true;
 }
@@ -211,81 +214,115 @@ void Controller::updateHook()
     references_inport.read(references);
     positions_inport.read(positions);
 
-	enable_inport.read(safe);
+    enable_inport.read(safe);
 
-	if (!safe) {
-        // Joint errors set to zero
-        for (uint i = 0; i < vector_size; i++) {
-            jointErrors[i] = 0.0;
-        }
-    } else {
-		// Compute joint errors
-		for (uint i = 0; i < vector_size; i++) {
-			jointErrors[i] = references[i]-positions[i];
-		}
-    }
+    if (!safe) {
+        // Write zero outputs
+        doubles zero_output(vector_size,0.0);
+        jointerrors_outport.write(zero_output);
+        controleffort_outport.write(zero_output);
 
-    // Apply Gain
-    for (uint i = 0; i < vector_size; i++) {
-        output_Gains[i] = jointErrors[i]*gains[i];
-    }
-    // Apply Weak Integrator
-    if (WeakIntegrator) {
-        for (uint i = 0; i < vector_size; i++) {
-            filters_WeakIntegrator[i]->update( output_Gains[i] );
-            output_WeakIntegrator[i] = filters_WeakIntegrator[i]->getOutput();
-        }
-    } else {
-        for (uint i = 0; i < vector_size; i++) {
-            output_WeakIntegrator[i] = output_Gains[i];
-        }
-    }
-    // Apply Lead Lag
-    if (LeadLag) {
-        for (uint i = 0; i < vector_size; i++) {
-            filters_LeadLag[i]->update( output_WeakIntegrator[i] );
-            output_LeadLag[i] = filters_LeadLag[i]->getOutput();
-        }
-    } else {
-        for (uint i = 0; i < vector_size; i++) {
-            output_LeadLag[i] = output_WeakIntegrator[i];
-        }
-    }
-    // Apply Notch
-    if (Notch) {
-        for (uint i = 0; i < vector_size; i++) {
-            filters_Notch[i]->update( output_LeadLag[i] );
-            output_Notch[i] = filters_Notch[i]->getOutput();
-        }
-    } else {
-        for (uint i = 0; i < vector_size; i++) {
-            output_Notch[i] = output_LeadLag[i];
-        }
-    }
-    // Apply Low Pass
-    if (LowPass) {
-        for (uint i = 0; i < vector_size; i++) {
-            filters_LowPass[i]->update( output_Notch[i] );
-            output[i] = filters_LowPass[i]->getOutput();
-        }
-    } else {
-        for (uint i = 0; i < vector_size; i++) {
-            output[i] = output_Notch[i];
-        }
-    }
+        return ;
 
-    if (safe){
+    } else {
+        // Compute joint errors
+        for (uint i = 0; i < vector_size; i++) {
+            jointErrors[i] = references[i]-positions[i];
+        }
+        // Apply Gain
+        for (uint i = 0; i < vector_size; i++) {
+            output_Gains[i] = jointErrors[i]*gains[i];
+        }
+        // Apply Weak Integrator
+        if (WeakIntegrator) {
+            for (uint i = 0; i < vector_size; i++) {
+                filters_WeakIntegrator[i]->update( output_Gains[i] );
+                output_WeakIntegrator[i] = filters_WeakIntegrator[i]->getOutput();
+            }
+        } else {
+            for (uint i = 0; i < vector_size; i++) {
+                output_WeakIntegrator[i] = output_Gains[i];
+            }
+        }
+        // Apply Lead Lag
+        if (LeadLag) {
+            for (uint i = 0; i < vector_size; i++) {
+                filters_LeadLag[i]->update( output_WeakIntegrator[i] );
+                output_LeadLag[i] = filters_LeadLag[i]->getOutput();
+            }
+        } else {
+            for (uint i = 0; i < vector_size; i++) {
+                output_LeadLag[i] = output_WeakIntegrator[i];
+            }
+        }
+        // Apply Notch
+        if (Notch) {
+            for (uint i = 0; i < vector_size; i++) {
+                filters_Notch[i]->update( output_LeadLag[i] );
+                output_Notch[i] = filters_Notch[i]->getOutput();
+            }
+        } else {
+            for (uint i = 0; i < vector_size; i++) {
+                output_Notch[i] = output_LeadLag[i];
+            }
+        }
+        // Apply Low Pass
+        if (LowPass) {
+            for (uint i = 0; i < vector_size; i++) {
+                filters_LowPass[i]->update( output_Notch[i] );
+                output[i] = filters_LowPass[i]->getOutput();
+            }
+        } else {
+            for (uint i = 0; i < vector_size; i++) {
+                output[i] = output_Notch[i];
+            }
+        }
+
         // Write the outputs
         jointerrors_outport.write(jointErrors);
         controleffort_outport.write(output);
-    } else {
-        // Write zero outputs
-        doubles zero_output(vector_size,0.0);
-        jointerrors_outport.write(jointErrors);
-        controleffort_outport.write(zero_output);
+    }
+}
+
+
+void Controller::stopHook()
+{
+    // Write zero outputs
+    doubles zero_output(vector_size,0.0);
+    jointerrors_outport.write(zero_output);
+    controleffort_outport.write(zero_output);
+
+    // reset filters
+    if (WeakIntegrator) {
+        for (uint i = 0; i < vector_size; i++) {
+            // Default discretization method: Prewarp Tustin
+            filters_WeakIntegrator[i]->finalize();
+            filters_WeakIntegrator[i]->configure(fz_WeakIntegrator[i], Ts, 4);
+        }
+    }
+    if (LeadLag) {
+        for (uint i = 0; i < vector_size; i++) {
+            // Default discretization method: Prewarp Tustin
+            filters_LeadLag[i]->finalize();
+            filters_LeadLag[i]->configure(fz_LeadLag[i], fp_LeadLag[i], Ts, 4);
+        }
+    }
+    if (Notch) {
+        for (uint i = 0; i < vector_size; i++) {
+            // Default discretization method: Prewarp Tustin
+            filters_Notch[i]->finalize();
+            filters_Notch[i]->configure(fz_Notch[i], dz_Notch[i], fp_Notch[i], dp_Notch[i], Ts, 4);
+        }
+    }
+    if (LowPass) {
+        for (uint i = 0; i < vector_size; i++) {
+            // Default discretization method: Prewarp Tustin
+            filters_LowPass[i]->finalize();
+            filters_LowPass[i]->configure(fp_LowPass[i], dp_LowPass[i], Ts);
+        }
     }
 
-
+    return ;
 }
 
 ORO_CREATE_COMPONENT(FILTERS::Controller)
