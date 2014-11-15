@@ -262,9 +262,9 @@ void Homing::updateHook()
 				}
                 return;        
             }
-            // if no joint was required to home than do not send homing finished
-            log(Error) << prefix <<"_Homing: Looped over all joints without at least one joint that required homing. Do not call for homing if in the ops file all required_homing are specified false!"<<endlog();
         }    
+		// if no joint was required to home than do not send homing finished
+		log(Error) << prefix <<"_Homing: Looped over all joints without at least one joint that required homing. Do not call for homing if in the ops file all required_homing are specified false!"<<endlog();
     }
 	
     // Check if homing is required for this joint else skip this joint
@@ -279,8 +279,9 @@ void Homing::updateHook()
         ReferenceGenerator_minpos.set(updated_minpos);
         ReferenceGenerator_maxpos.set(updated_maxpos);
         ReferenceGenerator_maxvel.set(updated_maxvel);
-
-		log(Warning) << prefix <<"_Homing: Skipped homing of joint "<< homing_order[jointNr] << ". Proceeding to joint " << homing_order[jointNr+1]<< "!" <<endlog();
+		
+		if (jointNr != (N-1)) {log(Warning) << prefix <<"_Homing: Skipped homing of joint "<< homing_order[jointNr] << ". Proceeding to joint " << homing_order[jointNr+1]<< "!" <<endlog();}
+		if (jointNr == (N-1)) {log(Warning) << prefix <<"_Homing: Skipped homing of last joint "<< homing_order[jointNr] << "!" <<endlog();}
 
         // Go to the next joint and start over
         jointNr++;

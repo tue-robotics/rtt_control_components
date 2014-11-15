@@ -100,6 +100,12 @@ bool ReferenceGenerator::startHook()
        mRefGenerators[i].setRefGen(actualPos[i]);
     }  
 	
+	// print initial value
+	//if (N>5) {
+	//	log(Warning) << "REFGEN: Starting with actual Pos: [" << actualPos[0] << "," << actualPos[1] << "," << actualPos[2] << "," << actualPos[3] << "," << actualPos[4] << "," << actualPos[5] << "," << actualPos[6] << "," << actualPos[7] << "]" <<endlog();
+	//}
+	
+	
     // Write on the outposport to make sure the receiving components gets new data
     posoutport.write( actualPos );
 
