@@ -154,8 +154,9 @@ void Supervisor::updateHook()
 	} 
 	
 	// Check if emergency button pressed:
-	if ( ebutton_ports[number_of_ebuttons].read( emergency_switches[number_of_ebuttons] ) == NewData ) {
-		if ( emergency != emergency_switches[number_of_ebuttons].data && emergency_switches[number_of_ebuttons].data ) {
+	std_msgs::Bool rosemergencymsg;
+	if ( rosemergencyport.read(rosemergencymsg) == NewData ) {
+		if ( emergency != rosemergencymsg.data && rosemergencymsg.data ) {
 			ROS_INFO_STREAM( "Supervisor: Emergency button pressed, shutting down components online components" );
 			for ( int partNr = 1; partNr < 6; partNr++ ) {
 				if ( hardwareStatusmsg.status[partNr].level == StatusOperationalmsg.level ) {
@@ -394,7 +395,7 @@ bool Supervisor::setState(int partNr, diagnostic_msgs::DiagnosticStatus state)
 bool Supervisor::updateAllState()
 {
 	int max_level = 0;
-	for ( int partNr = 0; partNr < 6; partNr++ ) {
+	for ( int partNr = 1; partNr < 6; partNr++ ) {
 		max_level = max((int) hardwareStatusmsg.status[partNr].level,max_level);
 	}
 	
