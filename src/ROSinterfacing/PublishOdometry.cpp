@@ -64,7 +64,7 @@ void PublishOdometry::updateHook()
 	}
 
     // Read position port
-    doubles pos(3);
+    doubles pos(3,0.0);
     pos_port.read(pos);
 
     // Compute velocities in robot frame
