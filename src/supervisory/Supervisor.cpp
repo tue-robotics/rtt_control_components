@@ -144,24 +144,18 @@ void Supervisor::updateHook()
 	// Determine timestamp:
 	long double new_time = os::TimeService::Instance()->getNSecs()*1e-9;
   
-	//bool serialRunning = false;
 	soem_beckhoff_drivers::EncoderMsg serialRunning;
-	if(serialRunningPort.read(serialRunning) == NewData) 
-	{
+	if(serialRunningPort.read(serialRunning) == NewData) {
 		aquisition_time = new_time;
 	}
-	else if ( new_time - aquisition_time > 1.0 )
-	{
+	else if ( new_time - aquisition_time > 1.0 ) {
 		ROS_ERROR_STREAM("Supervisor: Soem crashed!");
 		enabled_rosport.write( rosdisabledmsg );
 	} 
 	
 	// Check if emergency button pressed:
-	std_msgs::Bool rosemergencymsg;
-	if ( rosemergencyport.read( rosemergencymsg ) == NewData )
-	{
-		if ( emergency != rosemergencymsg.data && rosemergencymsg.data )
-		{
+	if ( ebutton_ports[number_of_ebuttons].read( emergency_switches[number_of_ebuttons] ) == NewData ) {
+		if ( emergency != emergency_switches[number_of_ebuttons].data && emergency_switches[number_of_ebuttons].data ) {
 			ROS_INFO_STREAM( "Supervisor: Emergency button pressed, shutting down components online components" );
 			for ( int partNr = 1; partNr < 6; partNr++ ) {
 				if ( hardwareStatusmsg.status[partNr].level == StatusOperationalmsg.level ) {
@@ -169,10 +163,8 @@ void Supervisor::updateHook()
 				}
 				GoIdle(partNr,hardwareStatusmsg);
 			}
-			//log(Warning) << "Supervisor: idleDueToEmergencyButton: [" << idleDueToEmergencyButton[1] << "," << idleDueToEmergencyButton[2] << "," << idleDueToEmergencyButton[3] << "," << idleDueToEmergencyButton[4] << "," << idleDueToEmergencyButton[5] << "]" << endlog();  
 		}
-		else if ( emergency != rosemergencymsg.data && !rosemergencymsg.data )
-		{
+		else if ( emergency != rosemergencymsg.data && !rosemergencymsg.data ) {
 			ROS_INFO_STREAM( "Supervisor: Emergency button released, restoring components" );
 			for ( int partNr = 1; partNr < 6; partNr++ ) {
 				if ( ( hardwareStatusmsg.status[partNr].level == StatusIdlemsg.level ) && (idleDueToEmergencyButton[partNr] == true)) {
@@ -393,6 +385,20 @@ bool Supervisor::setState(int partNr, diagnostic_msgs::DiagnosticStatus state)
 		hardwareStatusmsg.status[partNr].message = "homed";
 	}
 	hardwareStatusmsg.status[partNr].name = bodyParts[partNr];
+
+	updateAllState();
+	
+	return true;
+}
+
+bool Supervisor::updateAllState()
+{
+	int max_level = 0;
+	for ( int partNr = 0; partNr < 6; partNr++ ) {
+		max_level = max((int) hardwareStatusmsg.status[partNr].level,max_level);
+	}
+	
+	hardwareStatusmsg.status[0].level = max_level;	
 	return true;
 }
 

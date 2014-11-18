@@ -114,6 +114,7 @@ namespace SUPERVISORY
         virtual bool GoHoming(int partNr, diagnostic_msgs::DiagnosticArray statusArray);
         virtual bool GoError(int partNr, diagnostic_msgs::DiagnosticArray statusArray);
         virtual bool setState(int partNr, diagnostic_msgs::DiagnosticStatus state);
+        virtual bool updateAllState();
 
     protected:
 		// Component lists
