@@ -106,32 +106,41 @@ bool DynamixelController::startHook()
 
 bool DynamixelController::readReference() 
 {
-	sensor_msgs::JointState goalPos;
-	//goalPos = sensor_msgs::JointState();
+    sensor_msgs::JointState goalPos;
 	if (goalPosPort.read(goalPos) == NewData) {
 		log(Debug) << "DynamixelController: new reference obtained."<< endlog();
-		for ( uint i=0; i<n_dynamixels; i++ ){
-			if (goalPos.name[i] != currentPos.name[i] )
-			{
-				log(Debug)<<"DynamixelController: JointState message should contain "<<currentPos.name[i]<<", while this is now "<<goalPos.name[i] <<endlog();
-			}
-			dynamixel_goal[i] = (int) ((goalPos.position[i])*RAD_TO_STEP+dynamixel_offset[i]);
-			if (dynamixel_goal[i] > dynamixel_max[i])
-				dynamixel_goal[i] = dynamixel_max[i];
-			if (dynamixel_goal[i] < dynamixel_min[i])
-				dynamixel_goal[i] = dynamixel_min[i];
-			if (goalPos.velocity.size() > 0) {
-				dynamixel_speed[i] = (int) ((goalPos.velocity[i])*RAD_TO_STEP);
-				log(Debug) << "Incoming dynamixel speed: " << dynamixel_speed[i] <<endlog();
-				if (dynamixel_speed[i] > 1023)
-					dynamixel_speed[i] = 1023;
-				if (dynamixel_speed[i] == 0)
-					dynamixel_speed[i] = dynamixel_speed_default[i];
-			}
-			else {
-				dynamixel_speed[i] = dynamixel_speed_default[i];
-			}
-		}
+        uint n_inputs = goalPos.name.size();
+        // loop over inputs
+        for ( uint j=0; j<n_inputs; j++ ){
+            // find the corresponding dynamixel and set command
+            for ( uint i=0; i<n_dynamixels; i++ ){
+                if (goalPos.name[j] == currentPos.name[i] ) {
+                    // found matching dynamixel
+                    dynamixel_goal[i] = (int) ((goalPos.position[j])*RAD_TO_STEP+dynamixel_offset[i]);
+                    if (dynamixel_goal[i] > dynamixel_max[i])
+                        dynamixel_goal[i] = dynamixel_max[i];
+                    if (dynamixel_goal[i] < dynamixel_min[i])
+                        dynamixel_goal[i] = dynamixel_min[i];
+                    if (goalPos.velocity.size() > 0) {
+                        dynamixel_speed[i] = (int) ((goalPos.velocity[j])*RAD_TO_STEP);
+                        log(Debug) << "Incoming dynamixel speed: " << dynamixel_speed[i] <<endlog();
+                        if (dynamixel_speed[i] > 1023)
+                            dynamixel_speed[i] = 1023;
+                        if (dynamixel_speed[i] == 0)
+                            dynamixel_speed[i] = dynamixel_speed_default[i];
+                    }
+                    else {
+                        dynamixel_speed[i] = dynamixel_speed_default[i];
+                    }
+                    break;
+                } else {
+                    if ( i >= n_dynamixels-1 ){
+                        //log(Debug)<<"DynamixelController: JointState message should contain "<<currentPos.name[i]<<", while this is now "<<goalPos.name[i] <<endlog();
+                        log(Debug)<<"DynamixelController: JointState message should contain the name of a dynamixel, while this is now "<<goalPos.name[i] <<endlog();
+                    }
+                }
+            }
+        }
 		return true;
 	}
 	return false;
@@ -175,7 +184,7 @@ void DynamixelController::updateHook()
 				newPosition = dxl_makeword(dxl_get_rxpacket_parameter(0), dxl_get_rxpacket_parameter(1));
 				log(Debug) << "DynamixelController: dynamixel id, " << read_dynamixel+1 << ", received new position, " << newPosition << endlog();
 				currentPos.position[read_dynamixel] = (newPosition-dynamixel_offset[read_dynamixel])/RAD_TO_STEP;
-				currentPosPort.write(currentPos);
+                currentPosPort.write(currentPos);
 				read_dynamixel ++;
 				if ( read_dynamixel < n_dynamixels ){
 					log(Debug) << "DynamixelController: Read position of dynamixel, id " << read_dynamixel+1 << endlog();
