@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   kdl_parser
   rtt_std_msgs
   eigen
+  xmlrpcpp
   )
 
 include_directories(
@@ -30,6 +31,7 @@ include_directories(
 	include/lighting
 	${catkin_INCLUDE_DIRS} 
 	${scl_filters_INCLUDE_DIRS} 
+	${xmlrpcpp_INCLUDE_DIRS}
 	${USE_OROCOS_INCLUDE_DIRS})
 
 orocos_install_headers( DIRECTORY
@@ -52,7 +54,7 @@ file(GLOB_RECURSE HEADER_FILES include/*.hpp)
 # Export package information (replaces catkin_package() macro) 
 orocos_generate_package(
   INCLUDE_DIRS include
-  DEPENDS rtt_ros eigen
+  DEPENDS rtt_ros eigen xmlrpcpp
 )   
 
 ### Orocos Components - SIGNALROUTING ###
