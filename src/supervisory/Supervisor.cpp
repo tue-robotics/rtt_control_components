@@ -103,15 +103,15 @@ bool Supervisor::startHook()
 	bodyParts[0] = "all";
 	hardwareStatusmsg.status[0].name = bodyParts[0];
 	
-	if ( !serialRunningPort.connected() )
-	{
-		log(Error) << "Supervisor: serialport to check soem is not connected" << endlog();
+	// Connection checks
+	if ( !serialRunningPort.connected() ) {
+		log(Error) << "Supervisor: Could not start component: serialport to check soem is not connected" << endlog();
 		return false;
 	}
 	
 	start_time = os::TimeService::Instance()->getNSecs()*1e-9;
 	aquisition_time = start_time;
-	//Wait untill soem is running
+	// Wait untill soem is running
 	soem_beckhoff_drivers::EncoderMsg serialRunning;
 	while (!(serialRunningPort.read(serialRunning) == NewData) )
 	{
@@ -129,7 +129,7 @@ bool Supervisor::startHook()
 
 void Supervisor::updateHook()
 {
-	// time out for dashboard calls
+	// Time out for dashboard calls
 	if (!goodToGO) {
 		aquisition_time = os::TimeService::Instance()->getNSecs()*1e-9;
 	}
