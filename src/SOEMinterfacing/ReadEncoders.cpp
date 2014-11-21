@@ -123,14 +123,11 @@ double ReadEncoders::readEncoder( int i )
 
 void ReadEncoders::reset( uint Nreset, double resetvalue )
 {
-	//log(Warning)<<"ReadEncoders: BEFORE ENC VALUE for encoder " << Nreset + 1 << "[ "<< init_SI_value[Nreset] << "]" <<endlog();
 	// ReInitialising variables
 	ienc[Nreset] = 0;
 	previous_enc_position[Nreset] = 0.0;
+	init_SI_value[Nreset] = 0.0;
 	init_SI_value[Nreset] = readEncoder(Nreset) - resetvalue;
-	previous_enc_position[Nreset] = init_SI_value[Nreset];
-	log(Warning)<<"ReadEncoders: Resetting encoder: "<< Nreset + 1 << ", with value: " << resetvalue << "!" <<endlog();
-	//log(Warning)<<"ReadEncoders: AFTER ENC VALUE for encoder " << Nreset + 1 << "[ "<< init_SI_value[Nreset] << "]" <<endlog();
 }
 
 ORO_CREATE_COMPONENT(SOEM::ReadEncoders)
