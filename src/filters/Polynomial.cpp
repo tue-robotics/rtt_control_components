@@ -52,26 +52,16 @@ bool Polynomials::configureHook()
     /* Guaranteeing Real-Time data flow */
 
     /// Initialize filters
+    coefficients.resize(vector_size);
     for (unsigned int i = 0; i < vector_size; i++)
     {
         /// Initialize filter
         Polynomial polynomial(orders[i]);
 
-        /// Set terms
+        /// Initialize coefficients properie
+        coefficients[i].resize(orders[i]+1);
         string property_name = "coefficients"+to_string(i+1);
-        doubles coefficients;
-        addProperty( property_name, coefficients );
-
-        /// Number of coefficients should be order+1
-        if (orders[i] != coefficients.size()+1 )
-        {
-            log(Error)<<"Polynomial order ("<<orders[i]<<") does not correspond with size number of coefficients ("<<coefficients.size()<<")"<<endlog();
-            return false;
-        }
-
-        for (unsigned int j = 0; j < orders[i]+1; j++){
-            polynomial.setTerm(i, coefficients[j]);
-        }
+        addProperty( property_name, coefficients[i] );
 
         /// Pushback filter
         polynomials.push_back(polynomial);
@@ -85,6 +75,21 @@ bool Polynomials::configureHook()
 
 bool Polynomials::startHook()
 {
+    /// set filter terms
+    for (unsigned int i = 0; i < vector_size; i++)
+    {
+        /// Number of coefficients should be order+1
+        if (orders[i]+1 != coefficients[i].size() )
+        {
+            log(Error)<<"Polynomial: order ("<<orders[i]<<") does not correspond with size number of coefficients ("<<coefficients[i].size()<<")"<<endlog();
+            return false;
+        }
+
+        for (unsigned int j = 0; j < orders[i]+1; j++){
+            polynomials[i].setTerm(j, coefficients[i][j]);
+        }
+    }
+
 
     // Check validity of Ports:
     if ( !inport.connected() ) {
@@ -114,6 +119,7 @@ void Polynomials::updateHook()
     {
         output[i] = polynomials[i].evaluate( input[i] );
     }
+    //log(Warning)<<"Polynomial output = "<<output[0]<<endlog();
 
     // Write the outputs
     outport.write( output );

@@ -56,13 +56,14 @@ namespace FILTERS
 		OutputPort<doubles> outport;
 
 		/* Declaring global variables */
-		vector<Polynomial> polynomials;
+        vector<Polynomial> polynomials;
 
 		/* Declaring variables set by properties */
 		// Filter parameters
 		uint vector_size; // Number of polynomials/size of inputs and outputs
 		vector<unsigned int> orders; // Order of the various polynomials
 		doubles input, output;
+        vector<doubles> coefficients;
 
 	public:
 
