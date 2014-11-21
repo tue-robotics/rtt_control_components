@@ -3,13 +3,13 @@
  *
  *  Created on: 6 janv. 2012
  *      Author: ard, wla
- * Wrecked by Tim 
+ * 	Wrecked by Tim 
  */
-//#include <ros/package.h>
+
 #include <rtt/Component.hpp>
 #include "Supervisor.hpp"
-
 #include <ros/ros.h>
+//#include <XmlRpcCpp.h>
 
 enum dashboard_cmd_t {HOMING_CMD = 21, START_CMD = 22, STOP_CMD = 23, RESET_CMD = 24};
 
@@ -35,11 +35,18 @@ Supervisor::Supervisor(const string& name) :
     addOperation("AddEnabledPeer", &Supervisor::AddEnabledPeer, this, OwnThread)
             .doc("Add a peer to a EnabledList, all these components are stopped in states other than Homing or Operational")
             .arg("peerName","Name of the peer to add to the list")
-            .arg("partNr","The number of the bodypart");        
-    addOperation("NameBodyPart", &Supervisor::NameBodyPart, this, OwnThread)
-            .doc("Name a body part, this also creates a topic stating this bodypart is enabled or not")
+            .arg("partNr","The number of the bodypart");
+    addOperation("CreateRobotObject", &Supervisor::CreateRobotObject, this, OwnThread)
+            .doc("Create a robot object for the dashboard by specifying a vector of default part names")             
+            .arg("robotName","name of the robot")
+            .arg("defaultBodyParts","vector of strings containing default body part names");
+    addOperation("AddBodyPart", &Supervisor::AddBodyPart, this, OwnThread)
+            .doc("Add a body part by specifying its name and its properties")
             .arg("partNr","The number of the bodypart")              
-            .arg("partName","The name of the bodypart"); 
+            .arg("partName","The name of the bodypart")
+            .arg("homeable","Can you home the part")
+            .arg("homingmandatory","Can you start the arm directly without succesfull homing sequence")
+            .arg("resettable","If an error occurred, can you reset the error");
     addOperation("StartBodyPart", &Supervisor::StartBodyPart, this, OwnThread)
             .doc("Start a body part")
             .arg("partName","The name of the bodypart");              
@@ -58,7 +65,24 @@ Supervisor::Supervisor(const string& name) :
 	addPort("hardware_status", hardwareStatusPort ).doc("To send status to dashboard ");
 }
 
-Supervisor::~Supervisor(){}
+Supervisor::~Supervisor()
+{
+	// remove operations
+	remove("CreateRobotObject");
+	remove("AddBodyPart");	
+	remove("AddAllwaysOnPeer");
+	remove("AddOpOnlyPeer");
+	remove("AddHomingOnlyPeer");
+	remove("AddEnabledPeer");	
+	remove("StartBodyPart");
+	remove("StopBodyPart");
+	remove("DisplaySupervisoredPeers");	
+
+    // remove dashboard ros parameters from parameter server
+    ros::NodeHandle nh("~");
+    nh.deleteParam("dashboard");
+    nh.deleteParam("dashboard_list");
+}
 
 //------------------------------------------------------------------------------------------------------------------
 
@@ -87,7 +111,7 @@ bool Supervisor::configureHook()
 		homeableParts[partNr] = false;
 		idleDueToEmergencyButton[partNr] = false;
 		homedParts[partNr] = false;
-		staleParts[partNr] = true; // all parts are stale by default, in Namebodypart function they will be set to false
+		staleParts[partNr] = true; // all parts are stale by default, in Addbodypart function they will be set to false
 		bodyParts[partNr] = "";
 	}
 	
@@ -139,7 +163,7 @@ void Supervisor::updateHook()
 			if (staleParts[partNr] == false) {
 				setState(partNr, StatusIdlemsg);
 			}
-		}
+		}	
 	}
 	// Determine timestamp:
 	long double new_time = os::TimeService::Instance()->getNSecs()*1e-9;
@@ -267,7 +291,7 @@ void Supervisor::updateHook()
 
 //-----------------------------------------------------
 
-bool Supervisor::AddPeerCheckList( std::string peerName, vector<TaskContext*> List )
+bool Supervisor::AddPeerCheckList( string peerName, vector<TaskContext*> List )
 {    
     if( ! hasPeer(peerName) )
     {
@@ -349,7 +373,7 @@ bool Supervisor::stopList( vector<TaskContext*> List )
 	return true;
 }
 
-bool Supervisor::StartBodyPart( std::string partName )
+bool Supervisor::StartBodyPart( string partName )
 {
 	for ( int partNr = 0; partNr < 6; partNr++ )
 	{
@@ -364,13 +388,11 @@ bool Supervisor::StartBodyPart( std::string partName )
 	return false;
 }
 
-bool Supervisor::StopBodyPart( std::string partName )
+bool Supervisor::StopBodyPart( string partName )
 {
-	for ( int partNr = 0; partNr < 6; partNr++ )
-	{
+	for ( int partNr = 0; partNr < 6; partNr++ ) {
 		string ipartName = bodyParts[partNr];
-		if (ipartName.compare(partName) == 0)
-		{
+		if (ipartName.compare(partName) == 0) {
 			stopList( EnabledList[partNr] );
 			return true;
 		}
@@ -387,19 +409,14 @@ bool Supervisor::setState(int partNr, diagnostic_msgs::DiagnosticStatus state)
 	}
 	hardwareStatusmsg.status[partNr].name = bodyParts[partNr];
 
-	updateAllState();
-	
-	return true;
-}
-
-bool Supervisor::updateAllState()
-{
+	// update all state
 	int max_level = 0;
 	for ( int partNr = 1; partNr < 6; partNr++ ) {
 		max_level = max((int) hardwareStatusmsg.status[partNr].level,max_level);
 	}
 	
 	hardwareStatusmsg.status[0].level = max_level;	
+	
 	return true;
 }
 
@@ -491,7 +508,7 @@ bool Supervisor::isEmpty( vector<TaskContext*> List )
 	return true;
 }
 
-bool Supervisor::AddAllwaysOnPeer(std::string peerName )
+bool Supervisor::AddAllwaysOnPeer(string peerName )
 {
 	if ( AddPeerCheckList( peerName, AllwaysOnList ) )
 	{
@@ -502,7 +519,7 @@ bool Supervisor::AddAllwaysOnPeer(std::string peerName )
 	return false;
 }
 
-bool Supervisor::AddOpOnlyPeer( std::string peerName, int partNr )
+bool Supervisor::AddOpOnlyPeer( string peerName, int partNr )
 {
 	if ( AddPeerCheckList( peerName, OpOnlyList[partNr] ) )
 	{
@@ -512,7 +529,7 @@ bool Supervisor::AddOpOnlyPeer( std::string peerName, int partNr )
 	return false;
 }
 
-bool Supervisor::AddHomingOnlyPeer( std::string peerName, int partNr )
+bool Supervisor::AddHomingOnlyPeer( string peerName, int partNr )
 {
 	if ( AddPeerCheckList( peerName, HomingOnlyList[partNr] ) )
 	{
@@ -522,7 +539,7 @@ bool Supervisor::AddHomingOnlyPeer( std::string peerName, int partNr )
 	return false;
 }
 
-bool Supervisor::AddEnabledPeer( std::string peerName, int partNr )
+bool Supervisor::AddEnabledPeer( string peerName, int partNr )
 {
 	if ( AddPeerCheckList( peerName, EnabledList[partNr] ) )
 	{
@@ -532,13 +549,36 @@ bool Supervisor::AddEnabledPeer( std::string peerName, int partNr )
 	return false;
 }
 
-bool Supervisor::NameBodyPart( int partNr, std::string partName, bool homeable )
+bool Supervisor::CreateRobotObject(string robotName, vector<string> defaultBodyParts )
 {
-    addPort( partName+"_homingfinished", homingfinished_port[partNr] );
+	ros::NodeHandle nh("~");
+    nh.setParam("dashboard_list",defaultBodyParts);
+
+    for ( uint i = 0 ; i < defaultBodyParts.size(); i++ ) {
+        nh.setParam("dashboard/" + defaultBodyParts[i] + "/name", defaultBodyParts[i] );
+        nh.setParam("dashboard/" + defaultBodyParts[i] + "/homeable", false );
+        nh.setParam("dashboard/" + defaultBodyParts[i] + "/homingmandatory", true );
+        nh.setParam("dashboard/" + defaultBodyParts[i] + "/resettable", false );
+    }
+}
+
+
+bool Supervisor::AddBodyPart( int partNr, string partName, bool homeable , bool homingmandatory, bool resettable)
+{
+	if (homeable) {
+		addPort( partName+"_homingfinished", homingfinished_port[partNr] );
+	}
     addPort( partName+"_error", error_port[partNr] );
 	bodyParts[partNr] = partName;
 	homeableParts[partNr] = homeable;
 	staleParts[partNr] = false;
+	
+    ros::NodeHandle nh("~");
+    nh.setParam("dashboard/" + partName + "/name", partName );
+    nh.setParam("dashboard/" + partName + "/homeable", homeable );
+    nh.setParam("dashboard/" + partName + "/homingmandatory", homingmandatory );
+    nh.setParam("dashboard/" + partName + "/resettable", resettable );
+	
 	return true;
 }
 
@@ -546,63 +586,94 @@ void Supervisor::displaySupervisoredPeers()
 {
     cout << endl;
     cout << "List of Supervisored peers : " << endl;
+	// Display  AllwaysOnComponents
     cout << endl;
     cout << "AllwaysOnList : " << endl;
 
     vector<TaskContext*>::iterator i;
-    for ( i = AllwaysOnList.begin() ; i != AllwaysOnList.end() ; i++ )
-    {
+    for ( i = AllwaysOnList.begin() ; i != AllwaysOnList.end() ; i++ ) {
         TaskContext* tc = (*i);
 
-        if( tc == NULL )
-        {
+        if( tc == NULL ) {
             cout << "AllwaysOnList contains null values ! (displaySupervisoredPeers)" << endl;
-        }
-        else
-        {
+        } else {
             cout << "--  " << tc->getName() << endl;
         }
     }
-
     cout << "------------------------" << endl;
-    cout << endl;
-    for( int partNr = 0; partNr < 6; partNr++ )   
-    {
-
-		cout << "EnabledList[" << partNr << "] : " << endl;
+    
+	// Display Enabled 
+	cout << endl;
+    for( int partNr = 1; partNr < 6; partNr++ ) {
+		cout << "EnabledList[" << partNr << "] = [";
 
 		vector<TaskContext*>::iterator i;
-		for ( i = EnabledList[partNr].begin() ; i != EnabledList[partNr].end() ; i++ )
-		{
+		for ( i = EnabledList[partNr].begin() ; i != EnabledList[partNr].end() ; i++ ) {
 			TaskContext* tc = (*i);
-
-			if( tc == NULL )
-			{
+			if( tc == NULL ) {
 				cout << "EnabledList[" << partNr << "] contains null values ! (displaySupervisoredPeers)" << endl;
+			} else if (i == EnabledList[partNr].begin()) {
+				cout << tc->getName();
 			}
-			else
-			{
-				cout << "--  " << tc->getName() << endl;
+			else {
+				cout << ", " << tc->getName();
 			}
 		}
+		cout << "]" << endl;
+	}	  
+	
+	cout << "------------------------" << endl;
+	cout << endl; 
 
-		cout << "------------------------" << endl;
-		cout << endl; 
-	}  
+	// Display HomingOnly 
+	cout << endl;
+    for( int partNr = 1; partNr < 6; partNr++ ) {
+		cout << "HomingOnlyList[" << partNr << "] = [";
+
+		vector<TaskContext*>::iterator i;
+		for ( i = HomingOnlyList[partNr].begin() ; i != HomingOnlyList[partNr].end() ; i++ ) {
+			TaskContext* tc = (*i);
+			if( tc == NULL ) {
+				cout << "HomingOnlyList[" << partNr << "] contains null values ! (displaySupervisoredPeers)" << endl;
+			} else if (i == HomingOnlyList[partNr].begin()) {
+				cout << tc->getName();
+			}
+			else {
+				cout << ", " << tc->getName();
+			}
+		}
+		cout << "]" << endl;
+	}	  
+	
+	cout << "------------------------" << endl;
+	cout << endl;
+
+	// Display Operational Only 
+	cout << endl;
+    for( int partNr = 1; partNr < 6; partNr++ ) {
+		cout << "OpOnlyList[" << partNr << "] = [";
+
+		vector<TaskContext*>::iterator i;
+		for ( i = OpOnlyList[partNr].begin() ; i != OpOnlyList[partNr].end() ; i++ ) {
+			TaskContext* tc = (*i);
+			if( tc == NULL ) {
+				cout << "OpOnlyList[" << partNr << "] contains null values ! (displaySupervisoredPeers)" << endl;
+			} else if (i == OpOnlyList[partNr].begin()) {
+				cout << tc->getName();
+			}
+			else {
+				cout << ", " << tc->getName();
+			}
+		}
+		cout << "]" << endl;
+	}	  
+	
+	cout << "------------------------" << endl;
+	cout << endl;
 }
 
 void Supervisor::stopHook()
 {
-	// remove operations
-	remove("AddAllwaysOnPeer");
-	remove("AddOpOnlyPeer");
-	remove("AddHomingOnlyPeer");
-	remove("AddEnabledPeer");
-	remove("NameBodyPart");
-	remove("StartBodyPart");
-	remove("StopBodyPart");
-	remove("DisplaySupervisoredPeers");	
-
 	// send disabled msg
 	enabled_rosport.write( rosdisabledmsg );
 }

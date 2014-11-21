@@ -15,12 +15,12 @@ Homing::Homing(const string& name) : TaskContext(name, PreOperational)
 {  
     // Ports
 	addPort( "position",pos_inport );
-    addPort( "homing_finished", homingfinished_outport );
-
     addPort( "endswitch", endswitch_inport );
     addPort( "servo_error_in", jointerrors_inport );
     addPort( "abs_pos_in", absPos_inport );
     addPort( "force_in", forces_inport );
+    
+    addPort( "homing_finished", homingfinished_outport );
 
 	// Properties
     addProperty( "vector_size",     	N               ).doc("Number of joints");

@@ -46,7 +46,7 @@ namespace SUPERVISORY
     : public RTT::TaskContext
       {
       public:
-		//ports
+		// ports
         InputPort<std_msgs::Bool> rosemergencyport;
         InputPort<std_msgs::Bool> rosshutdownport;
         OutputPort<std_msgs::Bool> enabled_rosport;
@@ -57,13 +57,13 @@ namespace SUPERVISORY
         OutputPort<std_msgs::Bool> isenabled_rosport[6];
         OutputPort<diagnostic_msgs::DiagnosticArray> hardwareStatusPort;
         
-		//vectors
+		// vectors
         bool homeableParts[6];
         bool idleDueToEmergencyButton[6];
         bool homedParts[6];
         bool staleParts[6]; // staleparts is used to make sure, components that aren't started will be shown stale on the dashboard
         string bodyParts[6];
-        
+			
         // scalars
         bool emergency;     
         bool goodToGO;   
@@ -81,7 +81,7 @@ namespace SUPERVISORY
         diagnostic_msgs::DiagnosticStatus StatusErrormsg;
         diagnostic_msgs::DiagnosticArray hardwareStatusmsg;
 
-        Supervisor(const std::string& name);
+        Supervisor(const string& name);
         virtual ~Supervisor();
 
 		// component Hook functions
@@ -89,24 +89,23 @@ namespace SUPERVISORY
         virtual bool startHook();
         virtual void updateHook();
         virtual void stopHook();
-        
-        // External functions
-        virtual bool StartBodyPart( std::string partName );
-        virtual bool StopBodyPart( std::string partName );
+
+        // Set up functions for name body part and add component to list
+        virtual bool CreateRobotObject(string robotName, vector<string> defaultBodyParts);
+        virtual bool AddBodyPart( int partNr, string partName, bool homeable , bool homingmandatory, bool resettable);
+		virtual bool AddAllwaysOnPeer(string peerName);
+        virtual bool AddOpOnlyPeer(string peerName, int partNr);
+        virtual bool AddHomingOnlyPeer(string peerName, int partNr);
+        virtual bool AddEnabledPeer(string peerName, int partNr);
+        virtual bool StartBodyPart( string partName );
+        virtual bool StopBodyPart( string partName );
         virtual void displaySupervisoredPeers();
 
 		// Internal functions
-        virtual bool AddPeerCheckList( std::string peerName, vector<TaskContext*> List );
+        virtual bool AddPeerCheckList( string peerName, vector<TaskContext*> List );
         virtual bool startList( vector<TaskContext*> List );
         virtual bool stopList( vector<TaskContext*> List );
         virtual bool isEmpty( vector<TaskContext*> List );
-
-        // Set up functions for name body part and add component to list
-        virtual bool NameBodyPart(int partNr, std::string partName, bool homeable);
-		virtual bool AddAllwaysOnPeer(std::string peerName);
-        virtual bool AddOpOnlyPeer(std::string peerName, int partNr);
-        virtual bool AddHomingOnlyPeer(std::string peerName, int partNr);
-        virtual bool AddEnabledPeer(std::string peerName, int partNr);
         
         // state transitions
         virtual bool GoOperational(int partNr, diagnostic_msgs::DiagnosticArray statusArray);
@@ -114,7 +113,6 @@ namespace SUPERVISORY
         virtual bool GoHoming(int partNr, diagnostic_msgs::DiagnosticArray statusArray);
         virtual bool GoError(int partNr, diagnostic_msgs::DiagnosticArray statusArray);
         virtual bool setState(int partNr, diagnostic_msgs::DiagnosticStatus state);
-        virtual bool updateAllState();
 
     protected:
 		// Component lists
