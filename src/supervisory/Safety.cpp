@@ -30,12 +30,19 @@ Safety::Safety(const string& name) : TaskContext(name, PreOperational)
     addProperty( "maxJointErrors", MAX_ERRORS).doc("Maximum joint error allowed [rad]");
     addProperty( "motorSaturations", MOTORSAT ).doc("Motor saturation values");
     addProperty( "maxConSatTime", MAXCONSATTIME ).doc("Maximum time the controller is allowed to be saturated");
+    addProperty( "additional_safeties", n_safeties).doc("Add bool ports for additional safeties.")
 }
 
 Safety::~Safety(){}
 
 bool Safety::configureHook()
 {  
+    /// add an inport and string propertie for each additional safety component
+    for ( uint i=0; i<n_safeties; i++ ){
+        string name_inport = "safe_in"+to_string(i+1);
+        addPort( name_inport, safe_inports[i] );
+        string name_safety = ""
+    }
     return true;
 }
 
