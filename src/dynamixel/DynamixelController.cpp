@@ -123,13 +123,14 @@ bool DynamixelController::readReference()
                         dynamixel_goal[i] = dynamixel_max[i];
                     if (dynamixel_goal[i] < dynamixel_min[i])
                         dynamixel_goal[i] = dynamixel_min[i];
+					log(Debug)<<"DynamixelController: New goal position set: "<< dynamixel_goal[i]<<endlog();
                     if (goalPos.velocity.size() > 0) {
                         if (goalPos.velocity.size() == n_inputs){
                             dynamixel_speed[i] = (int) ((goalPos.velocity[j])*RAD_TO_STEP);
                         } else {
                             dynamixel_speed[i] = (int) ((goalPos.velocity[0])*RAD_TO_STEP);
                         }
-                        log(Warning) << "Incoming dynamixel speed: " << dynamixel_speed[i] <<endlog();
+                        log(Debug) << "Incoming dynamixel speed: " << dynamixel_speed[i] <<endlog();
                         if (dynamixel_speed[i] > 1023)
                             dynamixel_speed[i] = 1023;
                         if (dynamixel_speed[i] == 0)
@@ -141,8 +142,7 @@ bool DynamixelController::readReference()
                     break;
                 } else {
                     if ( i >= n_dynamixels-1 ){
-                        //log(Debug)<<"DynamixelController: JointState message should contain "<<currentPos.name[i]<<", while this is now "<<goalPos.name[i] <<endlog();
-                        log(Debug)<<"DynamixelController: JointState message should contain the joint name of a dynamixel, while this is now "<<goalPos.name[i] <<endlog();
+                        log(Debug)<<"DynamixelController: JointState message should contain the joint name of a dynamixel, while this is now "<<goalPos.name[j] <<endlog();
                     }
                 }
             }
