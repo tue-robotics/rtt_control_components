@@ -47,28 +47,32 @@ namespace SUPERVISORY
       {
       public:
 		// ports
-        InputPort<std_msgs::Bool> rosemergencyport;
-        InputPort<std_msgs::Bool> rosshutdownport;
+        InputPort<std_msgs::Bool> ebutton_ports[4];
+		InputPort<std_msgs::Bool> rosshutdownport;
         OutputPort<std_msgs::Bool> enabled_rosport;
         InputPort<bool> homingfinished_port[6];
         InputPort<bool> error_port[6]; 
         InputPort<soem_beckhoff_drivers::EncoderMsg> serialRunningPort;
         InputPort<std_msgs::UInt8MultiArray> dashboardCmdPort;
+        OutputPort<diagnostic_msgs::DiagnosticArray> ebuttonStatusPort;
         OutputPort<std_msgs::Bool> isenabled_rosport[6];
         OutputPort<diagnostic_msgs::DiagnosticArray> hardwareStatusPort;
         
-		// vectors
+		//vectors
         bool homeableParts[6];
         bool idleDueToEmergencyButton[6];
         bool homedParts[6];
         bool staleParts[6]; // staleparts is used to make sure, components that aren't started will be shown stale on the dashboard
         string bodyParts[6];
-			
+        vector<std_msgs::Bool> emergency_switches;
+        vector<string> ebutton_order;
+        
         // scalars
         bool emergency;     
         bool goodToGO;   
 		long double aquisition_time;
 		long double start_time;
+		int number_of_ebuttons;
 		
 		// msgs
         std_msgs::UInt8MultiArray dashboardCmdmsg;
