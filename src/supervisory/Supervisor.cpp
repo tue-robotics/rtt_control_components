@@ -127,20 +127,10 @@ bool Supervisor::configureHook()
 	number_of_ebuttons = ebutton_order.size();
 	emergency_switches.resize(number_of_ebuttons);
 	for ( int j = 0; j < number_of_ebuttons; j++ ) {		
-		if (ebutton_order[j] == "wireless") {
-			addPort( "ebuttonWireless", ebutton_ports[j] );
-			log(Warning) << "Supervisor: ebutton_ports[" << j <<"] added ebuttonWireless" << endlog();
-		} else if (ebutton_order[j] == "wired") {
-			addPort( "ebuttonWired", ebutton_ports[j] );
-			log(Warning) << "Supervisor: ebutton_ports[" << j <<"] added ebuttonWired" << endlog();
-		} else if (ebutton_order[j] == "reset") {
-			addPort( "ebuttonReset", ebutton_ports[j] );
-			log(Warning) << "Supervisor: ebutton_ports[" << j <<"] added ebuttonReset" << endlog();
-		} else if (ebutton_order[j] == "endswitch") {
-			addPort( "ebuttonEndswitch", ebutton_ports[j] );
-			log(Warning) << "Supervisor: ebutton_ports[" << j <<"] added ebuttonEndswitch" << endlog();
+		if ( (ebutton_order[j] == "Wireless") || (ebutton_order[j] == "Wired") || (ebutton_order[j] == "Reset") || (ebutton_order[j] == "Endswitch") ) {
+			addPort( ("ebutton"+ebutton_order[j]), ebutton_ports[j] );
 		} else {
-			log(Error) << "Supervisor: Could not configure component, ebutton_order[" << j <<"] does not match one of four possible strings ['wireless','wired','reset','endswitch']" << endlog();
+			log(Error) << "Supervisor: Could not configure component, ebutton_order[" << j <<"] does not match one of four possible strings ['Wireless','Wired','Reset','Endswitch']" << endlog();
 			return false;
 		}
 	}
