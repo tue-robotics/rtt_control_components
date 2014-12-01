@@ -15,38 +15,45 @@
 #include <rtt/Port.hpp>
 #include <sensor_msgs/JointState.h>
 
-#define N 7
+#define maxN 10
 
 using namespace std;
 using namespace RTT;
+
+template <class T>
+inline string to_string (const T& t){
+  stringstream ss;
+  ss << t;
+  return ss.str();
+};
 
 namespace ROS
 {
   class BenchmarkReference
   : public RTT::TaskContext
     {
-    private:
-    
-    int cntr;
+		typedef vector<double> doubles;
+		private:
+			// Ports
+			OutputPort<doubles> position_outport;
+			
+			//Variables
+			doubles referenceFunction[maxN];
+			doubles timeFunction;
+			doubles pos_out;
+			uint N;
+			uint cntr_ms;
+			uint cntr_s;
+			uint timeFunction_j;
+			bool endOfReferenceReached;
 
-    typedef vector<double> doubles;
+		public:
+			BenchmarkReference(const string& name);
+			~BenchmarkReference();
 
-    /* Declaring output ports*/
-    OutputPort<doubles> position_outport_;
-    OutputPort<doubles> velocity_outport_;
-    OutputPort<doubles> effort_outport_;
-
-    /* Declaring global variables */
-    doubles REF0_, REF1_, REF2_, REF3_, REF4_, REF5_, REF6_, REF7_, REF8_, REF9_, REF10_, pos_out_;
-
-    public:
-
-    BenchmarkReference(const string& name);
-    ~BenchmarkReference();
-
-    bool configureHook();
-    bool startHook();
-    void updateHook();
+			bool configureHook();
+			bool startHook();
+			void updateHook();
 
     };
 }

@@ -8,124 +8,77 @@ using namespace ROS;
 BenchmarkReference::BenchmarkReference(const string& name) :
     TaskContext(name, PreOperational)
 {
-    addPort( "pos_out", position_outport_ );
-    addPort( "vel_out", velocity_outport_ );
-    addPort( "eff_out", effort_outport_ );
+    addProperty( "vector_size", N );
+    addPort( "pos_out", position_outport );
 }
 
 BenchmarkReference::~BenchmarkReference(){}
 
 bool BenchmarkReference::configureHook()
 {
+	// check vectorsize
+	if (N > maxN) {
+		log(Warning)<< "BenchmarkReference: Could not configure Component. N is larger than maxN!" <<endlog();
+		return false;
+	}
 	
-	REF0_.assign(N,0.0);
-	REF1_.assign(N,0.0);
-	REF2_.assign(N,0.0);
-	REF3_.assign(N,0.0);
-	REF4_.assign(N,0.0);
-	REF5_.assign(N,0.0);
-	REF6_.assign(N,0.0);
-	REF7_.assign(N,0.0);
-	REF8_.assign(N,0.0);
-	REF9_.assign(N,0.0);
-	REF10_.assign(N,0.0);
-		
-		
-	// step 1 q12
-	REF1_[0] = -1.5;
-	REF1_[1] =  0.0;
-	
-	REF2_[0] = -1.5;
-	REF2_[1] = -1.5;
-	
-	REF3_[0] = -1.5;
-	REF3_[1] =  1.5;
-	
-	// step 3 q345	
-	REF5_[2] = 0.0;
-	REF5_[3] = 1.5;
-	
-	REF6_[0] = -1.5;
-	REF6_[2] = -1.5;
-	REF6_[3] = 1.5;
-	
-	REF7_[0] = -1.5;
-	REF7_[2] = 0.0;
-	REF7_[3] = 1.5;
-		
-	// step 3 q67	
-	REF9_[5] =  0.5;
-	REF9_[6] =  0.0;
-		
-	REF10_[5] =  0.0;
-	REF10_[6] =  -0.5;
+	for (uint i = 0; i < N; i++) {
+		string name = "referenceFunction"+to_string(i+1);
+		addProperty( name, referenceFunction[i]);
+	}
+	addProperty( "timeFunction", timeFunction);
 	
 	return true;
 }
 
 bool BenchmarkReference::startHook()
-{	
+{
+	int firstInputSize = referenceFunction[0].size();
+	for (uint i = 1; i < N; i++) {
+		if (referenceFunction[i].size() != firstInputSize) {
+			log(Warning)<< "BenchmarkReference: Could not start Component. Size of referenceFunction" << i << " is unequal to the size of referenceFunction1. All referenceFunctions should have the same size!" <<endlog();
+			return false;
+		}
+	}
+	if (timeFunction.size() != firstInputSize) {
+		log(Warning)<< "BenchmarkReference: Could not start Component. Size of timeFunction is unequal to the size of the referenceFunctions." <<endlog();
+		return false;
+	}
 	
-	cntr = 0;
+	cntr_ms = 0;
+	cntr_s = 0;
+	endOfReferenceReached = false;
+	timeFunction_j = 0;
+	pos_out.assign(N,0.0);
+	
     return true;
 }
 
 void BenchmarkReference::updateHook()
 {
-	
-	log(Warning)<< "UPDATEHOOK BENCHMARK TOOL" <<endlog();
-	if (cntr < 1) {
-		pos_out_ = REF0_;
-		log(Warning)<< " Publishing REF0 " <<endlog();
-	}
-	else if ((cntr >= 1) && ( cntr < 2 )) {
-		pos_out_ = REF1_;
-		log(Warning)<< " Publishing REF1 " <<endlog();
-	}
-	else if ((cntr >= 2) && ( cntr < 3 )) {
-		pos_out_ = REF2_;
-		log(Warning)<< " Publishing REF2 " <<endlog();
-	}
-	else if ((cntr >= 3) && ( cntr < 4 )) {
-		pos_out_ = REF3_;
-		log(Warning)<< " Publishing REF3 " <<endlog();
-	}
-	else if ((cntr >= 4) && ( cntr < 5 )) {
-		pos_out_ = REF4_;
-		log(Warning)<< " Publishing REF4 " <<endlog();
-	}
-	else if ((cntr >= 5) && ( cntr < 6 )) {
-		pos_out_ = REF5_;
-		log(Warning)<< " Publishing REF5 " <<endlog();
-	}
-	else if ((cntr >= 6) && ( cntr < 7 )) {
-		pos_out_ = REF6_;
-		log(Warning)<< " Publishing REF6 " <<endlog();
-	}
-	else if ((cntr >= 7) && ( cntr < 8 )) {
-		pos_out_ = REF7_;
-		log(Warning)<< " Publishing REF7 " <<endlog();
-	}
-	else if ((cntr >= 8) && ( cntr < 9 )) {
-		pos_out_ = REF8_;
-		log(Warning)<< " Publishing REF8 " <<endlog();
-	}
-	else if ((cntr >= 9) && ( cntr < 10 )) {
-		pos_out_ = REF9_;
-		log(Warning)<< " Publishing REF9 " <<endlog();
-	}
-	else if ((cntr >= 10) && ( cntr < 11 )) {
-		pos_out_ = REF10_;
-		log(Warning)<< " Publishing REF10 " <<endlog();
-	}
-	else if (cntr >= 11) {
-		pos_out_ = REF0_;
-		log(Warning)<< " Publishing REF0 (11)" <<endlog();
-		cntr--;
+	// Do the Counter Magic
+	if (!endOfReferenceReached) {
+		cntr_ms++;
+		if (cntr_ms >= 1000 ) {
+			cntr_ms = 0;
+			cntr_s++;
+		}
+		if (cntr_s >= timeFunction[timeFunction.size()-1]) {
+			endOfReferenceReached = true;
+		}
 	}
 
-	position_outport_.write(pos_out_);
-	cntr++;
+	// Update pos_out if necessary
+	if ( cntr_s >= timeFunction[timeFunction_j]) {
+		for (uint i = 0; i < N; i++) {
+			pos_out[i] = referenceFunction[i][timeFunction_j];
+		}
+		position_outport.write(pos_out);
+		timeFunction_j++;
+	}
+	
+	// Write pos_out
+	
 }
 
 ORO_CREATE_COMPONENT(ROS::BenchmarkReference)

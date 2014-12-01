@@ -56,12 +56,13 @@ Supervisor::Supervisor(const string& name) :
             .doc("Display the list of peers");
             
 	// Ports
-	addPort( "rosemergency", rosemergencyport );
 	addPort( "rosshutdown", rosshutdownport );
 	addPort( "rosetherCATenabled", enabled_rosport );
 	addPort( "serialRunning", serialRunningPort ).doc("Serial device running port");
 	addPort( "dashboardCmd", dashboardCmdPort ).doc("To receive dashboard commands ");  
-	addPort("hardware_status", hardwareStatusPort ).doc("To send status to dashboard ");
+	addPort( "hardware_status", hardwareStatusPort ).doc("To send hardware status to dashboard "); 
+	addPort( "ebutton_status", ebuttonStatusPort ).doc("To send ebutton status to dashboard "); 
+	addProperty( "ebuttonorder", ebutton_order );
 }
 
 Supervisor::~Supervisor()
@@ -118,6 +119,21 @@ bool Supervisor::configureHook()
 
 	enabled_rosport.write( rosenabledmsg );
 	
+	// check ebutton_order property
+	if (ebutton_order.size() < 2 || ebutton_order.size() > 4 ) {
+		log(Error) << "Supervisor: Could not configure component, size of ebutton_order should be 2, 3 or 4" << endlog();
+		return false;
+	}
+	number_of_ebuttons = ebutton_order.size();
+	emergency_switches.resize(number_of_ebuttons);
+	for ( int j = 0; j < number_of_ebuttons; j++ ) {		
+		if ( (ebutton_order[j] == "Wireless") || (ebutton_order[j] == "Wired") || (ebutton_order[j] == "Reset") || (ebutton_order[j] == "Endswitch") ) {
+			addPort( ("ebutton"+ebutton_order[j]), ebutton_ports[j] );
+		} else {
+			log(Error) << "Supervisor: Could not configure component, ebutton_order[" << j <<"] does not match one of four possible strings ['Wireless','Wired','Reset','Endswitch']" << endlog();
+			return false;
+		}
+	}
 	return true;
 }
 
@@ -130,6 +146,13 @@ bool Supervisor::startHook()
 	if ( !serialRunningPort.connected() ) {
 		log(Error) << "Supervisor: Could not start component: serialport to check soem is not connected" << endlog();
 		return false;
+	}
+	// ebutton connection checks
+	for ( int j = 1; j < ebutton_order.size(); j++ ) {
+		if (!ebutton_ports[j].connected()) {
+			log(Error) << "Supervisor: Could not start component: ebutton_ports[" << j << "] is not connected" << endlog();
+			return false;
+		}
 	}
 	
 	start_time = os::TimeService::Instance()->getNSecs()*1e-9;
@@ -176,10 +199,9 @@ void Supervisor::updateHook()
 		enabled_rosport.write( rosdisabledmsg );
 	} 
 	
-	// Check if emergency button pressed:
-	std_msgs::Bool rosemergencymsg;
-	if ( rosemergencyport.read(rosemergencymsg) == NewData ) {
-		if ( emergency != rosemergencymsg.data && rosemergencymsg.data ) {
+	// Check if emergency button pressed: (by reading last ebutton which is a AND of all ebuttons)
+	if ( ebutton_ports[(number_of_ebuttons-1)].read( emergency_switches[(number_of_ebuttons-1)] ) == NewData ) {
+		if ( emergency != emergency_switches[(number_of_ebuttons-1)].data && emergency_switches[(number_of_ebuttons-1)].data ) {
 			ROS_INFO_STREAM( "Supervisor: Emergency button pressed, shutting down components online components" );
 			for ( int partNr = 1; partNr < 6; partNr++ ) {
 				if ( hardwareStatusmsg.status[partNr].level == StatusOperationalmsg.level ) {
@@ -188,7 +210,7 @@ void Supervisor::updateHook()
 				GoIdle(partNr,hardwareStatusmsg);
 			}
 		}
-		else if ( emergency != rosemergencymsg.data && !rosemergencymsg.data ) {
+		else if ( emergency != emergency_switches[(number_of_ebuttons-1)].data && !emergency_switches[(number_of_ebuttons-1)].data ) {
 			ROS_INFO_STREAM( "Supervisor: Emergency button released, restoring components" );
 			for ( int partNr = 1; partNr < 6; partNr++ ) {
 				if ( ( hardwareStatusmsg.status[partNr].level == StatusIdlemsg.level ) && (idleDueToEmergencyButton[partNr] == true)) {
@@ -197,8 +219,26 @@ void Supervisor::updateHook()
 				}
 			}
 		}
-		emergency = rosemergencymsg.data;
+		emergency = emergency_switches[(number_of_ebuttons-1)].data;
 	}
+	
+	// send ebutton status to dashboard (When button 1 is pressed the status of buttons 1+i is not available anymore)
+	diagnostic_msgs::DiagnosticArray ebuttonStatusmsg;
+	ebuttonStatusmsg.status.resize(number_of_ebuttons);
+	
+	bool somebuttonpressed = false;
+	for ( int j = 0; j < number_of_ebuttons; j++ ) {
+		ebutton_ports[j].read(emergency_switches[j]); 
+		ebuttonStatusmsg.status[j].level = 3; // data is by default unavailable
+		ebuttonStatusmsg.status[j].name = ebutton_order[j];
+		if (emergency_switches[j].data == true && !somebuttonpressed) {
+			ebuttonStatusmsg.status[j].level = 1;
+			somebuttonpressed = true;
+		} else if (emergency_switches[j].data == false && !somebuttonpressed) {
+			ebuttonStatusmsg.status[j].level = 0;
+		}
+	}
+	ebuttonStatusPort.write(ebuttonStatusmsg);
 
 	// Read DashboardCmds
 	if (goodToGO) {
@@ -408,7 +448,7 @@ bool Supervisor::setState(int partNr, diagnostic_msgs::DiagnosticStatus state)
 	}
 	hardwareStatusmsg.status[partNr].name = bodyParts[partNr];
 
-	// update all state
+	// Update all state
 	int max_level = 0;
 	for ( int partNr = 1; partNr < 6; partNr++ ) {
 		max_level = max((int) hardwareStatusmsg.status[partNr].level,max_level);
