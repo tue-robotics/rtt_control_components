@@ -158,4 +158,16 @@ void ReferenceGenerator::updateHook()
 
 }
 
+void ReferenceGenerator::resetReference()
+{
+    log(Warning) << "REFGEN: Resettting bodypart!"<<endlog();
+
+    //Set the starting value to the current actual value
+    doubles actualPos(N,0.0);
+    initialposinport.read( actualPos );
+    for ( uint i = 0; i < N; i++ ){
+       mRefGenerators[i].setRefGen(actualPos[i]);
+    }
+}
+
 ORO_CREATE_COMPONENT(SOURCES::ReferenceGenerator)

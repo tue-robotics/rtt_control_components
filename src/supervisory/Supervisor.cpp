@@ -9,7 +9,6 @@
 #include <rtt/Component.hpp>
 #include "Supervisor.hpp"
 #include <ros/ros.h>
-//#include <XmlRpcCpp.h>
 
 enum dashboard_cmd_t {HOMING_CMD = 21, START_CMD = 22, STOP_CMD = 23, RESET_CMD = 24};
 

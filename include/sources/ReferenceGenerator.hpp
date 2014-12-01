@@ -70,6 +70,7 @@ namespace SOURCES
 			bool configureHook();
 			bool startHook();
 			void updateHook();
+            void resetReference();
 
 	};
 }
