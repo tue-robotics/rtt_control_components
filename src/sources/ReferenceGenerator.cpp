@@ -27,6 +27,9 @@ ReferenceGenerator::ReferenceGenerator(const string& name) : TaskContext(name, P
     addProperty( "maxPosition", maxpos);
     addProperty( "maxVelocity", maxvel);
     addProperty( "maxAcceleration", maxacc);
+    
+    // Operations
+    addOperation( "resetReference", &ReferenceGenerator::resetReference, this, OwnThread ).doc("Reset the reference generator to measured current position (used in homing)");
 }
 
 ReferenceGenerator::~ReferenceGenerator(){}

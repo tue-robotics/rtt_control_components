@@ -128,6 +128,10 @@ bool Homing::startHook()
         log(Error) << prefix <<"_Homing: Could not find :" << prefix << "_ReadEncoders component! Did you add it as Peer in the ops file?"<<endlog();
         return false;
     }
+    if ( !Safety ) {
+        log(Error) << prefix <<"_Homing: Could not find :" << prefix << "_Safety component! Did you add it as Peer in the ops file?"<<endlog();
+        return false;
+    }
     if ( !ReferenceGenerator ) {
         log(Error) << prefix <<"_Homing: Could not find :" << prefix << "_ReferenceGenerator component! Did you add it as Peer in the ops file?"<<endlog();
         return false;
@@ -180,7 +184,7 @@ bool Homing::startHook()
         return false;
     }
     if ( !ResetReference.ready() ) {
-        log(Error) << prefix <<"_Homing: Could not find :" << prefix << "_ReferenceGenerator.ResetReference Operation!"<<endlog();
+        log(Error) << prefix <<"_Homing: Could not find :" << prefix << "_ReferenceGenerator.resetReference Operation!"<<endlog();
         return false;
     }
     
