@@ -61,26 +61,24 @@ namespace MATH
 
     /* Declaring in and output ports*/
     InputPort<doubles> inports[maxN];
-    OutputPort<bools> outports[maxN];
+    OutputPort<bool> outports[maxN];
     OutputPort<std_msgs::Bool> outports_toROS[maxN];
 
     /* Declaring messages */
     vector<doubles> inputdata;
-    vector<bools> outputdata;
+    bools outputdata;
     std_msgs::Bool outputdata_msg;
 
     /* Declaring parameters variables */
     uint        n_inports; // number of inports
     uint        n_outports; // number of outports
     doubles     input_sizes; // sizes of the inputports
-    doubles     output_sizes; // sizes of the outputports
+    //doubles     output_sizes; // sizes of the outputports
     doubles     bound_values; // boundary values
     ints       	smaller; // comparison smaller or larger
     bool        direct_to_ROS; // direct outputs to ros
 
     /* Declaring global variables */
-    uint        n_signals; // number of signals to process
-    bools       outputs; // vector containing all outputs
 
     public:
 
