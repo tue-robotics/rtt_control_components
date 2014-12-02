@@ -9,8 +9,8 @@
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
 #include <std_msgs/Bool.h>
-#include <amigo_msgs/AmigoGripperCommand.h>
-#include <amigo_msgs/AmigoGripperMeasurement.h>
+#include <tue_msgs/GripperCommand.h>
+#include <tue_msgs/GripperMeasurement.h>
 
 #define PI 3.141592654
 #define GRIPPER_INDEX	7
@@ -35,7 +35,7 @@ namespace ARM
 	  {
 	  private:
 	  // Inports
-	  InputPort<amigo_msgs::AmigoGripperCommand> gripperCommandPort;
+	  InputPort<tue_msgs::GripperCommand> gripperCommandPort;
 	  InputPort<doubles> torqueInPort;
 	  InputPort<doubles> positionInPort;
 	  InputPort<bool> resetGripperPort;
@@ -43,7 +43,7 @@ namespace ARM
 	  
 	  // Outports
 	  OutputPort<doubles> gripperRefPort;
-	  OutputPort<amigo_msgs::AmigoGripperMeasurement> gripperMeasurementPort;
+	  OutputPort<tue_msgs::GripperMeasurement> gripperMeasurementPort;
 	  
 	  // Properties
 	  uint sensorPos;
@@ -57,7 +57,7 @@ namespace ARM
 	  doubles torques;
 	  doubles measPos;
 	  doubles gripperPos;
-      amigo_msgs::AmigoGripperCommand gripperCommand;
+      tue_msgs::GripperCommand gripperCommand;
 	  
 	public:
 

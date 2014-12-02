@@ -91,14 +91,14 @@ void GripperControl::updateHook()
 		torqueInPort.read(torques);
 		positionInPort.read(measPos);
 		
-		amigo_msgs::AmigoGripperMeasurement gripperMeasurement;
+		tue_msgs::GripperMeasurement gripperMeasurement;
 		gripperMeasurement.direction = gripperCommand.direction;
 		gripperMeasurement.torque = torques[GRIPPER_INDEX];
 		gripperMeasurement.position = measPos[GRIPPER_INDEX]/maxPos;
 		gripperMeasurement.end_position_reached = false;
 		gripperMeasurement.max_torque_reached = false;
 
-		if(gripperCommand.direction == amigo_msgs::AmigoGripperCommand::OPEN){
+		if(gripperCommand.direction == tue_msgs::GripperCommand::OPEN){
 			if (gripperPos[0] >= maxPos){
 				log(Info)<<"Gripper is OPEN"<<endlog();
 				gripperMeasurement.end_position_reached = true;
