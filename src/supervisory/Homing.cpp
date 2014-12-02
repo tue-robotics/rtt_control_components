@@ -128,6 +128,10 @@ bool Homing::startHook()
         log(Error) << prefix <<"_Homing: Could not find :" << prefix << "_ReadEncoders component! Did you add it as Peer in the ops file?"<<endlog();
         return false;
     }
+    if ( !Safety ) {
+        log(Error) << prefix <<"_Homing: Could not find :" << prefix << "_Safety component! Did you add it as Peer in the ops file?"<<endlog();
+        return false;
+    }
     if ( !ReferenceGenerator ) {
         log(Error) << prefix <<"_Homing: Could not find :" << prefix << "_ReferenceGenerator component! Did you add it as Peer in the ops file?"<<endlog();
         return false;
@@ -164,6 +168,7 @@ bool Homing::startHook()
     StartBodyPart = Supervisor->getOperation("StartBodyPart");
     StopBodyPart = Supervisor->getOperation("StopBodyPart");
     ResetEncoder = ReadEncoders->getOperation("reset");
+    ResetReference = ReferenceGenerator->getOperation("resetReference");
 
     // Check Operations
     if ( !StartBodyPart.ready() ) {
@@ -176,6 +181,10 @@ bool Homing::startHook()
     }
     if ( !ResetEncoder.ready() ) {
         log(Error) << prefix <<"_Homing: Could not find :" << prefix << "_ReadEncoder.reset Operation!"<<endlog();
+        return false;
+    }
+    if ( !ResetReference.ready() ) {
+        log(Error) << prefix <<"_Homing: Could not find :" << prefix << "_ReferenceGenerator.resetReference Operation!"<<endlog();
         return false;
     }
     
@@ -298,6 +307,9 @@ void Homing::updateHook()
         // Check homing criterion
         joint_finished = evaluateHomingCriterion(homing_order[jointNr]-1);
         if (joint_finished) {
+
+            // Reset interpolator
+            ResetReference();
 
             // Send to reset position
             ref_out = position;         

@@ -57,7 +57,7 @@ bool AnalogOutsGeneric::configureHook()
         log(Warning) << "AnalogOutsGeneric: There are more inputs than outputs. The last inputs will be discarded!" << endlog();
     }
     if ( nonobsolete_output_positions != n_inputs) {
-        log(Error) << "AnalogInsGeneric:  " << nonobsolete_output_positions << " non zero entries in output_positions is not equal to n_inputs: " << n_inputs << "!" << endlog();
+        log(Error) << "AnalogInsGeneric:  There are " << nonobsolete_output_positions << " non zero entries in output_positions which should be equal n_inputs: " << n_inputs << "!" << endlog();
         return false;
     }
 

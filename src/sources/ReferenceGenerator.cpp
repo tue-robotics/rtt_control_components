@@ -27,6 +27,9 @@ ReferenceGenerator::ReferenceGenerator(const string& name) : TaskContext(name, P
     addProperty( "maxPosition", maxpos);
     addProperty( "maxVelocity", maxvel);
     addProperty( "maxAcceleration", maxacc);
+    
+    // Operations
+    addOperation( "resetReference", &ReferenceGenerator::resetReference, this, OwnThread ).doc("Reset the reference generator to measured current position (used in homing)");
 }
 
 ReferenceGenerator::~ReferenceGenerator(){}
@@ -156,6 +159,18 @@ void ReferenceGenerator::updateHook()
     veloutport.write( outvel );
     accoutport.write( outacc );
 
+}
+
+void ReferenceGenerator::resetReference()
+{
+    log(Warning) << "REFGEN: Resettting bodypart!"<<endlog();
+
+    //Set the starting value to the current actual value
+    doubles actualPos(N,0.0);
+    initialposinport.read( actualPos );
+    for ( uint i = 0; i < N; i++ ){
+       mRefGenerators[i].setRefGen(actualPos[i]);
+    }
 }
 
 ORO_CREATE_COMPONENT(SOURCES::ReferenceGenerator)
