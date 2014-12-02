@@ -110,6 +110,7 @@ void Safety::updateHook()
         bool safe_i = true;
         if ( safe_inports[i].read(safe_i) == NewData ){
             if ( !safe_i && !errors){
+				errors = true;
                 ROS_ERROR_STREAM( "Safety: error in additional safety: "<< add_safeties[i] << ". output disabled." );
                 log(Error)<< "Safety: error in additional safety: "<< add_safeties[i] << ". output disabled." <<endlog();
             }

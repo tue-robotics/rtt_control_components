@@ -15,6 +15,7 @@ namespace SUPERVISORY
 {
     typedef vector<double> doubles;
     typedef vector<int> ints;
+    typedef vector<bool> bools;
     typedef vector<string> strings;
 
     /*! \class Safety
