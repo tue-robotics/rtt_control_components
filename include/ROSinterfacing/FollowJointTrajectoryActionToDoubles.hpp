@@ -13,6 +13,7 @@
 
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
+#include <rtt_actionlib/rtt_actionlib.hpp>
 #include <trajectory_msgs/JointTrajectory.h>
 #include <trajectory_msgs/JointTrajectoryPoint.h>
 #include <control_msgs/FollowJointTrajectoryAction.h>
@@ -39,8 +40,12 @@ namespace ROS
     {
     private:
 
+    // Convenience typedefs
     typedef vector<double> doubles;
-    
+    typedef actionlib::ServerGoalHandle<control_msgs::FollowJointTrajectoryAction> GoalHandle;
+
+    // RTT action server
+    rtt_actionlib::RTTActionServer<some_msgs::SomeAction> rtt_action_server_;
 
     /* Declaring and output ports*/
     InputPort<control_msgs::FollowJointTrajectoryActionGoal> goalport;

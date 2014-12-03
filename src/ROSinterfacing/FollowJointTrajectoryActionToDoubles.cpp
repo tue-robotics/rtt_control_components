@@ -21,6 +21,13 @@ FollowJointTrajectoryActionToDoubles::FollowJointTrajectoryActionToDoubles(const
     addPort( "pos_out", position_outport_ );
     addPort( "resetValues", resetPort );
     addPort( "result", resultport );
+
+    // Add action server ports to this task's root service
+    rtt_action_server_.addPorts(this->provides());
+
+    // Bind action server goal and cancel callbacks (see below)
+    rtt_action_server_.registerGoalCallback(boost::bind(&FollowJointTrajectoryActionToDoubles::goalCallback, this, _1));
+    rtt_action_server_.registerCancelCallback(boost::bind(&FollowJointTrajectoryActionToDoubles::cancelCallback, this, _1));
 }
 
 FollowJointTrajectoryActionToDoubles::~FollowJointTrajectoryActionToDoubles(){}
@@ -38,7 +45,8 @@ bool FollowJointTrajectoryActionToDoubles::configureHook()
 
 bool FollowJointTrajectoryActionToDoubles::startHook()
 {
-	
+    rtt_action_server_.start();
+
     /// Check which ports are connected
     if (!position_outport_.connected()) {
         log(Warning)<<"ReadJointState: Position outport not connected"<<endlog();
@@ -194,6 +202,17 @@ void FollowJointTrajectoryActionToDoubles::updateHook()
 
 		position_outport_.write(pos);
     }
+}
+
+// Called by rtt_action_server_ when a new goal is received
+void goalCallback(GoalHandle gh) {
+    // Accept/reject goal requests here
+    log(Info)<<"Received new goal"<<endlog();
+}
+
+// Called by rtt_action_server_ when a goal is cancelled / preempted
+void cancelCallback(GoalHandle gh) {
+    // Handle preemption here
 }
 
 ORO_CREATE_COMPONENT(ROS::FollowJointTrajectoryActionToDoubles)
