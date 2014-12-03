@@ -293,6 +293,8 @@ void Homing::updateHook()
 		if (jointNr == (N-1)) {log(Warning) << prefix <<"_Homing: Skipped homing of last joint "<< homing_order[jointNr] << "!" <<endlog();}
 
         // Go to the next joint and start over
+        log(Warning) << prefix <<"_Homing" <<endlog();
+        log(Warning) << prefix <<"_Homing" <<endlog();
         jointNr++;
         return;
     }
@@ -337,6 +339,8 @@ void Homing::updateHook()
 			Safety_maxJointErrors.set(updated_maxerr);
 
             log(Warning) << prefix <<"_Homing: Finished homing of joint "<< homing_order[jointNr] << ". Proceeding to joint " << homing_order[jointNr+1]<< "!" <<endlog();
+			log(Warning) << prefix <<"_Homing" <<endlog();
+			log(Warning) << prefix <<"_Homing" <<endlog();
             jointNr++;
             state = 0;
         }
@@ -428,10 +432,10 @@ void Homing::sendRef(doubles output_total)
 		}
 		
 		if ((N_outports > 1) && (n == 0)) {
-			log(Warning) << prefix <<"_Homing: Sending Ref [" << output[0] << "," << output[1] << "," << output[2] << "," << output[3] << "," << output[4] << "," << output[5] << "," << output[6] << "]" <<endlog();
+			log(Warning) << prefix <<"_Homing: Sending Ref [" << output[0] << "\t \t," << output[1] << "\t \t," << output[2] << "\t \t," << output[3] << "\t \t," << output[4] << "\t \t," << output[5] << "\t \t," << output[6] << "]" <<endlog();
 		}
 		if ((N_outports > 1) && (n == 1)) {
-			log(Warning) << prefix <<"_Homing: Sending Ref [" << output[0] << "]" <<endlog();
+			//log(Warning) << prefix <<"_Homing: Sending Ref [" << output[0] << "]" <<endlog();
 		}
 				
         ref_outport[n].write(output);

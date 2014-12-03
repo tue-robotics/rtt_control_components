@@ -100,6 +100,7 @@ void Safety::updateHook()
         if(fabs(timeNow-timeReachedSaturation[i])>=MAXCONSATTIME){
             if(errors==false){ // This check makes sure it is printed only once.
                 ROS_ERROR_STREAM( "Safety: Motor output "<<i+1<<" satured too long (absolute "<<MAXCONSATTIME<<" sec above "<<fabs(MOTORSAT[i])<<"). output disabled." );
+                log(Error)<<"Safety: Motor output "<<i+1<<" satured too long (absolute "<<MAXCONSATTIME<<" sec above "<<fabs(MOTORSAT[i])<<"). output disabled." <<endlog();
                 errors = true;
             }
         }
