@@ -42,6 +42,7 @@ namespace ROS
 
     typedef vector<double> doubles;
     typedef vector<int> ints;
+    typedef vector<bool> bools;
     typedef vector<string> strings;
 
     InputPort<sensor_msgs::JointState> inport;
@@ -53,9 +54,10 @@ namespace ROS
     doubles vel_out[maxN];
     doubles eff_out[maxN];
     ints activeBodyparts;
+    bools allowedBodyparts;
     int totalNumberOfJoints;
     int numberOfBodyparts;
-    bool ConnectionsChecked;
+    bool CheckConnections;
     
     public:
 
@@ -66,6 +68,7 @@ namespace ROS
     bool startHook();
     void updateHook();
     void AddBodyPart(int partNr, strings JointNames);
+    void AllowReadReference(int partNr, bool allowed);
     
     typedef pair<int, int> BodyJointPair;
     map<string, BodyJointPair> joint_map;

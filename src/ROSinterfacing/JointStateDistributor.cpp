@@ -12,8 +12,12 @@ JointStateDistributor::JointStateDistributor(const string& name) :
 	// Operations
 	addOperation("AddBodyPart", &JointStateDistributor::AddBodyPart, this, OwnThread)
 		.doc("Add a body part by specifying its partNr and its jointNames")
-		.arg("partNr","The number of the bodypart")              
+		.arg("partNr","The number of the bodypart")
 		.arg("JointNames","The name of joints");
+	addOperation("AllowReadReference", &JointStateDistributor::AllowReadReference, this)
+		.doc("Allow a bodypart to receive references. For example to block when not yet homed")
+		.arg("partNr","The number of the bodypart")
+		.arg("allowed","wether or not the bodypart is allowed to receieve references");
 
 	// Ports
 	addEventPort( "in", inport );
@@ -23,7 +27,7 @@ JointStateDistributor::~JointStateDistributor(){}
 
 bool JointStateDistributor::configureHook()
 {
-	ConnectionsChecked = true;
+	CheckConnections = false;
 	totalNumberOfJoints = 0;
 	numberOfBodyparts = 0;
     return true;
@@ -42,14 +46,13 @@ bool JointStateDistributor::startHook()
 void JointStateDistributor::updateHook()
 {
 	// Do a check on all outport connections if a new bodypart is attached.
-	if (!ConnectionsChecked) {
-		log(Warning) << "JointStateDistributor: checking connections" << endlog();
+	if (CheckConnections) {
 		for (uint l = 0; l < activeBodyparts.size(); l++) {
 			if (!pos_outport[activeBodyparts[l]].connected() && !vel_outport[activeBodyparts[l]].connected() && !eff_outport[activeBodyparts[l]].connected() ) {
 				log(Error) << "JointStateDistributor: Bodypart:" << activeBodyparts[l]+1 << "has no connected pos, vel or eff ports" << endlog();
 			}
 		}
-		ConnectionsChecked = true;
+		CheckConnections = false;
 	}
 	
 	// if a new message received
@@ -78,9 +81,13 @@ void JointStateDistributor::updateHook()
 		
 		// All joints are evaluated now write the output
 		for (uint l = 0; l < activeBodyparts.size(); l++) {
-			pos_outport[activeBodyparts[l]].write(pos_out[activeBodyparts[l]]);
-			vel_outport[activeBodyparts[l]].write(vel_out[activeBodyparts[l]]);
-			eff_outport[activeBodyparts[l]].write(eff_out[activeBodyparts[l]]);
+			if (allowedBodyparts[l]) {
+				pos_outport[activeBodyparts[l]].write(pos_out[activeBodyparts[l]]);
+				vel_outport[activeBodyparts[l]].write(vel_out[activeBodyparts[l]]);
+				eff_outport[activeBodyparts[l]].write(eff_out[activeBodyparts[l]]);
+			} else {
+				log(Warning) << "JointStateDistributor: Message received for bodypart that did not get the AllowReadReference!" << endlog();
+			}
 		}
 	}
 }
@@ -107,10 +114,22 @@ void JointStateDistributor::AddBodyPart(int partNr, strings JointNames)
     totalNumberOfJoints += JointNames.size();
 	numberOfBodyparts += 1;
 	activeBodyparts.resize(numberOfBodyparts);
+	allowedBodyparts.resize(numberOfBodyparts);
 	activeBodyparts[numberOfBodyparts-1] = partNr-1;
-	ConnectionsChecked = false;
-
+	allowedBodyparts[numberOfBodyparts-1] = true;
+	
 	log(Info) << "JointStateDistributor: Total of "<< totalNumberOfJoints <<" joints for " << numberOfBodyparts << " Bodyparts" << endlog();
+}
+
+void JointStateDistributor::AllowReadReference(int partNr, bool allowed)
+{
+	CheckConnections = true;
+	if (allowed = true) {
+		log(Info) << "JointStateDistributor:  Allowed Reading of References for partNr: "<< partNr <<"!" << endlog();
+	} else {
+		log(Info) << "JointStateDistributor:  Disabled Reading of References for partNr: "<< partNr <<"!" << endlog();
+	}
+	allowedBodyparts[partNr-1] = allowed;
 }
 
 ORO_CREATE_COMPONENT(ROS::JointStateDistributor)

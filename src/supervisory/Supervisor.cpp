@@ -170,6 +170,17 @@ bool Supervisor::startHook()
 	}
 	aquisition_time = os::TimeService::Instance()->getNSecs()*1e-9;
 	
+	// Set access to JointStateDistributer function to block read references while not in op state
+	JointStateDistributor = this->getPeer( "JointStateDistributor");
+	if ( JointStateDistributor ) {
+		AllowReadReference = JointStateDistributor->getOperation("AllowReadReference");
+		if ( !AllowReadReference.ready() ) {
+			log(Error) <<"Supervisor: Could not find : JointStateDistributor.AllowReadReference Operation!"<<endlog();
+			return false;
+		}
+	}
+	
+	
     return true;
 }
 
@@ -462,22 +473,22 @@ bool Supervisor::setState(int partNr, diagnostic_msgs::DiagnosticStatus state)
 bool Supervisor::GoOperational(int partNr, diagnostic_msgs::DiagnosticArray statusArray)
 {
 	if (staleParts[partNr] == false) {
-		// if in error state, GoOp is blocked, if in homing state, the EnabledList does not need to be restarted
-		if (statusArray.status[partNr].level != StatusErrormsg.level && statusArray.status[partNr].level != StatusHomingmsg.level) {
-			stopList( HomingOnlyList[partNr] );
-			startList( EnabledList[partNr] );
-			startList( OpOnlyList[partNr] );
-			setState(partNr, StatusOperationalmsg);
-		}
-		else if (statusArray.status[partNr].level != StatusErrormsg.level && statusArray.status[partNr].level == StatusHomingmsg.level) {
+		if (statusArray.status[partNr].level != StatusErrormsg.level) {				// if in error state, GoOp is blocked
 			stopList( HomingOnlyList[partNr] );
 			startList( OpOnlyList[partNr] );
+			if ( JointStateDistributor ) {											// if there is a JointStateDistributor then allow for partNr to read references
+				AllowReadReference(partNr,true);
+			}
+			
+			if (statusArray.status[partNr].level != StatusHomingmsg.level) {		// if in homing state, the EnabledList does not need to be restarted
+				startList( EnabledList[partNr] );
+			}
 			setState(partNr, StatusOperationalmsg);
 		}
-	}
-	else {
+	} else {
 		setState(partNr, StatusStalemsg);
 	}
+	
 	return true;
 }
 
@@ -487,6 +498,9 @@ bool Supervisor::GoIdle(int partNr, diagnostic_msgs::DiagnosticArray statusArray
 		stopList( EnabledList[partNr] );
 		stopList( HomingOnlyList[partNr] );
 		stopList( OpOnlyList[partNr] );
+		if ( JointStateDistributor ) {
+			AllowReadReference(partNr,false);
+		}
 		if (statusArray.status[partNr].level != StatusErrormsg.level) {
 			setState(partNr, StatusIdlemsg);
 		}
@@ -503,6 +517,9 @@ bool Supervisor::GoHoming(int partNr, diagnostic_msgs::DiagnosticArray statusArr
 	if (staleParts[partNr] == false) {
 		if (statusArray.status[partNr].level != StatusErrormsg.level) {
 			stopList( OpOnlyList[partNr] );
+			if ( JointStateDistributor ) {
+				AllowReadReference(partNr,false);
+			}
 			startList( EnabledList[partNr] );
 			startList( HomingOnlyList[partNr] );
 			setState(partNr, StatusHomingmsg);
@@ -521,6 +538,9 @@ bool Supervisor::GoError(int partNr, diagnostic_msgs::DiagnosticArray statusArra
 		stopList( EnabledList[partNr] );
 		stopList( HomingOnlyList[partNr] );
 		stopList( OpOnlyList[partNr] );
+		if ( JointStateDistributor ) {
+			AllowReadReference(partNr,false);
+		}
 		setState(partNr, StatusErrormsg);
 	}
 	else {
