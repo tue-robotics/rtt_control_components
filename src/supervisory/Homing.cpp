@@ -20,6 +20,7 @@ Homing::Homing(const string& name) : TaskContext(name, PreOperational)
     addPort( "abs_pos_in", absPos_inport );
     addPort( "force_in", forces_inport );
     
+    //addPort( "homing_logport", homing_logport );
     addPort( "homing_finished", homingfinished_outport );
 
 	// Properties
@@ -248,7 +249,15 @@ void Homing::updateHook()
         for (uint j = 0; j<N; j++) {
             if (require_homing[j] != 0) {
                 if (!finished) {
-
+					
+					// Reset parameters	
+					for (uint j = 0; j<N; j++) {
+						updated_minpos[j] = initial_minpos[j];
+						updated_maxpos[j] = initial_maxpos[j];
+						ReferenceGenerator_minpos.set(updated_minpos);
+						ReferenceGenerator_maxpos.set(updated_maxpos);
+					}
+					
                     // Reset encoders and send joint to endpos
                     finished = true;
 
@@ -289,12 +298,10 @@ void Homing::updateHook()
         ReferenceGenerator_maxpos.set(updated_maxpos);
         ReferenceGenerator_maxvel.set(updated_maxvel);
 		
-		if (jointNr != (N-1)) {log(Warning) << prefix <<"_Homing: Skipped homing of joint "<< homing_order[jointNr] << ". Proceeding to joint " << homing_order[jointNr+1]<< "!" <<endlog();}
-		if (jointNr == (N-1)) {log(Warning) << prefix <<"_Homing: Skipped homing of last joint "<< homing_order[jointNr] << "!" <<endlog();}
+		if (jointNr != (N-1)) {log(Warning) << prefix <<"_Homing: Skipped homing of joint "<< homing_order[jointNr] << ". Proceeding to joint " << homing_order[jointNr+1]<< "! \n \n \n \n" <<endlog();}
+		if (jointNr == (N-1)) {log(Warning) << prefix <<"_Homing: Skipped homing of last joint "<< homing_order[jointNr] << "! \n \n \n \n" <<endlog();}
 
         // Go to the next joint and start over
-        log(Warning) << prefix <<"_Homing" <<endlog();
-        log(Warning) << prefix <<"_Homing" <<endlog();
         jointNr++;
         return;
     }
@@ -321,11 +328,7 @@ void Homing::updateHook()
             sendRef(ref_out);
                        
             // Reset parameters            
-            updated_minpos[homing_order[jointNr]-1] = initial_minpos[homing_order[jointNr]-1];
-            updated_maxpos[homing_order[jointNr]-1] = initial_maxpos[homing_order[jointNr]-1];
             updated_maxvel[homing_order[jointNr]-1] = initial_maxvel[homing_order[jointNr]-1];
-            ReferenceGenerator_minpos.set(updated_minpos);
-            ReferenceGenerator_maxpos.set(updated_maxpos);
             ReferenceGenerator_maxvel.set(updated_maxvel);
             
             state++;
@@ -338,19 +341,22 @@ void Homing::updateHook()
 			updated_maxerr[homing_order[jointNr]-1] = initial_maxerr[homing_order[jointNr]-1];
 			Safety_maxJointErrors.set(updated_maxerr);
 
-            log(Warning) << prefix <<"_Homing: Finished homing of joint "<< homing_order[jointNr] << ". Proceeding to joint " << homing_order[jointNr+1]<< "!" <<endlog();
-			log(Warning) << prefix <<"_Homing" <<endlog();
-			log(Warning) << prefix <<"_Homing" <<endlog();
+            log(Warning) << prefix <<"_Homing: Finished homing of joint "<< homing_order[jointNr] << ". Proceeding to joint " << homing_order[jointNr+1]<< "! \n \n \n \n" <<endlog();
             jointNr++;
             state = 0;
         }
+		//doubles jointID_doubles;
+		//jointID_doubles.assign(1,0.0);
+        //homing_logport.write(jointID_doubles);
     }
 }
 
 void Homing::updateHomingRef( uint jointID)
 {
-    if (homing_type[jointID] != 3 ) {
+	// Read positions
+    pos_inport.read(position);
 
+    if (homing_type[jointID] != 3 ) {
         // Send to homing position
         ref_out = position;
         ref_out[jointID] = homing_direction[jointID]*25.0;
@@ -383,30 +389,42 @@ void Homing::updateHomingRef( uint jointID)
 bool Homing::evaluateHomingCriterion( uint jointID)
 {
     bool result = false;
-
+	//doubles jointID_doubles;
+	//jointID_doubles.resize(1);
+	//jointID_doubles[0] = (double) jointID;
     if (homing_type[jointID] == 1 ) {
         std_msgs::Bool endswitch_msg;
         endswitch_inport.read(endswitch_msg);
         result = !endswitch_msg.data;
-    } else if (homing_type[jointID] == 2 ) {
+        //if (result == true) {
+		//	homing_logport.write(jointID_doubles);
+		//}
+    } 
+    else if (homing_type[jointID] == 2 ) {
         doubles jointerrors;
         jointerrors_inport.read(jointerrors);
         if (fabs(jointerrors[jointID]) > homing_errors[jointID]) {
             result = true;
+            //homing_logport.write(jointID_doubles);
         }
-    } else if (homing_type[jointID] == 3 ) {
+    } 
+    else if (homing_type[jointID] == 3 ) {
         doubles absolutesensoroutput;
         absPos_inport.read(absolutesensoroutput);
         if (abs(absolutesensoroutput[jointID] - (double) homing_absPos[jointID]) <= 1) {
             result = true;
+            //homing_logport.write(jointID_doubles);
         }
-    } else if (homing_type[jointID] == 4 ) {
+    } 
+    else if (homing_type[jointID] == 4 ) {
         doubles forces;
         forces_inport.read(forces);
         if (forces[jointID] > homing_forces[jointID]) {
             result = true;
+            //homing_logport.write(jointID_doubles);
         }
-    } else {
+    } 
+    else {
 		if (cntr > 5000) {
 			cntr=0;		
 			log(Error) << prefix <<"_Homing: Invalid homing type provided. Choose 1 for endswitch homing, 2 for servoerror homing, 3 for absolute sensor homing, 4 for force sensor homing"<<endlog();

@@ -103,12 +103,6 @@ bool ReferenceGenerator::startHook()
        mRefGenerators[i].setRefGen(actualPos[i]);
     }  
 	
-	// print initial value
-	//if (N>5) {
-	//	log(Warning) << "REFGEN: Starting with actual Pos: [" << actualPos[0] << "," << actualPos[1] << "," << actualPos[2] << "," << actualPos[3] << "," << actualPos[4] << "," << actualPos[5] << "," << actualPos[6] << "," << actualPos[7] << "]" <<endlog();
-	//}
-	
-	
     // Write on the outposport to make sure the receiving components gets new data
     posoutport.write( actualPos );
 
@@ -131,7 +125,8 @@ void ReferenceGenerator::updateHook()
     for ( uint j = 0; j < N_inports; j++ ){
 		doubles inpos(inport_sizes[j],0.0);
 		if (NewData == posinport[j].read( inpos ) ){
-			// if new data then use inpos
+			//log(Warning) << "REFGEN: Received new reference"<<endlog();
+			//if (j==0) log(Warning) << "REFGEN: Received new reference [" << inpos[0] << "," << inpos[1] << ","  << inpos[2] << ","  << inpos[3] << ","  << inpos[4] << ","  << inpos[5] << ","  << inpos[6] << "] !"<<endlog();
 			for ( uint k = 0; k < inport_sizes[j]; k++ ){
 				if ( minpos[i] == 0.0 && maxpos[i] == 0.0 ) {
 					desiredPos[i]=(inpos[k]);
@@ -163,11 +158,10 @@ void ReferenceGenerator::updateHook()
 
 void ReferenceGenerator::resetReference()
 {
-    log(Warning) << "REFGEN: Resettting bodypart!"<<endlog();
-
     //Set the starting value to the current actual value
     doubles actualPos(N,0.0);
     initialposinport.read( actualPos );
+    log(Warning) << "REFGEN: Resettting bodypart with [" << actualPos[0] << "," << actualPos[1] << ","  << actualPos[2] << ","  << actualPos[3] << ","  << actualPos[4] << ","  << actualPos[5] << ","  << actualPos[6] << ","  << actualPos[7] << "] !"<<endlog();
     for ( uint i = 0; i < N; i++ ){
        mRefGenerators[i].setRefGen(actualPos[i]);
     }

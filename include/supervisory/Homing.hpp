@@ -50,6 +50,7 @@ namespace SUPERVISORY
 
         // outports
         OutputPort<doubles> ref_outport[5];
+        // OutputPort<doubles> homing_logport;
         OutputPort<bool> homingfinished_outport;
 
         // Properties
