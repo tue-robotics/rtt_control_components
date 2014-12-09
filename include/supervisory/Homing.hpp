@@ -41,16 +41,13 @@ namespace SUPERVISORY
     : public RTT::TaskContext
     {
         private:
-        // inports
+        // Ports
         InputPort<doubles> pos_inport;
         InputPort<std_msgs::Bool> endswitch_inport;
         InputPort<doubles> jointerrors_inport;
         InputPort<doubles> absPos_inport;
         InputPort<doubles> forces_inport;
-
-        // outports
         OutputPort<doubles> ref_outport[5];
-        // OutputPort<doubles> homing_logport;
         OutputPort<bool> homingfinished_outport;
 
         // Properties
@@ -88,7 +85,7 @@ namespace SUPERVISORY
         int jointNr;
         int state;
         bool joint_finished;
-        bool finished;
+        bool finishing;
         double homing_stroke_goal;
         doubles position;
         doubles ref_out;
@@ -99,14 +96,17 @@ namespace SUPERVISORY
         doubles updated_maxvel;
 
         protected:
+        // Component Peers
         TaskContext* Supervisor;
         TaskContext* ReadEncoders;
         TaskContext* Safety;
         TaskContext* ReferenceGenerator;
+        // Properties in Component Peers that homing component can modify
         Attribute<doubles> Safety_maxJointErrors;
         Attribute<doubles> ReferenceGenerator_minpos;
         Attribute<doubles> ReferenceGenerator_maxpos;
         Attribute<doubles> ReferenceGenerator_maxvel;
+        // Functions in Component Peers that homing component can call
         OperationCaller<bool(string)> StartBodyPart;
         OperationCaller<bool(string)> StopBodyPart;
         OperationCaller<void(int,double)> ResetEncoder;
@@ -120,8 +120,8 @@ namespace SUPERVISORY
         bool configureHook();
         bool startHook();
         void updateHook();
-        void stopHook();
-        
+
+        // Internal functions
         bool evaluateHomingCriterion(uint jointID);
         void updateHomingRef(uint jointID);
         void sendRef(doubles output_total);
