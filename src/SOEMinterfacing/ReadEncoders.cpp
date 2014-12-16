@@ -121,7 +121,7 @@ double ReadEncoders::readEncoder( int i )
 {
     EncoderMsg encdata;
     if ( inport_enc[i].read(encdata) != NewData ){
-        log(Warning)<< "ReadEncoders:: No new data recieved on encoder "<< i << endlog();
+        log(Debug)<< "ReadEncoders:: No new data recieved on encoder "<< i << endlog();
     }
 
     uint new_enc_position = encdata.value;
@@ -141,6 +141,9 @@ double ReadEncoders::determineDt()
     long double new_time = os::TimeService::Instance()->getNSecs()*1e-9;
     double dt = (new_time - old_time);
     old_time = new_time;
+    if (dt>0.0014 || dt<0.0006){
+		log(Debug)<<"ReadEncoders: dt is "<< dt << endlog();
+	}
     return dt;
 }
 
