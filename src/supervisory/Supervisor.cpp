@@ -733,8 +733,14 @@ void Supervisor::displaySupervisoredPeers()
 
 void Supervisor::stopHook()
 {
+	for( int partNr = 1; partNr < 6; partNr++ ) {
+		setState(partNr, StatusStalemsg);
+	}
+	hardwareStatusPort.write(hardwareStatusmsg);
+	
 	// send disabled msg
 	enabled_rosport.write( rosdisabledmsg );
+	
 }
 
 ORO_CREATE_COMPONENT(SUPERVISORY::Supervisor)
