@@ -4,7 +4,6 @@
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
 #include <std_msgs/Bool.h>
-#include <sensor_msgs/JointState.h>
 
 #define maxN 10 // maximum number of inputs and outputs
 
@@ -44,7 +43,7 @@ namespace SUPERVISORY
         // ports
         InputPort<doubles> jointErrors_inport;
         InputPort<doubles> controleffort_inport;
-        InputPort<bool> safe_inports[maxN];
+        InputPort<std_msgs::Bool> safe_inports[maxN];
         OutputPort<bool> enable_outport;
         OutputPort<bool> error_outport;
 

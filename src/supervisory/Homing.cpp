@@ -15,7 +15,7 @@ Homing::Homing(const string& name) : TaskContext(name, PreOperational)
 {  
     // Ports
     addPort(    "position",             pos_inport );
-    addPort(    "endswitch",            endswitch_inport );
+    addPort(    "homeswitch",           homeswitch_inport );
     addPort(    "servo_error_in",       jointerrors_inport );
     addPort(    "abs_pos_in",           absPos_inport );
     addPort(    "force_in",             forces_inport );
@@ -28,7 +28,7 @@ Homing::Homing(const string& name) : TaskContext(name, PreOperational)
     addProperty( "bodypart",        	bodypart        ).doc("Name of the bodypart, (fill in BODYPARTNAME)");
     addProperty( "prefix",          	prefix          ).doc("Prefix of components (for example: SPINDLE or RPERA)");
 
-    addProperty( "homing_type",     	homing_type     ).doc("Type of homing choose from: ['endswitch','servoerror', 'absolutesensor', 'forcesensor']");    
+    addProperty( "homing_type",     	homing_type     ).doc("Type of homing choose from: ['homeswitch','servoerror', 'absolutesensor', 'forcesensor']");    
     addProperty( "require_homing",  	require_homing  ).doc("Vector of boolean values to specify which joints should be homed");
     addProperty( "homing_order",    	homing_order    ).doc("The order in which the joints are homed, for example: array [2 3 1]");
     addProperty( "homing_direction",	homing_direction).doc("Homing direction");
@@ -62,13 +62,13 @@ bool Homing::configureHook()
 	}
 
     // Check which types of homing are required 
-    endswitchhoming = false;
+    homeswitchhoming = false;
     errorhoming     = false;
     absolutehoming  = false;
     forcehoming     = false;
     for (uint j = 0; j<N; j++) {
         if (homing_type[j] == 1) {
-            endswitchhoming = true;
+            homeswitchhoming = true;
         } else if (homing_type[j] == 2) {
             errorhoming = true;
         } else if (homing_type[j] == 3) {
@@ -76,7 +76,7 @@ bool Homing::configureHook()
         } else if (homing_type[j] == 4) {
             forcehoming = true;
         } else {
-			log(Error) << prefix <<"_Homing: Invalid homing type provided. Choose 1 for endswitch homing, 2 for servoerror homing, 3 for absolute sensor homing, 4 for force sensor homing"<<endlog();
+			log(Error) << prefix <<"_Homing: Invalid homing type provided. Choose 1 for homeswitch homing, 2 for servoerror homing, 3 for absolute sensor homing, 4 for force sensor homing"<<endlog();
             return false;
         }
     }
@@ -188,9 +188,9 @@ bool Homing::startHook()
     }
     
     // Check homing type specific port connections
-    if (endswitchhoming) {
-        if (!endswitch_inport.connected()) {
-            log(Error) << prefix <<"_Homing: endswitch_inport not connected!"<<endlog();
+    if (homeswitchhoming) {
+        if (!homeswitch_inport.connected()) {
+            log(Error) << prefix <<"_Homing: homeswitch_inport not connected!"<<endlog();
             return false;
         }
     }
@@ -327,27 +327,30 @@ void Homing::updateHomingRef( uint jointID)
 {
 	// Read positions
     pos_inport.read(position);
-
-    if (homing_type[jointID] != 3 ) {
-        // Send to homing position
-        ref_out = position;
-        ref_out[jointID] = homing_direction[jointID]*25.0;
-    } else { // absolute sensor homing
-
-        doubles absolutesensoroutput;
+    ref_out = position;
+    
+    // Update direction for homeswitch data and absolute sensor data
+    double direction = 1.0*homing_direction[jointID];
+	if (homing_type[jointID] == 1 ) {
+		std_msgs::Bool homeswitch_msg;
+        homeswitch_inport.read(homeswitch_msg);
+        
+        double direction = 1.0;
+        if (homeswitch_msg.data == false) {
+			direction = -1.0;
+		}
+	} 
+	else if (homing_type[jointID] == 3 ) {
+		doubles absolutesensoroutput;
         absPos_inport.read(absolutesensoroutput);
 
         // determine direction using absolute sensor if positive joint direction and positive sensor direction are opposite
-        // that can be corrected using the property homing_direction
-        double direction = 1.0*homing_direction[jointID]; // positive unless goal - measured < 0
         if ( (( (double) homing_absPos[jointID])-absolutesensoroutput[jointID]) < 0.0 ) {
             direction = -1.0*homing_direction[jointID];
         }
-
-        // Send to homing position
-        ref_out = position;
-        ref_out[jointID] = direction*25.0;
-    }
+	}
+	
+	ref_out[jointID] = direction*25.0;
 
     // Write ref if a new ref has been generated
     if (ref_out_prev[jointID] != ref_out[jointID]) {
@@ -362,9 +365,9 @@ bool Homing::evaluateHomingCriterion( uint jointID)
 {
     bool result = false;
     if (homing_type[jointID] == 1 ) {
-        std_msgs::Bool endswitch_msg;
-        endswitch_inport.read(endswitch_msg);
-        result = !endswitch_msg.data;
+        std_msgs::Bool homeswitch_msg;
+        homeswitch_inport.read(homeswitch_msg);
+        result = !homeswitch_msg.data;
     } 
     else if (homing_type[jointID] == 2 ) {
         doubles jointerrors;
@@ -390,7 +393,7 @@ bool Homing::evaluateHomingCriterion( uint jointID)
     else {
 		if (cntr > 5000) {
 			cntr=0;		
-			log(Error) << prefix <<"_Homing: Invalid homing type provided. Choose 1 for endswitch homing, 2 for servoerror homing, 3 for absolute sensor homing, 4 for force sensor homing"<<endlog();
+			log(Error) << prefix <<"_Homing: Invalid homing type provided. Choose 1 for homeswitch homing, 2 for servoerror homing, 3 for absolute sensor homing, 4 for force sensor homing"<<endlog();
 		}
 		cntr++;
     }

@@ -43,7 +43,7 @@ namespace SUPERVISORY
         private:
         // Ports
         InputPort<doubles> pos_inport;
-        InputPort<std_msgs::Bool> endswitch_inport;
+        InputPort<std_msgs::Bool> homeswitch_inport;
         InputPort<doubles> jointerrors_inport;
         InputPort<doubles> absPos_inport;
         InputPort<doubles> forces_inport;
@@ -72,7 +72,7 @@ namespace SUPERVISORY
         ints homing_absPos;
 
         // Constants
-        bool endswitchhoming;
+        bool homeswitchhoming;
         bool absolutehoming;
         bool forcehoming;
         bool errorhoming;
