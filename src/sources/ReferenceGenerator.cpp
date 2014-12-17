@@ -161,7 +161,7 @@ void ReferenceGenerator::resetReference()
     //Set the starting value to the current actual value
     doubles actualPos(N,0.0);
     initialposinport.read( actualPos );
-    log(Warning) << "REFGEN: Resettting bodypart with [" << actualPos[0] << "," << actualPos[1] << ","  << actualPos[2] << ","  << actualPos[3] << ","  << actualPos[4] << ","  << actualPos[5] << ","  << actualPos[6] << ","  << actualPos[7] << "] !"<<endlog();
+    log(Info) << "REFGEN: Resettting bodypart with [" << actualPos[0] << "," << actualPos[1] << ","  << actualPos[2] << ","  << actualPos[3] << ","  << actualPos[4] << ","  << actualPos[5] << ","  << actualPos[6] << ","  << actualPos[7] << "] !"<<endlog();
     for ( uint i = 0; i < N; i++ ){
        mRefGenerators[i].setRefGen(actualPos[i]);
     }
