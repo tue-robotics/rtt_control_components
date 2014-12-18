@@ -81,7 +81,7 @@ bool ReadEncoders::startHook()
         ienc[i] = 0;
         previous_enc_position[i] = 0.0; // obsolete
         init_SI_value[i] = 0.0;
-        init_SI_value[i] = readEncoder(i);
+        init_SI_value[i] = readEncoder(i)-offset[i];
         enc_position_prev[i] = enc_position[i];
     }
     determineDt();
