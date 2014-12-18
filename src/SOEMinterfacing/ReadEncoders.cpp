@@ -102,6 +102,17 @@ void ReadEncoders::updateHook()
         }
     }
 
+    // Reset the encoders with an initial offset.
+    doubles reset_values;
+    if( NewData == inport_init.read(reset_values)){
+        if(reset_values.size() == N){
+            log(Info)<<"ReadEncoders: initialize signal received"<<endlog();
+            for ( uint i = 0; i < N; i++ ) {
+                reset(i, reset_values[i]);
+            }
+        }
+    }
+
     // determine dt
     double dt = determineDt();
 
