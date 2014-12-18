@@ -55,6 +55,7 @@ bool ReadEncoders::configureHook()
     addPort( "out", outport );
     addPort( "out_enc", outport_enc );
     addPort( "in_reNull", inport_reNull );
+    addPort( "in_init", inport_init );
     addPort( "vel", outport_vel );
 
     counter = 0;
