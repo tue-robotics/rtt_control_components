@@ -11,6 +11,7 @@
 #ifndef JOINTSTATEDISTRIBUTOR_HPP
 #define JOINTSTATEDISTRIBUTOR_HPP
 
+#include <rtt/Component.hpp>
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
 #include <sensor_msgs/JointState.h>

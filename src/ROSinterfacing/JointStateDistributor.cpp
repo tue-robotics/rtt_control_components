@@ -1,5 +1,3 @@
-
-#include <rtt/Component.hpp>
 #include "JointStateDistributor.hpp"
 
 using namespace std;
@@ -73,8 +71,8 @@ void JointStateDistributor::updateHook()
 				int body_part_id = bjp.first;
 				int joint_id = bjp.second;
 				pos_out[body_part_id][joint_id] = in_msg.position[i];
-				vel_out[body_part_id][joint_id] = in_msg.position[i];
-				eff_out[body_part_id][joint_id] = in_msg.position[i];
+                vel_out[body_part_id][joint_id] = in_msg.velocity[i];
+                eff_out[body_part_id][joint_id] = in_msg.effort[i];
 				i++;
 			}
 		}

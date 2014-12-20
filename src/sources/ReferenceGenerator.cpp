@@ -113,10 +113,9 @@ bool ReferenceGenerator::startHook()
 void ReferenceGenerator::updateHook()
 {
     // Read the inputports
-    outpos.assign(N,0.0);
+    doubles outpos(N,0.0);
     doubles outvel(N,0.0);
     doubles outacc(N,0.0);
-    doubles resetdata(N*4,0.0);
 
     // If new data on the channel then change the desired positions
     // j loops over the number of inports, k loops over the size of the j-th input
@@ -125,9 +124,7 @@ void ReferenceGenerator::updateHook()
     for ( uint j = 0; j < N_inports; j++ ){
 		doubles inpos(inport_sizes[j],0.0);
 		if (NewData == posinport[j].read( inpos ) ){
-			//log(Warning) << "REFGEN: Received new reference"<<endlog();
-			//if (j==0) log(Warning) << "REFGEN: Received new reference [" << inpos[0] << "," << inpos[1] << ","  << inpos[2] << ","  << inpos[3] << ","  << inpos[4] << ","  << inpos[5] << ","  << inpos[6] << "] !"<<endlog();
-			for ( uint k = 0; k < inport_sizes[j]; k++ ){
+        for ( uint k = 0; k < inport_sizes[j]; k++ ){
 				if ( minpos[i] == 0.0 && maxpos[i] == 0.0 ) {
 					desiredPos[i]=(inpos[k]);
 				} else {
