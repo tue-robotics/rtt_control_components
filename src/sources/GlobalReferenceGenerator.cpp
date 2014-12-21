@@ -34,25 +34,29 @@ GlobalReferenceGenerator::~GlobalReferenceGenerator()
 bool GlobalReferenceGenerator::configureHook()
 {
     // Initialize
-    checked = false;
-    numberOfBodyparts = 0;
-    totalNumberOfJoints = 0;
-    vector_sizes.assign(maxN,0);
-    allowedBodyparts.resize(maxN);
-    pos_out.resize(maxN);
-    vel_out.resize(maxN);
-    acc_out.resize(maxN);
-    desiredPos.resize(maxN);
-    desiredVel.resize(maxN);
-    desiredAcc.resize(maxN);
     minpos.resize(maxN);
     maxpos.resize(maxN);
     maxvel.resize(maxN);
     maxacc.resize(maxN);
-    mRefGenerators.resize(maxN);
-    mRefPoints.resize(maxN);
+
+    checked = false;
+    totalNumberOfJoints = 0;
+    numberOfBodyparts = 0;
+    start_time = 0.0;
+
+    allowedBodyparts.resize(maxN);
+    vector_sizes.assign(maxN,0);
     InterpolDts.assign(maxN,0.0);
     InterpolEpses.assign(maxN,0.0);
+
+    desiredPos.resize(maxN);
+    desiredVel.resize(maxN);
+    desiredAcc.resize(maxN);
+    pos_out.resize(maxN);
+    vel_out.resize(maxN);
+    acc_out.resize(maxN);
+    mRefGenerators.resize(maxN);
+    mRefPoints.resize(maxN);
 
     return true;
 }
@@ -180,7 +184,7 @@ void GlobalReferenceGenerator::AddBodyPart(int partNr, strings JointNames)
     addPort(        ("pos_out"+to_string(partNr)),          posoutport[partNr-1] )      .doc("Position Reference");
     addPort(        ("vel_out"+to_string(partNr)),          veloutport[partNr-1] )      .doc("Velocity Reference");
     addPort(        ("acc_out"+to_string(partNr)),          accoutport[partNr-1] )      .doc("Acceleration Reference");
-    addPort(        ("initial_pos"+to_string(partNr)),      initialposinport[partNr-1]) .doc("Inport receiving initial pos for starting the reference generators");
+    addPort(        ("current_pos"+to_string(partNr)),      currentpos_inport[partNr-1]).doc("Inport for current position for initial position and feedtrough for disabled mode");
 
     // Add Properties
     addProperty(    "minPos"+to_string(partNr),             minpos[partNr-1] )          .doc("Minimum joint position limit (Homing temporarily supercedes this limits)");
@@ -227,7 +231,7 @@ void GlobalReferenceGenerator::ResetReference(int partNr)
     //Set the starting value to the current actual value
     uint N = minpos[partNr-1].size();
     doubles actualPos(N,0.0);
-    initialposinport[partNr-1].read( actualPos );
+    currentpos_inport[partNr-1].read( actualPos );
     log(Warning) << "GlobalReferenceGenerator: Resettting bodypart " << partNr-1 << " with [" << actualPos[0] << "," << actualPos[1] << ","  << actualPos[2] << ","  << actualPos[3] << ","  << actualPos[4] << ","  << actualPos[5] << ","  << actualPos[6] << ","  << actualPos[7] << "] !"<<endlog();
     for ( uint i = 0; i < N; i++ ){
        mRefGenerators[partNr-1][i].setRefGen(actualPos[i]);
@@ -277,14 +281,14 @@ bool GlobalReferenceGenerator::CheckConnectionsAndProperties()
             log(Error)<<"GlobalReferenceGenerator: Stopping component: None of the ports: posout" << partNr << ", velout" << partNr << ", accout" << partNr << " is connected."<<endlog();
             return false;
         }
-        if ( !initialposinport[partNr-1].connected() ) {
+        if ( !currentpos_inport[partNr-1].connected() ) {
             log(Error)<<"GlobalReferenceGenerator: Stopping component: initial_pos" << partNr << " is not connected."<<endlog();
             return false;
         }
 
         //Set the starting value to the current actual value
         doubles actualPos(vector_sizes[partNr-1],0.0);
-        initialposinport[partNr-1].read( actualPos );
+        currentpos_inport[partNr-1].read( actualPos );
         for ( uint i = 0; i < vector_sizes[partNr-1]; i++ ){
            mRefGenerators[partNr-1][i].setRefGen(actualPos[i]);
         }
