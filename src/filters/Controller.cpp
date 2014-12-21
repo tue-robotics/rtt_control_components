@@ -187,6 +187,16 @@ bool Controller::configureHook()
             }
         }
     }
+    
+    // Check
+	if ( (N_refinports < 1) || (N_refinports > 3) ) {
+		log(Error)<<"Controller: Could not configure component: The number of reference input ports: " << N_refinports << ", should be at least 1 and at most 3!"<<endlog();
+		return false;
+	}
+	if ( (N_ffwinports < 1) || (N_ffwinports > 3) ) {
+		log(Error)<<"Controller: Could not configure component: The number of ffw input ports: " << N_ffwinports << ", should be at least 1 and at most 3!"<<endlog();
+		return false;
+	}
 
     return true;
 }
