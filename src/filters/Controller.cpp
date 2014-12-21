@@ -25,11 +25,11 @@ Controller::Controller(const string& name) :
 {
     // Properties
     addProperty("vector_size",                  vector_size)            .doc("Number of controllers");
-    addProperty("number_of_ffwports",           N_ffwinports)     .doc("The amount of feed forward ports");
+    addProperty("number_of_ffwports",           N_ffwinports)     		.doc("The amount of feed forward ports");
     addProperty("controllers",                  controllers)            .doc("List of used controllers");
     addProperty("sampling_time",                Ts)                     .doc("Sampling time");
-    addProperty("number_of_inports",            N_refinports)              .doc("Number of inports");
-    addProperty("inport_sizes",                 inport_sizes)           .doc("Sizes of inports");
+    addProperty("number_of_refports",           N_refinports)           .doc("Number of inports");
+    addProperty("refinport_sizes",              inport_sizes)           .doc("Sizes of inports");
 
     // Controller Properties (You don't have to fill in the unused filters)
     addProperty("gains",                        gains)                  .doc("Gains");
