@@ -77,10 +77,10 @@ bool Controller::configureHook()
 {
     // Add Inports and FFW ports
     for ( uint j = 0; j < N_refinports; j++ ) {
-        addPort( ("ref_in"+to_string(j+1)),     references_inport[j] )      .doc("Control Reference port");
+        addPort( ("ref_in"+to_string(j+1)),		references_inport[j] )		.doc("Control Reference port");
     }
     for (uint j = 0; j < N_ffwinports; j++) {
-        addPort( ("ffw_in" + to_string(j)),     ffw_inport[j])              .doc("One of the FFW inports");
+        addPort( ("ffw_in" + to_string(j+1)),	ffw_inport[j])				.doc("One of the FFW inports");
     }
 
     // Determine which controllers are demanded and declare their properties
@@ -193,8 +193,8 @@ bool Controller::configureHook()
 		log(Error)<<"Controller: Could not configure component: The number of reference input ports: " << N_refinports << ", should be at least 1 and at most 3!"<<endlog();
 		return false;
 	}
-	if ( (N_ffwinports < 1) || (N_ffwinports > 3) ) {
-		log(Error)<<"Controller: Could not configure component: The number of ffw input ports: " << N_ffwinports << ", should be at least 1 and at most 3!"<<endlog();
+	if ( (N_ffwinports < 0) || (N_ffwinports > 3) ) {
+		log(Error)<<"Controller: Could not configure component: The number of ffw input ports: " << N_ffwinports << ", Cant be negative and can be at most 3!"<<endlog();
 		return false;
 	}
 
@@ -251,6 +251,7 @@ void Controller::updateHook()
 
     // Read (possible) ffw ports
     vector<doubles> ffw_input;
+    ffw_input.resize(N_ffwinports);
     for (uint j = 0; j < N_ffwinports; j++) {
         ffw_input[j].assign(vector_size,0.0);
         ffw_inport[j].read(ffw_input[j]);
