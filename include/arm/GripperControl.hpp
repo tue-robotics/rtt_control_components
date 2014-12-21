@@ -11,6 +11,7 @@
 #include <std_msgs/Bool.h>
 #include <tue_msgs/GripperCommand.h>
 #include <tue_msgs/GripperMeasurement.h>
+#include <amigo_ref_interpolator/interpolator.h>
 
 #define PI 3.141592654
 #define GRIPPER_INDEX	7
@@ -42,7 +43,9 @@ namespace ARM
 	  InputPort<bool> reNullPort;
 	  
 	  // Outports
-	  OutputPort<doubles> gripperRefPort;
+      OutputPort<doubles> posoutport;
+      OutputPort<doubles> veloutport;
+      OutputPort<doubles> accoutport;
 	  OutputPort<tue_msgs::GripperMeasurement> gripperMeasurementPort;
 	  
 	  // Properties
@@ -50,6 +53,10 @@ namespace ARM
 	  double maxPos;
 	  double gripperGain;
 	  double threshold_closed;
+      double desiredVel;
+      double desiredAcc;
+      double InterpolDt;
+      double InterpolEps;
 	  
 	  // variables
   	  bool completed;
@@ -58,6 +65,8 @@ namespace ARM
 	  doubles measPos;
 	  doubles gripperPos;
       tue_msgs::GripperCommand gripperCommand;
+      refgen::RefGenerator mRefGenerator;
+      amigo_msgs::ref_point mRefPoint;
 	  
 	public:
 

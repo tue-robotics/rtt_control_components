@@ -27,20 +27,25 @@ GripperControl::GripperControl(const std::string& name) : TaskContext(name, PreO
 	addEventPort("resetGripperPort",resetGripperPort);
 
 	/// Outports
-	addPort("gripper_ref",gripperRefPort);
 	addPort("gripper_measurement",gripperMeasurementPort);
+    addPort( "posout", posoutport );
+    addPort( "velout", veloutport );
+    addPort( "accout", accoutport );
 
 	/// Properties
 	addProperty( "threshold_closed", threshold_closed);
 	addProperty( "gripper_gain", gripperGain);
 	addProperty( "max_pos", maxPos);
+    addProperty( "gripper_vel", desiredVel);
+    addProperty( "gripper_acc", desiredAcc);
+    addProperty( "InterpolDt", InterpolDt);
+    addProperty( "InterpolEps", InterpolEps);
 }
 
 GripperControl::~GripperControl() {}
 
 bool GripperControl::configureHook() 
-{
-	
+{	
 	torques.assign(8,0.0); 
 	measPos.assign(8,0.0);
 	gripperPos.assign(1,0.0);
@@ -52,14 +57,38 @@ bool GripperControl::configureHook()
 
 bool GripperControl::startHook() 
 {
-	
+    // Check validity of Ports:
+    if ( !gripperCommandPort.connected() || !torqueInPort.connected() || !positionInPort.connected()) {
+        log(Warning)<<"GripperControl: Could not start component: one of the gripperCommandPort, torqueInPort, positionInPort is not connected!"<<endlog();
+        return false;
+    }
+    // Check validity of Ports:
+    if ( !reNullPort.connected() || !resetGripperPort.connected() ) {
+        log(Warning)<<"GripperControl: Could not start component: one of the gripperCommandPort, torqueInPort, positionInPort is not connected!"<<endlog();
+        return false;
+    }
+    if ( !posoutport.connected() && !veloutport.connected() && !accoutport.connected()) {
+        log(Warning)<<"GripperControl: Could not start component: none of the posoutport, veloutport, accoutport is connected!"<<endlog();
+        return false;
+    }
+    if ( !gripperMeasurementPort.connected() ) {
+        log(Warning)<<"GripperControl: gripperMeasurementPort is not connected!"<<endlog();
+    }
+
+    //Set the starting value to the current actual value
+    positionInPort.read(measPos);
+    mRefGenerator.setRefGen(measPos[GRIPPER_INDEX]);
+
 	return true;
 }
 
 void GripperControl::updateHook()
 {
-		
 	bool resetGripper;
+    doubles outpos(1,0.0);
+    doubles outvel(1,0.0);
+    doubles outacc(1,0.0);
+    double desiredPos = 0.0;
 	
 	if (resetGripperPort.read(resetGripper) == NewData){
 		if(resetGripper){
@@ -69,6 +98,12 @@ void GripperControl::updateHook()
 	
 	if (gripperCommandPort.read(gripperCommand) == NewData){
 		completed = false;
+        if(gripperCommand.direction == tue_msgs::GripperCommand::OPEN) {
+            desiredPos = 25.0;
+        }
+        else {
+            desiredPos = -25.0;
+        }
 	}
 		
 	// Check whether supervisor specifies nulling of the relative encoders
@@ -79,13 +114,17 @@ void GripperControl::updateHook()
 			// Increase threshold after the gripper has homed
 			threshold_closed = threshold_closed*1.25;
 			// Renull the gripperPos after homing
-			gripperPos[0] = 0;
-			gripperRefPort.write(gripperPos);
+            desiredPos = 0.0;
+
 			// gripperHomed = true if all joints are homed
 			gripperHomed = true;
 		}
 	}
-			
+
+    mRefPoint = mRefGenerator.generateReference(desiredPos, desiredVel, desiredAcc, InterpolDt, false, InterpolEps);
+    outpos[0]=mRefPoint.pos;
+    outvel[0]=mRefPoint.vel;
+    outacc[0]=mRefPoint.acc;
 
 	if (!completed){
 		torqueInPort.read(torques);
@@ -104,9 +143,6 @@ void GripperControl::updateHook()
 				gripperMeasurement.end_position_reached = true;
 				completed = true;
 			} 
-			else{
-				gripperPos[0] += gripperGain*PI/180;
-			}
 		} 
 		else{
 			//log(Warning)<<"gripper torques = "<<torques[GRIPPER_INDEX]<<endlog();
@@ -115,17 +151,17 @@ void GripperControl::updateHook()
 				gripperMeasurement.end_position_reached = true;
 				completed = true;
 			} 
-			else if(torques[GRIPPER_INDEX] < threshold_closed && torques[GRIPPER_INDEX] < MAX_TORQUE){
-				//log(Warning)<<"GRIPPERCON: closing with torque = "<<torques[GRIPPER_INDEX]<<endlog();
-				gripperPos[0] -= gripperGain*PI/180;
-			}
 			else {
 				log(Error)<<"Gripper torque "<<torques[GRIPPER_INDEX]<<" exceeds maximum torque of "<<MAX_TORQUE<<" abort close_gripper"<<endlog();
 				completed = true;
 				gripperMeasurement.max_torque_reached = true;
 			}
 		}
-		gripperRefPort.write(gripperPos);
+
+        // Write outputs
+        posoutport.write(outpos);
+        veloutport.write(outvel);
+        accoutport.write(outacc);
 		gripperMeasurementPort.write(gripperMeasurement);
 	}
 }
