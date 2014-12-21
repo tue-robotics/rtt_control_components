@@ -55,24 +55,15 @@ namespace SOURCES
      * The homing component switches a bodypart to the homing state
      *
      * Example for ops file:
-     * GlobalReferenceGenerator.AddBodyPart(BODYNUMBER,JOINT_NAMES)
-     * GlobalReferenceGenerator.minPos4 			= array ( -2.0, -2.0, -2.0, -2.0, -2.0, -2.0, -2.0 )
-     * GlobalReferenceGenerator.maxPos4 			= array ( 0.0,  0.0, 	0.0, 0.0, 	0.0, 0.0, 	0.0 )
-     * GlobalReferenceGenerator.maxVel4 			= array ( 0.4,  0.5, 	0.6, 0.7, 	0.8, 0.9, 	1.0 )
-     * GlobalReferenceGenerator.maxAcc4             = array ( 1.0,  1.0, 	1.0, 1.0, 	1.0, 1.0, 	1.0 )
-     * GlobalReferenceGenerator.interpolatorDt4 	= TS
+     * GlobalReferenceGenerator.AddBodyPart(2, strings("spindle_joint") )
+     * GlobalReferenceGenerator.minPos4 			= array ( 0.075)
+     * GlobalReferenceGenerator.maxPos4 			= array ( 0.4)
+     * GlobalReferenceGenerator.maxVel4 			= array ( 0.07)
+     * GlobalReferenceGenerator.maxAcc4             = array ( 0.2)
+     * GlobalReferenceGenerator.interpolatorDt4 	= 0.001
      * GlobalReferenceGenerator.interpolatorEps4 	= 1.0
      *
      */
-
-    /**
-    * TODO
-    * 1) add homing input port
-    * 2) set function to property acces for homing component
-    * 3) add property acces for supervisor to disable bodypart
-    * 4) add disabled mode where current pos is directly used
-    * 5) add multiple input ports to controller component
-    */
 
 	class GlobalReferenceGenerator
 		: public RTT::TaskContext
