@@ -23,6 +23,13 @@
 using namespace std;
 using namespace RTT;
 
+template <class T>
+inline string to_string (const T& t){
+  stringstream ss;
+  ss << t;
+  return ss.str();
+};
+
 namespace FILTERS
 {
     typedef vector<double> doubles;
@@ -33,10 +40,16 @@ namespace FILTERS
     * @brief A Component containing a complete controller
     * consising of multiple filters and a safety mechanism
     *
-    * Inputs		- Reference
-    * 			- Encoderpositions
+    * Inputs	- Referenceports
+    * 			- Jointpositions
+    *           - FFW inputs
     * Outputs	- Controloutput
     * 			- JointErrors
+    *
+    * The FFW ports are optional and will be added to the controller output.
+    * The references can be obtained from different ports when for example
+    * one of the joints has a custom reference generator manipulator grippers
+    *
     */
 
     class Controller
@@ -45,20 +58,23 @@ namespace FILTERS
         private:
 
         // Ports
-        InputPort<doubles> references_inport;
+        InputPort<doubles> references_inport[3];
         InputPort<doubles> positions_inport;
+        InputPort<doubles> ffw_inport[3];
         InputPort<bool> enable_inport;
         OutputPort<doubles> controleffort_outport;
         OutputPort<doubles> jointerrors_outport;
 
         // Properties
-        bool WeakIntegrator;
-        bool LeadLag;
-        bool Notch;
-        bool LowPass;
-        bool safe;
         uint vector_size;
+        uint N_refinports;
+        uint N_ffwinports;
         double Ts;
+        ints inport_sizes;
+        strings controllers;
+
+
+        // Controller Properties
         doubles gains;
         doubles fz_WeakIntegrator;
         doubles fz_LeadLag;
@@ -69,7 +85,13 @@ namespace FILTERS
         doubles dp_Notch;
         doubles fp_LowPass;
         doubles dp_LowPass;
-        strings controllers;
+
+        // Variables
+        bool safe;
+        bool WeakIntegrator;
+        bool LeadLag;
+        bool Notch;
+        bool LowPass;
 
         // Filters
         vector<DFILTERS::DWeakIntegrator*> filters_WeakIntegrator;
