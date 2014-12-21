@@ -51,8 +51,9 @@ namespace ARM
 	  // Properties
 	  uint sensorPos;
 	  double maxPos;
-	  double gripperGain;
+	  double minPos;
 	  double threshold_closed;
+	  double desiredPos;
       double desiredVel;
       double desiredAcc;
       double InterpolDt;
@@ -63,7 +64,6 @@ namespace ARM
 	  bool gripperHomed;
 	  doubles torques;
 	  doubles measPos;
-	  doubles gripperPos;
       tue_msgs::GripperCommand gripperCommand;
       refgen::RefGenerator mRefGenerator;
       amigo_msgs::ref_point mRefPoint;
