@@ -4,7 +4,7 @@
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
 #include <std_msgs/Bool.h>
-#include <sensor_msgs/JointState.h>
+#include <amigo_ref_interpolator/interpolator.h>
 
 using namespace std;
 using namespace RTT;
@@ -47,7 +47,9 @@ namespace SUPERVISORY
         InputPort<doubles> jointerrors_inport;
         InputPort<doubles> absPos_inport;
         InputPort<doubles> forces_inport;
-        OutputPort<doubles> ref_outport[5];
+        OutputPort<doubles> posoutport[2];
+        OutputPort<doubles> veloutport[2];
+        OutputPort<doubles> accoutport[2];
         OutputPort<bool> homingfinished_outport;
 
         // Properties
@@ -62,7 +64,8 @@ namespace SUPERVISORY
         ints require_homing;
         ints homing_order;
         ints homing_direction;
-        doubles homing_velocity;
+        doubles desiredVel;
+        doubles desiredAcc;
         doubles homing_stroke;
         doubles reset_stroke;
         doubles homing_endpos;
@@ -88,24 +91,27 @@ namespace SUPERVISORY
         bool finishing;
         double homing_stroke_goal;
         doubles position;
-        doubles ref_out;
-        doubles ref_out_prev;
+        doubles desiredPos;
         doubles updated_maxerr;
         doubles updated_minpos;
         doubles updated_maxpos;
         doubles updated_maxvel;
+		std::vector<refgen::RefGenerator> mRefGenerators;
+		std::vector<amigo_msgs::ref_point> mRefPoints;
+		double InterpolDt;
+		double InterpolEps;
+		vector< doubles > outpos;
+		vector< doubles > outvel;
+		vector< doubles > outacc;
 
         protected:
         // Component Peers
         TaskContext* Supervisor;
         TaskContext* ReadEncoders;
         TaskContext* Safety;
-        TaskContext* ReferenceGenerator;
         // Properties in Component Peers that homing component can modify
         Attribute<doubles> Safety_maxJointErrors;
-        Attribute<doubles> ReferenceGenerator_minpos;
-        Attribute<doubles> ReferenceGenerator_maxpos;
-        Attribute<doubles> ReferenceGenerator_maxvel;
+
         // Functions in Component Peers that homing component can call
         OperationCaller<bool(string)> StartBodyPart;
         OperationCaller<bool(string)> StopBodyPart;
@@ -124,8 +130,6 @@ namespace SUPERVISORY
         // Internal functions
         bool evaluateHomingCriterion(uint jointID);
         void updateHomingRef(uint jointID);
-        void sendRef(doubles output_total);
-
 
     };
 }
