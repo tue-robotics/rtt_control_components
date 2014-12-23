@@ -171,11 +171,11 @@ bool Supervisor::startHook()
 	aquisition_time = os::TimeService::Instance()->getNSecs()*1e-9;
 	
 	// Set access to JointStateDistributer function to block read references while not in op state
-	JointStateDistributor = this->getPeer( "JointStateDistributor");
-	if ( JointStateDistributor ) {
-		AllowReadReference = JointStateDistributor->getOperation("AllowReadReference");
+	GlobalReferenceGenerator = this->getPeer( "GlobalReferenceGenerator");
+	if ( GlobalReferenceGenerator ) {
+		AllowReadReference = GlobalReferenceGenerator->getOperation("AllowReadReference");
 		if ( !AllowReadReference.ready() ) {
-			log(Error) <<"Supervisor: Could not find : JointStateDistributor.AllowReadReference Operation!"<<endlog();
+			log(Error) <<"Supervisor: Could not find : GlobalReferenceGenerator.AllowReadReference Operation!"<<endlog();
 			return false;
 		}
 	}
@@ -476,7 +476,7 @@ bool Supervisor::GoOperational(int partNr, diagnostic_msgs::DiagnosticArray stat
 		if (statusArray.status[partNr].level != StatusErrormsg.level) {				// if in error state, GoOp is blocked
 			stopList( HomingOnlyList[partNr] );
 			startList( OpOnlyList[partNr] );
-			if ( JointStateDistributor ) {											// if there is a JointStateDistributor then allow for partNr to read references
+			if ( GlobalReferenceGenerator ) {										// if there is a GlobalReferenceGenerator then allow for partNr to read references
 				AllowReadReference(partNr,true);
 			}
 			
@@ -498,7 +498,7 @@ bool Supervisor::GoIdle(int partNr, diagnostic_msgs::DiagnosticArray statusArray
 		stopList( EnabledList[partNr] );
 		stopList( HomingOnlyList[partNr] );
 		stopList( OpOnlyList[partNr] );
-		if ( JointStateDistributor ) {
+		if ( GlobalReferenceGenerator ) {
 			AllowReadReference(partNr,false);
 		}
 		if (statusArray.status[partNr].level != StatusErrormsg.level) {
@@ -517,7 +517,7 @@ bool Supervisor::GoHoming(int partNr, diagnostic_msgs::DiagnosticArray statusArr
 	if (staleParts[partNr] == false) {
 		if (statusArray.status[partNr].level != StatusErrormsg.level) {
 			stopList( OpOnlyList[partNr] );
-			if ( JointStateDistributor ) {
+			if ( GlobalReferenceGenerator ) {
 				AllowReadReference(partNr,false);
 			}
 			startList( EnabledList[partNr] );
@@ -538,7 +538,7 @@ bool Supervisor::GoError(int partNr, diagnostic_msgs::DiagnosticArray statusArra
 		stopList( EnabledList[partNr] );
 		stopList( HomingOnlyList[partNr] );
 		stopList( OpOnlyList[partNr] );
-		if ( JointStateDistributor ) {
+		if ( GlobalReferenceGenerator ) {
 			AllowReadReference(partNr,false);
 		}
 		setState(partNr, StatusErrormsg);

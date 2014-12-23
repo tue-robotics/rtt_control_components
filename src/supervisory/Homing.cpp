@@ -91,6 +91,13 @@ bool Homing::configureHook()
         log(Error) << prefix <<"_Homing: homing_forces["<< homing_forces.size() <<"], homing_errors["<< homing_errors.size() <<"], homing_absPos["<< homing_absPos.size() <<"] should be size " << N <<"."<<endlog();        
         return false;
     }
+    
+    // Resizing
+    mRefGenerators.resize(N);
+    mRefPoints.resize(N);
+    outpos.resize(N_outports);
+    outvel.resize(N_outports);
+    outacc.resize(N_outports);
 
 	return true;
 }
@@ -98,38 +105,31 @@ bool Homing::configureHook()
 bool Homing::startHook()
 {
     // Set variables
-    state = 0;
-    jointNr = 0;
-    cntr = 5000;
     joint_finished = false;
     finishing = false;
+    jointNr = 0;
+    state = 0;
     homing_stroke_goal = 0.0;
-
-    position.assign(N,0.0);
-    
+    position.assign(N,0.0);    
     desiredPos.assign(N,0.0);
-    updated_maxerr.assign(N,0.0);
-    updated_minpos.assign(N,0.0);
-    updated_maxpos.assign(N,0.0);
-    updated_maxvel.assign(N,0.0);
     initial_maxerr.assign(N,0.0);
-    initial_minpos.assign(N,0.0);
-    initial_maxpos.assign(N,0.0);
-    initial_maxvel.assign(N,0.0);
-    
-    outpos.resize(N_outports);
-    outvel.resize(N_outports);
-    outacc.resize(N_outports);
+    updated_maxerr.assign(N,0.0);
     for ( uint n = 0; n < N_outports; n++ ) {
 		outpos[n].assign(outport_sizes[n],0.0);
 		outvel[n].assign(outport_sizes[n],0.0);
 		outacc[n].assign(outport_sizes[n],0.0);
 	}
+		
+	// Initialize refgen
+    pos_inport.read( position );
+    for ( uint i = 0; i < N; i++ ){
+       mRefGenerators[i].setRefGen(position[i]);
+    }
 
     // Connect Components
-    Supervisor = this->getPeer("Supervisor");
-    ReadEncoders = this->getPeer( prefix + "_ReadEncoders");
-    Safety = this->getPeer( prefix + "_Safety");
+    Supervisor 		= getPeer( "Supervisor");
+    ReadEncoders 	= getPeer( prefix + "_ReadEncoders");
+    Safety 			= getPeer( prefix + "_Safety");
     
     // Check Connections
     if ( !Supervisor ) {
@@ -274,6 +274,7 @@ void Homing::updateHook()
             desiredPos = position;
             desiredPos[homing_order[jointNr]-1] -= homing_stroke[homing_order[jointNr]-1];
             homing_stroke_goal = desiredPos[homing_order[jointNr]-1];
+            desiredVel[homing_order[jointNr]-1] = 3*desiredVel[homing_order[jointNr]-1];            
                        
             // Reset parameters            
             updated_maxerr[homing_order[jointNr]-1] = initial_maxerr[homing_order[jointNr]-1];
@@ -367,11 +368,7 @@ bool Homing::evaluateHomingCriterion( uint jointID)
         }
     } 
     else {
-		if (cntr > 5000) {
-			cntr=0;		
-			log(Error) << prefix <<"_Homing: Invalid homing type provided. Choose 1 for homeswitch homing, 2 for servoerror homing, 3 for absolute sensor homing, 4 for force sensor homing"<<endlog();
-		}
-		cntr++;
+		log(Error) << prefix <<"_Homing: Invalid homing type provided. Choose 1 for homeswitch homing, 2 for servoerror homing, 3 for absolute sensor homing, 4 for force sensor homing"<<endlog();
     }
 
     if (result == true ) {

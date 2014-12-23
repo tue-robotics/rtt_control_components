@@ -112,7 +112,7 @@ namespace SUPERVISORY
         virtual bool isEmpty( vector<TaskContext*> List );
         
         // External functions
-        TaskContext* JointStateDistributor;
+        TaskContext* GlobalReferenceGenerator;
         OperationCaller<void(int, bool)> AllowReadReference;
         
         // state transitions

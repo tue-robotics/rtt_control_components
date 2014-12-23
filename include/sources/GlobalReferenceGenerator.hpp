@@ -101,14 +101,15 @@ namespace SOURCES
             doubles InterpolEpses;
 
             // Global variables - vector of vectors
-            vector< doubles > desiredPos;
-            vector< doubles > desiredVel;
-            vector< doubles > desiredAcc;
-            vector< doubles > pos_out;
-            vector< doubles > vel_out;
-            vector< doubles > acc_out;
-            vector< vector< refgen::RefGenerator > > mRefGenerators;
-            vector< vector< amigo_msgs::ref_point> > mRefPoints;
+            vector<doubles> desiredPos;
+            vector<doubles> desiredVel;
+            vector<doubles> desiredAcc;
+            vector<doubles> pos_out;
+            vector<doubles> vel_out;
+            vector<doubles> acc_out;
+            vector<doubles> current_position;
+            vector<vector<refgen::RefGenerator > > mRefGenerators;
+            vector<vector<amigo_msgs::ref_point> > mRefPoints;
 
             // Global variables - map
             map<string, BodyJointPair> joint_map;

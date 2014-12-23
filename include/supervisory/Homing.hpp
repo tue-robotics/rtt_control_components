@@ -56,7 +56,6 @@ namespace SUPERVISORY
         uint N;
         uint N_outports;
         ints outport_sizes;
-        uint cntr;
         string bodypart;
         string prefix;
 
@@ -69,42 +68,35 @@ namespace SUPERVISORY
         doubles homing_stroke;
         doubles reset_stroke;
         doubles homing_endpos;
-
+		double InterpolDt;
+		double InterpolEps;
+		
         doubles homing_forces;
         doubles homing_errors;
         ints homing_absPos;
 
-        // Constants
+        // Variables
         bool homeswitchhoming;
         bool absolutehoming;
         bool forcehoming;
         bool errorhoming;
-        doubles initial_maxerr;
-        doubles initial_minpos;
-        doubles initial_maxpos;
-        doubles initial_maxvel;
-
-        // variables
-        int jointNr;
-        int state;
         bool joint_finished;
         bool finishing;
+        int jointNr;
+        int state;
         double homing_stroke_goal;
         doubles position;
         doubles desiredPos;
+        doubles initial_maxerr;
         doubles updated_maxerr;
-        doubles updated_minpos;
-        doubles updated_maxpos;
-        doubles updated_maxvel;
-		std::vector<refgen::RefGenerator> mRefGenerators;
-		std::vector<amigo_msgs::ref_point> mRefPoints;
-		double InterpolDt;
-		double InterpolEps;
 		vector< doubles > outpos;
 		vector< doubles > outvel;
 		vector< doubles > outacc;
-
+		std::vector<refgen::RefGenerator> mRefGenerators;
+		std::vector<amigo_msgs::ref_point> mRefPoints;
+		
         protected:
+        
         // Component Peers
         TaskContext* Supervisor;
         TaskContext* ReadEncoders;

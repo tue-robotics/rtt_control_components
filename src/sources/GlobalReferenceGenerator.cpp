@@ -55,6 +55,7 @@ bool GlobalReferenceGenerator::configureHook()
     pos_out.resize(maxN);
     vel_out.resize(maxN);
     acc_out.resize(maxN);
+    current_position.resize(maxN);
     mRefGenerators.resize(maxN);
     mRefPoints.resize(maxN);
 
@@ -91,6 +92,13 @@ void GlobalReferenceGenerator::updateHook()
             return;
         }
     }
+    
+    // Read all current positions
+	for ( uint j = 0; j < activeBodyparts.size(); j++ ) {
+        uint partNr = activeBodyparts[j];
+        currentpos_inport[partNr-1].read( current_position[partNr-1] );
+	}
+    
 
     // If a new message received
     sensor_msgs::JointState in_msg;
@@ -127,8 +135,9 @@ void GlobalReferenceGenerator::updateHook()
                     desiredVel [body_part_id] [joint_id] = maxvel [body_part_id] [joint_id];
                     desiredAcc [body_part_id] [joint_id] = maxacc [body_part_id] [joint_id];
 
-                } else {
-                    log(Warning) << "GlobalReferenceGenerator: Message received for bodypart that did not get the AllowReadReference!" << endlog();
+                } else { // Message received for bodypart that did not get the AllowReadReference!
+					log(Warning) << "GlobalReferenceGenerator: Message received for bodypart that did not get the AllowReadReference!" << endlog();
+					desiredPos[body_part_id][joint_id] = current_position[body_part_id][joint_id];
                 }
                 k++;
             }
@@ -173,6 +182,7 @@ void GlobalReferenceGenerator::AddBodyPart(int partNr, strings JointNames)
     desiredPos[partNr-1].assign(JointNames.size(),0.0);
     desiredVel[partNr-1].assign(JointNames.size(),0.0);
     desiredAcc[partNr-1].assign(JointNames.size(),0.0);
+    current_position[partNr-1].assign(JointNames.size(),0.0);
     minpos[partNr-1].assign(JointNames.size(),0.0);
     maxpos[partNr-1].assign(JointNames.size(),0.0);
     maxvel[partNr-1].assign(JointNames.size(),0.0);
@@ -287,14 +297,10 @@ bool GlobalReferenceGenerator::CheckConnectionsAndProperties()
         }
 
         //Set the starting value to the current actual value
-        doubles actualPos(vector_sizes[partNr-1],0.0);
-        currentpos_inport[partNr-1].read( actualPos );
+        currentpos_inport[partNr-1].read( current_position[partNr-1] );
         for ( uint i = 0; i < vector_sizes[partNr-1]; i++ ){
-           mRefGenerators[partNr-1][i].setRefGen(actualPos[i]);
+           mRefGenerators[partNr-1][i].setRefGen(current_position[partNr-1][i]);
         }
-
-        // Write on the outposport to make sure the receiving components get new data
-        posoutport[partNr-1].write( actualPos );
     }
 
     log(Warning) << "GlobalReferenceGenerator: Checked all Properties and ports of GlobalReferenceGenerator" << endlog();
