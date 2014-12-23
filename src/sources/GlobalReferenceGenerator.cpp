@@ -204,11 +204,6 @@ void GlobalReferenceGenerator::AddBodyPart(int partNr, strings JointNames)
     addProperty(    "interpolatorDt"+to_string(partNr),     InterpolDts[partNr-1] )     .doc("Interpol Dt");
     addProperty(    "interpolatorEps"+to_string(partNr),    InterpolEpses[partNr-1] )   .doc("Interpol Eps");
 
-    // Attrributes (To be able to acces these properties from the homing component)
-    addAttribute(   "minPos"+to_string(partNr),             minpos[partNr-1] );
-    addAttribute(   "maxPos"+to_string(partNr),             maxpos[partNr-1] );
-    addAttribute(   "maxVel"+to_string(partNr),             maxvel[partNr-1] );
-
     // Update total numer of joints and present bodyparts
     totalNumberOfJoints += JointNames.size();
     vector_sizes[partNr-1] = JointNames.size();
@@ -223,13 +218,12 @@ void GlobalReferenceGenerator::AddBodyPart(int partNr, strings JointNames)
 // to do do this via property acces instead of function?
 void GlobalReferenceGenerator::AllowReadReference(int partNr, bool allowed)
 {
-    allowedBodyparts[partNr-1] = allowed;
-
-    if (allowed = true) {
-        log(Warning) << "GlobalReferenceGenerator:  Allowed Reading of References for partNr: "<< partNr <<"!" << endlog();
-    } else {
-        log(Warning) << "GlobalReferenceGenerator:  Disabled Reading of References for partNr: "<< partNr <<"!" << endlog();
-    }
+	if (allowedBodyparts[partNr-1] != allowed) {
+		if (allowed == true ) { log(Warning) << "GlobalReferenceGenerator:  Allowed Reading of References for partNr: "<< partNr <<"!" << endlog();
+		} else { log(Warning) << "GlobalReferenceGenerator:  Disabled Reading of References for partNr: "<< partNr <<"!" << endlog(); } 
+	}
+	
+	allowedBodyparts[partNr-1] = allowed;
 
     return;
 }
