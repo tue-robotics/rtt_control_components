@@ -23,8 +23,8 @@ GravityTorques::GravityTorques(const std::string& name)
 	addEventPort("in", jointAnglesPort);
     addPort("out",gravityTorquesPort); 
     
-    addProperty( "RootLinkName", root_link_name ).doc("Name of the Base link frame of the manipulator");
-    addProperty( "TipLinkName", tip_link_name ).doc("Name of the Tip link frame of the manipulator");
+    addProperty( "RootLinkName", root_link_name ).doc("Name of the frame at root of the bodypart");
+    addProperty( "TipLinkName", tip_link_name ).doc("Name of the frame at the end link of the bodypart");
     addProperty( "GravityVector", GravityVector ).doc("Gravity Vector depends on choice of base frame");
 }
 
@@ -88,8 +88,10 @@ bool GravityTorques::configureHook()
         //log(Warning)<<"ARM GravityTorques: Parsed joint "<< j+1 <<" with center : [" << JointTipFrame.p[0] << ",\t" << JointTipFrame.p[1] << ",\t" << JointTipFrame.p[2] << "]!" <<endlog();
 
         if (JointCOG != KDLZeroVec ) {
+
+            nrMasses++;
             masses[j] = JointRBI.getMass();
-            mass_indexes[nrMasses] = j;
+            mass_indexes[nrMasses-1] = j;
 
             // Create chain
             KDL::Chain link_chain_;
@@ -99,10 +101,9 @@ bool GravityTorques::configureHook()
             }
 
             // Create solver
-            jacobian_solver[nrMasses] = new KDL::ChainJntToJacSolver(link_chain_);
-            //log(Warning)<<"ARM GravityTorques: Solver created for Joint "<< j+1 <<" with COG: [" << JointCOG[0] << ",\t" << JointCOG[1] << ",\t" << JointCOG[2] << "] and Mass: " << masses[j] << "!" <<endlog();
-
-            nrMasses++;
+            jacobian_solver[nrMasses-1] = new KDL::ChainJntToJacSolver(link_chain_);
+            link_chains_.resize(nrMasses);
+            link_chains_[nrMasses-1] = link_chain_;
         }
     }
 
@@ -143,6 +144,7 @@ void GravityTorques::updateHook()
     jointAngles.assign(nrJoints,0.0);
 
     if ( jointAnglesPort.read(jointAngles) == NewData ) {
+		
         // jointAngles to KDL jointArray
         KDL::JntArray q_current_(nrJoints);
         for (uint j = 0; j < nrJoints; j++) {

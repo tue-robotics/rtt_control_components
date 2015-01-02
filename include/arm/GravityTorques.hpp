@@ -27,9 +27,9 @@ using namespace Eigen;
 
 namespace ARM
 {
-	typedef std::vector<double> doubles;
-    typedef std::vector<uint> ints;
-    typedef std::vector<string> strings;
+	typedef vector<double> doubles;
+    typedef vector<uint> ints;
+    typedef vector<string> strings;
 	
     /*! \class GravityTorques
      * \brief Defines Orocos component for computation of joint torques
@@ -77,6 +77,7 @@ namespace ARM
     KDL::Tree kdl_tree_;
     KDL::Chain kdl_chain_;
     urdf::Model robot_model_;
+    vector < KDL::Chain > link_chains_;
 
 
 	public:
