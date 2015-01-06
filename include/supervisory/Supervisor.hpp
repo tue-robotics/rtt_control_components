@@ -111,6 +111,10 @@ namespace SUPERVISORY
         virtual bool stopList( vector<TaskContext*> List );
         virtual bool isEmpty( vector<TaskContext*> List );
         
+        // External functions
+        TaskContext* GlobalReferenceGenerator;
+        OperationCaller<void(int, bool)> AllowReadReference;
+        
         // state transitions
         virtual bool GoOperational(int partNr, diagnostic_msgs::DiagnosticArray statusArray);
         virtual bool GoIdle(int partNr, diagnostic_msgs::DiagnosticArray statusArray);

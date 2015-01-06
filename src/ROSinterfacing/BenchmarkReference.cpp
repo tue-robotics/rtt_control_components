@@ -66,6 +66,9 @@ void BenchmarkReference::updateHook()
 		if (cntr_s >= timeFunction[timeFunction.size()-1]) {
 			endOfReferenceReached = true;
 		}
+	} else {
+		pos_out.assign(N,0.0);
+		position_outport.write(pos_out);
 	}
 
 	// Update pos_out if necessary
@@ -76,9 +79,6 @@ void BenchmarkReference::updateHook()
 		position_outport.write(pos_out);
 		timeFunction_j++;
 	}
-	
-	// Write pos_out
-	
 }
 
 ORO_CREATE_COMPONENT(ROS::BenchmarkReference)

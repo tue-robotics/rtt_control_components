@@ -108,9 +108,10 @@ void Safety::updateHook()
 
     // Additional safety checks
     for ( uint i=0; i<n_add_safeties; i++){
-        bool safe_i = true;
+        std_msgs::Bool safe_i;
+        safe_i.data = true;
         if ( safe_inports[i].read(safe_i) == NewData ){
-            if ( !safe_i && !errors){
+            if ( !safe_i.data && !errors){
 				errors = true;
                 ROS_ERROR_STREAM( "Safety: error in additional safety: "<< add_safeties[i] << ". output disabled." );
                 log(Error)<< "Safety: error in additional safety: "<< add_safeties[i] << ". output disabled." <<endlog();

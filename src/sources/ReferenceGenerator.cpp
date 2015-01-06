@@ -38,11 +38,11 @@ bool ReferenceGenerator::configureHook()
 {
     // Property Checks
 	if ( (N_inports <= 0) || (N_inports > N)) {
-        log(Error)<<"Could not start component: size or N_inports is incorrect. N_inports and N should satisfy (0 < N_inports <= N)"<<endlog();        
+        log(Error)<<"Reference Generator: Could not start component: size or N_inports is incorrect. N_inports and N should satisfy (0 < N_inports <= N)"<<endlog();        
         return false;
     }
     if ( (inport_sizes.size() != N_inports) ) {
-        log(Error)<<"Could not start component: Size of inport_sizes is incorrect. should be equal to N_inports"<<endlog();    
+        log(Error)<<"Reference Generator: Could not start component: Size of inport_sizes is incorrect. should be equal to N_inports"<<endlog();    
         return false;
     }      
 	int sumofinputs =0;
@@ -50,22 +50,22 @@ bool ReferenceGenerator::configureHook()
 		sumofinputs += inport_sizes[j];
 	}
 	if ( (sumofinputs != N) ) {
-        log(Error)<<"Could not start component: Sum of input_sizes should match N"<<endlog();    
+        log(Error)<<"Reference Generator: Could not start component: Sum of input_sizes should match N"<<endlog();    
         return false;
     }	    
     if ( (minpos.size() != N) || (maxpos.size() != N) || (maxvel.size() != N) || (maxacc.size() != N) ) {
-        log(Error)<<"Could not start component:  minpos["<< minpos.size() <<"], maxpos["<< maxpos.size() <<"], maxvel["<< maxvel.size() <<"], maxacc["<< maxacc.size() <<"] should be size " << N <<"."<<endlog();        
+        log(Error)<<"Reference Generator: Could not start component:  minpos["<< minpos.size() <<"], maxpos["<< maxpos.size() <<"], maxvel["<< maxvel.size() <<"], maxacc["<< maxacc.size() <<"] should be size " << N <<"."<<endlog();        
         return false;
     }
     for ( uint i = 0; i < N; i++ ){
         if ( minpos[i] == 0.0 && maxpos[i] == 0.0 ) {
-            log(Warning)<<"minPos and maxPos both specified 0.0. Thus maxPos and minPos boundaries are not taken into account"<<endlog();
+            log(Warning)<<"Reference Generator: minPos and maxPos both specified 0.0. Thus maxPos and minPos boundaries are not taken into account"<<endlog();
         } else if ( minpos[i] > maxpos[i]) {
-            log(Error)<<"Could not start component: minPosition should be specified smaller than maxPosition"<<endlog();
+            log(Error)<<"Reference Generator: Could not start component: minPosition should be specified smaller than maxPosition"<<endlog();
             return false;
         }
         if ( ( maxvel[i] < 0.0) || ( maxacc[i] < 0.0) ) {
-            log(Error)<<"Could not start component: maxVelocity and maxAcceleration should be specified positive"<<endlog();
+            log(Error)<<"Reference Generator: Could not start component: maxVelocity and maxAcceleration should be specified positive"<<endlog();
             return false;
         }
     }
@@ -93,7 +93,7 @@ bool ReferenceGenerator::startHook()
 		}
 	}
     if ( !posoutport.connected() ) {
-        log(Warning)<<"Outputport not connected!"<<endlog();
+        log(Warning)<<"Reference Generator: Outputport not connected!"<<endlog();
     }
 
     //Set the starting value to the current actual value
@@ -102,12 +102,6 @@ bool ReferenceGenerator::startHook()
     for ( uint i = 0; i < N; i++ ){
        mRefGenerators[i].setRefGen(actualPos[i]);
     }  
-	
-	// print initial value
-	//if (N>5) {
-	//	log(Warning) << "REFGEN: Starting with actual Pos: [" << actualPos[0] << "," << actualPos[1] << "," << actualPos[2] << "," << actualPos[3] << "," << actualPos[4] << "," << actualPos[5] << "," << actualPos[6] << "," << actualPos[7] << "]" <<endlog();
-	//}
-	
 	
     // Write on the outposport to make sure the receiving components gets new data
     posoutport.write( actualPos );
@@ -119,10 +113,9 @@ bool ReferenceGenerator::startHook()
 void ReferenceGenerator::updateHook()
 {
     // Read the inputports
-    outpos.assign(N,0.0);
+    doubles outpos(N,0.0);
     doubles outvel(N,0.0);
     doubles outacc(N,0.0);
-    doubles resetdata(N*4,0.0);
 
     // If new data on the channel then change the desired positions
     // j loops over the number of inports, k loops over the size of the j-th input
@@ -131,8 +124,7 @@ void ReferenceGenerator::updateHook()
     for ( uint j = 0; j < N_inports; j++ ){
 		doubles inpos(inport_sizes[j],0.0);
 		if (NewData == posinport[j].read( inpos ) ){
-			// if new data then use inpos
-			for ( uint k = 0; k < inport_sizes[j]; k++ ){
+        for ( uint k = 0; k < inport_sizes[j]; k++ ){
 				if ( minpos[i] == 0.0 && maxpos[i] == 0.0 ) {
 					desiredPos[i]=(inpos[k]);
 				} else {
@@ -163,11 +155,10 @@ void ReferenceGenerator::updateHook()
 
 void ReferenceGenerator::resetReference()
 {
-    log(Warning) << "REFGEN: Resettting bodypart!"<<endlog();
-
     //Set the starting value to the current actual value
     doubles actualPos(N,0.0);
     initialposinport.read( actualPos );
+    log(Info) << "Reference Generator: Resettting bodypart with [" << actualPos[0] << "," << actualPos[1] << ","  << actualPos[2] << ","  << actualPos[3] << ","  << actualPos[4] << ","  << actualPos[5] << ","  << actualPos[6] << ","  << actualPos[7] << "] !"<<endlog();
     for ( uint i = 0; i < N; i++ ){
        mRefGenerators[i].setRefGen(actualPos[i]);
     }

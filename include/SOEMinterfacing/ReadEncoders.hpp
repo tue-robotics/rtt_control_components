@@ -22,6 +22,7 @@ inline string to_string (const T& t){
 namespace SOEM
 {
   typedef vector<double> doubles;
+  typedef vector<int> ints;
 
   class ReadEncoders
   : public RTT::TaskContext
@@ -38,6 +39,7 @@ namespace SOEM
     InputPort<bool> inport_reNull;
     OutputPort<doubles> outport;
     OutputPort<doubles> outport_enc;
+    OutputPort<doubles> outport_vel;
     
 
     // Declaring message types
@@ -49,6 +51,10 @@ namespace SOEM
     doubles enc2SI;
     doubles offset;
     uint encoderbits;
+    ints enc_position;
+    ints enc_position_prev;
+    doubles enc_velocity;
+    long double old_time;
     
 
     public:
@@ -64,6 +70,7 @@ namespace SOEM
     private:
 
     double readEncoder( int i );
+    double determineDt();
     };
 }
 #endif

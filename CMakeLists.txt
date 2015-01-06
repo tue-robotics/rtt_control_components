@@ -133,6 +133,8 @@ orocos_component(SineWave src/sources/SineWave.cpp ${HEADER_FILES})
 orocos_component(StepSignal src/sources/StepSignal.cpp ${HEADER_FILES})
 orocos_component(UniformRandomNumber src/sources/UniformRandomNumber.cpp ${HEADER_FILES})
 orocos_component(ReferenceGenerator_rtt src/sources/ReferenceGenerator.cpp ${HEADER_FILES})
+orocos_component(GlobalReferenceGenerator src/sources/GlobalReferenceGenerator.cpp ${HEADER_FILES})
+target_link_libraries(GlobalReferenceGenerator ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(ReferenceGenerator_rtt ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(ConstantBool ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(ConstantSignal ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
@@ -192,6 +194,7 @@ orocos_component(JointTrajectoryToDoubles src/ROSinterfacing/JointTrajectoryToDo
 orocos_component(PublishOdometry src/ROSinterfacing/PublishOdometry.cpp ${HEADER_FILES})
 orocos_component(ReadTwistMsg src/ROSinterfacing/ReadTwistMsg.cpp ${HEADER_FILES})
 orocos_component(RosDiagnostics src/ROSinterfacing/RosDiagnostics.cpp ${HEADER_FILES})
+orocos_component(JointStateDistributor src/ROSinterfacing/JointStateDistributor.cpp ${HEADER_FILES})
 target_link_libraries(BenchmarkReference ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(BoolToROS ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(DoublesToJointState ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
@@ -203,6 +206,7 @@ target_link_libraries(JointTrajectoryToDoubles ${catkin_LIBRARIES} ${USE_OROCOS_
 target_link_libraries(PublishOdometry ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(ReadTwistMsg ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(RosDiagnostics ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
+target_link_libraries(JointStateDistributor ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 
 ### Orocos Components - soem_interfacing ###
 orocos_component(AnalogInsGeneric src/SOEMinterfacing/AnalogInsGeneric.cpp ${HEADER_FILES})
@@ -263,4 +267,6 @@ add_dependencies(AnalogInsPera2 soem_beckhoff_drivers_generate_messages_cpp)
 add_dependencies(AnalogIns soem_beckhoff_drivers_generate_messages_cpp)
 add_dependencies(AnalogOutsPera soem_beckhoff_drivers_generate_messages_cpp)
 add_dependencies(AnalogOuts soem_beckhoff_drivers_generate_messages_cpp)
+
+## to do add dependency for each component depending on a message specified elswhere 
 

@@ -10,7 +10,6 @@
 
 #include <amigo_ref_interpolator/interpolator.h>
 #include <sensor_msgs/JointState.h>
-#include "printLog.hpp"
 
 using namespace std;
 
@@ -57,10 +56,7 @@ namespace SOURCES
 			doubles desiredPos;
 			doubles desiredVel;
 			doubles desiredAcc;
-			doubles interpolators[maxN];
-			doubles outpos;
 			double InterpolDt, InterpolEps;
-			TueLog printer;
 
 		public:
 
