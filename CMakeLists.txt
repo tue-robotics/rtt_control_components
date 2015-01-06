@@ -28,7 +28,7 @@ include_directories(
 	include/ROSinterfacing
 	include/dynamixel
 	include/lighting
-	${catkin_INCLUDE_DIRS} 
+        ${catkin_INCLUDE_DIRS}
 	${scl_filters_INCLUDE_DIRS} 
 	${USE_OROCOS_INCLUDE_DIRS})
 
@@ -45,7 +45,7 @@ orocos_install_headers( DIRECTORY
 	include/SOEMinterfacing
 	include/ROSinterfacing
 	include/dynamixel
-	include/lighting)
+        include/lighting)
 
 file(GLOB_RECURSE HEADER_FILES include/*.hpp)
 

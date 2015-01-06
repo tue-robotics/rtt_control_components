@@ -47,7 +47,7 @@ bool FollowJointTrajectoryActionToDoubles::startHook()
 {
     rtt_action_server_.start();
 
-    /// Check which ports are connected
+    // Check which ports are connected
     if (!position_outport_.connected()) {
         log(Warning)<<"ReadJointState: Position outport not connected"<<endlog();
     }
@@ -82,7 +82,7 @@ void FollowJointTrajectoryActionToDoubles::updateHook()
 		log(Info)<<"New goal received"<<endlog();
 		
 		//TODO: Check feasibility of trajectory
-	}
+    }
 	
 	if ( playing_trajectory && ! playing_trajectory_point ) { // Lets calculate the speeds to the next point
 		log(Debug)<<"Calculating new trajectory initiated." << endlog();
@@ -163,7 +163,7 @@ void FollowJointTrajectoryActionToDoubles::updateHook()
 			control_msgs::FollowJointTrajectoryActionResult resultmsg;
 			resultmsg.result.error_code = 0; // SUCCESSFUL
 			resultmsg.status.status = 3;     // SUCCEEDED
-			resultport.write(resultmsg);
+            resultport.write(resultmsg);
 			playing_trajectory = false;
 			log(Info)<<"Trajectory finished"<<endlog();
 		} else {
@@ -205,13 +205,13 @@ void FollowJointTrajectoryActionToDoubles::updateHook()
 }
 
 // Called by rtt_action_server_ when a new goal is received
-void goalCallback(GoalHandle gh) {
+void FollowJointTrajectoryActionToDoubles::goalCallback(GoalHandle gh) {
     // Accept/reject goal requests here
     log(Info)<<"Received new goal"<<endlog();
 }
 
 // Called by rtt_action_server_ when a goal is cancelled / preempted
-void cancelCallback(GoalHandle gh) {
+void FollowJointTrajectoryActionToDoubles::cancelCallback(GoalHandle gh) {
     // Handle preemption here
 }
 
