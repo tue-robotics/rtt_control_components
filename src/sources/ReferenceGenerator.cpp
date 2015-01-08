@@ -72,7 +72,7 @@ bool ReferenceGenerator::configureHook()
     
     // add inports
     for ( uint j = 0; j < N_inports; j++ ) {
-        this->addPort( ("posin"+to_string(j+1)), posinport[j] ); 
+        addPort( ("posin"+to_string(j+1)), posinport[j] );
 	}
 
     mRefGenerators.resize(N);
@@ -122,20 +122,32 @@ void ReferenceGenerator::updateHook()
     // i loops over the total output size (sum of all input sizes)
     uint i = 0;
     for ( uint j = 0; j < N_inports; j++ ){
+		
 		doubles inpos(inport_sizes[j],0.0);
 		if (NewData == posinport[j].read( inpos ) ){
-        for ( uint k = 0; k < inport_sizes[j]; k++ ){
+			
+			for ( uint k = 0; k < inport_sizes[j]; k++ ){
+				
 				if ( minpos[i] == 0.0 && maxpos[i] == 0.0 ) {
 					desiredPos[i]=(inpos[k]);
 				} else {
 					desiredPos[i]=min(inpos[k], maxpos[i]);
 					desiredPos[i]=max(minpos[i], desiredPos[i]);
+					
+					if (inpos[i] < (minpos[i] - 0.05) ) {
+						log(Warning) << "GlobalReferenceGenerator: Received goal " << inpos[i] << " on port " << j+1 << ". This is outside minimal bound " << minpos[i] << "!" << endlog();
+					}
+					if (inpos[i] > (maxpos[i] + 0.05) ) {
+						log(Warning) << "GlobalReferenceGenerator: Received goal " << inpos[i] << " on port " << j+1 << ". This is outside maximal bound " << maxpos[i] << "!" << endlog();
+					}
 				}
 				desiredVel[i]=maxvel[i];
 				desiredAcc[i]=maxacc[i];	
 
 				i++;
 			}
+		} else { // if no data received skip 
+			i+=inport_sizes[j];
 		}
 	}
 
