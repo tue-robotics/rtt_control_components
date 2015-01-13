@@ -1,0 +1,21 @@
+# amigo_console
+# amigo.leftArm.send_joint_trajectory('prepare_grasp')
+
+
+import("rtt_ros")
+ros.import("rtt_control_components")
+
+loadComponent("FollowJointTrajectoryActionToDoubles","ROS::FollowJointTrajectoryActionToDoubles")
+addPeer("Deployer","FollowJointTrajectoryActionToDoubles")
+
+loadService("FollowJointTrajectoryActionToDoubles","actionlib")
+
+FollowJointTrajectoryActionToDoubles.actionlib.connect("/amigo/left_arm/references");
+
+setActivity("FollowJointTrajectoryActionToDoubles",0.1,LowestPriority,ORO_SCHED_OTHER)
+
+FollowJointTrajectoryActionToDoubles.configure
+
+FollowJointTrajectoryActionToDoubles.start
+
+
