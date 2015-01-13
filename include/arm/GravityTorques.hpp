@@ -41,8 +41,6 @@ namespace ARM
      * this model is then parsed to a kdl tree out of which a KDL chain 
      * is extracted.
      *
-     * To Do:
-     * Rewrite to parse urdf in stead of declaring parameters in ops file
 	 */
 	
 	class GravityTorques : 
@@ -54,32 +52,19 @@ namespace ARM
 	InputPort<doubles> jointAnglesPort;
     OutputPort<doubles> gravityTorquesPort;
 	
-	//Properties
-    std::string root_link_name;
-    std::string tip_link_name; 
-	std::string urdf_xml;
-	std::string full_urdf_xml;
-	doubles masses;
+    // Properties
+    string root_link_name;
+    string tip_link_name;
     doubles GravityVector;
 
-    // input variable
-	doubles jointAngles;
-
 	//variables
-    ints mass_indexes;
     uint nrJoints;
-    uint nrMasses;
-
-    // Vectors of GravityWrenches, Robot Arm Chains and jacobian solvers. ith elemen of these vectors represent object for ith mass
-    Eigen::VectorXd GravityWrenches[MAXJOINTS];
-    KDL::Chain RobotArmChain[MAXJOINTS];
+    doubles masses;
+    KDL::Chain kdl_chain;
     KDL::ChainJntToJacSolver* jacobian_solver[MAXJOINTS];
-    KDL::Tree kdl_tree_;
-    KDL::Chain kdl_chain_;
-    urdf::Model robot_model_;
-    vector < KDL::Chain > link_chains_;
-
-
+    std::vector < KDL::Frame > link_frames;         // [frame from mount to link 1, mount to link 2, ... ,mount to link nrJoints]
+    std::vector < KDL::Vector > link_COGs;          // std vector of KDL Vectors. (for each joint, a vector from COG to the link center)
+    KDL::Wrenches GravityWrenches_COG;              // gravity wrench in center of grav but wrt root frame
 	public:
 	
 	GravityTorques(const std::string& name);
