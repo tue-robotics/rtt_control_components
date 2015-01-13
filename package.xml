@@ -77,6 +77,7 @@
 	  <plugin_depend>rtt_std_msgs</plugin_depend>
           <plugin_depend>rtt_std_srvs</plugin_depend>
           <plugin_depend>rtt_actionlib</plugin_depend>
+          <plugin_depend>rtt_control_msgs</plugin_depend>
       <plugin_depend>rtt_tue_msgs</plugin_depend>
       <plugin_depend>rtt_rosgraph_msgs</plugin_depend>
       <plugin_depend>rtt_diagnostic_msgs</plugin_depend>

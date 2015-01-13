@@ -3,8 +3,6 @@
 #include <rtt/Component.hpp>
 
 #include "FollowJointTrajectoryActionToDoubles.hpp"
-#define DT 0.001
-#define EPS 0.0017 //[0.1 DEG]
 
 using namespace std;
 using namespace RTT;
@@ -13,14 +11,6 @@ using namespace ROS;
 FollowJointTrajectoryActionToDoubles::FollowJointTrajectoryActionToDoubles(const string& name) :
     TaskContext(name, PreOperational)
 {
-    addProperty( "NumberOfJoints", Nj );
-    addProperty( "start_pos", start_pos );
-    addProperty( "max_vels", max_vels );
-    addProperty( "max_accs", max_accs );
-    addPort( "goal", goalport );
-    addPort( "pos_out", position_outport_ );
-    addPort( "resetValues", resetPort );
-    addPort( "result", resultport );
 
     // Add action server ports to this task's root service
     rtt_action_server_.addPorts(this->provides());
@@ -28,45 +18,26 @@ FollowJointTrajectoryActionToDoubles::FollowJointTrajectoryActionToDoubles(const
     // Bind action server goal and cancel callbacks (see below)
     rtt_action_server_.registerGoalCallback(boost::bind(&FollowJointTrajectoryActionToDoubles::goalCallback, this, _1));
     rtt_action_server_.registerCancelCallback(boost::bind(&FollowJointTrajectoryActionToDoubles::cancelCallback, this, _1));
+
 }
 
 FollowJointTrajectoryActionToDoubles::~FollowJointTrajectoryActionToDoubles(){}
 
 bool FollowJointTrajectoryActionToDoubles::configureHook()
 {
-	
-    pos.assign(Nj, 0.0);
-    vel.assign(Nj, 0.0);
-    goal_pos.assign(Nj, 0.0);
-    cur_max_vel.assign(Nj, 0.0);
-    cur_max_acc.assign(Nj, 0.0);
     return true;
 }
 
 bool FollowJointTrajectoryActionToDoubles::startHook()
 {
     rtt_action_server_.start();
-
-    // Check which ports are connected
-    if (!position_outport_.connected()) {
-        log(Warning)<<"ReadJointState: Position outport not connected"<<endlog();
-    }
-    if (!goalport.connected()) {
-        log(Warning)<<"ReadJointState: Inport not connected"<<endlog();
-    }
-            
-    for(unsigned int j = 0; j < Nj; ++j) {
-		pos[j] = start_pos[j];
-	}
-
-    playing_trajectory = false;
     return true;
 }
 
 void FollowJointTrajectoryActionToDoubles::updateHook()
 {
-	
-	doubles resetdata;
+
+    /*doubles resetdata;
 	if (resetPort.read( resetdata ) == NewData) { // Following the trajectory is interupted and the actual joints may be moved
 		for(unsigned int j = 0; j < Nj; ++j) {
 			pos[j] = resetdata[j];
@@ -84,7 +55,7 @@ void FollowJointTrajectoryActionToDoubles::updateHook()
 		//TODO: Check feasibility of trajectory
     }
 	
-	if ( playing_trajectory && ! playing_trajectory_point ) { // Lets calculate the speeds to the next point
+    if ( playing_trajectory && ! playing_trajectory_point ) { // Lets calculate the speeds to the next point
 		log(Debug)<<"Calculating new trajectory initiated." << endlog();
 		log(Debug)<<"Max vel: " << 
 		max_vels[0] << "  " << max_vels[1] << "  " << max_vels[2] << "  " << max_vels[3] << endlog();
@@ -155,7 +126,7 @@ void FollowJointTrajectoryActionToDoubles::updateHook()
 		log(Info)<<"New trajectory to next point calculated"<<endlog();
 	}
 	
-	if ( playing_trajectory && playing_trajectory_point && std::abs(goal_pos[slowest] - pos[slowest]) < EPS ) { //(Criterium goal reached)
+    if ( playing_trajectory && playing_trajectory_point && std::abs(goal_pos[slowest] - pos[slowest]) < EPS ) { //(Criterium goal reached)
 		playing_trajectory_point = false;
 		
 		if (tp >= goalmsg.goal.trajectory.points.size()) {
@@ -201,13 +172,13 @@ void FollowJointTrajectoryActionToDoubles::updateHook()
 		log(Debug)<<"Going to: " << pos[0] <<" " << pos[1] <<" " << pos[2] <<" " << pos[3] <<" With vel: " << vel[0] <<" " << vel[1] <<" " << vel[2] <<" " << vel[3] <<" With acc: " << cur_max_acc[0] <<" " << cur_max_acc[1] <<" " << cur_max_acc[2] <<" " << cur_max_acc[3] <<endlog();
 
 		position_outport_.write(pos);
-    }
+    }*/
 }
 
 // Called by rtt_action_server_ when a new goal is received
 void FollowJointTrajectoryActionToDoubles::goalCallback(GoalHandle gh) {
     // Accept/reject goal requests here
-    log(Info)<<"Received new goal"<<endlog();
+    log(Warning)<<"Received new goal"<<endlog();
 }
 
 // Called by rtt_action_server_ when a goal is cancelled / preempted
