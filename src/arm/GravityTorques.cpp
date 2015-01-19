@@ -147,7 +147,7 @@ void GravityTorques::updateHook()
 
 doubles GravityTorques::ComputeGravityTorques(KDL::JntArray q_current)
 {
-    log(Warning)<<"ARM GravityTorques: q = [" << q_current(0) << "," << q_current(1) << "," << q_current(2) << "," << q_current(3) << "," << q_current(4) << "," << q_current(5) << "," << q_current(6) << "," << q_current(7) << "]" << endlog();
+    log(Info)<<"ARM GravityTorques: q = [" << q_current(0) << "," << q_current(1) << "," << q_current(2) << "," << q_current(3) << "," << q_current(4) << "," << q_current(5) << "," << q_current(6) << "]" << endlog();
 
     // Calculate Partial Jacobian, and
     doubles gravityTorques(nrJoints,0.0);
@@ -181,10 +181,10 @@ doubles GravityTorques::ComputeGravityTorques(KDL::JntArray q_current)
 
 
         if (link_COG_r.Norm() > 0.001 ) {
-            log(Warning)<<"ARM GravityTorques: For Joint " << j+1 << " The link_COGs[j]                = [" << link_COGs[j].x() << "," << link_COGs[j].y() << "," << link_COGs[j].z() << "]" <<endlog();
-            log(Warning)<<"ARM GravityTorques: For Joint " << j+1 << " The link_COGs[j] transformed to = [" << link_COG_r.x() << "," << link_COG_r.y() << "," << link_COG_r.z() << "]" <<endlog();
-            log(Warning)<<"ARM GravityTorques: For Joint " << j+1 << " The start Gravity Wrench is     = [" << GravityWrenches_COG[j](0) << ", " << GravityWrenches_COG[j](1) << ", " << GravityWrenches_COG[j](2) << ", " << GravityWrenches_COG[j](3) << ", " << GravityWrenches_COG[j](4) << ", " << GravityWrenches_COG[j](5) << "]" <<endlog();
-            log(Warning)<<"ARM GravityTorques: For Joint " << j+1 << " The updated Gravity Wrench is   = [" << GravityWrenches_COL(0) << ", " << GravityWrenches_COL(1) << ", " << GravityWrenches_COL(2) << ", " << GravityWrenches_COL(3) << ", " << GravityWrenches_COL(4) << ", " << GravityWrenches_COL(5) << "] \n " <<endlog();
+            log(Info)<<"ARM GravityTorques: For Joint " << j+1 << " The link_COGs[j]                = [" << link_COGs[j].x() << "," << link_COGs[j].y() << "," << link_COGs[j].z() << "]" <<endlog();
+            log(Info)<<"ARM GravityTorques: For Joint " << j+1 << " The link_COGs[j] transformed to = [" << link_COG_r.x() << "," << link_COG_r.y() << "," << link_COG_r.z() << "]" <<endlog();
+            log(Info)<<"ARM GravityTorques: For Joint " << j+1 << " The start Gravity Wrench is     = [" << GravityWrenches_COG[j](0) << ", " << GravityWrenches_COG[j](1) << ", " << GravityWrenches_COG[j](2) << ", " << GravityWrenches_COG[j](3) << ", " << GravityWrenches_COG[j](4) << ", " << GravityWrenches_COG[j](5) << "]" <<endlog();
+            log(Info)<<"ARM GravityTorques: For Joint " << j+1 << " The updated Gravity Wrench is   = [" << GravityWrenches_COL(0) << ", " << GravityWrenches_COL(1) << ", " << GravityWrenches_COL(2) << ", " << GravityWrenches_COL(3) << ", " << GravityWrenches_COL(4) << ", " << GravityWrenches_COL(5) << "] \n " <<endlog();
         }
 
         // Calculate Gravity Torques
