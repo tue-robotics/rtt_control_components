@@ -1,3 +1,15 @@
+# remove system libraries if working in tue-dev:
+# rm -rf ~/ros/hydro/system/devel/lib/orocos/gnulinux/rtt_control_components/
+
+# rosrun rtt_control_components test_FollowJointTrajectoryAction
+
+# OR
+# roslaunch amigo_launch_files grasp_precompute_action.launch
+# rosrun tue_manipulation test_grasp_precompute amigo
+
+# OR
+# astart
+# amiddle
 # amigo_console
 # amigo.leftArm.send_joint_trajectory('prepare_grasp')
 
@@ -10,7 +22,7 @@ addPeer("Deployer","FollowJointTrajectoryActionToDoubles")
 
 loadService("FollowJointTrajectoryActionToDoubles","actionlib")
 
-FollowJointTrajectoryActionToDoubles.actionlib.connect("/amigo/left_arm/references");
+FollowJointTrajectoryActionToDoubles.actionlib.connect("/joint_trajectory_action_left");
 
 setActivity("FollowJointTrajectoryActionToDoubles",0.1,LowestPriority,ORO_SCHED_OTHER)
 
