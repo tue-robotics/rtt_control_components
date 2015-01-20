@@ -19,7 +19,6 @@
 #include <trajectory_msgs/JointTrajectoryPoint.h>
 #include <control_msgs/FollowJointTrajectoryAction.h>
 #include <actionlib/action_definition.h>
-#include <rtt_actionlib_examples/SomeActionAction.h>
 
 
 
@@ -39,7 +38,7 @@ namespace ROS
   : public RTT::TaskContext
     {
     private:
-    ACTION_DEFINITION(control_msgs::FollowJointTrajectoryAction);
+    ACTION_DEFINITION(control_msgs::FollowJointTrajectoryAction)
 
     // Convenience typedefs
     typedef vector<double> doubles;
