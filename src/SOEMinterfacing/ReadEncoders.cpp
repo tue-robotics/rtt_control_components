@@ -121,7 +121,7 @@ double ReadEncoders::readEncoder( int i )
 {
     EncoderMsg encdata;
     if ( inport_enc[i].read(encdata) != NewData ){
-        log(Warning)<< "ReadEncoders:: No new data recieved on encoder "<< i << endlog();
+        //log(Warning)<< "ReadEncoders:: No new data recieved on encoder "<< i << endlog();
     }
 
     uint new_enc_position = encdata.value;
