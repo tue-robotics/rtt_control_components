@@ -61,7 +61,7 @@ namespace FILTERS
 		/* Declaring variables set by properties */
 		// Filter parameters
 		uint vector_size; // Number of polynomials/size of inputs and outputs
-		vector<unsigned int> orders; // Order of the various polynomials
+		vector<int> orders; // Order of the various polynomials
 		doubles input, output;
         vector<doubles> coefficients;
 
