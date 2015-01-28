@@ -78,11 +78,11 @@ bool GravityTorques::configureHook()
         total_mass += masses[j];
 
         KDL::Frame JointTipFrame = kdl_chain.getSegment(j).getFrameToTip();
-        log(Warning)<<"ARM GravityTorques: Parsed joint "<< j+1 <<" with center : [" << JointTipFrame.p[0] << ",\t" << JointTipFrame.p[1] << ",\t" << JointTipFrame.p[2] << "]!" <<endlog();
+        //log(Warning)<<"ARM GravityTorques: Parsed joint "<< j+1 <<" with center : [" << JointTipFrame.p[0] << ",\t" << JointTipFrame.p[1] << ",\t" << JointTipFrame.p[2] << "]!" <<endlog();
 
         // Create COG vectors
         link_COGs[j] = kdl_chain.getSegment(j).getInertia().getCOG();
-        log(Warning)<<"ARM GravityTorques: Added Joint " << j+1 << " with mass : " << masses[j] << " kg and with COG [" << link_COGs[j].x() << "," << link_COGs[j].y() << "," << link_COGs[j].z() << "]" <<endlog();
+        //log(Warning)<<"ARM GravityTorques: Added Joint " << j+1 << " with mass : " << masses[j] << " kg and with COG [" << link_COGs[j].x() << "," << link_COGs[j].y() << "," << link_COGs[j].z() << "]" <<endlog();
         link_COGs[j].ReverseSign();
 
         // Create chain
@@ -100,10 +100,10 @@ bool GravityTorques::configureHook()
             KDL::Vector force(GravityVector[0]*masses[j], GravityVector[1]*masses[j], GravityVector[2]*masses[j]);
             GravityWrenches_COG[j] = KDL::Wrench(force, KDL::Vector::Zero());
         }
-        log(Warning)<<"ARM GravityTorques: Created Gravity Wrench root [" << GravityWrenches_COG[j](0) << "," << GravityWrenches_COG[j](1) << "," << GravityWrenches_COG[j](2) << "," << GravityWrenches_COG[j](3) << "," << GravityWrenches_COG[j](4) << "," << GravityWrenches_COG[j](5) << "]" <<endlog();
+        //log(Warning)<<"ARM GravityTorques: Created Gravity Wrench root [" << GravityWrenches_COG[j](0) << "," << GravityWrenches_COG[j](1) << "," << GravityWrenches_COG[j](2) << "," << GravityWrenches_COG[j](3) << "," << GravityWrenches_COG[j](4) << "," << GravityWrenches_COG[j](5) << "]" <<endlog();
 
     }
-    log(Warning)<<"ARM GravityTorques: Total Mass: " << total_mass << " kg. " <<endlog();
+    //log(Warning)<<"ARM GravityTorques: Total Mass: " << total_mass << " kg. " <<endlog();
 
     // to do: add check wether the gravity vector is aligned with the base frame vector
 
