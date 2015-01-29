@@ -50,8 +50,6 @@ namespace MATH
     uint vectorsize;
     uint numberofinputs;
     
-    vector<doubles> inputs;
-
     public:
 
     Addition(const string& name);
