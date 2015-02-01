@@ -28,18 +28,11 @@ Addition::~Addition(){}
 
 bool Addition::configureHook()
 {
-	
 	// Adding inports
 	addEventPort( "in1_ev", inports[0]);
 	for ( uint j = 1; j < numberofinputs; j++ ) {
 		string name_inport = "in"+to_string(j+1);
 		addPort( name_inport, inports[j]);
-	}
-	
-	// Initialising input matrix inputs
-	inputs.resize(numberofinputs);
-	for ( uint j = 0; j < numberofinputs; j++ ) {
-		inputs[j].assign(vectorsize,0.0);
 	}
 	
 	return true;
@@ -64,21 +57,13 @@ bool Addition::startHook()
 
 void Addition::updateHook()
 {
-	
-	// Read the inputports
+	doubles output(vectorsize,0.0);
+	// Read input ports
 	for ( uint j = 0; j < numberofinputs; j++ ) {
 		doubles tempinput(vectorsize,0.0); 
 		inports[j].read(tempinput);
 		for ( uint i = 0; i < vectorsize; i++ ) {
-			inputs[j][i] = tempinput[i];
-		}
-	}
-
-	// Calculate the output:
-	doubles output(vectorsize,0.0);
-	for ( uint j = 0; j < numberofinputs; j++ ) {
-		for ( uint i = 0; i < vectorsize; i++ ) {
-			output[i] += inputs[j][i];
+			output[i] += tempinput[i];
 		}
 	}
 	

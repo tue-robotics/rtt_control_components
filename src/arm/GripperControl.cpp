@@ -96,6 +96,13 @@ void GripperControl::updateHook()
 	}
 	
 	if (gripperCommandPort.read(gripperCommand) == NewData){
+		if (gripperCommand.direction == tue_msgs::GripperCommand::OPEN) {
+			log(Info)<<"Grippercontrol: received GripperCommand Open"<<endlog();
+		} else if (gripperCommand.direction == tue_msgs::GripperCommand::CLOSE) {
+			log(Info)<<"Grippercontrol: received GripperCommand Close"<<endlog();
+		} else {
+			log(Info)<<"Grippercontrol: received invalid GripperCommand"<<endlog();
+		}		
 		completed = false;
         if(gripperCommand.direction == tue_msgs::GripperCommand::OPEN) {
 			log(Warning)<<"Grippercontrol: received gripper Command: Open"<<endlog();

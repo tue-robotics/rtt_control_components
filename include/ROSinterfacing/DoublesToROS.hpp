@@ -14,6 +14,7 @@
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
 #include <std_msgs/Float32.h>
+#include <std_msgs/Float32MultiArray.h>
 
 #define maxN 40 //Maximum  size
 
@@ -44,15 +45,16 @@ namespace ROS
     typedef vector<double> doubles;
     typedef vector<string> strings;
 
-    /* Declaring and output port*/
+    /* Declaring output ports*/
     OutputPort<std_msgs::Float32> doubleoutports[maxN];
+    OutputPort<std_msgs::Float32MultiArray> arrayoutport;
 
     InputPort<doubles> doubleinport;
 
 
     /* Declaring global variables */
     uint Ndouble; // Number of doubles in vector
-
+    bool sendAnArray;
 
     public:
 

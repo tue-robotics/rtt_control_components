@@ -73,7 +73,7 @@ namespace SUPERVISORY
 		
         doubles homing_forces;
         doubles homing_errors;
-        ints homing_absPos;
+        doubles homing_absPos;
 
         // Variables
         bool homeswitchhoming;

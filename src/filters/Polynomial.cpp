@@ -38,6 +38,13 @@ bool Polynomials::configureHook()
         log(Error)<<"Vector size ("<<vector_size<<") does not correspond with size of vector with orders ("<<orders.size()<<")"<<endlog();
         return false;
     }
+    
+    for (uint i=0; i<orders.size(); i++){
+		if (orders[i] < 0){
+			log(Error)<<"Polynomial: order of polynomial cannot be negative, order is "<<orders[i]<<endlog();
+			return false;
+		}
+	}
 
     // Adding ports
     addEventPort( "in", inport );

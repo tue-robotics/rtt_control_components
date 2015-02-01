@@ -380,7 +380,7 @@ bool Homing::evaluateHomingCriterion( uint jointID)
     else if (homing_type[jointID] == 3 ) {
         doubles absolutesensoroutput;
         absPos_inport.read(absolutesensoroutput);
-        if (abs(absolutesensoroutput[jointID] - (double) homing_absPos[jointID]) <= 1) {
+        if (abs(absolutesensoroutput[jointID] - (double) homing_absPos[jointID]) <= 3.3/((double)4095.0) ) {
             result = true;
         }
     } 

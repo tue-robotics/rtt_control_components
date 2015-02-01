@@ -55,6 +55,7 @@ bool ReadEncoders::configureHook()
     addPort( "out", outport );
     addPort( "out_enc", outport_enc );
     addPort( "in_reNull", inport_reNull );
+    addPort( "in_init", inport_init );
     addPort( "vel", outport_vel );
 
     counter = 0;
@@ -80,7 +81,7 @@ bool ReadEncoders::startHook()
         ienc[i] = 0;
         previous_enc_position[i] = 0.0; // obsolete
         init_SI_value[i] = 0.0;
-        init_SI_value[i] = readEncoder(i);
+        init_SI_value[i] = readEncoder(i)-offset[i];
         enc_position_prev[i] = enc_position[i];
     }
     determineDt();
@@ -99,6 +100,17 @@ void ReadEncoders::updateHook()
                 reset(i, 0.0);
             }
             reNull = false;
+        }
+    }
+
+    // Reset the encoders with an initial offset.
+    doubles reset_values;
+    if( NewData == inport_init.read(reset_values)){
+        if(reset_values.size() == N){
+            log(Info)<<"ReadEncoders: initialize signal received"<<endlog();
+            for ( uint i = 0; i < N; i++ ) {
+                reset(i, reset_values[i]);
+            }
         }
     }
 
@@ -121,7 +133,7 @@ double ReadEncoders::readEncoder( int i )
 {
     EncoderMsg encdata;
     if ( inport_enc[i].read(encdata) != NewData ){
-        log(Debug)<< "ReadEncoders:: No new data recieved on encoder "<< i << endlog();
+        //log(Warning)<< "ReadEncoders:: No new data recieved on encoder "<< i << endlog();
     }
 
     uint new_enc_position = encdata.value;
@@ -142,7 +154,7 @@ double ReadEncoders::determineDt()
     double dt = (new_time - old_time);
     old_time = new_time;
     if (dt>0.0014 || dt<0.0006){
-		log(Debug)<<"ReadEncoders: dt is "<< dt << endlog();
+		log(Warning)<<"ReadEncoders: dt is "<< dt << endlog();
 	}
     return dt;
 }
