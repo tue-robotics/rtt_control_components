@@ -17,17 +17,27 @@
 import("rtt_ros")
 ros.import("rtt_control_components")
 
-loadComponent("FollowJointTrajectoryActionToDoubles","ROS::FollowJointTrajectoryActionToDoubles")
-addPeer("Deployer","FollowJointTrajectoryActionToDoubles")
+loadComponent("TrajectoryActionlib","ROS::TrajectoryActionlib")
+addPeer("Deployer","TrajectoryActionlib")
 
-loadService("FollowJointTrajectoryActionToDoubles","actionlib")
+TrajectoryActionlib.vector_size 		= 8
+TrajectoryActionlib.number_of_inports 	= 2
+TrajectoryActionlib.inport_sizes 		= ints (7, 1)
+TrajectoryActionlib.InterpolatorDt 	= 0.1
+TrajectoryActionlib.InterpolatorEps 	= 1.0
+TrajectoryActionlib.minPosition		= array (	-1.57,		-1.57,		-1.57,  	0.0, 		-1.83,		-0.95, 		-0.61, 		-4.0	)
+TrajectoryActionlib.maxPosition		= array (	0.0,		1.57,		1.57, 		2.23,  		1.83, 		0.95,  		0.61,  		4.0		)
+TrajectoryActionlib.maxVelocity		= array (0.4, 0.4, 0.6, 0.8, 0.8, 1.0, 1.0, 10.0)
+TrajectoryActionlib.maxAcceleration	= array (0.2, 0.2, 0.3, 0.5, 0.5, 0.5, 0.5, 100.0)
 
-FollowJointTrajectoryActionToDoubles.actionlib.connect("/joint_trajectory_action_left");
+loadService("TrajectoryActionlib","actionlib")
 
-setActivity("FollowJointTrajectoryActionToDoubles",0.1,LowestPriority,ORO_SCHED_OTHER)
+TrajectoryActionlib.actionlib.connect("/joint_trajectory_action_left");
 
-FollowJointTrajectoryActionToDoubles.configure
+setActivity("TrajectoryActionlib",0.1,LowestPriority,ORO_SCHED_OTHER)
 
-FollowJointTrajectoryActionToDoubles.start
+TrajectoryActionlib.configure
+
+TrajectoryActionlib.start
 
 

@@ -95,7 +95,7 @@ bool TrajectoryActionlib::configureHook()
 
 bool TrajectoryActionlib::startHook()
 {
-    // Check validity of Ports:
+    /*// Check validity of Ports:
     for ( uint i = 0; i < N_inports; i++ ){
 		if ( (!posinport[i].connected() ) ) {
             log(Warning)<<"TrajectoryActionlib:: posin"<< i <<"is not connected!"<<endlog();
@@ -103,7 +103,7 @@ bool TrajectoryActionlib::startHook()
 	}
     if ( !posoutport.connected() ) {
         log(Warning)<<"Reference Generator: Outputport not connected!"<<endlog();
-    }
+    }*/
 
     //Set the starting value to the current actual value
     doubles actualPos(N,0.0);
