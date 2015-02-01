@@ -6,6 +6,12 @@
 #include <rtt/Component.hpp>
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
+#include <rtt_actionlib/rtt_actionlib.h>
+#include <rtt_actionlib/rtt_action_server.h>
+#include <trajectory_msgs/JointTrajectory.h>
+#include <trajectory_msgs/JointTrajectoryPoint.h>
+#include <control_msgs/FollowJointTrajectoryAction.h>
+#include <actionlib/action_definition.h>
 #include <rtt/Logger.hpp>
 
 #include <amigo_ref_interpolator/interpolator.h>
@@ -22,16 +28,19 @@ inline string to_string (const T& t){
 
 using namespace RTT;
 
-namespace SOURCES
+namespace ROS
 {
-	typedef vector<double> doubles;
-	typedef vector<int> ints;
-
 
     class TrajectoryActionlib
 		: public RTT::TaskContext
 		{
 		private:
+    
+			ACTION_DEFINITION(control_msgs::FollowJointTrajectoryAction)
+			// Convenience typedefs
+            typedef vector<double> doubles;
+            typedef vector<int> ints;
+
 
 			// Declaring input- and output_ports
 			InputPort<doubles> posinport[5];
@@ -58,6 +67,13 @@ namespace SOURCES
 			doubles desiredAcc;
 			double InterpolDt, InterpolEps;
 
+			// RTT action server
+			rtt_actionlib::RTTActionServer<control_msgs::FollowJointTrajectoryAction> rtt_action_server_;
+			typedef actionlib::ServerGoalHandle<control_msgs::FollowJointTrajectoryAction> GoalHandle;
+			GoalHandle current_gh_;
+			Feedback feedback_;
+			Result result_;
+
 		public:
 
             TrajectoryActionlib(const string& name);
@@ -67,7 +83,8 @@ namespace SOURCES
 			bool startHook();
 			void updateHook();
             void resetReference();
-
+            void goalCallback(GoalHandle gh);
+            void cancelCallback(GoalHandle gh);
 	};
 }
 #endif

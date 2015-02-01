@@ -2,7 +2,7 @@
 
 using namespace std;
 using namespace RTT;
-using namespace SOURCES;
+using namespace ROS;
 
 TrajectoryActionlib::TrajectoryActionlib(const string& name) : TaskContext(name, PreOperational)
 {
@@ -30,6 +30,15 @@ TrajectoryActionlib::TrajectoryActionlib(const string& name) : TaskContext(name,
     
     // Operations
     addOperation( "resetReference", &TrajectoryActionlib::resetReference, this, OwnThread ).doc("Reset the reference generator to measured current position (used in homing)");
+
+    // Actionlib
+    // Add action server ports to this task's root service
+    rtt_action_server_.addPorts(this->provides());
+
+    // Bind action server goal and cancel callbacks
+    rtt_action_server_.registerGoalCallback(boost::bind(&TrajectoryActionlib::goalCallback, this, _1));
+    rtt_action_server_.registerCancelCallback(boost::bind(&TrajectoryActionlib::cancelCallback, this, _1));
+
 }
 
 TrajectoryActionlib::~TrajectoryActionlib(){}
@@ -106,6 +115,8 @@ bool TrajectoryActionlib::startHook()
     // Write on the outposport to make sure the receiving components gets new data
     posoutport.write( actualPos );
 
+    // Start the actionlib server
+    rtt_action_server_.start();
     return true;
 }
 
@@ -164,4 +175,21 @@ void TrajectoryActionlib::resetReference()
     }
 }
 
-ORO_CREATE_COMPONENT(SOURCES::TrajectoryActionlib)
+// Called by rtt_action_server_ when a new goal is received
+void TrajectoryActionlib::goalCallback(GoalHandle gh) {
+    // Accept/reject goal requests here
+    uint number_of_goal_joints_ = gh.getGoal()->trajectory.joint_names.size();
+    log(Warning)<<"Received new goal with " << number_of_goal_joints_ << " joints" <<endlog();
+
+    gh.setAccepted();
+    log(Warning)<<"Accepted goal"<<endlog();
+    gh.setSucceeded();
+    log(Warning)<<"Succeeded new goal"<<endlog();
+}
+
+// Called by rtt_action_server_ when a goal is cancelled / preempted
+void TrajectoryActionlib::cancelCallback(GoalHandle gh) {
+    // Handle preemption here
+}
+
+ORO_CREATE_COMPONENT(ROS::TrajectoryActionlib)
