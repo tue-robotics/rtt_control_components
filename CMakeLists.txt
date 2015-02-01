@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(rtt_control_components)
 
+find_package(cmake_modules REQUIRED)
+find_package(Eigen REQUIRED)
 find_package(catkin REQUIRED COMPONENTS
   rtt_ros
   std_msgs
@@ -11,7 +13,6 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   kdl_parser
   rtt_std_msgs
-  eigen
   )
 
 include_directories(
@@ -30,7 +31,8 @@ include_directories(
 	include/lighting
         ${catkin_INCLUDE_DIRS}
 	${scl_filters_INCLUDE_DIRS} 
-	${USE_OROCOS_INCLUDE_DIRS})
+        ${USE_OROCOS_INCLUDE_DIRS}
+        ${Eigen_INCLUDE_DIRS})
 
 orocos_install_headers( DIRECTORY
 	include
@@ -52,7 +54,7 @@ file(GLOB_RECURSE HEADER_FILES include/*.hpp)
 # Export package information (replaces catkin_package() macro) 
 orocos_generate_package(
   INCLUDE_DIRS include
-  DEPENDS rtt_ros eigen
+  DEPENDS rtt_ros
 )   
 
 ### Orocos Components - SIGNALROUTING ###
@@ -188,6 +190,7 @@ target_link_libraries(GlobalReferenceGenerator ${catkin_LIBRARIES} ${USE_OROCOS_
 #orocos_component(DoublesToJointState src/ROSinterfacing/DoublesToJointState.cpp ${HEADER_FILES})
 #orocos_component(DoublesToROS src/ROSinterfacing/DoublesToROS.cpp ${HEADER_FILES})
 orocos_component(FollowJointTrajectoryActionToDoubles src/ROSinterfacing/FollowJointTrajectoryActionToDoubles.cpp ${HEADER_FILES})
+orocos_component(TrajectoryActionlib src/ROSinterfacing/TrajectoryActionlib.cpp ${HEADER_FILES})
 #orocos_component(JointStateAggregator src/ROSinterfacing/JointStateAggregator.cpp ${HEADER_FILES})
 #orocos_component(JointStateToDoubles src/ROSinterfacing/JointStateToDoubles.cpp ${HEADER_FILES})
 #orocos_component(JointTrajectoryToDoubles src/ROSinterfacing/JointTrajectoryToDoubles.cpp ${HEADER_FILES})
@@ -200,6 +203,7 @@ orocos_component(FollowJointTrajectoryActionToDoubles src/ROSinterfacing/FollowJ
 #target_link_libraries(DoublesToJointState ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 #target_link_libraries(DoublesToROS ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(FollowJointTrajectoryActionToDoubles ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
+target_link_libraries(TrajectoryActionlib ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 #target_link_libraries(JointStateAggregator ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 #target_link_libraries(JointStateToDoubles ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 #target_link_libraries(JointTrajectoryToDoubles ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
