@@ -87,6 +87,7 @@ orocos_component(SmallerLarger src/math/SmallerLarger.cpp ${HEADER_FILES})
 orocos_component(Sqrt src/math/Sqrt.cpp ${HEADER_FILES})
 orocos_component(Subtraction src/math/Subtraction.cpp ${HEADER_FILES})
 orocos_component(Sum src/math/Sum.cpp ${HEADER_FILES})
+orocos_component(Sine src/math/Sine.cpp ${HEADER_FILES})
 #orocos_component(DotProduct src/math/DotProduct.cpp ${HEADER_FILES})
 #orocos_component(Product src/math/Product.cpp ${HEADER_FILES})
 #target_link_libraries(DotProduct ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
@@ -106,6 +107,7 @@ target_link_libraries(SmallerLarger ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(Sqrt ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(Subtraction ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(Sum ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
+target_link_libraries(Sine ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 
 ### Orocos Components - SUPERVISORY ###
 orocos_component(ActuatorEnabler src/supervisory/ActuatorEnabler.cpp ${HEADER_FILES})
@@ -267,6 +269,4 @@ add_dependencies(AnalogInsPera2 soem_beckhoff_drivers_generate_messages_cpp)
 add_dependencies(AnalogIns soem_beckhoff_drivers_generate_messages_cpp)
 add_dependencies(AnalogOutsPera soem_beckhoff_drivers_generate_messages_cpp)
 add_dependencies(AnalogOuts soem_beckhoff_drivers_generate_messages_cpp)
-
-## to do add dependency for each component depending on a message specified elswhere 
 
