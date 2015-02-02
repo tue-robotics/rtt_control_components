@@ -3,7 +3,7 @@
 
 using namespace std;
 using namespace RTT;
-using namespace ROS;
+using namespace SOURCES;
 
 BenchmarkReference::BenchmarkReference(const string& name) :
     TaskContext(name, PreOperational)
@@ -81,4 +81,4 @@ void BenchmarkReference::updateHook()
 	}
 }
 
-ORO_CREATE_COMPONENT(ROS::BenchmarkReference)
+ORO_CREATE_COMPONENT(SOURCES::BenchmarkReference)

@@ -27,7 +27,7 @@ inline string to_string (const T& t){
   return ss.str();
 };
 
-namespace ROS
+namespace SOURCES
 {
   class BenchmarkReference
   : public RTT::TaskContext
