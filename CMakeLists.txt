@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(rtt_control_components)
 
+find_package(cmake_modules REQUIRED)
+find_package(Eigen REQUIRED)
 find_package(catkin REQUIRED COMPONENTS
   rtt_ros
   std_msgs
@@ -11,7 +13,6 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   kdl_parser
   rtt_std_msgs
-  eigen
   )
 
 include_directories(
@@ -30,7 +31,9 @@ include_directories(
 	include/lighting
 	${catkin_INCLUDE_DIRS} 
 	${scl_filters_INCLUDE_DIRS} 
-	${USE_OROCOS_INCLUDE_DIRS})
+	${USE_OROCOS_INCLUDE_DIRS}
+    ${Eigen_INCLUDE_DIRS})
+
 
 orocos_install_headers( DIRECTORY
 	include
@@ -52,7 +55,7 @@ file(GLOB_RECURSE HEADER_FILES include/*.hpp)
 # Export package information (replaces catkin_package() macro) 
 orocos_generate_package(
   INCLUDE_DIRS include
-  DEPENDS rtt_ros eigen
+  DEPENDS rtt_ros
 )   
 
 ### Orocos Components - SIGNALROUTING ###

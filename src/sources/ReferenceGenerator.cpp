@@ -96,15 +96,10 @@ bool ReferenceGenerator::startHook()
         log(Warning)<<"Outputport not connected!"<<endlog();
     }
 
-    //Set the starting value to the current actual value
-    doubles actualPos(N,0.0);
-    initialposinport.read( actualPos );
-    for ( uint i = 0; i < N; i++ ){
-       mRefGenerators[i].setRefGen(actualPos[i]);
-    }  
-	
-    // Write on the outposport to make sure the receiving components gets new data
-    posoutport.write( actualPos );
+
+	// Reset the reference generator to the current position.
+	// Publishes the current position once.
+	resetReference();    
 
     return true;
 }
@@ -167,13 +162,20 @@ void ReferenceGenerator::updateHook()
 
 void ReferenceGenerator::resetReference()
 {
+	// Reset the desired velocity and acceleration
+    desiredVel.assign(N,0.0);
+    desiredAcc.assign(N,0.0);
+    
     //Set the starting value to the current actual value
     doubles actualPos(N,0.0);
     initialposinport.read( actualPos );
-    log(Info) << "REFGEN: Resettting bodypart with [" << actualPos[0] << "," << actualPos[1] << ","  << actualPos[2] << ","  << actualPos[3] << ","  << actualPos[4] << ","  << actualPos[5] << ","  << actualPos[6] << ","  << actualPos[7] << "] !"<<endlog();
     for ( uint i = 0; i < N; i++ ){
-       mRefGenerators[i].setRefGen(actualPos[i]);
+        mRefGenerators[i].setRefGen(actualPos[i]);
+        desiredPos[i] = actualPos[i];
     }
+    
+    // Write on the outposport to make sure the receiving components gets new data
+    posoutport.write( actualPos );
 }
 
 ORO_CREATE_COMPONENT(SOURCES::ReferenceGenerator)
