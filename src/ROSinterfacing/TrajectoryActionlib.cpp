@@ -151,7 +151,7 @@ void TrajectoryActionlib::goalCallback(GoalHandle gh) {
             int joint_id = bjp.second;
             if (allowedBodyparts[body_part_id] == true) {
                 if ( minpos[body_part_id][joint_id] == 0.0 && maxpos[body_part_id][joint_id] == 0.0 ) {
-                    desiredPos [body_part_id] [joint_id] = gh.getGoal()->trajectory.points[0].positions[k]; // TODO: support more trajectories inside single message
+                    desiredPos [body_part_id] [joint_id] = gh.getGoal()->trajectory.points[0].positions[k]; // TODO: support more points inside single trajectory
 
                 } else {
                     desiredPos [body_part_id] [joint_id] = min( gh.getGoal()->trajectory.points[0].positions[k]                  , maxpos     [body_part_id][joint_id]);
