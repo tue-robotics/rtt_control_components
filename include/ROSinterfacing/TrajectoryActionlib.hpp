@@ -31,7 +31,7 @@ using namespace RTT;
 namespace ROS
 {
     /**
-     * @brief Global component that receives joint state messages for
+     * @brief Global component that receives trajectories for
      * all bodyparts. This component sorts them, and generates a
      * reference signal for all joints.
      *
@@ -89,7 +89,6 @@ namespace ROS
             // i iterates over all joints within particular bodypart
 
 			// Declaring input- and output_ports
-            InputPort<sensor_msgs::JointState> inport;
             InputPort<doubles> currentpos_inport[maxN];
 			OutputPort<doubles> posoutport[maxN];
 			OutputPort<doubles> veloutport[maxN];

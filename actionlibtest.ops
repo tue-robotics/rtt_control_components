@@ -31,3 +31,10 @@ TrajectoryActionlib.configure
 TrajectoryActionlib.start
 
 
+#### LOAD JOINTSTATEAGGREGATOR ####
+loadComponent("GlobalReferenceGenerator","SOURCES::GlobalReferenceGenerator")
+setActivity("GlobalReferenceGenerator",0.1,LowestPriority, ORO_SCHED_OTHER)
+GlobalReferenceGenerator.configure
+stream("GlobalReferenceGenerator.in", ros.topic("/amigo/left_arm/references"))
+GlobalReferenceGenerator.start
+

@@ -6,21 +6,19 @@ using namespace ROS;
 
 TrajectoryActionlib::TrajectoryActionlib(const string& name) : TaskContext(name, PreOperational)
 {
-	// Operations
+    // Operations
     addOperation("AddBodyPart", &TrajectoryActionlib::AddBodyPart, this, OwnThread)
-		.doc("Add a body part by specifying its partNr and its jointNames")
-		.arg("partNr","The number of the bodypart")
+        .doc("Add a body part by specifying its partNr and its jointNames")
+        .arg("partNr","The number of the bodypart")
         .arg("JointNames","The name of joints");
     addOperation("AllowReadReference", &TrajectoryActionlib::AllowReadReference, this)
-		.doc("Allow a bodypart to receive references. For example to block when not yet homed")
-		.arg("partNr","The number of the bodypart")
-		.arg("allowed","wether or not the bodypart is allowed to receieve references");
+        .doc("Allow a bodypart to receive references. For example to block when not yet homed")
+        .arg("partNr","The number of the bodypart")
+        .arg("allowed","wether or not the bodypart is allowed to receieve references");
     addOperation( "ResetReference", &TrajectoryActionlib::ResetReference, this, OwnThread )
-		.doc("Reset the reference generator to measured current position (used in homing)")
-		.arg("partNr","The number of the bodypart");
+        .doc("Reset the reference generator to measured current position (used in homing)")
+        .arg("partNr","The number of the bodypart");
 
-	// Ports
-    addPort(     "in",              inport )            .doc("Inport reading joint state message topic from ROS");
 
     // Actionlib
     // Add action server ports to this task's root service
@@ -75,17 +73,10 @@ bool TrajectoryActionlib::startHook()
     // Initialize
     start_time = os::TimeService::Instance()->getNSecs()*1e-9;
 
-    // Port connection checks:
-    if (!inport.connected()) {
-        log(Warning) << "TrajectoryActionlib: Could not start component: inport is not connected" << endlog();
-        return false;
-    }
-
     // Start the actionlib server
     rtt_action_server_.start();
     return true;
 }
-
 
 void TrajectoryActionlib::updateHook()
 {
@@ -104,54 +95,9 @@ void TrajectoryActionlib::updateHook()
     }
     
     // Read all current positions
-	for ( uint j = 0; j < activeBodyparts.size(); j++ ) {
+    for ( uint j = 0; j < activeBodyparts.size(); j++ ) {
         uint partNr = activeBodyparts[j];
         currentpos_inport[partNr-1].read( current_position[partNr-1] );
-	}
-    
-
-    // If a new message received
-    sensor_msgs::JointState in_msg;
-    if (inport.read(in_msg) == NewData) {
-
-        log(Info) << "TrajectoryActionlib: Received Message" << endlog();
-        // then loop over all joints within the message received
-        uint k = 0;
-        while (k < in_msg.position.size()) {
-            map<string, BodyJointPair>::const_iterator it = joint_map.find(in_msg.name[k]);
-            if (it == joint_map.end()) {
-                log(Warning) << "TrajectoryActionlib: received a message with joint name that is not listed!" << endlog();
-                k++;
-            } else {
-                // received a message with joint name that is found. update the output and go to the next message.
-                BodyJointPair bjp = it->second;
-                int body_part_id = bjp.first;
-                int joint_id = bjp.second;
-                if (allowedBodyparts[body_part_id] == true) {
-                    if ( minpos[body_part_id][joint_id] == 0.0 && maxpos[body_part_id][joint_id] == 0.0 ) {
-                        desiredPos [body_part_id] [joint_id] = in_msg.position[k];
-
-                    } else {
-                        desiredPos [body_part_id] [joint_id] = min( in_msg.position[k]                  , maxpos     [body_part_id][joint_id]);
-                        desiredPos [body_part_id] [joint_id] = max( minpos [body_part_id] [joint_id]    , desiredPos [body_part_id][joint_id]);
-
-                        if (in_msg.position[k] < (minpos [body_part_id][joint_id] - 0.05) ) {
-                            log(Warning) << "TrajectoryActionlib: Received goal " << in_msg.position[k] << " for partNr " << body_part_id+1 << ", joint " << joint_id+1 << ". This is outside minimal bound " << minpos [body_part_id][joint_id] << "!" << endlog();
-                        }
-                        if (in_msg.position[k] > (maxpos [body_part_id][joint_id] + 0.05) ) {
-                            log(Warning) << "TrajectoryActionlib: Received goal " << in_msg.position[k] << " for partNr " << body_part_id+1 << ", joint " << joint_id+1 << ". This is outside maximal bound " << maxpos [body_part_id][joint_id] << "!" << endlog();
-                        }
-                    }
-                    desiredVel [body_part_id] [joint_id] = maxvel [body_part_id] [joint_id];
-                    desiredAcc [body_part_id] [joint_id] = maxacc [body_part_id] [joint_id];
-
-                } else { // Message received for bodypart that did not get the AllowReadReference!
-					log(Warning) << "TrajectoryActionlib: Message received for bodypart that did not get the AllowReadReference!" << endlog();
-					desiredPos[body_part_id][joint_id] = current_position[body_part_id][joint_id];
-                }
-                k++;
-            }
-        }
     }
 
     // Send references
@@ -174,7 +120,73 @@ void TrajectoryActionlib::updateHook()
         }
     }
 
-    //log(Warning) << "TrajectoryActionlib: end of UpdateHook" << endlog();
+    // TODO: Put some criteria here
+    if ( false ) {
+        current_gh_.setSucceeded();
+        log(Info)<<"Succeeded new goal"<<endlog();
+    }
+}
+
+// Called by rtt_action_server_ when a new goal is received
+void TrajectoryActionlib::goalCallback(GoalHandle gh) {
+    // Accept/reject goal requests here
+
+    current_gh_ = gh;
+
+    log(Info) << "TrajectoryActionlib: Received Message" << endlog();
+    uint number_of_goal_joints_ = gh.getGoal()->trajectory.joint_names.size();
+    // Loop over all joints within the message received
+    uint k = 0;
+    bool accept = true;
+    while (k < number_of_goal_joints_) {
+        map<string, BodyJointPair>::const_iterator it = joint_map.find(gh.getGoal()->trajectory.joint_names[k]);
+        if (it == joint_map.end()) {
+            log(Warning) << "TrajectoryActionlib: received a message with joint name ["+gh.getGoal()->trajectory.joint_names[k]+"] that is not listed!" << endlog();
+            accept = false;
+            k++;
+        } else {
+            // received a message with joint name that is found. update the output and go to the next message.
+            BodyJointPair bjp = it->second;
+            int body_part_id = bjp.first;
+            int joint_id = bjp.second;
+            if (allowedBodyparts[body_part_id] == true) {
+                if ( minpos[body_part_id][joint_id] == 0.0 && maxpos[body_part_id][joint_id] == 0.0 ) {
+                    desiredPos [body_part_id] [joint_id] = gh.getGoal()->trajectory.points[0].positions[k]; // TODO: support more trajectories inside single message
+
+                } else {
+                    desiredPos [body_part_id] [joint_id] = min( gh.getGoal()->trajectory.points[0].positions[k]                  , maxpos     [body_part_id][joint_id]);
+                    desiredPos [body_part_id] [joint_id] = max( minpos [body_part_id] [joint_id]    , desiredPos [body_part_id][joint_id]);
+
+                    if (gh.getGoal()->trajectory.points[0].positions[k] < (minpos [body_part_id][joint_id] - 0.05) ) {
+                        log(Warning) << "TrajectoryActionlib: Received goal " << gh.getGoal()->trajectory.points[0].positions[k] << " for partNr " << body_part_id+1 << ", joint " << joint_id+1 << ". This is outside minimal bound " << minpos [body_part_id][joint_id] << "!" << endlog();
+                    }
+                    if (gh.getGoal()->trajectory.points[0].positions[k] > (maxpos [body_part_id][joint_id] + 0.05) ) {
+                        log(Warning) << "TrajectoryActionlib: Received goal " << gh.getGoal()->trajectory.points[0].positions[k] << " for partNr " << body_part_id+1 << ", joint " << joint_id+1 << ". This is outside maximal bound " << maxpos [body_part_id][joint_id] << "!" << endlog();
+                    }
+                }
+                desiredVel [body_part_id] [joint_id] = maxvel [body_part_id] [joint_id];
+                desiredAcc [body_part_id] [joint_id] = maxacc [body_part_id] [joint_id];
+
+            } else { // Message received for bodypart that did not get the AllowReadReference!
+                log(Warning) << "TrajectoryActionlib: Message received for bodypart that did not get the AllowReadReference!" << endlog();
+                desiredPos[body_part_id][joint_id] = current_position[body_part_id][joint_id];
+            }
+            k++;
+        }
+    }
+    if (accept) {
+        gh.setAccepted();
+        log(Info)<<"Accepted goal"<<endlog();
+    }
+    else {
+        gh.setRejected();
+        log(Info)<<"Rejected goal"<<endlog();
+    }
+}
+
+// Called by rtt_action_server_ when a goal is cancelled / preempted
+void TrajectoryActionlib::cancelCallback(GoalHandle gh) {
+    // Handle preemption here
 }
 
 void TrajectoryActionlib::AddBodyPart(int partNr, strings JointNames)
@@ -228,12 +240,12 @@ void TrajectoryActionlib::AddBodyPart(int partNr, strings JointNames)
 // to do do this via property acces instead of function?
 void TrajectoryActionlib::AllowReadReference(int partNr, bool allowed)
 {
-	if (allowedBodyparts[partNr-1] != allowed) {
-		if (allowed == true ) { log(Warning) << "TrajectoryActionlib:  Allowed Reading of References for partNr: "<< partNr <<"!" << endlog();
-		} else { log(Warning) << "TrajectoryActionlib:  Disabled Reading of References for partNr: "<< partNr <<"!" << endlog(); } 
-	}
-	
-	allowedBodyparts[partNr-1] = allowed;
+    if (allowedBodyparts[partNr-1] != allowed) {
+        if (allowed == true ) { log(Warning) << "TrajectoryActionlib:  Allowed Reading of References for partNr: "<< partNr <<"!" << endlog();
+        } else { log(Warning) << "TrajectoryActionlib:  Disabled Reading of References for partNr: "<< partNr <<"!" << endlog(); }
+    }
+
+    allowedBodyparts[partNr-1] = allowed;
 
     return;
 }
@@ -310,24 +322,6 @@ bool TrajectoryActionlib::CheckConnectionsAndProperties()
     log(Warning) << "TrajectoryActionlib: Checked all Properties and ports of TrajectoryActionlib" << endlog();
 
     return true;
-}
-
-
-// Called by rtt_action_server_ when a new goal is received
-void TrajectoryActionlib::goalCallback(GoalHandle gh) {
-    // Accept/reject goal requests here
-    uint number_of_goal_joints_ = gh.getGoal()->trajectory.joint_names.size();
-    log(Warning)<<"Received new goal with " << number_of_goal_joints_ << " joints" <<endlog();
-
-    gh.setAccepted();
-    log(Warning)<<"Accepted goal"<<endlog();
-    gh.setSucceeded();
-    log(Warning)<<"Succeeded new goal"<<endlog();
-}
-
-// Called by rtt_action_server_ when a goal is cancelled / preempted
-void TrajectoryActionlib::cancelCallback(GoalHandle gh) {
-    // Handle preemption here
 }
 
 ORO_CREATE_COMPONENT(ROS::TrajectoryActionlib)
