@@ -18,10 +18,10 @@
 
 /*
                                                                  _______________________
-  soem_beckhoff_drivers::AnalogMsg in_0[3] = { x, y, z }         |                       | -----> std::vector<double> std_out0[3] = {z, b, x}
-                        ---------------------------------------> |   AnalogInsGeneric2   | -----> std_msgs::Float32Multiarray ros_out0[3] = {z, b, x}
-  soem_beckhoff_drivers::AnalogMsg in_1[5] = { a, b, c, d, e }   |    (example config)   | -----> std::vector<double> std_out1[2] = {a, e}
-                        ---------------------------------------> |_______________________| -----> std_msgs::Float32Multiarray ros_out1 = {a, e}
+  soem_beckhoff_drivers::AnalogMsg in_0[3] = { x, y, z }         |                       | -----> std::vector<double> std_out_0[3] = {z, b, x}
+                        ---------------------------------------> |   AnalogInsGeneric2   | -----> std_msgs::Float32Multiarray ros_out_0[3] = {z, b, x}
+  soem_beckhoff_drivers::AnalogMsg in_1[5] = { a, b, c, d, e }   |    (example config)   | -----> std::vector<double> std_out_1[2] = {a, e}
+                        ---------------------------------------> |_______________________| -----> std_msgs::Float32Multiarray ros_out_1 = {a, e}
 
   Robin, 9 Feb 2015
 
