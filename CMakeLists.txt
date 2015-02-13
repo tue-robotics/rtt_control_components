@@ -215,7 +215,6 @@ target_link_libraries(JointStateDistributor ${catkin_LIBRARIES} ${USE_OROCOS_LIB
 
 ### Orocos Components - soem_interfacing ###
 orocos_component(AnalogInsGeneric src/SOEMinterfacing/AnalogInsGeneric.cpp ${HEADER_FILES})
-orocos_component(AnalogInsGeneric2 src/SOEMinterfacing/AnalogInsGeneric2.cpp ${HEADER_FILES})
 orocos_component(AnalogOutsGeneric src/SOEMinterfacing/AnalogOutsGeneric.cpp ${HEADER_FILES})
 orocos_component(DigitalIns src/SOEMinterfacing/DigitalIns.cpp ${HEADER_FILES})
 orocos_component(DigitalOuts src/SOEMinterfacing/DigitalOuts.cpp ${HEADER_FILES})
@@ -227,7 +226,6 @@ orocos_component(AnalogInsPera src/SOEMinterfacing/AnalogInsPera.cpp ${HEADER_FI
 orocos_component(AnalogInsPera2 src/SOEMinterfacing/AnalogInsPera2.cpp ${HEADER_FILES})
 orocos_component(AnalogOutsPera src/SOEMinterfacing/AnalogOutsPera.cpp ${HEADER_FILES})
 target_link_libraries(AnalogInsGeneric ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
-target_link_libraries(AnalogInsGeneric2 ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(AnalogOutsGeneric ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(DigitalIns ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(DigitalOuts ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
@@ -269,7 +267,6 @@ add_dependencies(AnalogInsPera soem_beckhoff_drivers_generate_messages_cpp)
 add_dependencies(ReadEncodersTimeStamp soem_beckhoff_drivers_generate_messages_cpp)
 add_dependencies(ReadEncoders soem_beckhoff_drivers_generate_messages_cpp)
 add_dependencies(AnalogInsGeneric soem_beckhoff_drivers_generate_messages_cpp)
-add_dependencies(AnalogInsGeneric2 soem_beckhoff_drivers_generate_messages_cpp)
 add_dependencies(AnalogOutsGeneric soem_beckhoff_drivers_generate_messages_cpp)
 add_dependencies(AnalogInsPera2 soem_beckhoff_drivers_generate_messages_cpp)
 add_dependencies(AnalogIns soem_beckhoff_drivers_generate_messages_cpp)

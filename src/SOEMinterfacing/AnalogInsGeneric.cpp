@@ -10,164 +10,204 @@ using namespace SOEM;
 
 AnalogInsGeneric::AnalogInsGeneric(const string& name) : TaskContext(name, PreOperational)
 {
-    addProperty( "numberofinports", n_inports ).doc("The number of inports");
-    addProperty( "numberofoutports", n_outports ).doc("The number of outports");
-    addProperty( "input_sizes", input_sizes ).doc("Vector specifying sizes of the inports");
-    addProperty( "output_sizes", output_sizes ).doc("Vector specifying sizes of the outports");
-    addProperty( "input_positions", input_positions ).doc("Vector specifying which inputs are obsolete");
-    addProperty( "direct_to_ROS", direct_to_ROS ).doc("Boolean specifying wether the output has to be streamed directly to ROS");
+    addProperty( "inport_dimensions", inport_dimensions ).doc("Array specifying, for each inport, the number of entries a single "
+                                                              "soem_beckhoff_driver::AnalogInMsg contains.");
+
+    addProperty( "outport_dimensions", outport_dimensions ).doc("Array specifying, for each outport, the number of entries a single "
+                                                                "std::vector<double> or ROS std_msgs::Float32Multiarray message contains.");
+
+    addProperty( "from_which_inport", from_which_inport ).doc("Array specifying, for each entry in the outport messages, from which inport "
+                                                              "its value should come.");
+
+    addProperty( "from_which_entry", from_which_entry ).doc("Array specifying, for each entry in the outport messages, which entry from the "
+                                                            "inport specified in from_which_inport it should contain.");
 }
-AnalogInsGeneric::~AnalogInsGeneric(){}
 
 bool AnalogInsGeneric::configureHook()
 {
-	// Determine number of in- and outputs
-    n_inputs = 0;
-    n_outputs = 0;
-    for ( uint i = 0; i < n_inports; i++ ) {
-        n_inputs += input_sizes[i];
+
+    /***************************************
+        Check for illegal configuration
+    /***************************************/
+
+    bool error = false;
+    n_inports = inport_dimensions.size();
+
+    if(n_inports < 1)
+    {
+        log(Error) << "Need at least one inport to configure this component!" << endlog();
+        error = true;
     }
-    for ( uint i = 0; i < n_outports; i++ ) {
-        n_outputs += output_sizes[i];
+
+    n_inport_entries = 0;
+
+    for(uint i = 0; i < n_inports; ++i)
+    {
+        if(inport_dimensions[i] < 1)
+        {
+            log(Error) << "Inport_dimensions cannot contain value smaller than one!" << endlog();
+            error = true;
+        }
+        n_inport_entries += inport_dimensions[i];
     }
-    uint nonobsolete_input_positions = 0;
-    for ( uint i = 0; i < input_positions.size(); i++ ) {
-        if (input_positions[i] != 0.0) {
-            nonobsolete_input_positions++;
+
+    n_outports = outport_dimensions.size();
+
+    if(n_outports < 1)
+    {
+        log(Error) << "Need at least one outport to configure this component!" << endlog();
+        error = true;
+    }
+
+    n_outport_entries = 0;
+
+    for(uint i = 0; i < n_outports; ++i)
+    {
+        if(outport_dimensions[i] < 1)
+        {
+            log(Error) << "Outport_dimensions cannot contain value smaller than one!" << endlog();
+            error = true;
+        }
+
+        n_outport_entries += outport_dimensions[i];
+    }
+    if(n_outports + n_inports > MAX_PORTS)
+    {
+        log(Error) << "Too many in- and outports specified! MAX_PORTS = " << MAX_PORTS << endlog();
+        error = true;
+    }
+
+    if(from_which_inport.size() != n_outport_entries)
+    {
+        log(Error) << "The number of entries in from_which_inport should equal the total number of output values." << endlog();
+        error = true;
+    }
+
+    if(from_which_entry.size() != n_outport_entries)
+    {
+        log(Error) << "The number of entries in from_which_entry should equal the total number of output values." << endlog();
+        error = true;
+    }
+
+    for(uint i = 0; i < n_outport_entries; ++i)
+    {
+        if( from_which_inport[i] >= n_inports || from_which_inport[i] < 0 )
+        {
+            log(Error) << "From_which_inport array contains port index " << from_which_inport[i] << " which does not exist according to inport_dimensions!" << endlog();
+            error = true;
+        }
+        else if ( from_which_entry[i] >= inport_dimensions[ from_which_inport[i] ] || from_which_entry[i] < 0 )
+        {
+            log(Error) << "From_which_entry array contains index " << from_which_entry[i] << " which does not exist for inport " << from_which_inport[i] << "!" << endlog();
+            error = true;
         }
     }
 
-    // Verify property feasibility
-    if (input_sizes.size()  == 0 || output_sizes.size()  == 0 ) {
-        log(Error) << "AnalogInsGeneric: Please make sure the input_sizes and output_sizes are properly set before the call to the configureHook()" << endlog();
+    if( error )
         return false;
-    }
-    if (n_inports  > maxN || n_outports  > maxN ) {
-        log(Error) << "AnalogInsGeneric: The maximum number of ports has exceeded the hardcoded value maxN. Verify the number of ports and if necessary increase maxN" << endlog();
-        return false;
-    }
-    if (input_sizes.size()  != n_inports || output_sizes.size()  != n_outports ) {
-        log(Error) << "AnalogInsGeneric: The size of input_sizes/output_sizes does not match the corresponding numberofinports/numberofoutports " << endlog();
-        return false;
-    }
-    if ( input_positions.size() != n_inputs) {
-        log(Error) << "AnalogInsGeneric: The size of output_positions does not match n_outputs (which is the sum of all elements of output_sizes)" << endlog();
-        return false;
-    }
-    if ( nonobsolete_input_positions != n_outputs) {
-        log(Error) << "AnalogInsGeneric:  " << nonobsolete_input_positions << " non zero entries in input_positions is not equal to n_outputs: " << n_outputs << "!" << endlog();
-        return false;
-    }
-    if (direct_to_ROS) {
-        for ( uint i = 0; i < n_outports; i++ ) {
-            if (output_sizes[i] != 1.0) {
-                log(Error) << "AnalogInsGeneric: direct_to_ROS is true, But one of the output sizes is not equal to 1.0" << endlog();
-                return false;
-            }
-        }
-    }
 
-    // Resizing of inputdata_msgs, and outputdata
-    inputdata_msgs.resize(n_inports);
-    for ( uint i = 0; i < n_inports; i++ ) {
-        inputdata_msgs[i].values.resize(input_sizes[i]);
-    }
-    outputdata.resize(n_outports);
-    for ( uint i = 0; i < n_outports; i++ ) {
-        outputdata[i].resize(output_sizes[i]);
-    }
 
-    // Creating in- and outports
-    for ( uint i = 0; i < n_inports; i++ ) {
-        string name_inport = "in"+to_string(i+1);
-        addEventPort( name_inport, inports[i] );
-    }
-    for ( uint i = 0; i < n_outports; i++ ) {
-        string name_outport = "out"+to_string(i+1);
-        addPort( name_outport, outports[i] );
-        string name_outport_toROS = "outmsg"+to_string(i+1);
-        addPort( name_outport_toROS, outports_toROS[i] );
-    }
+    /***************************************
+        Create in- and outports
+    /***************************************/
 
-    // Create empty mapping matrix - each row maps one input to one output
-    mapping.resize(max(n_inputs,n_outputs));
-    for ( uint i = 0; i < max(n_inputs,n_outputs); i++ ) {
-        mapping[i].assign(4,0.0);
-    }
-    // Fill first two columns of mapping matrix - First column specifies which inport and the second column specifies which double from that input has to be mapped
-    uint k = 0;
-    uint l = 0;
-    for ( uint i = 0; i < n_inports; i++ ) {
-        for ( uint j = 0; j < input_sizes[i]; j++ ) {
-            if (k - l < min(n_inputs,n_outputs)) {
-                if (input_positions[k] != 0.0) {
-                    mapping[k-l][0] = i;
-                    mapping[k-l][1] = j;
-                } else {
-                    l++;
-                }
-            }
-            k++;
-        }
-    }
 
-    // Fill last two columns of mapping matrix -  Third column specifies which output and the fourth column specifies to which double in the vector of that output
-    k = 0;
-    for ( uint i = 0; i < n_outports; i++ ) {
-        for ( uint j = 0; j < output_sizes[i]; j++ ) {
-            if (k < min(n_inputs,n_outputs)) {
-                mapping[k][2] = i;
-                mapping[k][3] = j;
-            }
-            k++;
-        }
+    for( uint i = 0; i < n_inports; i++ )
+        addEventPort( "beckhoffmsg_in_"+to_string(i), inports[i] );
+
+
+    for( uint i = 0; i < n_outports; i++ )
+    {
+        addPort( "stdvect_out_"+to_string(i), stdvect_outports[i] );
+        addPort( "rosmsg_out_"+to_string(i), rosmsg_outports[i] );
     }
-    
-    for ( uint m = 0; m < max(n_inputs,n_outputs); m++ ) {
-		log(Info) << "AI: mapping matrix is: [" << mapping[m][0] << "," << mapping[m][1] << "," << mapping[m][2] << "," << mapping[m][3] << "]" << endlog();		
-	}
 
     return true;
 }
 
 bool AnalogInsGeneric::startHook()
 {
-	return true;
+    for(uint i = 0; i < n_inports; ++i)
+    {
+        if ( !inports[i].connected() )
+        {
+            log(Error) << "Inport " << inports[i].getName() << " is not connected, cannot start component" << endlog();
+            return false;
+        }
+    }
+    return true;
 }
 
 void AnalogInsGeneric::updateHook()
 {
-    // Check all ports for newdata
-    for ( uint i = 0; i < n_inports; i++ ) {
-        if ( NewData == inports[i].read(inputdata_msgs[i])) { }
+
+    /***************************************
+        Initialize in- and outport messages
+    /***************************************/
+
+    std::vector< soem_beckhoff_drivers::AnalogMsg > inputdata_msgs;
+    std::vector< std::vector< double > >outputdata_std_vect;
+    std::vector< std_msgs::Float32MultiArray > outputdata_ros_msg;
+
+    inputdata_msgs.resize(n_inports);
+
+    for( uint i = 0; i < n_inports; ++i )
+        inputdata_msgs[i].values.resize( inport_dimensions[i] );
+
+    outputdata_std_vect.resize(n_outports);
+    outputdata_ros_msg.resize(n_outports);
+
+    for( uint i = 0; i < n_outports; i++ )
+    {
+        outputdata_std_vect[i].resize( outport_dimensions[i] );
+        outputdata_ros_msg[i].data.resize( outport_dimensions[i] );
     }
 
-    // Do map input structure to output structure
+
+    /******************************************
+        Loop over inports to obtain new data
+    /******************************************/
+
+    for( uint i = 0; i < n_inports; ++i )
+    {
+        switch( inports[i].read(inputdata_msgs[i]) )
+        {
+        case NewData:
+            break;
+        case OldData:
+            log(Warning) << "Using old data for inport " << inports[i].getName() << endlog();
+            break;
+        case NoData:
+            log(Error) << "Could not read data for inport " << inports[i].getName() << endlog();
+            return;
+        default:
+            log(Error) << "Inport.read() returns unknown status!" << endlog();
+            return;
+        }
+    }
+
+    /***************************************
+        Loop over outports, do mapping
+    /***************************************/
+
     uint k = 0;
-    for ( uint i = 0; i < n_inports; i++ ) {
-        for ( uint j = 0; j < input_sizes[i]; j++ ) {
-            uint map_in_1 = mapping[k][0];
-            uint map_in_2 = mapping[k][1];
-            uint map_out_1 = mapping[k][2];
-            uint map_out_2 = mapping[k][3];
-            outputdata[map_out_1][map_out_2] = inputdata_msgs[map_in_1].values[map_in_2];
-            k++;
+    for( uint i = 0; i < n_outports; ++i )
+    {
+        for( uint j = 0; j < outport_dimensions[i]; ++j)
+        {
+            outputdata_std_vect[i][j] = inputdata_msgs[ from_which_inport[k] ].values[ from_which_entry[k] ];
+            outputdata_ros_msg[i].data[j] = inputdata_msgs[ from_which_inport[k] ].values[ from_which_entry[k] ];
+            ++k;
         }
+        rosmsg_outports[i].write(outputdata_ros_msg[i]);
+        stdvect_outports[i].write(outputdata_std_vect[i]);
     }
 
-    if (!direct_to_ROS) {
-        // Write output
-        for ( uint i = 0; i < n_outports; i++ ) {
-            outports[i].write(outputdata[i]);
-        }
-    }
-    else {
-        // Convert output to message and write msg
-        for ( uint i = 0; i < n_outports; i++ ) {
-            outputdata_msg.data = outputdata[i][0];
-            outports_toROS[i].write(outputdata_msg);
-        }
-    }
+}
+
+AnalogInsGeneric::~AnalogInsGeneric()
+{
+    // destructor
 }
 
 ORO_CREATE_COMPONENT(SOEM::AnalogInsGeneric)
