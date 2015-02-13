@@ -35,7 +35,7 @@ bool AnalogInsGeneric::configureHook()
 
     if(n_inports < 1)
     {
-        log(Error) << "Need at least one inport to configure this component!" << endlog();
+        log(Error) << "In AnalogInsGeneric: Need at least one inport to configure this component!" << endlog();
         error = true;
     }
 
@@ -45,7 +45,7 @@ bool AnalogInsGeneric::configureHook()
     {
         if(inport_dimensions[i] < 1)
         {
-            log(Error) << "Inport_dimensions cannot contain value smaller than one!" << endlog();
+            log(Error) << "In AnalogInsGeneric: Inport_dimensions cannot contain value smaller than one!" << endlog();
             error = true;
         }
         n_inport_entries += inport_dimensions[i];
@@ -55,7 +55,7 @@ bool AnalogInsGeneric::configureHook()
 
     if(n_outports < 1)
     {
-        log(Error) << "Need at least one outport to configure this component!" << endlog();
+        log(Error) << "In AnalogInsGeneric: Need at least one outport to configure this component!" << endlog();
         error = true;
     }
 
@@ -65,7 +65,7 @@ bool AnalogInsGeneric::configureHook()
     {
         if(outport_dimensions[i] < 1)
         {
-            log(Error) << "Outport_dimensions cannot contain value smaller than one!" << endlog();
+            log(Error) << "In AnalogInsGeneric: Outport_dimensions cannot contain value smaller than one!" << endlog();
             error = true;
         }
 
@@ -73,19 +73,19 @@ bool AnalogInsGeneric::configureHook()
     }
     if(n_outports + n_inports > MAX_PORTS)
     {
-        log(Error) << "Too many in- and outports specified! MAX_PORTS = " << MAX_PORTS << endlog();
+        log(Error) << "In AnalogInsGeneric: Too many in- and outports specified! MAX_PORTS = " << MAX_PORTS << endlog();
         error = true;
     }
 
     if(from_which_inport.size() != n_outport_entries)
     {
-        log(Error) << "The number of entries in from_which_inport should equal the total number of output values." << endlog();
+        log(Error) << "In AnalogInsGeneric: The number of entries in from_which_inport should equal the total number of output values." << endlog();
         error = true;
     }
 
     if(from_which_entry.size() != n_outport_entries)
     {
-        log(Error) << "The number of entries in from_which_entry should equal the total number of output values." << endlog();
+        log(Error) << "In AnalogInsGeneric: The number of entries in from_which_entry should equal the total number of output values." << endlog();
         error = true;
     }
 
@@ -93,12 +93,12 @@ bool AnalogInsGeneric::configureHook()
     {
         if( from_which_inport[i] > n_inports || from_which_inport[i] <= 0 )
         {
-            log(Error) << "From_which_inport array contains port no. " << from_which_inport[i] << " which does not exist according to inport_dimensions!" << endlog();
+            log(Error) << "In AnalogInsGeneric: From_which_inport array contains port no. " << from_which_inport[i] << " which does not exist according to inport_dimensions!" << endlog();
             error = true;
         }
         else if ( from_which_entry[i] > inport_dimensions[ from_which_inport[i]-1 ] || from_which_entry[i] <= 0 )
         {
-            log(Error) << "From_which_entry array contains entry no. " << from_which_entry[i] << " which does not exist for inport no. " << from_which_inport[i] << "!" << endlog();
+            log(Error) << "In AnalogInsGeneric: From_which_entry array contains entry no. " << from_which_entry[i] << " which does not exist for inport no. " << from_which_inport[i] << "!" << endlog();
             error = true;
         }
     }
@@ -131,7 +131,7 @@ bool AnalogInsGeneric::startHook()
     {
         if ( !inports[i].connected() )
         {
-            log(Error) << "Inport " << inports[i].getName() << " is not connected, cannot start component" << endlog();
+            log(Error) << "In AnalogInsGeneric: Inport " << inports[i].getName() << " is not connected, cannot start component" << endlog();
             return false;
         }
     }
@@ -175,13 +175,13 @@ void AnalogInsGeneric::updateHook()
         case NewData:
             break;
         case OldData:
-            log(Warning) << "Using old data for inport " << inports[i].getName() << endlog();
+            log(Info) << "In AnalogInsGeneric: Using old data for inport " << inports[i].getName() << endlog();
             break;
         case NoData:
-            log(Error) << "Could not read data for inport " << inports[i].getName() << endlog();
+            log(Error) << "In AnalogInsGeneric: Could not read data for inport " << inports[i].getName() << endlog();
             return;
         default:
-            log(Error) << "Inport.read() returns unknown status!" << endlog();
+            log(Error) << "In AnalogInsGeneric: Inport.read() returns unknown status!" << endlog();
             return;
         }
     }
