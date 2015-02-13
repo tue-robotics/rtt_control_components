@@ -91,14 +91,14 @@ bool AnalogInsGeneric::configureHook()
 
     for(uint i = 0; i < n_outport_entries; ++i)
     {
-        if( from_which_inport[i] >= n_inports || from_which_inport[i] < 0 )
+        if( from_which_inport[i] > n_inports || from_which_inport[i] <= 0 )
         {
-            log(Error) << "From_which_inport array contains port index " << from_which_inport[i] << " which does not exist according to inport_dimensions!" << endlog();
+            log(Error) << "From_which_inport array contains port no. " << from_which_inport[i] << " which does not exist according to inport_dimensions!" << endlog();
             error = true;
         }
-        else if ( from_which_entry[i] >= inport_dimensions[ from_which_inport[i] ] || from_which_entry[i] < 0 )
+        else if ( from_which_entry[i] > inport_dimensions[ from_which_inport[i]-1 ] || from_which_entry[i] <= 0 )
         {
-            log(Error) << "From_which_entry array contains index " << from_which_entry[i] << " which does not exist for inport " << from_which_inport[i] << "!" << endlog();
+            log(Error) << "From_which_entry array contains entry no. " << from_which_entry[i] << " which does not exist for inport no. " << from_which_inport[i] << "!" << endlog();
             error = true;
         }
     }
@@ -113,13 +113,13 @@ bool AnalogInsGeneric::configureHook()
 
 
     for( uint i = 0; i < n_inports; i++ )
-        addEventPort( "beckhoffmsg_in_"+to_string(i), inports[i] );
+        addEventPort( "beckhoffmsg_in_"+to_string(i+1), inports[i] );
 
 
     for( uint i = 0; i < n_outports; i++ )
     {
-        addPort( "stdvect_out_"+to_string(i), stdvect_outports[i] );
-        addPort( "rosmsg_out_"+to_string(i), rosmsg_outports[i] );
+        addPort( "stdvect_out_"+to_string(i+1), stdvect_outports[i] );
+        addPort( "rosmsg_out_"+to_string(i+1), rosmsg_outports[i] );
     }
 
     return true;
@@ -195,8 +195,8 @@ void AnalogInsGeneric::updateHook()
     {
         for( uint j = 0; j < outport_dimensions[i]; ++j)
         {
-            outputdata_std_vect[i][j] = inputdata_msgs[ from_which_inport[k] ].values[ from_which_entry[k] ];
-            outputdata_ros_msg[i].data[j] = inputdata_msgs[ from_which_inport[k] ].values[ from_which_entry[k] ];
+            outputdata_std_vect[i][j] = inputdata_msgs[ from_which_inport[k]-1 ].values[ from_which_entry[k]-1 ];
+            outputdata_ros_msg[i].data[j] = inputdata_msgs[ from_which_inport[k]-1 ].values[ from_which_entry[k]-1 ];
             ++k;
         }
         rosmsg_outports[i].write(outputdata_ros_msg[i]);

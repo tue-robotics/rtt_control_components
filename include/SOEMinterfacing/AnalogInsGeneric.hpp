@@ -17,11 +17,11 @@
 
 
 /*
-                                                                 _______________________
-  soem_beckhoff_drivers::AnalogMsg in_0[3] = { x, y, z }         |                       | -----> std::vector<double> std_out_0[3] = {z, b, x}
-                        ---------------------------------------> |   AnalogInsGeneric   | -----> std_msgs::Float32Multiarray ros_out_0[3] = {z, b, x}
-  soem_beckhoff_drivers::AnalogMsg in_1[5] = { a, b, c, d, e }   |    (example config)   | -----> std::vector<double> std_out_1[2] = {a, e}
-                        ---------------------------------------> |_______________________| -----> std_msgs::Float32Multiarray ros_out_1 = {a, e}
+                                                              _______________________
+  soem_beckhoff_drivers::AnalogMsg in_1 = { x, y, z }        |                       | -----> std::vector<double> std_out_1 = {z, b, x}
+                        -----------------------------------> |   AnalogInsGeneric    | -----> std_msgs::Float32Multiarray ros_out_1 = {z, b, x}
+  soem_beckhoff_drivers::AnalogMsg in_2 = { a, b, c, d, e }  |    (example config)   | -----> std::vector<double> std_out_2 = {a, e}
+                        -----------------------------------> |_______________________| -----> std_msgs::Float32Multiarray ros_out_2 = {a, e}
 
   Robin, 9 Feb 2015
 
@@ -46,7 +46,7 @@
 
         Array specifying, for each entry in the outport messages, from which inport its value should come. For
         instance: If inport_dimensions is set to {2,1}, and outport_dimensions to {1,2,1}, then setting
-        from_which_inport to {0,1,1,0} implies that the first and third outport messages contain data coming
+        from_which_inport to {1,2,2,1} implies that the first and third outport messages contain data coming
         from the first inport, while both entries in messages from the second outport are coming from the second
         inport.
 
@@ -54,8 +54,8 @@
 
         Array specifying, for each entry in the outport messages, which entry from the inport specified in
         from_which_inport it should contain. For instance: If inport_dimensions is set to {2,1},
-        outport_dimensions to {1,2,1} and from_which_inport to {0,1,1,0}, then setting from_which_entry to
-        {1,0,0,0} implies that the first outport contains the second entry of the first inport, both entries
+        outport_dimensions to {1,2,1} and from_which_inport to {1,2,2,1}, then setting from_which_entry to
+        {2,1,1,1} implies that the first outport contains the second entry of the first inport, both entries
         of the second outport contain the first entry of the second inport and the third outport contains the
         first entry of the first inport
 
