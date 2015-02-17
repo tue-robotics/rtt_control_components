@@ -278,7 +278,7 @@ bool TrajectoryActionlib::CheckConnectionsAndProperties()
         uint partNr = activeBodyparts[j];
         // Property checks
         if ( (minpos[partNr-1].size() != vector_sizes[partNr-1]) || (maxpos[partNr-1].size() != vector_sizes[partNr-1]) || (maxvel[partNr-1].size() != vector_sizes[partNr-1]) || (maxacc[partNr-1].size() != vector_sizes[partNr-1]) ) {
-            log(Error)<<"TrajectoryActionlib: Stopping component: Sizes of minpos["<< partNr-1 <<"], maxpos["<< partNr-1 <<"], maxvel["<< partNr-1 <<"], maxacc["<< partNr-1 <<"] -> [" << minpos.size() << "," << maxpos.size() << "," << maxvel.size() << "," << maxacc.size() << "] should be size " << vector_sizes[partNr-1] <<"."<<endlog();
+            log(Error)<<"TrajectoryActionlib: Stopping component: Sizes of bodypart "<<partNr<<" are wrong: minpos("<< minpos.size() <<"), maxpos("<< maxpos.size() <<"), maxvel("<< maxvel.size() <<"), maxacc("<< maxacc.size() <<") -> Should be size " << vector_sizes[partNr-1] <<"."<<endlog();
             return false;
         }
         for ( uint i = 0; i < vector_sizes[partNr-1]; i++ ){
