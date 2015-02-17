@@ -51,11 +51,11 @@ bool Homing::configureHook()
 {
     // Input checks generic
     if (homing_type.size() != N || require_homing.size() != N || homing_order.size() != N  ) {
-        log(Error) << prefix <<"_Homing: size of homing_type, require_homing or homing_order does not match vector_size"<<endlog();
+        log(Error) << prefix <<"_Homing: size of homing_type ("<<homing_type.size()<<"), require_homing ("<<require_homing.size()<<") or homing_order ("<<homing_order.size()<<") does not match vector_size ("<<N<<")"<<endlog();
         return false;
     }
     if (homing_direction.size() != N || desiredVel.size() != N || desiredAcc.size() != N || homing_stroke.size() != N || reset_stroke.size() != N || homing_endpos.size() != N  ) {
-        log(Error) << prefix <<"_Homing: size of homing_direction, homing_velocity, homing_acceleration, homing_stroke, reset_stroke or homing_endpos does not match vector_size"<<endlog();
+        log(Error) << prefix <<"_Homing: size of homing_direction ("<<homing_direction.size()<<"), homing_velocity ("<<desiredVel.size()<<"), homing_acceleration ("<<desiredAcc.size()<<"), homing_stroke ("<<homing_stroke.size()<<"), reset_stroke ("<<reset_stroke.size()<<") or homing_endpos ("<<homing_endpos.size()<<") does not match vector_size ("<<N<<")"<<endlog();
         return false;
     }
     
