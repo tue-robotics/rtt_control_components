@@ -13,7 +13,7 @@ typedef actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction>
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "test_grasp");
-    Client client("/joint_trajectory_action_left", true); // true -> don't need ros::spin()
+    Client client("/amigo/left_arm/joint_trajectory_action", true); // true -> don't need ros::spin()
     client.waitForServer();
     control_msgs::FollowJointTrajectoryGoal goal;
 
