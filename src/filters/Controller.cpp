@@ -267,7 +267,7 @@ void Controller::updateHook()
         jointerrors_outport.write(zero_output);
         controleffort_outport.write(zero_output);
 
-        return ;
+        return;
 
     } else {
 

@@ -23,6 +23,10 @@ using namespace RTT;
 
 namespace SUPERVISORY
 {
+	typedef vector<double> doubles;
+	typedef vector<int> ints;
+	typedef vector<bool> bools;
+	
 	/*! \class Supervisor
 	 *  \brief Defines Orocos component for supervising hardware components
 	 *
@@ -46,6 +50,8 @@ namespace SUPERVISORY
     : public RTT::TaskContext
       {
       public:
+      
+      
 		// ports
         InputPort<std_msgs::Bool> ebutton_ports[4];
 		InputPort<std_msgs::Bool> rosshutdownport;
@@ -66,6 +72,7 @@ namespace SUPERVISORY
         string bodyParts[6];
         vector<std_msgs::Bool> emergency_switches;
         vector<string> ebutton_order;
+        bools allowedBodyparts;
         
         // scalars
         bool emergency;     
@@ -104,17 +111,17 @@ namespace SUPERVISORY
         virtual bool StartBodyPart( string partName );
         virtual bool StopBodyPart( string partName );
         virtual void displaySupervisoredPeers();
-
+        
 		// Internal functions
         virtual bool AddPeerCheckList( string peerName, vector<TaskContext*> List );
         virtual bool startList( vector<TaskContext*> List );
         virtual bool stopList( vector<TaskContext*> List );
         virtual bool isEmpty( vector<TaskContext*> List );
         
-        // External functions
+        //Atributes
         TaskContext* GlobalReferenceGenerator;
-        OperationCaller<void(int, bool)> AllowReadReference;
-        
+        Attribute<bools> AllowReadReferencesRefGen;
+              
         // state transitions
         virtual bool GoOperational(int partNr, diagnostic_msgs::DiagnosticArray statusArray);
         virtual bool GoIdle(int partNr, diagnostic_msgs::DiagnosticArray statusArray);

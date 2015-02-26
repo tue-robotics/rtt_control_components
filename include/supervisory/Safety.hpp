@@ -55,15 +55,12 @@ namespace SUPERVISORY
         double MAXCONSATTIME;
         strings add_safeties;
 
-
         // variables
         bool errors;
         doubles jointErrors;
         doubles timeReachedSaturation;
         ints firstSatInstance;
         uint n_add_safeties;
-
-
 
     public:
 

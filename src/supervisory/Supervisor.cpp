@@ -104,6 +104,11 @@ bool Supervisor::configureHook()
 	StatusHomingmsg.level = 3;
 	StatusErrormsg.level = 4;
 	hardwareStatusmsg.status.resize(6);
+	allowedBodyparts.resize(5);
+	
+	for( int j = 0; j < 5; j++ ) {
+		allowedBodyparts[j] = false;
+	}
 	
 	// declaration of  vectors
 	for( int partNr = 0; partNr < 6; partNr++ ) {
@@ -170,17 +175,22 @@ bool Supervisor::startHook()
 	}
 	aquisition_time = os::TimeService::Instance()->getNSecs()*1e-9;
 	
-	// Set access to JointStateDistributer function to block read references while not in op state
+	// Fetch Property Acces
 	GlobalReferenceGenerator = this->getPeer( "GlobalReferenceGenerator");
-	if ( GlobalReferenceGenerator ) {
-		AllowReadReference = GlobalReferenceGenerator->getOperation("AllowReadReference");
-		if ( !AllowReadReference.ready() ) {
-			log(Error) <<"Supervisor: Could not find : GlobalReferenceGenerator.AllowReadReference Operation!"<<endlog();
-			return false;
-		}
-	}
-	
-	
+    AllowReadReferencesRefGen = GlobalReferenceGenerator->attributes()->getAttribute("allowedBodyparts");
+
+    // Check Property Acces
+    if (!AllowReadReferencesRefGen.ready() ) {
+        log(Error) << "Supervisor: Could not gain acces to GlobalReferenceGenerator.AllowReadReferences"<<endlog();
+        return false;
+    }
+    
+    bools disable_all(6);
+    for ( int j = 1; j < 6; j++ ) {
+		disable_all[j] = false;
+    }
+	AllowReadReferencesRefGen.set(disable_all);
+
     return true;
 }
 
@@ -476,9 +486,10 @@ bool Supervisor::GoOperational(int partNr, diagnostic_msgs::DiagnosticArray stat
 		if (statusArray.status[partNr].level != StatusErrormsg.level) {				// if in error state, GoOp is blocked
 			stopList( HomingOnlyList[partNr] );
 			startList( OpOnlyList[partNr] );
-			if ( GlobalReferenceGenerator ) {										// if there is a GlobalReferenceGenerator then allow for partNr to read references
-				AllowReadReference(partNr,true);
-			}
+			allowedBodyparts = AllowReadReferencesRefGen.get();
+			log(Warning) << "Supervisor: GoIdle: allowedBodyparts: [" << allowedBodyparts[0] << ", " << allowedBodyparts[1] << ", " << allowedBodyparts[2] << ", " << allowedBodyparts[3] << ", " << allowedBodyparts[4] << "]!" << endlog();
+			allowedBodyparts[partNr-1] = true;
+			AllowReadReferencesRefGen.set(allowedBodyparts);
 			
 			if (statusArray.status[partNr].level != StatusHomingmsg.level) {		// if in homing state, the EnabledList does not need to be restarted
 				startList( EnabledList[partNr] );
@@ -498,9 +509,11 @@ bool Supervisor::GoIdle(int partNr, diagnostic_msgs::DiagnosticArray statusArray
 		stopList( EnabledList[partNr] );
 		stopList( HomingOnlyList[partNr] );
 		stopList( OpOnlyList[partNr] );
-		if ( GlobalReferenceGenerator ) {
-			AllowReadReference(partNr,false);
-		}
+		
+		allowedBodyparts = AllowReadReferencesRefGen.get();
+		log(Warning) << "Supervisor: GoIdle: allowedBodyparts: [" << allowedBodyparts[0] << ", " << allowedBodyparts[1] << ", " << allowedBodyparts[2] << ", " << allowedBodyparts[3] << ", " << allowedBodyparts[4] << "]!" << endlog();
+		allowedBodyparts[partNr-1] = false;
+		AllowReadReferencesRefGen.set(allowedBodyparts);
 		if (statusArray.status[partNr].level != StatusErrormsg.level) {
 			setState(partNr, StatusIdlemsg);
 		}
@@ -517,9 +530,12 @@ bool Supervisor::GoHoming(int partNr, diagnostic_msgs::DiagnosticArray statusArr
 	if (staleParts[partNr] == false) {
 		if (statusArray.status[partNr].level != StatusErrormsg.level) {
 			stopList( OpOnlyList[partNr] );
-			if ( GlobalReferenceGenerator ) {
-				AllowReadReference(partNr,false);
-			}
+			
+			allowedBodyparts = AllowReadReferencesRefGen.get();
+			allowedBodyparts[partNr-1] = false;
+			AllowReadReferencesRefGen.set(allowedBodyparts);
+			log(Warning) << "Supervisor: GoHoming: allowedBodyparts: [" << allowedBodyparts[0] << ", " << allowedBodyparts[1] << ", " << allowedBodyparts[2] << ", " << allowedBodyparts[3] << ", " << allowedBodyparts[4] << "]!" << endlog();
+
 			startList( EnabledList[partNr] );
 			startList( HomingOnlyList[partNr] );
 			setState(partNr, StatusHomingmsg);
@@ -538,9 +554,13 @@ bool Supervisor::GoError(int partNr, diagnostic_msgs::DiagnosticArray statusArra
 		stopList( EnabledList[partNr] );
 		stopList( HomingOnlyList[partNr] );
 		stopList( OpOnlyList[partNr] );
-		if ( GlobalReferenceGenerator ) {
-			AllowReadReference(partNr,false);
-		}
+		
+
+		allowedBodyparts = AllowReadReferencesRefGen.get();
+		log(Warning) << "Supervisor: GoError: allowedBodyparts: [" << allowedBodyparts[0] << ", " << allowedBodyparts[1] << ", " << allowedBodyparts[2] << ", " << allowedBodyparts[3] << ", " << allowedBodyparts[4] << "]!" << endlog();
+		allowedBodyparts[partNr-1] = false;
+		AllowReadReferencesRefGen.set(allowedBodyparts);
+	
 		setState(partNr, StatusErrormsg);
 	}
 	else {
