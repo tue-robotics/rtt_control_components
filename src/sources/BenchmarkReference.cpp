@@ -65,19 +65,22 @@ void BenchmarkReference::updateHook()
 		}
 		if (cntr_s >= timeFunction[timeFunction.size()-1]) {
 			endOfReferenceReached = true;
+			pos_out.assign(N,0.0);
+			position_outport.write(pos_out);
 		}
+		
+		// Update pos_out if necessary
+		if ( cntr_s >= timeFunction[timeFunction_j]) {
+			for (uint i = 0; i < N; i++) {
+				pos_out[i] = referenceFunction[i][timeFunction_j];
+			}
+			position_outport.write(pos_out);
+			timeFunction_j++;
+		}
+		
 	} else {
 		pos_out.assign(N,0.0);
 		position_outport.write(pos_out);
-	}
-
-	// Update pos_out if necessary
-	if ( cntr_s >= timeFunction[timeFunction_j]) {
-		for (uint i = 0; i < N; i++) {
-			pos_out[i] = referenceFunction[i][timeFunction_j];
-		}
-		position_outport.write(pos_out);
-		timeFunction_j++;
 	}
 }
 
