@@ -2,20 +2,25 @@
  * author: Tim Clephas
  * email:  t.t.g.clephas@student.tue.nl
  *
- * filename:             Addition.hpp
+ * filename:             Gain.hpp
  * Last modification:    March 2011
  */
 
-#ifndef ADDITION_HPP
-#define ADDITION_HPP
+#ifndef SINE_HPP
+#define SINE_HPP
 
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
 
-#define maxN 10 //Maximum number of ports that can be created.
-
 using namespace std;
 using namespace RTT;
+
+template <class T>
+inline string to_string (const T& t){
+  stringstream ss;
+  ss << t;
+  return ss.str();
+};
 
 namespace MATH
 {
@@ -30,34 +35,37 @@ namespace MATH
    * The component is configured using only the 'vectorsize'-property.
    */
 
-  class Addition
+  class Sine
   : public RTT::TaskContext
     {
     private:
 
     typedef vector<double> doubles;
-    
-	template <class T>
-		inline string to_string (const T& t){
-		stringstream ss;
-		ss << t;
-		return ss.str();
-	};
 
-    InputPort<doubles> inports[maxN];
+
+    /*
+     * Declaring input- and output_ports
+     */
+    InputPort<doubles> inport;
     OutputPort<doubles> outport;
 
-    uint vectorsize;
-    uint numberofinputs;
+    /*
+     * Declaring variable vectorsize which is set by a property
+     */
+    uint vectorsize; // Number of elements to be calculated.
+    doubles gain;
 
     public:
-
-    Addition(const string& name);
-    ~Addition();
+    /**
+     * Set up a component for adding two vectors.
+     */
+    Sine(const string& name);
+    ~Sine();
 
     bool configureHook();
     bool startHook();
     void updateHook();
+    void stopHook();
     };
 }
 #endif

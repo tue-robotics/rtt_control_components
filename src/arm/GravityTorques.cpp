@@ -23,8 +23,8 @@ GravityTorques::GravityTorques(const std::string& name)
 	addEventPort("in", jointAnglesPort);
     addPort("out",gravityTorquesPort); 
     
-    addProperty( "RootLinkName", root_link_name ).doc("Name of the Base link frame of the manipulator");
-    addProperty( "TipLinkName", tip_link_name ).doc("Name of the Tip link frame of the manipulator");
+    addProperty( "RootLinkName", root_link_name ).doc("Name of the frame at root of the bodypart");
+    addProperty( "TipLinkName", tip_link_name ).doc("Name of the frame at the end link of the bodypart");
     addProperty( "GravityVector", GravityVector ).doc("Gravity Vector depends on choice of base frame");
 }
 
@@ -33,8 +33,10 @@ GravityTorques::~GravityTorques(){}
 bool GravityTorques::configureHook()
 {
     // Fetch robot_model_ from parameter server (URDF robot model)
-    ros::NodeHandle n("~");
     std::string urdf_xml_default = "/amigo/robot_description";
+    string urdf_xml;
+    string full_urdf_xml;
+    ros::NodeHandle n("~");
     n.param("urdf_xml",urdf_xml,urdf_xml_default);
     n.searchParam(urdf_xml,full_urdf_xml);
     ROS_INFO("Reading xml file from parameter server");
@@ -43,82 +45,67 @@ bool GravityTorques::configureHook()
         log(Error)<<"ARM GravityTorques: Could not load the xml from parameter server: " <<full_urdf_xml << "!" <<endlog();
         return false;
     }
-     
+
     // Construct KDL::Tree from URDF model
-    if (!kdl_parser::treeFromString(urdf_model_string, kdl_tree_)) {
+    KDL::Tree KDL_tree;
+    if (!kdl_parser::treeFromString(urdf_model_string, KDL_tree)) {
         log(Error)<<"ARM GravityTorques:Could not construct tree object from URDF model!" <<endlog();
         return false;
     }
         
     // Extract whole KDL::Chain from robot tree
-    if (!kdl_tree_.getChain(root_link_name, tip_link_name, kdl_chain_)) {
+    if (!KDL_tree.getChain(root_link_name, tip_link_name, kdl_chain)) {
         log(Error)<<"ARM GravityTorques: Could not construct chain object from " << root_link_name << " to " << tip_link_name << "!" <<endlog();
         return false;
     }
 
-    // init
-    nrJoints = kdl_chain_.getNrOfSegments();
-    nrMasses = 0;
+    // Initialisation
+    double total_mass = 0.0;
+    nrJoints = kdl_chain.getNrOfSegments();
     masses.assign(nrJoints,0.0);
-    mass_indexes.assign(nrJoints,0);
-    KDL::Vector KDLZeroVec;
-    KDLZeroVec.Zero();
+    GravityWrenches_COG.resize(nrJoints);
+    link_frames.resize(nrJoints);
+    link_COGs.resize(nrJoints);
 
-    // Print joint layout (For debugging purposes)
     for (uint j=0; j<nrJoints; j++) {
 
-        KDL::Segment JointSegment = kdl_chain_.getSegment(j);
-        KDL::Frame JointTipFrame = JointSegment.getFrameToTip();
-        KDL::RigidBodyInertia JointRBI = JointSegment.getInertia();
-        KDL::Vector JointCOG = JointRBI.getCOG();
+        // init
+        GravityWrenches_COG[j].Zero();
+        link_COGs[j].Zero();
 
-        log(Warning)<<"ARM GravityTorques: Parsing joint "<< j+1 <<" with center of joint   : [" << JointTipFrame.p[0] << ",\t" << JointTipFrame.p[1] << ",\t" << JointTipFrame.p[2] << "]" <<endlog();
-    }
+        // Get mass
+        masses[j] = kdl_chain.getSegment(j).getInertia().getMass();
+        total_mass += masses[j];
 
-    // Check for every joint if there is a link attached
-    for (uint j=0; j<nrJoints; j++) {
-
-        KDL::Segment JointSegment = kdl_chain_.getSegment(j);
-        KDL::Frame JointTipFrame = JointSegment.getFrameToTip();
-        KDL::RigidBodyInertia JointRBI = JointSegment.getInertia();
-        KDL::Vector JointCOG = JointRBI.getCOG();
-
-        log(Warning)<<"ARM GravityTorques: Parsing joint "<< j+1 <<" with center of gravity : [" << JointCOG[0] << ",\t" << JointCOG[1] << ",\t" << JointCOG[2] << "] and Mass: " << JointRBI.getMass() << "!" <<endlog();
-
+        KDL::Frame JointTipFrame = kdl_chain.getSegment(j).getFrameToTip();
         //log(Warning)<<"ARM GravityTorques: Parsed joint "<< j+1 <<" with center : [" << JointTipFrame.p[0] << ",\t" << JointTipFrame.p[1] << ",\t" << JointTipFrame.p[2] << "]!" <<endlog();
 
-        if (JointCOG != KDLZeroVec ) {
-            masses[j] = JointRBI.getMass();
-            mass_indexes[nrMasses] = j;
+        // Create COG vectors
+        link_COGs[j] = kdl_chain.getSegment(j).getInertia().getCOG();
+        //log(Warning)<<"ARM GravityTorques: Added Joint " << j+1 << " with mass : " << masses[j] << " kg and with COG [" << link_COGs[j].x() << "," << link_COGs[j].y() << "," << link_COGs[j].z() << "]" <<endlog();
+        link_COGs[j].ReverseSign();
 
-            // Create chain
-            KDL::Chain link_chain_;
-            if (!kdl_tree_.getChain(root_link_name, JointSegment.getName(), link_chain_)) {
-                log(Error)<<"ARM GravityTorques: Could not construct chain object from " << root_link_name << " to " << JointSegment.getName() << "!" <<endlog();
-                return false;
-            }
-
-            // Create solver
-            jacobian_solver[nrMasses] = new KDL::ChainJntToJacSolver(link_chain_);
-            //log(Warning)<<"ARM GravityTorques: Solver created for Joint "<< j+1 <<" with COG: [" << JointCOG[0] << ",\t" << JointCOG[1] << ",\t" << JointCOG[2] << "] and Mass: " << masses[j] << "!" <<endlog();
-
-            nrMasses++;
+        // Create chain
+        KDL::Chain link_chain;
+        if (!KDL_tree.getChain(root_link_name, kdl_chain.getSegment(j).getName(), link_chain)) {
+            log(Error)<<"ARM GravityTorques: Could not construct chain object from " << root_link_name << " to " << kdl_chain.getSegment(j).getName() << "!" <<endlog();
+            return false;
         }
-    }
 
-    //! Construct a vector consisting of a gravity wrench vector for each mass
-    for (uint m = 0; m < nrMasses; m++) {
-        GravityWrenches[m].resize(6);
+        // Create solver
+        jacobian_solver[j] = new KDL::ChainJntToJacSolver(link_chain);
+
+        // Create gravity wrench
         for (uint i=0; i<3; i++) {
-            GravityWrenches[m](i) = GravityVector[i]*masses[mass_indexes[m]];
-            GravityWrenches[m](i+3) = 0.0;
+            KDL::Vector force(GravityVector[0]*masses[j], GravityVector[1]*masses[j], GravityVector[2]*masses[j]);
+            GravityWrenches_COG[j] = KDL::Wrench(force, KDL::Vector::Zero());
         }
-        log(Warning)<<"ARM GravityTorques: Created Gravity Wrench [" << GravityWrenches[m](0) << "," << GravityWrenches[m](1) << "," << GravityWrenches[m](2) << "," << GravityWrenches[m](3) << "," << GravityWrenches[m](4) << "," << GravityWrenches[m](5) << "]" <<endlog();
-    }
+        //log(Warning)<<"ARM GravityTorques: Created Gravity Wrench root [" << GravityWrenches_COG[j](0) << "," << GravityWrenches_COG[j](1) << "," << GravityWrenches_COG[j](2) << "," << GravityWrenches_COG[j](3) << "," << GravityWrenches_COG[j](4) << "," << GravityWrenches_COG[j](5) << "]" <<endlog();
 
-	if (mass_indexes.size() >= 2 ) { 
-		log(Warning)<<"ARM GravityTorques: Mass indexes are [" << mass_indexes[0] << "," << mass_indexes[1] << "," << mass_indexes[2] << "]" <<endlog(); 
-	}
+    }
+    //log(Warning)<<"ARM GravityTorques: Total Mass: " << total_mass << " kg. " <<endlog();
+
+    // to do: add check wether the gravity vector is aligned with the base frame vector
 
     return true;
 }
@@ -140,60 +127,77 @@ bool GravityTorques::startHook()
 void GravityTorques::updateHook()
 {
     // read jointAngles
-    jointAngles.assign(nrJoints,0.0);
-
+    doubles jointAngles(nrJoints,0.0);
     if ( jointAnglesPort.read(jointAngles) == NewData ) {
-        // jointAngles to KDL jointArray
-        KDL::JntArray q_current_(nrJoints);
+		
+        // Tranform jointAngles from doubles to KDL::jointArray
+        KDL::JntArray q_current(nrJoints);
         for (uint j = 0; j < nrJoints; j++) {
-            q_current_(j) = jointAngles[j];
+            q_current(j) = jointAngles[j];
         }
 
         // calculate gravityTorques
         doubles gravityTorques(nrJoints,0.0);
-        gravityTorques = ComputeGravityTorques(q_current_);
+        gravityTorques = ComputeGravityTorques(q_current);
 
         //write gravity torques
         gravityTorquesPort.write(gravityTorques);        
     }
 }
 
-doubles GravityTorques::ComputeGravityTorques(KDL::JntArray q_current_)
+doubles GravityTorques::ComputeGravityTorques(KDL::JntArray q_current)
 {
-    doubles gravityTorques_(nrJoints,0.0);
+    log(Info)<<"ARM GravityTorques: q = [" << q_current(0) << "," << q_current(1) << "," << q_current(2) << "," << q_current(3) << "," << q_current(4) << "," << q_current(5) << "," << q_current(6) << "]" << endlog();
 
-    for (uint m=0; m<nrMasses; m++) {
+    // Calculate Partial Jacobian, and
+    doubles gravityTorques(nrJoints,0.0);
+    for (uint j=0; j<nrJoints; j++) {
 
-        //! Convert KDL::JntArray to size of partial Jacobian
-        KDL::JntArray q_current_partial_;
-        q_current_partial_.resize(mass_indexes[m]+1);
-        for (uint j=0; j<(mass_indexes[m]+1); j++) {
-            q_current_partial_(j) = q_current_(j);
+        // Calculate frames of joints from latest postions expressed in root frame
+        link_frames[j] = kdl_chain.getSegment(j).pose(q_current(j));
+        if (j>0) {
+            link_frames[j] = link_frames[j-1]*link_frames[j];
         }
 
-        //! Determine Jacobian (KDL)
-        KDL::Jacobian partial_jacobian_KDL_(mass_indexes[m]+1);
-        jacobian_solver[m]->JntToJac(q_current_partial_, partial_jacobian_KDL_);
+        //! Calculate Partial Jacobian
+        KDL::JntArray q_currentpartial(j+1);
+        KDL::Jacobian partial_jacobian(j+1);
+        for (uint jj=0; jj<(j+1); jj++) {
+            q_currentpartial(jj) = q_current(jj);
+        }
+        jacobian_solver[j]->JntToJac(q_currentpartial, partial_jacobian);
 
-        //Convert Jacobian of type KDL to type Eigen::MatrixXd
-        Eigen::MatrixXd partial_jacobian_(partial_jacobian_KDL_.rows(), partial_jacobian_KDL_.columns());
-        for (uint i=0; i<partial_jacobian_KDL_.columns(); i++) {
-            for (uint k=0; k<partial_jacobian_KDL_.rows(); k++) {
-                partial_jacobian_(k,i) = partial_jacobian_KDL_(k,i);
-            }
+        //! Calculate GravityWrench
+        KDL::Rotation R_rl = link_frames[j].M;
+        KDL::Vector link_COG_r = R_rl*link_COGs[j];
+        KDL::Wrench GravityWrenches_COL = GravityWrenches_COG[j].RefPoint(link_COG_r);
+
+        //! Convert KDL::Wrench GravityWrench to Eigen::Vector
+        Eigen::VectorXd GravityWrench(6);
+        for (uint n=0; n<6; n++) {
+            GravityWrench(n) = GravityWrenches_COL(n);
         }
 
-        //! Calculate partial gravity torque
-        Eigen::VectorXd PartialGravityTorques_ = Eigen::VectorXd::Zero((mass_indexes[m]+1));
-        PartialGravityTorques_ = partial_jacobian_.transpose()*GravityWrenches[m];
+
+
+        if (link_COG_r.Norm() > 0.001 ) {
+            log(Info)<<"ARM GravityTorques: For Joint " << j+1 << " The link_COGs[j]                = [" << link_COGs[j].x() << "," << link_COGs[j].y() << "," << link_COGs[j].z() << "]" <<endlog();
+            log(Info)<<"ARM GravityTorques: For Joint " << j+1 << " The link_COGs[j] transformed to = [" << link_COG_r.x() << "," << link_COG_r.y() << "," << link_COG_r.z() << "]" <<endlog();
+            log(Info)<<"ARM GravityTorques: For Joint " << j+1 << " The start Gravity Wrench is     = [" << GravityWrenches_COG[j](0) << ", " << GravityWrenches_COG[j](1) << ", " << GravityWrenches_COG[j](2) << ", " << GravityWrenches_COG[j](3) << ", " << GravityWrenches_COG[j](4) << ", " << GravityWrenches_COG[j](5) << "]" <<endlog();
+            log(Info)<<"ARM GravityTorques: For Joint " << j+1 << " The updated Gravity Wrench is   = [" << GravityWrenches_COL(0) << ", " << GravityWrenches_COL(1) << ", " << GravityWrenches_COL(2) << ", " << GravityWrenches_COL(3) << ", " << GravityWrenches_COL(4) << ", " << GravityWrenches_COL(5) << "] \n " <<endlog();
+        }
+
+        // Calculate Gravity Torques
+        Eigen::VectorXd PartialGravityTorques = Eigen::VectorXd::Zero(j+1);
+        PartialGravityTorques = partial_jacobian.data.transpose()*GravityWrench;
 
         //! convert partial gravity torque to doubles and add all partial gravity torques together
-        for (uint j=0; j<(mass_indexes[m]+1); j++) {
-            gravityTorques_[j] += PartialGravityTorques_(j);
+        for (uint jj=0; jj<(j+1); jj++) {
+            gravityTorques[jj] += PartialGravityTorques(jj);
         }
     }
 
-    return gravityTorques_;
+    return gravityTorques;
 }
 
 ORO_CREATE_COMPONENT(ARM::GravityTorques)

@@ -155,10 +155,15 @@ bool Homing::startHook()
     
     // Fetch Property Acces
     Safety_maxJointErrors = Safety->attributes()->getAttribute("maxJointErrors");
-
+	AllowReadReferencesRefGen = GlobalReferenceGenerator->attributes()->getAttribute("allowedBodyparts");
+	
     // Check Property Acces
     if (!Safety_maxJointErrors.ready() ) {
         log(Error) << prefix <<"_Homing: Could not gain acces to property maxJointErrors of the "<< prefix << "_Safety component."<<endlog();
+        return false;
+    }
+    if ( !AllowReadReferencesRefGen.ready() ) {
+        log(Error) << prefix <<"_Homing: Could not find : AllowReadReferencesRefGen Operation!"<<endlog();
         return false;
     }
     
@@ -168,7 +173,7 @@ bool Homing::startHook()
     ResetEncoder = ReadEncoders->getOperation("reset");
 	ResetReferenceRefGen = GlobalReferenceGenerator->getOperation("ResetReference");
 	SendToPos = GlobalReferenceGenerator->getOperation("SendToPos");
-	AllowReadReferencesRefGen = GlobalReferenceGenerator->attributes()->getAttribute("allowedBodyparts");
+	
 	
     // Check Operations
     if ( !StartBodyPart.ready() ) {
@@ -189,10 +194,6 @@ bool Homing::startHook()
     }
     if ( !SendToPos.ready() ) {
         log(Error) << prefix <<"_Homing: Could not find : GlobalReferenceGenerator.SendToPos Operation!"<<endlog();
-        return false;
-    }
-    if ( !AllowReadReferencesRefGen.ready() ) {
-        log(Error) << prefix <<"_Homing: Could not find : AllowReadReferencesRefGen Operation!"<<endlog();
         return false;
     }
     
@@ -259,15 +260,18 @@ void Homing::updateHook()
             }
             
 			ResetReferenceRefGen(partNr);
-            StartBodyPart(bodypart);
             
-            log(Warning) << prefix <<"_Homing: Allowing Read References" <<endlog();
 			allowedBodyparts = AllowReadReferencesRefGen.get();
-			allowedBodyparts[partNr-1] = true;
+			log(Warning) << prefix <<"_Homing: Fetched Read References Allowed: [" << allowedBodyparts[0] << "," << allowedBodyparts[1] << "," << allowedBodyparts[2] << "," << allowedBodyparts[3] << "," << allowedBodyparts[4] << "]" <<endlog();
+ 			allowedBodyparts[partNr-1] = true;
 			AllowReadReferencesRefGen.set(allowedBodyparts);
+			log(Warning) << prefix <<"_Homing: Set Read References Allowed:     [" << allowedBodyparts[0] << "," << allowedBodyparts[1] << "," << allowedBodyparts[2] << "," << allowedBodyparts[3] << "," << allowedBodyparts[4] << "]" <<endlog();
             
+            StartBodyPart(bodypart);            
+
 			SendToPos(partNr,homing_endpos);
             homingfinished_outport.write(true);	
+                        
 		}
 		return;
     }

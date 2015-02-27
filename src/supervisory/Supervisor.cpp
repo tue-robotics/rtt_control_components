@@ -487,9 +487,11 @@ bool Supervisor::GoOperational(int partNr, diagnostic_msgs::DiagnosticArray stat
 			stopList( HomingOnlyList[partNr] );
 			startList( OpOnlyList[partNr] );
 			allowedBodyparts = AllowReadReferencesRefGen.get();
-			log(Warning) << "Supervisor: GoIdle: allowedBodyparts: [" << allowedBodyparts[0] << ", " << allowedBodyparts[1] << ", " << allowedBodyparts[2] << ", " << allowedBodyparts[3] << ", " << allowedBodyparts[4] << "]!" << endlog();
+			log(Warning) << "Supervisor: GoOperational: Fetched Read References Allowed:  [" << allowedBodyparts[0] << "," << allowedBodyparts[1] << "," << allowedBodyparts[2] << "," << allowedBodyparts[3] << "," << allowedBodyparts[4] << "]" <<endlog();
 			allowedBodyparts[partNr-1] = true;
 			AllowReadReferencesRefGen.set(allowedBodyparts);
+			log(Warning) << "Supervisor: GoOperational:  Set Read References Allowed:     [" << allowedBodyparts[0] << "," << allowedBodyparts[1] << "," << allowedBodyparts[2] << "," << allowedBodyparts[3] << "," << allowedBodyparts[4] << "]" <<endlog();
+
 			
 			if (statusArray.status[partNr].level != StatusHomingmsg.level) {		// if in homing state, the EnabledList does not need to be restarted
 				startList( EnabledList[partNr] );
@@ -511,9 +513,10 @@ bool Supervisor::GoIdle(int partNr, diagnostic_msgs::DiagnosticArray statusArray
 		stopList( OpOnlyList[partNr] );
 		
 		allowedBodyparts = AllowReadReferencesRefGen.get();
-		log(Warning) << "Supervisor: GoIdle: allowedBodyparts: [" << allowedBodyparts[0] << ", " << allowedBodyparts[1] << ", " << allowedBodyparts[2] << ", " << allowedBodyparts[3] << ", " << allowedBodyparts[4] << "]!" << endlog();
+		log(Warning) << "Supervisor: Goidle: Fetched Read References Allowed:  [" << allowedBodyparts[0] << "," << allowedBodyparts[1] << "," << allowedBodyparts[2] << "," << allowedBodyparts[3] << "," << allowedBodyparts[4] << "]" <<endlog();
 		allowedBodyparts[partNr-1] = false;
 		AllowReadReferencesRefGen.set(allowedBodyparts);
+		log(Warning) << "Supervisor: Goidle:  Set Read References Allowed:     [" << allowedBodyparts[0] << "," << allowedBodyparts[1] << "," << allowedBodyparts[2] << "," << allowedBodyparts[3] << "," << allowedBodyparts[4] << "]" <<endlog();
 		if (statusArray.status[partNr].level != StatusErrormsg.level) {
 			setState(partNr, StatusIdlemsg);
 		}
@@ -532,9 +535,10 @@ bool Supervisor::GoHoming(int partNr, diagnostic_msgs::DiagnosticArray statusArr
 			stopList( OpOnlyList[partNr] );
 			
 			allowedBodyparts = AllowReadReferencesRefGen.get();
+			log(Warning) << "Supervisor: GoHoming: Fetched Read References Allowed:  [" << allowedBodyparts[0] << "," << allowedBodyparts[1] << "," << allowedBodyparts[2] << "," << allowedBodyparts[3] << "," << allowedBodyparts[4] << "]" <<endlog();
 			allowedBodyparts[partNr-1] = false;
 			AllowReadReferencesRefGen.set(allowedBodyparts);
-			log(Warning) << "Supervisor: GoHoming: allowedBodyparts: [" << allowedBodyparts[0] << ", " << allowedBodyparts[1] << ", " << allowedBodyparts[2] << ", " << allowedBodyparts[3] << ", " << allowedBodyparts[4] << "]!" << endlog();
+			log(Warning) << "Supervisor: GoHoming:  Set Read References Allowed:     [" << allowedBodyparts[0] << "," << allowedBodyparts[1] << "," << allowedBodyparts[2] << "," << allowedBodyparts[3] << "," << allowedBodyparts[4] << "]" <<endlog();
 
 			startList( EnabledList[partNr] );
 			startList( HomingOnlyList[partNr] );
@@ -557,9 +561,11 @@ bool Supervisor::GoError(int partNr, diagnostic_msgs::DiagnosticArray statusArra
 		
 
 		allowedBodyparts = AllowReadReferencesRefGen.get();
-		log(Warning) << "Supervisor: GoError: allowedBodyparts: [" << allowedBodyparts[0] << ", " << allowedBodyparts[1] << ", " << allowedBodyparts[2] << ", " << allowedBodyparts[3] << ", " << allowedBodyparts[4] << "]!" << endlog();
+		log(Warning) << "Supervisor: GoError: Fetched Read References Allowed:  [" << allowedBodyparts[0] << "," << allowedBodyparts[1] << "," << allowedBodyparts[2] << "," << allowedBodyparts[3] << "," << allowedBodyparts[4] << "]" <<endlog();
 		allowedBodyparts[partNr-1] = false;
 		AllowReadReferencesRefGen.set(allowedBodyparts);
+		log(Warning) << "Supervisor: GoError:  Set Read References Allowed:     [" << allowedBodyparts[0] << "," << allowedBodyparts[1] << "," << allowedBodyparts[2] << "," << allowedBodyparts[3] << "," << allowedBodyparts[4] << "]" <<endlog();
+
 	
 		setState(partNr, StatusErrormsg);
 	}

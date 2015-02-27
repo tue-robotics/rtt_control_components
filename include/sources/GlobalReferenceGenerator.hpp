@@ -95,6 +95,7 @@ namespace SOURCES
 
             // Global variables - vector
             bools allowedBodyparts;
+            bools allowedBodyparts_prev;
             ints activeBodyparts;
             ints vector_sizes;
             doubles InterpolDts;
