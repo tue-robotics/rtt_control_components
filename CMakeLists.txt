@@ -165,6 +165,7 @@ orocos_component(AdmittanceController src/filters/AdmittanceController.cpp ${HEA
 orocos_component(SecondOrderLowPass src/filters/SecondOrderLowPass.cpp ${HEADER_FILES})
 orocos_component(LeadLag src/filters/LeadLag.cpp ${HEADER_FILES})
 orocos_component(FeedForward src/filters/FeedForward.cpp ${HEADER_FILES})
+orocos_component(Current2VoltageFFW src/filters/Current2VoltageFFW.cpp ${HEADER_FILES})
 target_link_libraries(SkewedNotch ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(AdmittanceControllerSpindle ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(FirstOrderLowPass ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
@@ -176,6 +177,7 @@ target_link_libraries(AdmittanceController ${catkin_LIBRARIES} ${USE_OROCOS_LIBR
 target_link_libraries(SecondOrderLowPass ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(LeadLag ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(FeedForward ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
+target_link_libraries(Current2VoltageFFW ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 
 ### Orocos Components - ARM ###
 orocos_component(GravityTorquesManual src/arm/GravityTorquesManual.cpp ${HEADER_FILES})
