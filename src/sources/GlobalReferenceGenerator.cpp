@@ -266,7 +266,7 @@ bool GlobalReferenceGenerator::CheckConnectionsAndProperties()
         uint partNr = activeBodyparts[j];
         // Property checks
         if ( (minpos[partNr-1].size() != vector_sizes[partNr-1]) || (maxpos[partNr-1].size() != vector_sizes[partNr-1]) || (maxvel[partNr-1].size() != vector_sizes[partNr-1]) || (maxacc[partNr-1].size() != vector_sizes[partNr-1]) ) {
-            log(Error)<<"GlobalReferenceGenerator: Stopping component: Sizes of minpos["<< partNr-1 <<"], maxpos["<< partNr-1 <<"], maxvel["<< partNr-1 <<"], maxacc["<< partNr-1 <<"] -> [" << minpos.size() << "," << maxpos.size() << "," << maxvel.size() << "," << maxacc.size() << "] should be size " << vector_sizes[partNr-1] <<"."<<endlog();
+            log(Error)<<"GlobalReferenceGenerator: Stopping component: Sizes of minpos["<< partNr-1 <<"], maxpos["<< partNr-1 <<"], maxvel["<< partNr-1 <<"], maxacc["<< partNr-1 <<"] -> [" << minpos[partNr-1].size() << "," << maxpos[partNr-1].size() << "," << maxvel[partNr-1].size() << "," << maxacc[partNr-1].size() << "] should be size " << vector_sizes[partNr-1] <<"."<<endlog();
             return false;
         }
         for ( uint i = 0; i < vector_sizes[partNr-1]; i++ ){

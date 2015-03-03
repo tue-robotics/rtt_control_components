@@ -154,7 +154,7 @@ double ReadEncoders::determineDt()
     double dt = (new_time - old_time);
     old_time = new_time;
     if (dt>0.0014 || dt<0.0006){
-		log(Warning)<<"ReadEncoders: dt is "<< dt << endlog();
+		log(Info)<<"ReadEncoders: dt is "<< dt << endlog();
 	}
     return dt;
 }
