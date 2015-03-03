@@ -28,6 +28,8 @@ TrajectoryActionlib::TrajectoryActionlib(const string& name) : TaskContext(name,
     rtt_action_server_.registerGoalCallback(boost::bind(&TrajectoryActionlib::goalCallback, this, _1));
     rtt_action_server_.registerCancelCallback(boost::bind(&TrajectoryActionlib::cancelCallback, this, _1));
 
+	// AddAttribute
+	addAttribute( "allowedBodyparts", allowedBodyparts );
 }
 
 TrajectoryActionlib::~TrajectoryActionlib(){
