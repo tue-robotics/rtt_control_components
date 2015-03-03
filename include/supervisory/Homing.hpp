@@ -36,6 +36,7 @@ namespace SUPERVISORY
 
     typedef vector<double> doubles;
     typedef vector<int> ints;
+    typedef vector<bool> bools;
 
     class Homing
     : public RTT::TaskContext
@@ -67,7 +68,6 @@ namespace SUPERVISORY
         doubles desiredAcc;
         doubles homing_stroke;
         doubles reset_stroke;
-        doubles homing_endpos;
 		double InterpolDt;
 		double InterpolEps;
 		
@@ -82,13 +82,17 @@ namespace SUPERVISORY
         bool errorhoming;
         bool joint_finished;
         bool finishing;
+        bool finishingdone;
         int jointNr;
         int state;
+        int partNr;
         double homing_stroke_goal;
         doubles position;
         doubles desiredPos;
+        doubles homing_endpos;
         doubles initial_maxerr;
         doubles updated_maxerr;
+        bools allowedBodyparts;
 		vector< doubles > outpos;
 		vector< doubles > outvel;
 		vector< doubles > outacc;
@@ -101,14 +105,18 @@ namespace SUPERVISORY
         TaskContext* Supervisor;
         TaskContext* ReadEncoders;
         TaskContext* Safety;
+        TaskContext* GlobalReferenceGenerator;
+        
         // Properties in Component Peers that homing component can modify
         Attribute<doubles> Safety_maxJointErrors;
+        Attribute<bools> AllowReadReferencesRefGen;
 
         // Functions in Component Peers that homing component can call
         OperationCaller<bool(string)> StartBodyPart;
         OperationCaller<bool(string)> StopBodyPart;
         OperationCaller<void(int,double)> ResetEncoder;
-        OperationCaller<void()> ResetReference;
+        OperationCaller<void(int)> ResetReferenceRefGen;
+        OperationCaller<void(int,doubles)> SendToPos;
 
         public:
 
@@ -122,6 +130,7 @@ namespace SUPERVISORY
         // Internal functions
         bool evaluateHomingCriterion(uint jointID);
         void updateHomingRef(uint jointID);
+        void SendRef();
 
     };
 }

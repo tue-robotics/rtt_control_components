@@ -72,7 +72,7 @@ bool ReferenceGenerator::configureHook()
     
     // add inports
     for ( uint j = 0; j < N_inports; j++ ) {
-        this->addPort( ("posin"+to_string(j+1)), posinport[j] ); 
+        addPort( ("posin"+to_string(j+1)), posinport[j] );
 	}
 
     mRefGenerators.resize(N);
@@ -93,7 +93,7 @@ bool ReferenceGenerator::startHook()
 		}
 	}
     if ( !posoutport.connected() ) {
-        log(Warning)<<"Reference Generator: Outputport not connected!"<<endlog();
+        log(Warning)<<"Outputport not connected!"<<endlog();
     }
 
 
@@ -117,9 +117,12 @@ void ReferenceGenerator::updateHook()
     // i loops over the total output size (sum of all input sizes)
     uint i = 0;
     for ( uint j = 0; j < N_inports; j++ ){
+		
 		doubles inpos(inport_sizes[j],0.0);
 		if (NewData == posinport[j].read( inpos ) ){
-        for ( uint k = 0; k < inport_sizes[j]; k++ ){
+			
+			for ( uint k = 0; k < inport_sizes[j]; k++ ){
+				
 				if ( minpos[i] == 0.0 && maxpos[i] == 0.0 ) {
 					desiredPos[i]=(inpos[k]);
 				} else {

@@ -20,7 +20,8 @@ using namespace SOURCES;
 
 PulseSignal::PulseSignal(const string& name) : 
 	    TaskContext(name, PreOperational),
-			vector_size(0)
+			vector_size(0),
+			offset(1,0.0)
 {
 
   addProperty( "amplitude", amplitude );
@@ -28,6 +29,7 @@ PulseSignal::PulseSignal(const string& name) :
   addProperty( "pulse_width", pulse_width );
   addProperty( "phase_delay", phase_delay );
   addProperty( "vector_size", vector_size );
+  addProperty( "offset", offset );
 
   // Adding ports
   addPort( "out", outport );
@@ -66,6 +68,17 @@ bool PulseSignal::startHook()
     return false;
   }
   
+  if (offset.size() == 1){
+	  if (offset[0] == 0.0){
+		  //log(Warning)<<"offset size adjusted"<<endlog();
+		  offset.assign(vector_size,0.0);
+	  }
+  } else if (offset.size() != vector_size){
+    log(Error)<<"PulseSignal: offset should contain as many elements as vector_size!"<<endlog();
+    return false;
+  }
+	  
+  
   for (uint i = 0; i < vector_size; i++) {
 	  k[i] = 0;
   }
@@ -80,9 +93,9 @@ void PulseSignal::updateHook()
   
   for ( uint i = 0; i < vector_size; i++ ) {
 	  if (k[i]*Ts >= phase_delay[i] && k[i]*Ts < (phase_delay[i] + pulse_width[i]) ) {
-		output[i] = amplitude[i];
+		output[i] = offset[i]+amplitude[i];
 	  } else {
-		output[i] = 0.0;
+		output[i] = offset[i];
 	  }   
 	  k[i]++;
 

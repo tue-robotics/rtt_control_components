@@ -57,6 +57,7 @@ namespace SOURCES
 		doubles period;
 		doubles pulse_width;
 		doubles phase_delay;
+		doubles offset;
 		uint vector_size;
 		
     public:

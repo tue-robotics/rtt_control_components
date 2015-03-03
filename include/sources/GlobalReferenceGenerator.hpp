@@ -86,7 +86,7 @@ namespace SOURCES
             vector<doubles> maxpos;
             vector<doubles> maxvel;
             vector<doubles> maxacc;
-
+            
             // Global variables - scalar
             bool checked;
             int totalNumberOfJoints;
@@ -95,6 +95,7 @@ namespace SOURCES
 
             // Global variables - vector
             bools allowedBodyparts;
+            bools allowedBodyparts_prev;
             ints activeBodyparts;
             ints vector_sizes;
             doubles InterpolDts;
@@ -123,7 +124,7 @@ namespace SOURCES
 			bool startHook();
 			void updateHook();
             void AddBodyPart(int partNr, strings JointNames);
-            void AllowReadReference(int partNr, bool allowed);
+            void SendToPos(int partNr, doubles pos);
             void ResetReference(int partNr);
             bool CheckConnectionsAndProperties();
 
