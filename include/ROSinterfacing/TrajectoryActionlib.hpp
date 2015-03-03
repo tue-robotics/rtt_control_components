@@ -1,7 +1,7 @@
 #ifndef TrajectoryActionlib_HPP
 #define TrajectoryActionlib_HPP
 
-#define maxN 10 //Maximum matrix size
+#define maxN 5 //Maximum bodyparts size
 
 #include <rtt/Component.hpp>
 #include <rtt/TaskContext.hpp>
@@ -30,6 +30,12 @@ using namespace RTT;
 
 namespace ROS
 {
+	typedef vector<double> doubles;
+	typedef vector<int> ints;
+    typedef vector<bool> bools;
+    typedef vector<string> strings;
+    typedef pair<int, int> BodyJointPair;
+
     /**
      * @brief Global component that receives trajectories for
      * all bodyparts. This component sorts them, and generates a
@@ -55,13 +61,13 @@ namespace ROS
      * The homing component switches a bodypart to the homing state
      *
      * Example for ops file:
-     * GlobalReferenceGenerator.AddBodyPart(2, strings("spindle_joint") )
-     * GlobalReferenceGenerator.minPos4 			= array ( 0.075)
-     * GlobalReferenceGenerator.maxPos4 			= array ( 0.4)
-     * GlobalReferenceGenerator.maxVel4 			= array ( 0.07)
-     * GlobalReferenceGenerator.maxAcc4             = array ( 0.2)
-     * GlobalReferenceGenerator.interpolatorDt4 	= 0.001
-     * GlobalReferenceGenerator.interpolatorEps4 	= 1.0
+     * TrajectoryActionlib.AddBodyPart(2, strings("spindle_joint") )
+     * TrajectoryActionlib.minPos4 			= array ( 0.075)
+     * TrajectoryActionlib.maxPos4 			= array ( 0.4)
+     * TrajectoryActionlib.maxVel4 			= array ( 0.07)
+     * TrajectoryActionlib.maxAcc4             = array ( 0.2)
+     * TrajectoryActionlib.interpolatorDt4 	= 0.001
+     * TrajectoryActionlib.interpolatorEps4 	= 1.0
      *
      */
 
@@ -89,6 +95,7 @@ namespace ROS
             // i iterates over all joints within particular bodypart
 
 			// Declaring input- and output_ports
+            InputPort<sensor_msgs::JointState> inport;
             InputPort<doubles> currentpos_inport[maxN];
 			OutputPort<doubles> posoutport[maxN];
 			OutputPort<doubles> veloutport[maxN];
@@ -108,6 +115,7 @@ namespace ROS
 
             // Global variables - vector
             bools allowedBodyparts;
+            bools allowedBodyparts_prev;
             ints activeBodyparts;
             ints vector_sizes;
             doubles InterpolDts;
@@ -136,7 +144,7 @@ namespace ROS
 			bool startHook();
 			void updateHook();
             void AddBodyPart(int partNr, strings JointNames);
-            void AllowReadReference(int partNr, bool allowed);
+            void SendToPos(int partNr, doubles pos);
             void ResetReference(int partNr);
             bool CheckConnectionsAndProperties();
             void goalCallback(GoalHandle gh);

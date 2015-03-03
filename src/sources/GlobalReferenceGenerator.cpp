@@ -6,21 +6,18 @@ using namespace SOURCES;
 
 GlobalReferenceGenerator::GlobalReferenceGenerator(const string& name) : TaskContext(name, PreOperational)
 {
-	// Operations
+    // Operations
     addOperation("AddBodyPart", &GlobalReferenceGenerator::AddBodyPart, this, OwnThread)
-		.doc("Add a body part by specifying its partNr and its jointNames")
-		.arg("partNr","The number of the bodypart")
+        .doc("Add a body part by specifying its partNr and its jointNames")
+        .arg("partNr","The number of the bodypart")
         .arg("JointNames","The name of joints");
 	addOperation( "SendToPos", &GlobalReferenceGenerator::SendToPos, this, OwnThread )
 		.doc("Send the bodypart to position, used when finished homing")
 		.arg("partNr","The number of the bodypart")     
 		.arg("pos","Position to go to"); 
     addOperation( "ResetReference", &GlobalReferenceGenerator::ResetReference, this, OwnThread )
-		.doc("Reset the reference generator to measured current position (used in homing)")
-		.arg("partNr","The number of the bodypart");
-	
-	// AddAttribute
-	addAttribute( "allowedBodyparts", allowedBodyparts );
+        .doc("Reset the reference generator to measured current position (used in homing)")
+        .arg("partNr","The number of the bodypart");
 
 	// Ports
     addPort(     "in",              inport )            .doc("Inport reading joint state message topic from ROS");
@@ -103,7 +100,7 @@ void GlobalReferenceGenerator::updateHook()
     }
     
     // Read all current positions
-	for ( uint j = 0; j < activeBodyparts.size(); j++ ) {
+    for ( uint j = 0; j < activeBodyparts.size(); j++ ) {
         uint partNr = activeBodyparts[j];
         currentpos_inport[partNr-1].read( current_position[partNr-1] );
 	}
@@ -152,7 +149,6 @@ void GlobalReferenceGenerator::updateHook()
 
     // Send references
     for ( uint j = 0; j < activeBodyparts.size(); j++ ) {
-
         uint partNr = activeBodyparts[j];
         if (allowedBodyparts[partNr-1] == true) {
 			
@@ -163,7 +159,7 @@ void GlobalReferenceGenerator::updateHook()
                 vel_out[partNr-1][i]=mRefPoints[partNr-1][i].vel;
                 acc_out[partNr-1][i]=mRefPoints[partNr-1][i].acc;
             }
-			
+
             posoutport[partNr-1].write( pos_out[partNr-1] );
             veloutport[partNr-1].write( vel_out[partNr-1] );
             accoutport[partNr-1].write( acc_out[partNr-1] );
