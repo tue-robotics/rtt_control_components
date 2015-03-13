@@ -1,0 +1,92 @@
+#### IMPORT PACKAGE ####
+import("rtt_ros")
+ros.import("rtt_control_components")
+
+#### DECLARATION OF PARAMETERS ####
+var double Ts = 0.01                            # Sample time
+
+# Source1
+var int S1VS = 2;                               # Source 1 vector size
+var array S1V = array(1.0, 2.0);                # Source 1 values
+
+# Source2
+var int S2VS = 2;                               # Source 2 vector size
+var array S2V = array(3.0, 4.0);                # Source 2 values
+
+# Position source
+var int PSVS = 4;                               # Position source vector size
+var array PSV = array(0.0, 0.0, 0.0, 0.0);      # Position source values
+
+# Controller    
+var int NC = 4;                                 # Number of controllers
+var int NI = 2;                                 # Number of input ports
+var ints IS = ints(2, 2);                       # Array with input sizes
+var array GAINS = array(1.0, 2.0, 3.0, 4.0);    # Gains
+
+# Outputs
+var strings OUTPUT_NAMES 		= strings("u1", "u2", "u3", "u4");
+
+##### SOURCES #####
+# Source1 (reference)
+loadComponent("Source1", "SOURCES::ConstantSignal")
+Source1.vector_size = S1VS
+Source1.value = S1V
+setActivity("Source1",Ts,HighestPriority,ORO_SCHED_RT)
+Source1.configure
+
+# Source2 (reference)
+loadComponent("Source2", "SOURCES::ConstantSignal")
+Source2.vector_size = S2VS
+Source2.value = S2V
+setActivity("Source2",Ts,HighestPriority,ORO_SCHED_RT)
+Source2.configure
+
+# Position source
+loadComponent("PosSource", "SOURCES::ConstantSignal")
+PosSource.vector_size = PSVS
+PosSource.value = PSV
+setActivity("PosSource",Ts,HighestPriority,ORO_SCHED_RT)
+PosSource.configure
+
+# Bool source to enable controller
+loadComponent("BoolSource", "SOURCES::ConstantBool")
+BoolSource.value = true
+setActivity("BoolSource",Ts,HighestPriority,ORO_SCHED_RT)
+BoolSource.configure
+
+##### CONTROLLER #####
+# Controller
+loadComponent("DUMMY_Controller","FILTERS::Controller")
+setActivity("DUMMY_Controller",0.0,HighestPriority,ORO_SCHED_RT)
+DUMMY_Controller.vector_size 				= NC;
+DUMMY_Controller.sampling_time 				= Ts;
+DUMMY_Controller.controllers 				= strings ();
+DUMMY_Controller.number_of_refports			= NI
+DUMMY_Controller.refinport_sizes			= IS
+DUMMY_Controller.number_of_ffwports			= 0
+DUMMY_Controller.gains 						= GAINS;
+DUMMY_Controller.configure
+
+##### Publishing joint angles on ROS-topic #####
+loadComponent("WriteOutput","ROS::DoublesToJointState")
+setActivity("WriteOutput",Ts,LowestPriority,ORO_SCHED_OTHER)
+WriteOutput.JointNames 	= OUTPUT_NAMES
+WriteOutput.configure
+
+##### Connect components #####
+connect ("Source1.out", "DUMMY_Controller.ref_in1", 	ConnPolicy() );	
+connect ("Source2.out", "DUMMY_Controller.ref_in2", 	ConnPolicy() );	
+connect ("PosSource.out", "DUMMY_Controller.pos_in", 	ConnPolicy() );	
+connect ("BoolSource.out", "DUMMY_Controller.enable",   ConnPolicy() );
+connect ("DUMMY_Controller.out", "WriteOutput.pos_in",  ConnPolicy() );
+
+# Stream to ros
+stream ("WriteOutput.out", 		ros.topic("/dummy_control_output"))
+
+# Start components
+Source1.start
+Source2.start
+PosSource.start
+DUMMY_Controller.start
+BoolSource.start
+WriteOutput.start
