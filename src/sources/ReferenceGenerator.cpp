@@ -130,10 +130,10 @@ void ReferenceGenerator::updateHook()
 					desiredPos[i]=max(minpos[i], desiredPos[i]);
 					
 					if (inpos[i] < (minpos[i] - 0.05) ) {
-						log(Warning) << "GlobalReferenceGenerator: Received goal " << inpos[i] << " on port " << j+1 << ". This is outside minimal bound " << minpos[i] << "!" << endlog();
+						log(Warning) << "ReferenceGenerator: Received goal " << inpos[i] << " on port " << j+1 << ". This is outside minimal bound " << minpos[i] << "!" << endlog();
 					}
 					if (inpos[i] > (maxpos[i] + 0.05) ) {
-						log(Warning) << "GlobalReferenceGenerator: Received goal " << inpos[i] << " on port " << j+1 << ". This is outside maximal bound " << maxpos[i] << "!" << endlog();
+						log(Warning) << "ReferenceGenerator: Received goal " << inpos[i] << " on port " << j+1 << ". This is outside maximal bound " << maxpos[i] << "!" << endlog();
 					}
 				}
 				desiredVel[i]=maxvel[i];
