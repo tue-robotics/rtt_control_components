@@ -318,8 +318,8 @@ void Homing::updateHook()
     } else {
         // Move to zero position relative to homing position (homing_stroke_goal)
         if ( (position[homing_order[jointNr]-1] > (homing_stroke_goal-0.01) ) && (position[homing_order[jointNr]-1] < (homing_stroke_goal+0.01) ) ) {
-            if (jointNr == N-1 ) {log(Warning) << prefix <<"_Homing: Finished homing of joint "<< homing_order[jointNr] << ". Proceeding to joint " << homing_order[jointNr+1]<< "! \n " <<endlog();}
-            if (jointNr != N-1 ) {log(Warning) << prefix <<"_Homing: Finished homing of last joint "<< homing_order[jointNr] << ". \n" <<endlog();}
+            if (jointNr != N-1 ) {log(Warning) << prefix <<"_Homing: Finished homing of joint "<< homing_order[jointNr] << ". Proceeding to joint " << homing_order[jointNr+1]<< "! \n " <<endlog();}
+            if (jointNr == N-1 ) {log(Warning) << prefix <<"_Homing: Finished homing of last joint "<< homing_order[jointNr] << ". \n" <<endlog();}
             jointNr++;
             state = 0;
         }
@@ -394,7 +394,7 @@ bool Homing::evaluateHomingCriterion( uint jointID)
     else if (homing_type[jointID] == 3 ) {
         doubles absolutesensoroutput;
         absPos_inport.read(absolutesensoroutput);
-        if (abs(absolutesensoroutput[jointID] - (double) homing_absPos[jointID]) <= 1) {
+        if (abs(absolutesensoroutput[jointID] - (double) homing_absPos[jointID]) <= 3.3/((double)4095.0) ) {
             result = true;
         }
     } 
