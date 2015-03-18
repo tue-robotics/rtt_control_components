@@ -245,7 +245,8 @@ void Controller::updateHook()
         doubles ref_in(inport_sizes[j],0.0);
         references_inport[j].read(ref_in);
         for ( uint i = 0; i < inport_sizes[j]; i++ ) {
-            references[k+i] = ref_in[i];
+            references[k] = ref_in[i];
+            k++;
         }
     }
 
