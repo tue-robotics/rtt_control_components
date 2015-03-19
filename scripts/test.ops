@@ -6,25 +6,25 @@ ros.import("rtt_control_components")
 var double Ts = 0.01                            # Sample time
 
 # Source1
-var int S1VS = 2;                               # Source 1 vector size
-var array S1V = array(1.0, 2.0);                # Source 1 values
+var int S1VS = 3;                               # Source 1 vector size
+var array S1V = array(2.0, 4.0, 6.0);                # Source 1 values
 
 # Source2
 var int S2VS = 2;                               # Source 2 vector size
-var array S2V = array(3.0, 4.0);                # Source 2 values
+var array S2V = array(8.0, 10.0);                # Source 2 values
 
 # Position source
-var int PSVS = 4;                               # Position source vector size
-var array PSV = array(0.0, 0.0, 0.0, 0.0);      # Position source values
+var int PSVS = 5;                               # Position source vector size
+var array PSV = array(1.0, 2.0, 3.0, 4.0, 5.0);      # Position source values
 
 # Controller    
-var int NC = 4;                                 # Number of controllers
+var int NC = 5;                                 # Number of controllers
 var int NI = 2;                                 # Number of input ports
-var ints IS = ints(2, 2);                       # Array with input sizes
-var array GAINS = array(1.0, 2.0, 3.0, 4.0);    # Gains
+var ints IS = ints(S1VS, S2VS);                       # Array with input sizes
+var array GAINS = array(1.0, 2.0, 3.0, 4.0, 5.0);    # Gains
 
 # Outputs
-var strings OUTPUT_NAMES 		= strings("u1", "u2", "u3", "u4");
+var strings OUTPUT_NAMES 		= strings("u1", "u2", "u3", "u4", "u5");
 
 ##### SOURCES #####
 # Source1 (reference)
