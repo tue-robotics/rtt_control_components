@@ -29,13 +29,13 @@ int main(int argc, char** argv)
           */
 
         // First, the joint names, which apply to all waypoints
-        goal.trajectory.joint_names.push_back("shoulder_pitch_joint");
-        goal.trajectory.joint_names.push_back("shoulder_yaw_joint");
-        goal.trajectory.joint_names.push_back("shoulder_roll_joint");
-        goal.trajectory.joint_names.push_back("elbow_pitch_joint");
-        goal.trajectory.joint_names.push_back("wrist_roll_joint");
-        goal.trajectory.joint_names.push_back("wrist_pitch_joint");
-        goal.trajectory.joint_names.push_back("wrist_yaw_joint");
+        goal.trajectory.joint_names.push_back("shoulder_pitch_joint_left");
+        goal.trajectory.joint_names.push_back("shoulder_yaw_joint_left");
+        goal.trajectory.joint_names.push_back("shoulder_roll_joint_left");
+        goal.trajectory.joint_names.push_back("elbow_pitch_joint_left");
+        goal.trajectory.joint_names.push_back("elbow_roll_joint_left");
+        goal.trajectory.joint_names.push_back("wrist_pitch_joint_left");
+        goal.trajectory.joint_names.push_back("wrist_yaw_joint_left");
 
         // We will have two waypoints in this goal trajectory
         goal.trajectory.points.resize(2);
@@ -65,9 +65,9 @@ int main(int argc, char** argv)
         ind += 1;
         goal.trajectory.points[ind].positions.resize(7);
         goal.trajectory.points[ind].positions[0] = -0.3;
-        goal.trajectory.points[ind].positions[1] = 0.2;
+        goal.trajectory.points[ind].positions[1] = -0.2;
         goal.trajectory.points[ind].positions[2] = -0.1;
-        goal.trajectory.points[ind].positions[3] = -1.2;
+        goal.trajectory.points[ind].positions[3] = 1.2;
         goal.trajectory.points[ind].positions[4] = 1.5;
         goal.trajectory.points[ind].positions[5] = -0.3;
         goal.trajectory.points[ind].positions[6] = 0.5;
@@ -78,7 +78,7 @@ int main(int argc, char** argv)
             goal.trajectory.points[ind].velocities[j] = 0.0;
         }
         // To be reached 2 seconds after starting along the trajectory
-        goal.trajectory.points[ind].time_from_start = ros::Duration(20.0);
+        goal.trajectory.points[ind].time_from_start = ros::Duration(5.0);
 
 
         client.sendGoal(goal);
@@ -87,6 +87,37 @@ int main(int argc, char** argv)
             printf("Grasp precompute successful\n");
         else
             printf("Grasp precompute unsuccesfull\n");
+
+
+
+
+		control_msgs::FollowJointTrajectoryGoal torsogoal;
+
+		torsogoal.trajectory.header.stamp = ros::Time::now();
+
+        torsogoal.trajectory.joint_names.push_back("torso_joint");
+
+        torsogoal.trajectory.points.resize(2);
+
+        ind = 0;
+        torsogoal.trajectory.points[ind].positions.resize(1);
+        torsogoal.trajectory.points[ind].positions[0] = 0.0;
+        // To be reached 1 second after starting along the trajectory
+        torsogoal.trajectory.points[ind].time_from_start = ros::Duration(1.0);
+
+        ind += 1;
+        torsogoal.trajectory.points[ind].positions.resize(1);
+        torsogoal.trajectory.points[ind].positions[0] = 0.4;
+        // To be reached 2 seconds after starting along the trajectory
+        torsogoal.trajectory.points[ind].time_from_start = ros::Duration(5.0);
+
+        client.sendGoal(torsogoal);
+        client.waitForResult();
+        if (client.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+            printf("Torso successful\n");
+        else
+            printf("Torso unsuccesfull\n");
+
 
         return 0;
     }
