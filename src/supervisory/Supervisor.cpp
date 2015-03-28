@@ -174,10 +174,18 @@ bool Supervisor::startHook()
 		}
 	}
 	aquisition_time = os::TimeService::Instance()->getNSecs()*1e-9;
-	
+
 	// Fetch Property Acces
-	GlobalReferenceGenerator = this->getPeer( "GlobalReferenceGenerator");
-    AllowReadReferencesRefGen = GlobalReferenceGenerator->attributes()->getAttribute("allowedBodyparts");
+	if ( this->hasPeer( "GlobalReferenceGenerator") )
+	{
+		GlobalReferenceGenerator = this->getPeer( "GlobalReferenceGenerator");
+		AllowReadReferencesRefGen = GlobalReferenceGenerator->attributes()->getAttribute("allowedBodyparts");
+	}
+	else
+	{
+		log(Error) << "Supervisor: Could not access peer GlobalReferenceGenerator" << endlog();
+		return false;
+	}
 
     // Check Property Acces
     if (!AllowReadReferencesRefGen.ready() ) {
