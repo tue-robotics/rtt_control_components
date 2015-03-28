@@ -1,8 +1,6 @@
 /// Created according to Robotis User's manual 2006-06-14 page 12
-/// Can be used for both AX-12 as AX-64
+/// Can be used for both AX-12 as RX-64
 
-// AX-12 manual: http://www.electronickits.com/robot/BioloidAX-12(english).pdf
-// AX-64 manual: http://creativemachines.cornell.edu/sites/default/files/RX-64_Manual.pdf
 
 // Control table address
 #define AX_MODEL_NUMBER_L       0
