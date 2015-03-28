@@ -32,7 +32,7 @@ include_directories(
 	${catkin_INCLUDE_DIRS} 
 	${scl_filters_INCLUDE_DIRS} 
 	${USE_OROCOS_INCLUDE_DIRS}
-    ${Eigen_INCLUDE_DIRS})
+	${Eigen_INCLUDE_DIRS})
 
 
 orocos_install_headers( DIRECTORY
@@ -193,6 +193,7 @@ orocos_component(BoolToROS src/ROSinterfacing/BoolToROS.cpp ${HEADER_FILES})
 orocos_component(DoublesToJointState src/ROSinterfacing/DoublesToJointState.cpp ${HEADER_FILES})
 orocos_component(DoublesToROS src/ROSinterfacing/DoublesToROS.cpp ${HEADER_FILES})
 orocos_component(FollowJointTrajectoryActionToDoubles src/ROSinterfacing/FollowJointTrajectoryActionToDoubles.cpp ${HEADER_FILES})
+orocos_component(TrajectoryActionlib src/ROSinterfacing/TrajectoryActionlib.cpp ${HEADER_FILES})
 orocos_component(JointStateAggregator src/ROSinterfacing/JointStateAggregator.cpp ${HEADER_FILES})
 orocos_component(JointStateToDoubles src/ROSinterfacing/JointStateToDoubles.cpp ${HEADER_FILES})
 orocos_component(JointTrajectoryToDoubles src/ROSinterfacing/JointTrajectoryToDoubles.cpp ${HEADER_FILES})
@@ -205,6 +206,7 @@ target_link_libraries(BoolToROS ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(DoublesToJointState ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(DoublesToROS ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(FollowJointTrajectoryActionToDoubles ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
+target_link_libraries(TrajectoryActionlib ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(JointStateAggregator ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(JointStateToDoubles ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(JointTrajectoryToDoubles ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
@@ -273,3 +275,6 @@ add_dependencies(AnalogIns soem_beckhoff_drivers_generate_messages_cpp)
 add_dependencies(AnalogOutsPera soem_beckhoff_drivers_generate_messages_cpp)
 add_dependencies(AnalogOuts soem_beckhoff_drivers_generate_messages_cpp)
 
+### TESTS ###
+add_executable(test_FollowJointTrajectoryAction test/test_FollowJointTrajectoryAction.cpp)
+target_link_libraries(test_FollowJointTrajectoryAction ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})

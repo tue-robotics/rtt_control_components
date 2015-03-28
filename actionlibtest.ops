@@ -1,0 +1,42 @@
+# remove system libraries if working in tue-dev:
+# rm -rf ~/ros/hydro/system/devel/lib/orocos/gnulinux/rtt_control_components/
+
+# deployer -s actionlibtest.ops
+# rosrun rtt_control_components test_FollowJointTrajectoryAction
+
+# OR
+# deployer -s actionlibtest.ops
+# roslaunch amigo_launch_files grasp_precompute_action.launch
+# rosrun tue_manipulation test_grasp_precompute amigo left
+
+# OR
+# deployer -s actionlibtest.ops
+# astart
+# amiddle
+# robot_console amigo
+# amigo.leftArm.send_joint_trajectory('prepare_grasp')
+
+
+import("rtt_ros")
+ros.import("rtt_control_components")
+
+loadComponent("TrajectoryActionlib","ROS::TrajectoryActionlib")
+
+loadService("TrajectoryActionlib","actionlib")
+
+TrajectoryActionlib.actionlib.connect("/amigo/left_arm/joint_trajectory_action");
+
+setActivity("TrajectoryActionlib",0.1,LowestPriority,ORO_SCHED_OTHER)
+
+TrajectoryActionlib.configure
+
+TrajectoryActionlib.start
+
+
+#### LOAD JOINTSTATEAGGREGATOR ####
+loadComponent("GlobalReferenceGenerator","SOURCES::GlobalReferenceGenerator")
+setActivity("GlobalReferenceGenerator",0.1,LowestPriority, ORO_SCHED_OTHER)
+GlobalReferenceGenerator.configure
+stream("GlobalReferenceGenerator.in", ros.topic("/amigo/right_arm/references"))
+GlobalReferenceGenerator.start
+
