@@ -138,11 +138,38 @@ bool Homing::startHook()
     }
 
     // Connect Components
-    Supervisor 		= getPeer( "Supervisor");
-    ReadEncoders 	= getPeer( prefix + "_ReadEncoders");
-    Safety 			= getPeer( prefix + "_Safety");
-    GlobalReferenceGenerator = getPeer( "GlobalReferenceGenerator");
-    
+    if ( hasPeer( "Supervisor" ) ) {
+		Supervisor 		= getPeer( "Supervisor");
+	}
+	else {
+		log(Error) << "Supervisor: Could not access peer Supervisor" << endlog();
+		return false;
+	}
+	if ( hasPeer( prefix + "_ReadEncoders" ) ) {
+		ReadEncoders 		= getPeer( prefix + "_ReadEncoders" );
+	}
+	else {
+		log(Error) << "Supervisor: Could not access peer " + prefix + "_ReadEncoders" << endlog();
+		return false;
+	}
+	if ( hasPeer( prefix + "_Safety" ) ) {
+		Safety 		= getPeer( prefix + "_Safety" );
+	}
+	else {
+		log(Error) << "Supervisor: Could not access peer " + prefix + "_Safety" << endlog();
+		return false;
+	}
+    if ( hasPeer( "GlobalReferenceGenerator") )	{
+		GlobalReferenceGenerator = getPeer( "GlobalReferenceGenerator");
+	}
+	else if ( hasPeer( "TrajectoryActionlib") )	{
+		GlobalReferenceGenerator = getPeer( "TrajectoryActionlib");
+	}
+	else {
+		log(Error) << "Supervisor: Could not access peer GlobalReferenceGenerator" << endlog();
+		return false;
+	}
+	
     // Check Connections
     if ( !Supervisor ) {
         log(Error) << prefix <<"_Homing: Could not find Supervisor component! Did you add it as Peer in the ops file?"<<endlog();
