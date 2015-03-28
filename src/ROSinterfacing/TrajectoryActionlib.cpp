@@ -304,14 +304,19 @@ void TrajectoryActionlib::SendToPos(int partNr, doubles pos)
 		desiredAcc [partNr-1] [joint_id] = maxacc [partNr-1] [joint_id];
 	}
 			
-	log(Warning)<< "TrajectoryActionlib: Processed SendToPos goal:" << desiredPos[partNr-1][0] << "!"<< endlog();
-	log(Warning) << "TrajectoryActionlib:  Allowed:     [" << allowedBodyparts[0] << "," << allowedBodyparts[1] << "," << allowedBodyparts[2] << "," << allowedBodyparts[3] << "," << allowedBodyparts[4] << "]" <<endlog();
+	log(Info)<< "TrajectoryActionlib: Processed SendToPos goal:" << desiredPos[partNr-1][0] << "!"<< endlog();
+	log(Info) << "TrajectoryActionlib:  Allowed:     [" << allowedBodyparts[0] << "," << allowedBodyparts[1] << "," << allowedBodyparts[2] << "," << allowedBodyparts[3] << "," << allowedBodyparts[4] << "]" <<endlog();
 
     return;
 }
 
 void TrajectoryActionlib::ResetReference(int partNr)
 {
+	if (partNr < 0 || partNr > maxN ) {
+		log(Error) <<"TrajectoryActionlib::ResetReference: Invalid partNr provided: partNr = " << partNr <<endlog();
+		return;
+	}
+	
     //Set the starting value to the current actual value
     uint N = minpos[partNr-1].size();
     doubles actualPos(N,0.0);
@@ -326,8 +331,6 @@ void TrajectoryActionlib::ResetReference(int partNr)
 
 bool TrajectoryActionlib::CheckConnectionsAndProperties()
 {
-    log(Warning) << "TrajectoryActionlib: start of CheckConnectionsAndProperties" << endlog();
-
     // to do use iterator
     for ( uint j = 0; j < activeBodyparts.size(); j++ ) {
         // look up bodypart number
@@ -374,8 +377,6 @@ bool TrajectoryActionlib::CheckConnectionsAndProperties()
            mRefGenerators[partNr-1][i].setRefGen(current_position[partNr-1][i]);
         }
     }
-
-    log(Warning) << "TrajectoryActionlib: Checked all Properties and ports of TrajectoryActionlib" << endlog();
 
     return true;
 }
