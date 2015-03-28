@@ -179,13 +179,17 @@ bool Supervisor::startHook()
 	if ( this->hasPeer( "GlobalReferenceGenerator") )
 	{
 		GlobalReferenceGenerator = this->getPeer( "GlobalReferenceGenerator");
-		AllowReadReferencesRefGen = GlobalReferenceGenerator->attributes()->getAttribute("allowedBodyparts");
+	}
+	else if ( this->hasPeer( "TrajectoryActionlib") )
+	{
+		GlobalReferenceGenerator = this->getPeer( "TrajectoryActionlib");
 	}
 	else
 	{
 		log(Error) << "Supervisor: Could not access peer GlobalReferenceGenerator" << endlog();
 		return false;
 	}
+	AllowReadReferencesRefGen = GlobalReferenceGenerator->attributes()->getAttribute("allowedBodyparts");
 
     // Check Property Acces
     if (!AllowReadReferencesRefGen.ready() ) {
