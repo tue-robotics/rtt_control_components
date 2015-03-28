@@ -176,9 +176,9 @@ bool Supervisor::startHook()
 	aquisition_time = os::TimeService::Instance()->getNSecs()*1e-9;
 
 	// Fetch Property Acces
-	if ( this->hasPeer( "GlobalReferenceGenerator") )
+	if ( this->hasPeer( "TrajectoryActionlib") )
 	{
-		GlobalReferenceGenerator = this->getPeer( "GlobalReferenceGenerator");
+		GlobalReferenceGenerator = this->getPeer( "TrajectoryActionlib");
 		AllowReadReferencesRefGen = GlobalReferenceGenerator->attributes()->getAttribute("allowedBodyparts");
 	}
 	else
