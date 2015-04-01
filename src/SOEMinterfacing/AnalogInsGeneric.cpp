@@ -178,10 +178,10 @@ void AnalogInsGeneric::updateHook()
             log(Info) << "In AnalogInsGeneric: Using old data for inport " << inports[i].getName() << endlog();
             break;
         case NoData:
-            log(Error) << "In AnalogInsGeneric: Could not read data for inport " << inports[i].getName() << endlog();
+            log(Info) << "In AnalogInsGeneric: Could not read data for inport " << inports[i].getName() << endlog();
             return;
         default:
-            log(Error) << "In AnalogInsGeneric: Inport.read() returns unknown status!" << endlog();
+            log(Info) << "In AnalogInsGeneric: Inport.read() returns unknown status!" << endlog();
             return;
         }
     }
