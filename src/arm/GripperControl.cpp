@@ -73,7 +73,7 @@ void GripperControl::updateHook()
 		} else if (gripperCommand.direction == tue_msgs::GripperCommand::CLOSE) {
 			log(Info)<<"Grippercontrol: received GripperCommand Close"<<endlog();
 		} else {
-			log(Info)<<"Grippercontrol: received invalid GripperCommand"<<endlog();
+			log(Warning)<<"Grippercontrol: received invalid GripperCommand"<<endlog();
 		}		
 		completed = false;
 	}
