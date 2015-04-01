@@ -64,6 +64,7 @@ namespace SUPERVISORY
         ints require_homing;
         ints homing_order;
         ints homing_direction;
+        doubles homingVel;
         doubles desiredVel;
         doubles desiredAcc;
         doubles homing_stroke;

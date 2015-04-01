@@ -227,7 +227,11 @@ void GlobalReferenceGenerator::SendToPos(int partNr, doubles pos)
 	if (allowedBodyparts[partNr-1] == false) {
 		log(Warning) << "GlobalReferenceGenerator: Received SendToPos for bodypart that is not yet allowed" << endlog();
 	}	
-	log(Warning)<< "GlobalReferenceGenerator: Received SendToPos goal: " << pos[0] << "!"<< endlog();
+	if (pos.size() == 7 ) {
+		log(Warning)<< "GlobalReferenceGenerator: Received SendToPos goal for partNr: " << partNr << ". -> [" << pos[0] << "," << pos[1] << "," << pos[2] << "," << pos[3] << "," << pos[4] << "," << pos[5] << "," << pos[6] << "," << pos[7] << "]!"<< endlog();
+	} else {
+		log(Warning)<< "GlobalReferenceGenerator: Received SendToPos goal for partNr: " << partNr << ". -> [" << pos[0] << "]" << endlog();
+	}	
 		
 	for ( uint joint_id = 0; joint_id < pos.size(); joint_id++ ){
 		desiredPos [partNr-1] [joint_id] = min( pos[joint_id]            		, maxpos     [partNr-1][joint_id]);
@@ -256,7 +260,14 @@ void GlobalReferenceGenerator::ResetReference(int partNr)
     for ( uint i = 0; i < N; i++ ){
        mRefGenerators[partNr-1][i].setRefGen(actualPos[i]);
     }
-    log(Warning) <<"GlobalReferenceGenerator: Reset to" << actualPos[0] <<endlog();
+    
+    
+	if (partNr == 3 || partNr == 4 ) {
+		log(Warning) <<"GlobalReferenceGenerator: Reset for partNr: " << partNr << " to [" << actualPos[0] << "," << actualPos[1] << "," << actualPos[2] << "," << actualPos[3] << "," << actualPos[4] << "," << actualPos[5] << "," << actualPos[6] << "," << actualPos[7] << "]!"<< endlog();
+	} else {
+		log(Warning) <<"GlobalReferenceGenerator: Reset for partNr: " << partNr << " to " << actualPos[0] <<endlog();
+	}
+    
     
     return;
 }

@@ -33,7 +33,7 @@ Homing::Homing(const string& name) : TaskContext(name, PreOperational)
     addProperty( "require_homing",  	require_homing  ).doc("Vector of boolean values to specify which joints should be homed");
     addProperty( "homing_order",    	homing_order    ).doc("The order in which the joints are homed, for example: array [2 3 1]");
     addProperty( "homing_direction",	homing_direction).doc("Homing direction");
-    addProperty( "homing_velocity", 	desiredVel 		).doc("Homing velocities");
+    addProperty( "homing_velocity", 	homingVel 		).doc("Homing velocities");
     addProperty( "homing_acceleration", desiredAcc 		).doc("Homing accelerations");
     addProperty( "homing_stroke",   	homing_stroke   ).doc("Stroke from endstop to reset position (This distance is provided as delta goal after homing position is reached)");
     addProperty( "reset_stroke",        reset_stroke    ).doc("Stroke from resetposition to zero position (also the position the bodypart will assume when the rest of the joints are homed)");
@@ -55,8 +55,8 @@ bool Homing::configureHook()
         log(Error) << prefix <<"_Homing: size of homing_type ("<<homing_type.size()<<"), require_homing ("<<require_homing.size()<<") or homing_order ("<<homing_order.size()<<") does not match vector_size ("<<N<<")"<<endlog(); 
         return false;
     }
-    if (homing_direction.size() != N || desiredVel.size() != N || desiredAcc.size() != N || homing_stroke.size() != N || reset_stroke.size() != N || homing_endpos.size() != outport_sizes[0] ) {
-        log(Error) << prefix <<"_Homing: size of homing_direction ("<<homing_direction.size()<<"), homing_velocity ("<<desiredVel.size()<<"), homing_acceleration ("<<desiredAcc.size()<<"), homing_stroke ("<<homing_stroke.size()<<"), reset_stroke ("<<reset_stroke.size()<<" or homing_endpos ("<<homing_endpos.size()<<")"<<endlog();
+    if (homing_direction.size() != N || homingVel.size() != N || desiredAcc.size() != N || homing_stroke.size() != N || reset_stroke.size() != N || homing_endpos.size() != outport_sizes[0] ) {
+        log(Error) << prefix <<"_Homing: size of homing_direction ("<<homing_direction.size()<<"), homing_velocity ("<<homingVel.size()<<"), homing_acceleration ("<<desiredAcc.size()<<"), homing_stroke ("<<homing_stroke.size()<<"), reset_stroke ("<<reset_stroke.size()<<" or homing_endpos ("<<homing_endpos.size()<<")"<<endlog();
         return false;
     }
 	if (partNr < 0 || partNr > 6 ) {        
@@ -107,6 +107,7 @@ bool Homing::configureHook()
     outpos.resize(N_outports);
     outvel.resize(N_outports);
     outacc.resize(N_outports);
+    desiredVel.resize(homingVel.size());
 
 	return true;
 }
@@ -130,6 +131,8 @@ bool Homing::startHook()
 		outvel[n].assign(outport_sizes[n],0.0);
 		outacc[n].assign(outport_sizes[n],0.0);
 	}
+	desiredVel = homingVel;
+	log(Warning) << prefix <<"_Homing: Resetted homingVel: " << homingVel[0] <<endlog();
 		
 	// Initialize refgen
     pos_inport.read( position );
