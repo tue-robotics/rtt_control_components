@@ -1,15 +1,20 @@
-#ifndef GLOBALREFERENCEGENERATOR_HPP
-#define GLOBALREFERENCEGENERATOR_HPP
+#ifndef TrajectoryActionlib_HPP
+#define TrajectoryActionlib_HPP
 
 #define maxN 5 //Maximum bodyparts size
 
 #include <rtt/Component.hpp>
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
+#include <rtt_actionlib/rtt_actionlib.h>
+#include <rtt_actionlib/rtt_action_server.h>
+#include <trajectory_msgs/JointTrajectory.h>
+#include <trajectory_msgs/JointTrajectoryPoint.h>
+#include <control_msgs/FollowJointTrajectoryAction.h>
+#include <actionlib/action_definition.h>
 #include <rtt/Logger.hpp>
 
 #include <amigo_ref_interpolator/interpolator.h>
-#include <sensor_msgs/JointState.h>
 
 using namespace std;
 
@@ -18,11 +23,12 @@ inline string to_string (const T& t){
   stringstream ss;
   ss << t;
   return ss.str();
-};
+}
+
 
 using namespace RTT;
 
-namespace SOURCES
+namespace ROS
 {
 	typedef vector<double> doubles;
 	typedef vector<int> ints;
@@ -31,7 +37,7 @@ namespace SOURCES
     typedef pair<int, int> BodyJointPair;
 
     /**
-     * @brief Global component that receives joint state messages for
+     * @brief Global component that receives trajectories for
      * all bodyparts. This component sorts them, and generates a
      * reference signal for all joints.
      *
@@ -55,27 +61,52 @@ namespace SOURCES
      * The homing component switches a bodypart to the homing state
      *
      * Example for ops file:
-     * GlobalReferenceGenerator.AddBodyPart(2, strings("spindle_joint") )
-     * GlobalReferenceGenerator.minPos4 			= array ( 0.075)
-     * GlobalReferenceGenerator.maxPos4 			= array ( 0.4)
-     * GlobalReferenceGenerator.maxVel4 			= array ( 0.07)
-     * GlobalReferenceGenerator.maxAcc4             = array ( 0.2)
-     * GlobalReferenceGenerator.interpolatorDt4 	= 0.001
-     * GlobalReferenceGenerator.interpolatorEps4 	= 1.0
+     * TrajectoryActionlib.AddBodyPart(2, strings("spindle_joint") )
+     * TrajectoryActionlib.minPos4 			= array ( 0.075)
+     * TrajectoryActionlib.maxPos4 			= array ( 0.4)
+     * TrajectoryActionlib.maxVel4 			= array ( 0.07)
+     * TrajectoryActionlib.maxAcc4             = array ( 0.2)
+     * TrajectoryActionlib.interpolatorDt4 	= 0.001
+     * TrajectoryActionlib.interpolatorEps4 	= 1.0
      *
      */
 
-	class GlobalReferenceGenerator
+    class TrajectoryActionlib
 		: public RTT::TaskContext
 		{
 		private:
+            // Actionlib stuff
+			ACTION_DEFINITION(control_msgs::FollowJointTrajectoryAction)
+            rtt_actionlib::RTTActionServer<control_msgs::FollowJointTrajectoryAction> rtt_action_server_;
+            typedef actionlib::ServerGoalHandle<control_msgs::FollowJointTrajectoryAction> GoalHandle;
+
+            GoalHandle current_gh_;
+            Feedback feedback_;
+            Result result_;
+
+            struct TrajectoryInfo
+            {
+                TrajectoryInfo() : time(0), index(-1) {}
+
+                GoalHandle goal_handle;
+                double time;
+                int index;
+            };
+
+            std::vector < TrajectoryInfo > goal_handles_;
+
+			// Convenience typedefs
+			typedef vector<double> doubles;
+			typedef vector<int> ints;
+			typedef vector<bool> bools;
+			typedef vector<string> strings;
+			typedef pair<int, int> BodyJointPair;
 
             // iterators
             // j iterates over all connected bodyparts
             // i iterates over all joints within particular bodypart
 
 			// Declaring input- and output_ports
-            InputPort<sensor_msgs::JointState> inport;
             InputPort<doubles> currentpos_inport[maxN];
 			OutputPort<doubles> posoutport[maxN];
 			OutputPort<doubles> veloutport[maxN];
@@ -86,7 +117,7 @@ namespace SOURCES
             vector<doubles> maxpos;
             vector<doubles> maxvel;
             vector<doubles> maxacc;
-            
+
             // Global variables - scalar
             bool checked;
             int totalNumberOfJoints;
@@ -117,8 +148,8 @@ namespace SOURCES
 
 		public:
 
-			GlobalReferenceGenerator(const string& name);
-			~GlobalReferenceGenerator();
+            TrajectoryActionlib(const string& name);
+            ~TrajectoryActionlib();
 
 			bool configureHook();
 			bool startHook();
@@ -127,8 +158,8 @@ namespace SOURCES
             void SendToPos(int partNr, doubles pos);
             void ResetReference(int partNr);
             bool CheckConnectionsAndProperties();
-
-
+            void goalCallback(GoalHandle gh);
+            void cancelCallback(GoalHandle gh);
 	};
 }
 #endif

@@ -11,13 +11,16 @@ GlobalReferenceGenerator::GlobalReferenceGenerator(const string& name) : TaskCon
 		.doc("Add a body part by specifying its partNr and its jointNames")
 		.arg("partNr","The number of the bodypart")
         .arg("JointNames","The name of joints");
-    addOperation("AllowReadReference", &GlobalReferenceGenerator::AllowReadReference, this)
-		.doc("Allow a bodypart to receive references. For example to block when not yet homed")
-		.arg("partNr","The number of the bodypart")
-		.arg("allowed","wether or not the bodypart is allowed to receieve references");
+	addOperation( "SendToPos", &GlobalReferenceGenerator::SendToPos, this, OwnThread )
+		.doc("Send the bodypart to position, used when finished homing")
+		.arg("partNr","The number of the bodypart")     
+		.arg("pos","Position to go to"); 
     addOperation( "ResetReference", &GlobalReferenceGenerator::ResetReference, this, OwnThread )
 		.doc("Reset the reference generator to measured current position (used in homing)")
 		.arg("partNr","The number of the bodypart");
+	
+	// AddAttribute
+	addAttribute( "allowedBodyparts", allowedBodyparts );
 
 	// Ports
     addPort(     "in",              inport )            .doc("Inport reading joint state message topic from ROS");
@@ -27,7 +30,7 @@ GlobalReferenceGenerator::~GlobalReferenceGenerator()
 {
     // remove operations
     remove("AddBodyPart");
-    remove("AllowReadReference");
+    remove("SendToPos");
     remove("ResetReference");
 }
 
@@ -45,6 +48,7 @@ bool GlobalReferenceGenerator::configureHook()
     start_time = 0.0;
 
     allowedBodyparts.resize(maxN);
+    allowedBodyparts_prev.resize(maxN);
     vector_sizes.assign(maxN,0);
     InterpolDts.assign(maxN,0.0);
     InterpolEpses.assign(maxN,0.0);
@@ -55,6 +59,7 @@ bool GlobalReferenceGenerator::configureHook()
     pos_out.resize(maxN);
     vel_out.resize(maxN);
     acc_out.resize(maxN);
+    current_position.resize(maxN);
     mRefGenerators.resize(maxN);
     mRefPoints.resize(maxN);
 
@@ -78,6 +83,11 @@ bool GlobalReferenceGenerator::startHook()
 
 void GlobalReferenceGenerator::updateHook()
 {
+	if (allowedBodyparts != allowedBodyparts_prev) {
+		log(Warning) << "GlobalReferenceGenerator:  Allowed:     [" << allowedBodyparts[0] << "," << allowedBodyparts[1] << "," << allowedBodyparts[2] << "," << allowedBodyparts[3] << "," << allowedBodyparts[4] << "]" <<endlog();
+	}
+	allowedBodyparts_prev = allowedBodyparts;
+	
     // 6.5s after start, check all properties, ports, etc.
     if (!checked) {
         double aquisition_time = os::TimeService::Instance()->getNSecs()*1e-9;
@@ -91,12 +101,17 @@ void GlobalReferenceGenerator::updateHook()
             return;
         }
     }
-
+    
+    // Read all current positions
+	for ( uint j = 0; j < activeBodyparts.size(); j++ ) {
+        uint partNr = activeBodyparts[j];
+        currentpos_inport[partNr-1].read( current_position[partNr-1] );
+	}
+    
     // If a new message received
     sensor_msgs::JointState in_msg;
     if (inport.read(in_msg) == NewData) {
 
-        log(Info) << "GlobalReferenceGenerator: Received Message" << endlog();
         // then loop over all joints within the message received
         uint k = 0;
         while (k < in_msg.position.size()) {
@@ -127,8 +142,8 @@ void GlobalReferenceGenerator::updateHook()
                     desiredVel [body_part_id] [joint_id] = maxvel [body_part_id] [joint_id];
                     desiredAcc [body_part_id] [joint_id] = maxacc [body_part_id] [joint_id];
 
-                } else {
-                    log(Warning) << "GlobalReferenceGenerator: Message received for bodypart that did not get the AllowReadReference!" << endlog();
+                } else { // Message received for bodypart that did not get the AllowReadReference!
+					desiredPos[body_part_id][joint_id] = current_position[body_part_id][joint_id];
                 }
                 k++;
             }
@@ -137,10 +152,10 @@ void GlobalReferenceGenerator::updateHook()
 
     // Send references
     for ( uint j = 0; j < activeBodyparts.size(); j++ ) {
-        uint partNr = activeBodyparts[j];
-        if (allowedBodyparts[partNr-1]) {
-            uint partNr = activeBodyparts[j];
 
+        uint partNr = activeBodyparts[j];
+        if (allowedBodyparts[partNr-1] == true) {
+			
             // Compute the next reference points
             for ( uint i = 0; i < vector_sizes[partNr-1]; i++ ){
                 mRefPoints[partNr-1][i] = mRefGenerators[partNr-1][i].generateReference(desiredPos[partNr-1][i], desiredVel[partNr-1][i], desiredAcc[partNr-1][i], InterpolDts[partNr-1], false, InterpolEpses[partNr-1]);
@@ -148,14 +163,12 @@ void GlobalReferenceGenerator::updateHook()
                 vel_out[partNr-1][i]=mRefPoints[partNr-1][i].vel;
                 acc_out[partNr-1][i]=mRefPoints[partNr-1][i].acc;
             }
-
+			
             posoutport[partNr-1].write( pos_out[partNr-1] );
             veloutport[partNr-1].write( vel_out[partNr-1] );
             accoutport[partNr-1].write( acc_out[partNr-1] );
         }
     }
-
-    //log(Warning) << "GlobalReferenceGenerator: end of UpdateHook" << endlog();
 }
 
 void GlobalReferenceGenerator::AddBodyPart(int partNr, strings JointNames)
@@ -173,6 +186,7 @@ void GlobalReferenceGenerator::AddBodyPart(int partNr, strings JointNames)
     desiredPos[partNr-1].assign(JointNames.size(),0.0);
     desiredVel[partNr-1].assign(JointNames.size(),0.0);
     desiredAcc[partNr-1].assign(JointNames.size(),0.0);
+    current_position[partNr-1].assign(JointNames.size(),0.0);
     minpos[partNr-1].assign(JointNames.size(),0.0);
     maxpos[partNr-1].assign(JointNames.size(),0.0);
     maxvel[partNr-1].assign(JointNames.size(),0.0);
@@ -194,58 +208,72 @@ void GlobalReferenceGenerator::AddBodyPart(int partNr, strings JointNames)
     addProperty(    "interpolatorDt"+to_string(partNr),     InterpolDts[partNr-1] )     .doc("Interpol Dt");
     addProperty(    "interpolatorEps"+to_string(partNr),    InterpolEpses[partNr-1] )   .doc("Interpol Eps");
 
-    // Attrributes (To be able to acces these properties from the homing component)
-    addAttribute(   "minPos"+to_string(partNr),             minpos[partNr-1] );
-    addAttribute(   "maxPos"+to_string(partNr),             maxpos[partNr-1] );
-    addAttribute(   "maxVel"+to_string(partNr),             maxvel[partNr-1] );
-
     // Update total numer of joints and present bodyparts
     totalNumberOfJoints += JointNames.size();
     vector_sizes[partNr-1] = JointNames.size();
     numberOfBodyparts += 1;
     activeBodyparts.resize(numberOfBodyparts);
     activeBodyparts[numberOfBodyparts-1] = partNr;
-    allowedBodyparts[partNr-1] = true;
+    allowedBodyparts[partNr-1] = false;
 
     log(Warning) << "GlobalReferenceGenerator: Total of "<< totalNumberOfJoints <<" joints for " << numberOfBodyparts << " Bodyparts" << endlog();
 }
 
-// to do do this via property acces instead of function?
-void GlobalReferenceGenerator::AllowReadReference(int partNr, bool allowed)
+void GlobalReferenceGenerator::SendToPos(int partNr, doubles pos)
 {
-    allowedBodyparts[partNr-1] = allowed;
-
-    if (allowed = true) {
-        log(Warning) << "GlobalReferenceGenerator:  Allowed Reading of References for partNr: "<< partNr <<"!" << endlog();
-    } else {
-        log(Warning) << "GlobalReferenceGenerator:  Disabled Reading of References for partNr: "<< partNr <<"!" << endlog();
-    }
+	if (pos.size() != vector_sizes[partNr-1]) {
+		log(Warning) << "GlobalReferenceGenerator: Invalid size of pos/vector_sizes[partNr-1]" << endlog();
+	}	
+	if (allowedBodyparts[partNr-1] == false) {
+		log(Warning) << "GlobalReferenceGenerator: Received SendToPos for bodypart that is not yet allowed" << endlog();
+	}	
+	if (pos.size() == 7 ) {
+		log(Warning)<< "GlobalReferenceGenerator: Received SendToPos goal for partNr: " << partNr << ". -> [" << pos[0] << "," << pos[1] << "," << pos[2] << "," << pos[3] << "," << pos[4] << "," << pos[5] << "," << pos[6] << "," << pos[7] << "]!"<< endlog();
+	} else {
+		log(Warning)<< "GlobalReferenceGenerator: Received SendToPos goal for partNr: " << partNr << ". -> [" << pos[0] << "]" << endlog();
+	}	
+		
+	for ( uint joint_id = 0; joint_id < pos.size(); joint_id++ ){
+		desiredPos [partNr-1] [joint_id] = min( pos[joint_id]            		, maxpos     [partNr-1][joint_id]);
+		desiredPos [partNr-1] [joint_id] = max( minpos [partNr-1] [joint_id]    , desiredPos [partNr-1][joint_id]);
+		desiredVel [partNr-1] [joint_id] = maxvel [partNr-1] [joint_id];
+		desiredAcc [partNr-1] [joint_id] = maxacc [partNr-1] [joint_id];
+	}
+			
+	log(Info)<< "GlobalReferenceGenerator: Processed SendToPos goal:" << desiredPos[partNr-1][0] << "!"<< endlog();
+	log(Info) << "GlobalReferenceGenerator:  Allowed:     [" << allowedBodyparts[0] << "," << allowedBodyparts[1] << "," << allowedBodyparts[2] << "," << allowedBodyparts[3] << "," << allowedBodyparts[4] << "]" <<endlog();
 
     return;
 }
 
 void GlobalReferenceGenerator::ResetReference(int partNr)
 {
-    log(Warning) << "GlobalReferenceGenerator: start of ResetReference" << endlog();
-
-    //Set the starting value to the current actual value
+	if (partNr < 0 || partNr > maxN ) {
+		log(Error) <<"GlobalReferenceGenerator::ResetReference: Invalid partNr provided: partNr = " << partNr <<endlog();
+		return;
+	}
+	
+	// Set the starting value to the current actual value
     uint N = minpos[partNr-1].size();
     doubles actualPos(N,0.0);
     currentpos_inport[partNr-1].read( actualPos );
-    log(Warning) << "GlobalReferenceGenerator: Resettting bodypart " << partNr-1 << " with [" << actualPos[0] << "," << actualPos[1] << ","  << actualPos[2] << ","  << actualPos[3] << ","  << actualPos[4] << ","  << actualPos[5] << ","  << actualPos[6] << ","  << actualPos[7] << "] !"<<endlog();
     for ( uint i = 0; i < N; i++ ){
        mRefGenerators[partNr-1][i].setRefGen(actualPos[i]);
     }
-
-    log(Warning) << "GlobalReferenceGenerator: end of ResetReference" << endlog();
-
+    
+    
+	if (partNr == 3 || partNr == 4 ) {
+		log(Warning) <<"GlobalReferenceGenerator: Reset for partNr: " << partNr << " to [" << actualPos[0] << "," << actualPos[1] << "," << actualPos[2] << "," << actualPos[3] << "," << actualPos[4] << "," << actualPos[5] << "," << actualPos[6] << "," << actualPos[7] << "]!"<< endlog();
+	} else {
+		log(Warning) <<"GlobalReferenceGenerator: Reset for partNr: " << partNr << " to " << actualPos[0] <<endlog();
+	}
+    
+    
     return;
 }
 
 bool GlobalReferenceGenerator::CheckConnectionsAndProperties()
 {
-    log(Warning) << "GlobalReferenceGenerator: start of CheckConnectionsAndProperties" << endlog();
-
     // to do use iterator
     for ( uint j = 0; j < activeBodyparts.size(); j++ ) {
         // look up bodypart number
@@ -287,18 +315,12 @@ bool GlobalReferenceGenerator::CheckConnectionsAndProperties()
         }
 
         //Set the starting value to the current actual value
-        doubles actualPos(vector_sizes[partNr-1],0.0);
-        currentpos_inport[partNr-1].read( actualPos );
+        currentpos_inport[partNr-1].read( current_position[partNr-1] );
         for ( uint i = 0; i < vector_sizes[partNr-1]; i++ ){
-           mRefGenerators[partNr-1][i].setRefGen(actualPos[i]);
+           mRefGenerators[partNr-1][i].setRefGen(current_position[partNr-1][i]);
         }
-
-        // Write on the outposport to make sure the receiving components get new data
-        posoutport[partNr-1].write( actualPos );
     }
-
-    log(Warning) << "GlobalReferenceGenerator: Checked all Properties and ports of GlobalReferenceGenerator" << endlog();
-
+    
     return true;
 }
 

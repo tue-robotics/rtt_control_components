@@ -38,11 +38,11 @@ bool ReferenceGenerator::configureHook()
 {
     // Property Checks
 	if ( (N_inports <= 0) || (N_inports > N)) {
-        log(Error)<<"Could not start component: size or N_inports is incorrect. N_inports and N should satisfy (0 < N_inports <= N)"<<endlog();        
+        log(Error)<<"Reference Generator: Could not start component: size or N_inports is incorrect. N_inports and N should satisfy (0 < N_inports <= N)"<<endlog();        
         return false;
     }
     if ( (inport_sizes.size() != N_inports) ) {
-        log(Error)<<"Could not start component: Size of inport_sizes is incorrect. should be equal to N_inports"<<endlog();    
+        log(Error)<<"Reference Generator: Could not start component: Size of inport_sizes is incorrect. should be equal to N_inports"<<endlog();    
         return false;
     }      
 	int sumofinputs =0;
@@ -50,22 +50,22 @@ bool ReferenceGenerator::configureHook()
 		sumofinputs += inport_sizes[j];
 	}
 	if ( (sumofinputs != N) ) {
-        log(Error)<<"Could not start component: Sum of input_sizes should match N"<<endlog();    
+        log(Error)<<"Reference Generator: Could not start component: Sum of input_sizes should match N"<<endlog();    
         return false;
     }	    
     if ( (minpos.size() != N) || (maxpos.size() != N) || (maxvel.size() != N) || (maxacc.size() != N) ) {
-        log(Error)<<"Could not start component:  minpos["<< minpos.size() <<"], maxpos["<< maxpos.size() <<"], maxvel["<< maxvel.size() <<"], maxacc["<< maxacc.size() <<"] should be size " << N <<"."<<endlog();        
+        log(Error)<<"Reference Generator: Could not start component:  minpos["<< minpos.size() <<"], maxpos["<< maxpos.size() <<"], maxvel["<< maxvel.size() <<"], maxacc["<< maxacc.size() <<"] should be size " << N <<"."<<endlog();        
         return false;
     }
     for ( uint i = 0; i < N; i++ ){
         if ( minpos[i] == 0.0 && maxpos[i] == 0.0 ) {
-            log(Warning)<<"minPos and maxPos both specified 0.0. Thus maxPos and minPos boundaries are not taken into account"<<endlog();
+            log(Warning)<<"Reference Generator: minPos and maxPos both specified 0.0. Thus maxPos and minPos boundaries are not taken into account"<<endlog();
         } else if ( minpos[i] > maxpos[i]) {
-            log(Error)<<"Could not start component: minPosition should be specified smaller than maxPosition"<<endlog();
+            log(Error)<<"Reference Generator: Could not start component: minPosition should be specified smaller than maxPosition"<<endlog();
             return false;
         }
         if ( ( maxvel[i] < 0.0) || ( maxacc[i] < 0.0) ) {
-            log(Error)<<"Could not start component: maxVelocity and maxAcceleration should be specified positive"<<endlog();
+            log(Error)<<"Reference Generator: Could not start component: maxVelocity and maxAcceleration should be specified positive"<<endlog();
             return false;
         }
     }

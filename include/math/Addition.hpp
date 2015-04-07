@@ -49,7 +49,7 @@ namespace MATH
 
     uint vectorsize;
     uint numberofinputs;
-    
+
     public:
 
     Addition(const string& name);

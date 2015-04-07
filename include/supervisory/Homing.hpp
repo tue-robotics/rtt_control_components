@@ -4,7 +4,7 @@
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
 #include <std_msgs/Bool.h>
-#include <sensor_msgs/JointState.h>
+#include <amigo_ref_interpolator/interpolator.h>
 
 using namespace std;
 using namespace RTT;
@@ -36,6 +36,7 @@ namespace SUPERVISORY
 
     typedef vector<double> doubles;
     typedef vector<int> ints;
+    typedef vector<bool> bools;
 
     class Homing
     : public RTT::TaskContext
@@ -47,14 +48,15 @@ namespace SUPERVISORY
         InputPort<doubles> jointerrors_inport;
         InputPort<doubles> absPos_inport;
         InputPort<doubles> forces_inport;
-        OutputPort<doubles> ref_outport[5];
+        OutputPort<doubles> posoutport[2];
+        OutputPort<doubles> veloutport[2];
+        OutputPort<doubles> accoutport[2];
         OutputPort<bool> homingfinished_outport;
 
         // Properties
         uint N;
         uint N_outports;
         ints outport_sizes;
-        uint cntr;
         string bodypart;
         string prefix;
 
@@ -62,55 +64,61 @@ namespace SUPERVISORY
         ints require_homing;
         ints homing_order;
         ints homing_direction;
-        doubles homing_velocity;
+        doubles homingVel;
+        doubles desiredVel;
+        doubles desiredAcc;
         doubles homing_stroke;
         doubles reset_stroke;
-        doubles homing_endpos;
-
+		double InterpolDt;
+		double InterpolEps;
+		
         doubles homing_forces;
         doubles homing_errors;
         doubles homing_absPos;
 
-        // Constants
+        // Variables
         bool homeswitchhoming;
         bool absolutehoming;
         bool forcehoming;
         bool errorhoming;
-        doubles initial_maxerr;
-        doubles initial_minpos;
-        doubles initial_maxpos;
-        doubles initial_maxvel;
-
-        // variables
-        int jointNr;
-        int state;
         bool joint_finished;
         bool finishing;
+        bool finishingdone;
+        int jointNr;
+        int state;
+        int partNr;
         double homing_stroke_goal;
         doubles position;
-        doubles ref_out;
-        doubles ref_out_prev;
+        doubles desiredPos;
+        doubles homing_endpos;
+        doubles initial_maxerr;
         doubles updated_maxerr;
-        doubles updated_minpos;
-        doubles updated_maxpos;
-        doubles updated_maxvel;
-
+        bools allowedBodyparts;
+		vector< doubles > outpos;
+		vector< doubles > outvel;
+		vector< doubles > outacc;
+		std::vector<refgen::RefGenerator> mRefGenerators;
+		std::vector<amigo_msgs::ref_point> mRefPoints;
+		
         protected:
+        
         // Component Peers
         TaskContext* Supervisor;
         TaskContext* ReadEncoders;
         TaskContext* Safety;
-        TaskContext* ReferenceGenerator;
+        TaskContext* GripperControl;
+        TaskContext* GlobalReferenceGenerator;
+        
         // Properties in Component Peers that homing component can modify
         Attribute<doubles> Safety_maxJointErrors;
-        Attribute<doubles> ReferenceGenerator_minpos;
-        Attribute<doubles> ReferenceGenerator_maxpos;
-        Attribute<doubles> ReferenceGenerator_maxvel;
+        Attribute<bools> AllowReadReferencesRefGen;
+
         // Functions in Component Peers that homing component can call
         OperationCaller<bool(string)> StartBodyPart;
         OperationCaller<bool(string)> StopBodyPart;
         OperationCaller<void(int,double)> ResetEncoder;
-        OperationCaller<void()> ResetReference;
+        OperationCaller<void(int)> ResetReferenceRefGen;
+        OperationCaller<void(int,doubles)> SendToPos;
 
         public:
 
@@ -124,8 +132,7 @@ namespace SUPERVISORY
         // Internal functions
         bool evaluateHomingCriterion(uint jointID);
         void updateHomingRef(uint jointID);
-        void sendRef(doubles output_total);
-
+        void SendRef();
 
     };
 }
