@@ -184,13 +184,6 @@ void TrajectoryActionlib::updateHook()
             // Send point to 'controller'
             const std::vector<std::string>& joint_names = gh.getGoal()->trajectory.joint_names;
 
-            //std::cout << joint_names.size() << " " << p.positions.size() << std::endl;
-
-            /*for(unsigned int j = 0; j < joint_names.size(); ++j)
-            {
-                //std::cout << "Joint " << joint_names[j] << " to " << p.positions[j] << std::endl;
-                this->setJointPosition(joint_names[j], p.positions[j]);
-            }*/
             // then loop over all joints within the message received
             uint k = 0;
             while (k < joint_names.size()) {
@@ -333,8 +326,18 @@ void TrajectoryActionlib::goalCallback(GoalHandle gh) {
 }
 
 // Called by rtt_action_server_ when a goal is cancelled / preempted
-void TrajectoryActionlib::cancelCallback(GoalHandle gh) {
-    // Handle preemption here
+void TrajectoryActionlib::cancelCallback(GoalHandle gh)
+{
+    // Find the goalhandle in the goal_handles_ vector
+    for(std::vector<TrajectoryInfo>::iterator it = goal_handles_.begin(); it != goal_handles_.end(); ++it)
+    {
+        if (gh.getGoalID().id == it->goal_handle.getGoalID().id)
+        {
+            it->goal_handle.setCanceled();
+            it = goal_handles_.erase(it);
+            return;
+        }
+    }
 }
 
 void TrajectoryActionlib::AddBodyPart(int partNr, strings JointNames)
