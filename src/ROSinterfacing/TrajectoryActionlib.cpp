@@ -151,6 +151,99 @@ void TrajectoryActionlib::updateHook()
         }
     }
 
+    // If a goal is active
+    if (!goal_handles_.empty())
+    {
+        log(Info) << "TrajectoryActionlib: Let's process this goal!" << endlog();
+
+        // Take the first item in the queue
+        TrajectoryInfo& t_info = goal_handles_.front();
+
+        GoalHandle& gh = t_info.goal_handle;
+
+        double t_end = t_info.time + 0.001; //TODO: Don't hardcode dt
+
+        // Create a vector with points to do:
+        const std::vector<trajectory_msgs::JointTrajectoryPoint>& points = gh.getGoal()->trajectory.points;
+
+        int new_index = -1;
+        for(int i = t_info.index + 1; i < (int)points.size(); ++i) // For every point
+        {
+            const trajectory_msgs::JointTrajectoryPoint& p = points[i];
+
+            if (p.time_from_start.toSec() > t_end)
+                break; // Found the first point with the timestamp not in the past.
+
+            new_index = i;
+        }
+
+        if (new_index > t_info.index) // New point!
+        {
+            const trajectory_msgs::JointTrajectoryPoint& p = points[new_index];
+
+            // Send point to 'controller'
+            const std::vector<std::string>& joint_names = gh.getGoal()->trajectory.joint_names;
+
+            //std::cout << joint_names.size() << " " << p.positions.size() << std::endl;
+
+            /*for(unsigned int j = 0; j < joint_names.size(); ++j)
+            {
+                //std::cout << "Joint " << joint_names[j] << " to " << p.positions[j] << std::endl;
+                this->setJointPosition(joint_names[j], p.positions[j]);
+            }*/
+            // then loop over all joints within the message received
+            uint k = 0;
+            while (k < joint_names.size()) {
+                map<string, BodyJointPair>::const_iterator it = joint_map.find(joint_names[k]);
+                if (it == joint_map.end()) {
+                    log(Warning) << "TrajectoryActionlib: received a message with joint name that is not listed!" << endlog();
+                    k++;
+                } else {
+                    // received a message with joint name that is found. update the output and go to the next message.
+                    BodyJointPair bjp = it->second;
+                    int body_part_id = bjp.first;
+                    int joint_id = bjp.second;
+                    if (allowedBodyparts[body_part_id] == true) {
+                        if ( minpos[body_part_id][joint_id] == 0.0 && maxpos[body_part_id][joint_id] == 0.0 ) {
+                            desiredPos [body_part_id] [joint_id] = p.positions[k];
+
+                        } else {
+                            desiredPos [body_part_id] [joint_id] = min( p.positions[k]                      , maxpos     [body_part_id][joint_id]);
+                            desiredPos [body_part_id] [joint_id] = max( minpos [body_part_id] [joint_id]    , desiredPos [body_part_id][joint_id]);
+
+                            if (p.positions[k] < (minpos [body_part_id][joint_id] - 0.05) ) {
+                                log(Warning) << "TrajectoryActionlib: Received goal " << p.positions[k] << " for partNr " << body_part_id+1 << ", joint " << joint_id+1 << ". This is outside minimal bound " << minpos [body_part_id][joint_id] << "!" << endlog();
+                            }
+                            if (p.positions[k] > (maxpos [body_part_id][joint_id] + 0.05) ) {
+                                log(Warning) << "TrajectoryActionlib: Received goal " << p.positions[k] << " for partNr " << body_part_id+1 << ", joint " << joint_id+1 << ". This is outside maximal bound " << maxpos [body_part_id][joint_id] << "!" << endlog();
+                            }
+                        }
+                        desiredVel [body_part_id] [joint_id] = maxvel [body_part_id] [joint_id];
+                        desiredAcc [body_part_id] [joint_id] = maxacc [body_part_id] [joint_id];
+
+                    } else { // Message received for bodypart that did not get the AllowReadReference!
+                        desiredPos[body_part_id][joint_id] = current_position[body_part_id][joint_id];
+                    }
+                    k++;
+                }
+            }
+
+            // Progress index
+            t_info.index = new_index;
+        }
+
+        // Progress time
+        t_info.time += 0.001; //TODO: Don't hardcode time
+
+        // Check if this was the last point. If so, remove the goal handle
+        if (new_index + 1 == points.size())
+        {
+            log(Info) << "TrajectoryActionlib: Succeeded this goal!" << endlog();
+            gh.setSucceeded();
+            goal_handles_.erase(goal_handles_.begin());
+        }
+    }
+
     // Send references
     for ( uint j = 0; j < activeBodyparts.size(); j++ ) {
         uint partNr = activeBodyparts[j];
@@ -226,11 +319,16 @@ void TrajectoryActionlib::goalCallback(GoalHandle gh) {
     }
     if (accept) {
         gh.setAccepted();
-        log(Info)<<"Accepted goal"<<endlog();
+        log(Info)<<"TrajectoryActionlib: Accepted goal"<<endlog();
+        TrajectoryInfo t_info;
+        t_info.goal_handle = gh;
+
+        // Push back goal handle
+        goal_handles_.push_back(t_info);
     }
     else {
         gh.setRejected();
-        log(Info)<<"Rejected goal"<<endlog();
+        log(Info)<<"TrajectoryActionlib: Rejected goal"<<endlog();
     }
 }
 

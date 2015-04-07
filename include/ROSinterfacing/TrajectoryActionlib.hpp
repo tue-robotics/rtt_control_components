@@ -26,6 +26,8 @@ inline string to_string (const T& t){
   return ss.str();
 };
 
+
+
 using namespace RTT;
 
 namespace ROS
@@ -82,6 +84,17 @@ namespace ROS
             GoalHandle current_gh_;
             Feedback feedback_;
             Result result_;
+
+            struct TrajectoryInfo
+            {
+                TrajectoryInfo() : time(0), index(-1) {}
+
+                GoalHandle goal_handle;
+                double time;
+                int index;
+            };
+
+            std::vector < TrajectoryInfo > goal_handles_;
 
 			// Convenience typedefs
 			typedef vector<double> doubles;

@@ -106,6 +106,7 @@ namespace SUPERVISORY
         TaskContext* Supervisor;
         TaskContext* ReadEncoders;
         TaskContext* Safety;
+        TaskContext* GripperControl;
         TaskContext* GlobalReferenceGenerator;
         
         // Properties in Component Peers that homing component can modify

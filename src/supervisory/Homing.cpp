@@ -172,6 +172,15 @@ bool Homing::startHook()
 		log(Error) << "Supervisor: Could not access peer GlobalReferenceGenerator" << endlog();
 		return false;
 	}
+	if (prefix == "LPERA" || prefix == "RPERA") {
+		if ( hasPeer( prefix + "_GripperControl" ) ) {
+			GripperControl 		= getPeer( prefix + "_GripperControl" );
+		}
+		else {
+			log(Error) << "Supervisor: Could not access peer " + prefix + "_GripperControl" << endlog();
+			return false;
+		}
+	}
 	
     // Check Connections
     if ( !Supervisor ) {
@@ -186,6 +195,11 @@ bool Homing::startHook()
         log(Error) << prefix <<"_Homing: Could not find :" << prefix << "_Safety component! Did you add it as Peer in the ops file?"<<endlog();
         return false;
     }
+    if ( !GlobalReferenceGenerator ) {
+        log(Error) << prefix <<"_Homing: Could not find :" << prefix << "_Safety component! Did you add it as Peer in the ops file?"<<endlog();
+        return false;
+    }
+    
     if ( !GlobalReferenceGenerator ) {
         log(Error) << prefix <<"_Homing: Could not find :" << prefix << "_Safety component! Did you add it as Peer in the ops file?"<<endlog();
         return false;
@@ -297,7 +311,15 @@ void Homing::updateHook()
             }
             
 			ResetReferenceRefGen(partNr);
-            
+
+			// If the component is LPERA or RPERA then the gripperControl component needs to be started
+			if (prefix == "LPERA" || prefix == "RPERA") {
+				if (!GripperControl->isRunning() )
+				{
+					GripperControl->start();
+				}
+			}
+       
 			allowedBodyparts = AllowReadReferencesRefGen.get();
  			allowedBodyparts[partNr-1] = true;
 			AllowReadReferencesRefGen.set(allowedBodyparts);
