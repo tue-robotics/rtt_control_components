@@ -15,7 +15,6 @@
 #include <rtt/Logger.hpp>
 
 #include <amigo_ref_interpolator/interpolator.h>
-#include <sensor_msgs/JointState.h>
 
 using namespace std;
 
@@ -24,8 +23,7 @@ inline string to_string (const T& t){
   stringstream ss;
   ss << t;
   return ss.str();
-};
-
+}
 
 
 using namespace RTT;
@@ -81,6 +79,7 @@ namespace ROS
 			ACTION_DEFINITION(control_msgs::FollowJointTrajectoryAction)
             rtt_actionlib::RTTActionServer<control_msgs::FollowJointTrajectoryAction> rtt_action_server_;
             typedef actionlib::ServerGoalHandle<control_msgs::FollowJointTrajectoryAction> GoalHandle;
+
             GoalHandle current_gh_;
             Feedback feedback_;
             Result result_;
@@ -108,7 +107,6 @@ namespace ROS
             // i iterates over all joints within particular bodypart
 
 			// Declaring input- and output_ports
-            InputPort<sensor_msgs::JointState> inport;
             InputPort<doubles> currentpos_inport[maxN];
 			OutputPort<doubles> posoutport[maxN];
 			OutputPort<doubles> veloutport[maxN];
