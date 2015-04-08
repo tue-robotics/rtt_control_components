@@ -12,7 +12,7 @@
     <node
       name="$(arg NAME)"
       pkg="rtt_ros" type="deployer" 
-      args="-s $(find rtt_control_components)/scripts/test.ops"
+      args="-s $(find rtt_control_components)/test/test-controller.ops"
       output="screen">
       <env name="OROCOS_TARGET" value="$(arg OROCOS_TARGET)"/>
       <env name="RTT_COMPONENT_PATH" value="$(arg RTT_COMPONENT_PATH)"/>
