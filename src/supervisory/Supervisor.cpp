@@ -93,6 +93,7 @@ bool Supervisor::configureHook()
 	goodToGO = false;
 	start_time = 0.0;
 	aquisition_time = 0.0;
+	old_structure = false;
 
 	// declaration of msgs
 	rosenabledmsg.data = true;
@@ -184,25 +185,26 @@ bool Supervisor::startHook()
 	{
 		GlobalReferenceGenerator = this->getPeer( "TrajectoryActionlib");
 	}
-	else
-	{
-		log(Error) << "Supervisor: Could not access peer GlobalReferenceGenerator" << endlog();
-		return false;
+	else {
+		old_structure = true;
 	}
-	AllowReadReferencesRefGen = GlobalReferenceGenerator->attributes()->getAttribute("allowedBodyparts");
+	
+	if (!old_structure) {
 
-    // Check Property Acces
-    if (!AllowReadReferencesRefGen.ready() ) {
-        log(Error) << "Supervisor: Could not gain acces to GlobalReferenceGenerator.AllowReadReferences"<<endlog();
-        return false;
-    }
-    
-    bools disable_all(6);
-    for ( int j = 1; j < 6; j++ ) {
-		disable_all[j] = false;
-    }
-	AllowReadReferencesRefGen.set(disable_all);
+		AllowReadReferencesRefGen = GlobalReferenceGenerator->attributes()->getAttribute("allowedBodyparts");
 
+		// Check Property Acces
+		if (!AllowReadReferencesRefGen.ready() ) {
+			log(Error) << "Supervisor: Could not gain acces to GlobalReferenceGenerator.AllowReadReferences"<<endlog();
+			return false;
+		}
+		
+		bools disable_all(6);
+		for ( int j = 1; j < 6; j++ ) {
+			disable_all[j] = false;
+		}
+		AllowReadReferencesRefGen.set(disable_all);
+	}
     return true;
 }
 
@@ -498,9 +500,11 @@ bool Supervisor::GoOperational(int partNr, diagnostic_msgs::DiagnosticArray stat
 		if (statusArray.status[partNr].level != StatusErrormsg.level) {				// if in error state, GoOp is blocked
 			stopList( HomingOnlyList[partNr] );
 			startList( OpOnlyList[partNr] );
-			allowedBodyparts = AllowReadReferencesRefGen.get();
-			allowedBodyparts[partNr-1] = true;
-			AllowReadReferencesRefGen.set(allowedBodyparts);
+			if (!old_structure) { 
+				allowedBodyparts = AllowReadReferencesRefGen.get();
+				allowedBodyparts[partNr-1] = true;
+				AllowReadReferencesRefGen.set(allowedBodyparts);
+			}
 			
 			if (statusArray.status[partNr].level != StatusHomingmsg.level) {		// if in homing state, the EnabledList does not need to be restarted
 				startList( EnabledList[partNr] );
@@ -520,10 +524,11 @@ bool Supervisor::GoIdle(int partNr, diagnostic_msgs::DiagnosticArray statusArray
 		stopList( EnabledList[partNr] );
 		stopList( HomingOnlyList[partNr] );
 		stopList( OpOnlyList[partNr] );
-		
-		allowedBodyparts = AllowReadReferencesRefGen.get();
-		allowedBodyparts[partNr-1] = false;
-		AllowReadReferencesRefGen.set(allowedBodyparts);
+		if (!old_structure) {
+			allowedBodyparts = AllowReadReferencesRefGen.get();
+			allowedBodyparts[partNr-1] = false;
+			AllowReadReferencesRefGen.set(allowedBodyparts);
+		}
 		if (statusArray.status[partNr].level != StatusErrormsg.level) {
 			setState(partNr, StatusIdlemsg);
 		}
@@ -540,11 +545,11 @@ bool Supervisor::GoHoming(int partNr, diagnostic_msgs::DiagnosticArray statusArr
 	if (staleParts[partNr] == false) {
 		if (statusArray.status[partNr].level != StatusErrormsg.level) {
 			stopList( OpOnlyList[partNr] );
-			
-			allowedBodyparts = AllowReadReferencesRefGen.get();
-			allowedBodyparts[partNr-1] = false;
-			AllowReadReferencesRefGen.set(allowedBodyparts);
-
+			if (!old_structure) {
+				allowedBodyparts = AllowReadReferencesRefGen.get();
+				allowedBodyparts[partNr-1] = false;
+				AllowReadReferencesRefGen.set(allowedBodyparts);
+			}
 			startList( EnabledList[partNr] );
 			startList( HomingOnlyList[partNr] );
 			setState(partNr, StatusHomingmsg);
@@ -564,10 +569,11 @@ bool Supervisor::GoError(int partNr, diagnostic_msgs::DiagnosticArray statusArra
 		stopList( HomingOnlyList[partNr] );
 		stopList( OpOnlyList[partNr] );
 
-		allowedBodyparts = AllowReadReferencesRefGen.get();
-		allowedBodyparts[partNr-1] = false;
-		AllowReadReferencesRefGen.set(allowedBodyparts);
-	
+		if (!old_structure) {
+			allowedBodyparts = AllowReadReferencesRefGen.get();
+			allowedBodyparts[partNr-1] = false;
+			AllowReadReferencesRefGen.set(allowedBodyparts);
+		}
 		setState(partNr, StatusErrormsg);
 	}
 	else {

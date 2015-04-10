@@ -73,6 +73,7 @@ namespace SUPERVISORY
         vector<std_msgs::Bool> emergency_switches;
         vector<string> ebutton_order;
         bools allowedBodyparts;
+        bool old_structure;
         
         // scalars
         bool emergency;     
