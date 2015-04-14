@@ -114,29 +114,18 @@ void TrajectoryActionlib::updateHook()
     {
         // Take the first item in the queue
         TrajectoryInfo& t_info = goal_handles_.front();
-
         GoalHandle& gh = t_info.goal_handle;
 
-        double t_end = t_info.time + 0.001; //TODO: Don't hardcode dt
+        // If first point, set t_start from trajectory
+        if (t_info.t_start == -1)
+            t_info.t_start = os::TimeService::Instance()->getNSecs()*1e-9;
 
-        // Create a vector with points to do:
-        const std::vector<trajectory_msgs::JointTrajectoryPoint>& points = gh.getGoal()->trajectory.points;
+        // Take first point in the queue
+        const trajectory_msgs::JointTrajectoryPoint& point = t_info.points.front();
 
-        int new_index = -1;
-        for(int i = t_info.index + 1; i < (int)points.size(); ++i) // For every point
+        // Check whether we have to start with the point
+        if (point.time_from_start.toSec() <= os::TimeService::Instance()->getNSecs()*1e-9 - t_info.t_start)
         {
-            const trajectory_msgs::JointTrajectoryPoint& p = points[i];
-
-            if (p.time_from_start.toSec() > t_end)
-                break; // Found the first point with the timestamp not in the past.
-
-            new_index = i;
-        }
-
-        if (new_index > t_info.index) // New point!
-        {
-            const trajectory_msgs::JointTrajectoryPoint& p = points[new_index];
-
             // Send point to 'controller'
             const std::vector<std::string>& joint_names = gh.getGoal()->trajectory.joint_names;
 
@@ -150,7 +139,7 @@ void TrajectoryActionlib::updateHook()
                 int body_part_id = bjp.first;
                 int joint_id = bjp.second;
                 if (allowedBodyparts[body_part_id] == true) {
-                    desiredPos [body_part_id] [joint_id] = p.positions[k];
+                    desiredPos [body_part_id] [joint_id] = point.positions[k];
                     desiredVel [body_part_id] [joint_id] = maxvel [body_part_id] [joint_id];
                     desiredAcc [body_part_id] [joint_id] = maxacc [body_part_id] [joint_id];
                 } else { // Message received for bodypart that did not get the AllowReadReference!
@@ -162,19 +151,38 @@ void TrajectoryActionlib::updateHook()
                 k++;
             }
 
-            // Progress index
-            t_info.index = new_index;
-        }
+            // Check if we are already there
+            bool already_there = true;
+            k = 0;
+            while (k < joint_names.size()) {
+                map<string, BodyJointPair>::const_iterator it = joint_map.find(joint_names[k]);
 
-        // Progress time
-        t_info.time += 0.001; //TODO: Don't hardcode time
+                // Update the output and go to the next message.
+                BodyJointPair bjp = it->second;
+                int body_part_id = bjp.first;
+                int joint_id = bjp.second;
 
-        // Check if this was the last point. If so, remove the goal handle
-        if (new_index + 1 == points.size())
-        {
-            log(Info) << "TrajectoryActionlib: Succeeded this goal!" << endlog();
-            gh.setSucceeded();
-            goal_handles_.erase(goal_handles_.begin());
+                // Remove point if we are within 0.1 error
+                if ( abs( desiredPos[body_part_id][joint_id] - mRefPoints[body_part_id][joint_id].pos) > 0.1 )
+                    already_there = false;
+
+                k++;
+            }
+
+            // Pop point if we are there :)
+            if (already_there)
+            {
+                t_info.points.pop();
+                log(Info) << "TrajectoryActionlib: We are there, poppin'!" << endlog();
+            }
+
+            // Check if this was the last point. If so, remove the goal handle
+            if (t_info.points.empty())
+            {
+                log(Info) << "TrajectoryActionlib: Succeeded this goal!" << endlog();
+                gh.setSucceeded();
+                goal_handles_.erase(goal_handles_.begin());
+            }
         }
     }
 
@@ -201,8 +209,6 @@ void TrajectoryActionlib::updateHook()
 // Called by rtt_action_server_ when a new goal is received
 void TrajectoryActionlib::goalCallback(GoalHandle gh) {
     // Accept/reject goal requests here
-
-    current_gh_ = gh;
 
     log(Info) << "TrajectoryActionlib: Received Message" << endlog();
     uint number_of_goal_joints_ = gh.getGoal()->trajectory.joint_names.size();
@@ -243,8 +249,7 @@ void TrajectoryActionlib::goalCallback(GoalHandle gh) {
     if (accept) {
         gh.setAccepted();
         log(Info)<<"TrajectoryActionlib: Accepted goal"<<endlog();
-        TrajectoryInfo t_info;
-        t_info.goal_handle = gh;
+        TrajectoryInfo t_info(gh);
 
         // Push back goal handle
         goal_handles_.push_back(t_info);
@@ -260,6 +265,7 @@ void TrajectoryActionlib::goalCallback(GoalHandle gh) {
 // Called by rtt_action_server_ when a goal is cancelled / preempted
 void TrajectoryActionlib::cancelCallback(GoalHandle gh)
 {
+    log(Info) << "TrajectoryActionlib: Cancelling this goal!" << endlog();
     // Find the goalhandle in the goal_handles_ vector
     for(std::vector<TrajectoryInfo>::iterator it = goal_handles_.begin(); it != goal_handles_.end(); ++it)
     {

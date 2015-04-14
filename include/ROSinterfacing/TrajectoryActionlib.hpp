@@ -16,6 +16,8 @@
 
 #include <amigo_ref_interpolator/interpolator.h>
 
+#include <queue>
+
 using namespace std;
 
 template <class T>
@@ -80,17 +82,20 @@ namespace ROS
             rtt_actionlib::RTTActionServer<control_msgs::FollowJointTrajectoryAction> rtt_action_server_;
             typedef actionlib::ServerGoalHandle<control_msgs::FollowJointTrajectoryAction> GoalHandle;
 
-            GoalHandle current_gh_;
             Feedback feedback_;
             Result result_;
 
             struct TrajectoryInfo
             {
-                TrajectoryInfo() : time(0), index(-1) {}
+                TrajectoryInfo(const GoalHandle& gh) : goal_handle(gh), t_start(-1)
+                {
+                    for (std::vector<trajectory_msgs::JointTrajectoryPoint>::const_iterator it = gh.getGoal()->trajectory.points.begin(); it != gh.getGoal()->trajectory.points.end(); ++it)
+                        points.push(*it);
+                }
 
+                double t_start;
                 GoalHandle goal_handle;
-                double time;
-                int index;
+                std::queue<trajectory_msgs::JointTrajectoryPoint> points;
             };
 
             std::vector < TrajectoryInfo > goal_handles_;
