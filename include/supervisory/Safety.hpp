@@ -54,6 +54,7 @@ namespace SUPERVISORY
         doubles MOTORSAT;
         double MAXCONSATTIME;
         strings add_safeties;
+        bool errorcntr;
 
 
         // variables

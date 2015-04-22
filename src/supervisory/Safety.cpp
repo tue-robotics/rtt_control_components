@@ -61,6 +61,7 @@ bool Safety::startHook()
     }
 
     errors = false;
+    errorcntr = 0;
     jointErrors.assign(NJ,0.0);
     timeReachedSaturation.assign(NM,0.0);
     firstSatInstance.resize(NM);
@@ -74,11 +75,16 @@ void Safety::updateHook()
     jointErrors_inport.read(jointErrors);
     for ( uint i = 0; i < NJ; i++ ) {
         if( (fabs(jointErrors[i])>MAX_ERRORS[i]) ) {
-            if( errors == false ){
+            if( errors == false && errorcntr >= 5) {
                 ROS_ERROR_STREAM( "Safety: Error of joint q"<<i+1<<" exceeded limit ("<<MAX_ERRORS[i]<<"). jointErrors["<<i<<"] = " << jointErrors[i] << " output disabled." );
                 log(Error)<<"Safety: Error of joint q"<<i+1<<" exceeded limit ("<<MAX_ERRORS[i]<<"). jointErrors["<<i<<"] = " << jointErrors[i] << " output disabled." <<endlog();
                 errors = true;
+            } else if ( errors == false && errorcntr < 5) {
+                errorcntr++;
             }
+        } else if (errorcntr != 0) {
+            errorcntr = 0;
+            log(Error)<<"Safety: I suspect an error of joint q"<<i+1<<" exceeded limit ("<<MAX_ERRORS[i]<<"). jointErrors["<<i<<"] = " << jointErrors[i] << " output disabled." <<endlog();
         }
     }
 
