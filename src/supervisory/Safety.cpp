@@ -79,7 +79,7 @@ void Safety::updateHook()
                 ROS_ERROR_STREAM( "Safety: Error of joint q"<<i+1<<" exceeded limit ("<<MAX_ERRORS[i]<<"). jointErrors["<<i<<"] = " << jointErrors[i] << " output disabled." );
                 log(Error)<<"Safety: Error of joint q"<<i+1<<" exceeded limit ("<<MAX_ERRORS[i]<<"). jointErrors["<<i<<"] = " << jointErrors[i] << " output disabled." <<endlog();
                 errors = true;
-            } else if ( errors == false && errorcntrs[i] < 2) {
+            } else if ( errors == false && errorcntrs[i] < 4) {
                 errorcntrs[i]++;
                 log(Error)<<"Safety: I suspect an error of joint q"<<i+1<<" exceeded limit ("<<MAX_ERRORS[i]<<"). jointErrors["<<i<<"] = " << jointErrors[i] << " output disabled." <<endlog();
                 log(Error)<<"Safety: The errorcntrs[" << i <<"] "<<errorcntrs[i] <<"!" <<endlog();
