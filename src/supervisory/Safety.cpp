@@ -75,11 +75,11 @@ void Safety::updateHook()
     jointErrors_inport.read(jointErrors);
     for ( uint i = 0; i < NJ; i++ ) {
         if( (fabs(jointErrors[i])>MAX_ERRORS[i]) ) {
-            if( errors == false && errorcntrs[i] >= 2) {
+            if( errors == false && errorcntrs[i] >= 3) {
                 ROS_ERROR_STREAM( "Safety: Error of joint q"<<i+1<<" exceeded limit ("<<MAX_ERRORS[i]<<"). jointErrors["<<i<<"] = " << jointErrors[i] << " output disabled." );
                 log(Error)<<"Safety: Error of joint q"<<i+1<<" exceeded limit ("<<MAX_ERRORS[i]<<"). jointErrors["<<i<<"] = " << jointErrors[i] << " output disabled." <<endlog();
                 errors = true;
-            } else if ( errors == false && errorcntrs[i] < 4) {
+            } else if ( errors == false && errorcntrs[i] < 3) {
                 errorcntrs[i]++;
                 log(Error)<<"Safety: I suspect an error of joint q"<<i+1<<" exceeded limit ("<<MAX_ERRORS[i]<<"). jointErrors["<<i<<"] = " << jointErrors[i] << " output disabled." <<endlog();
                 log(Error)<<"Safety: The errorcntrs[" << i <<"] "<<errorcntrs[i] <<"!" <<endlog();
