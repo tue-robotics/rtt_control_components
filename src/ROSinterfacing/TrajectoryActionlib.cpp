@@ -163,11 +163,8 @@ void TrajectoryActionlib::updateHook()
                 int joint_id = bjp.second;
 
                 // Remove point if we are within 0.1 error
-                if ( abs( desiredPos[body_part_id][joint_id] - mRefPoints[body_part_id][joint_id].pos) > 0.2 )
-                {
-                    //log(Info) << "TrajectoryActionlib: Joint name: " << joint_names[k] << " error is too large: " << abs( desiredPos[body_part_id][joint_id] - mRefPoints[body_part_id][joint_id].pos) << endlog();
+                if ( abs( desiredPos[body_part_id][joint_id] - mRefPoints[body_part_id][joint_id].pos) > 0.1 )
                     already_there = false;
-                }
 
                 k++;
             }
