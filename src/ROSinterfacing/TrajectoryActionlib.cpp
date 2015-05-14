@@ -44,9 +44,13 @@ bool TrajectoryActionlib::configureHook()
 {
     // Initialize
     minpos.resize(maxN);
+    minpos2.resize(maxN);
     maxpos.resize(maxN);
+    maxpos2.resize(maxN);
     maxvel.resize(maxN);
+    maxvel2.resize(maxN);
     maxacc.resize(maxN);
+    maxacc2.resize(maxN);
 
     checked = false;
     totalNumberOfJoints = 0;
@@ -298,9 +302,13 @@ void TrajectoryActionlib::AddBodyPart(int partNr, strings JointNames)
     desiredAcc[partNr-1].assign(JointNames.size(),0.0);
     current_position[partNr-1].assign(JointNames.size(),0.0);
     minpos[partNr-1].assign(JointNames.size(),0.0);
+    minpos2[partNr-1].assign(JointNames.size(),0.0);
     maxpos[partNr-1].assign(JointNames.size(),0.0);
+    maxpos2[partNr-1].assign(JointNames.size(),0.0);
     maxvel[partNr-1].assign(JointNames.size(),0.0);
+    maxvel2[partNr-1].assign(JointNames.size(),0.0);
     maxacc[partNr-1].assign(JointNames.size(),0.0);
+    maxacc2[partNr-1].assign(JointNames.size(),0.0);
     mRefGenerators[partNr-1].resize(JointNames.size());
     mRefPoints[partNr-1].resize(JointNames.size());
 
@@ -327,6 +335,20 @@ void TrajectoryActionlib::AddBodyPart(int partNr, strings JointNames)
     allowedBodyparts[partNr-1] = false;
 
     log(Warning) << "TrajectoryActionlib: Total of "<< totalNumberOfJoints <<" joints for " << numberOfBodyparts << " Bodyparts" << endlog();
+
+    // Get the constraints for each joint from the URDF model
+    urdf::Model Model;
+    Model.initParam("/amigo/robot_description");
+
+    for (size_t i = 0; i < JointNames.size(); ++i)
+    {
+        boost::shared_ptr<const urdf::Joint> Joint = Model.getJoint(JointNames[i]);
+        minpos2[partNr-1][i] = Joint->limits->lower;
+        maxpos2[partNr-1][i] = Joint->limits->upper;
+        maxvel2[partNr-1][i] = Joint->limits->velocity;
+        maxacc2[partNr-1][i] = Joint->limits->effort;
+    }
+
 }
 
 void TrajectoryActionlib::SendToPos(int partNr, doubles pos)
@@ -417,6 +439,10 @@ bool TrajectoryActionlib::CheckConnectionsAndProperties()
         currentpos_inport[partNr-1].read( current_position[partNr-1] );
         for ( uint i = 0; i < vector_sizes[partNr-1]; i++ ){
            mRefGenerators[partNr-1][i].setRefGen(current_position[partNr-1][i]);
+           log(Warning) << "Minpos: " << minpos2[partNr-1][i] << " == " << minpos[partNr-1][i] << endlog();
+           log(Warning) << "Maxpos: " << maxpos2[partNr-1][i] << " == " << maxpos[partNr-1][i] << endlog();
+           log(Warning) << "Maxvel: " << maxvel2[partNr-1][i] << " == " << maxvel[partNr-1][i] << endlog();
+           log(Warning) << "Maxacc: " << maxacc2[partNr-1][i] << " == " << maxacc[partNr-1][i] << endlog();
         }
     }
 
