@@ -112,13 +112,17 @@ void TrajectoryActionlib::updateHook()
     // If a goal is active
     if (!goal_handles_.empty())
     {
+        //log(Info) << "Desired: " << desiredPos[2][0] << " Send: " << pos_out[2][0] << "Actual: " << current_position[2][0] << "\n" << endlog();
+
         // Take the first item in the queue
         TrajectoryInfo& t_info = goal_handles_.front();
         GoalHandle& gh = t_info.goal_handle;
 
         // If first point, set t_start from trajectory
-        if (t_info.t_start == -1)
+        if (t_info.t_start == -1) {
             t_info.t_start = os::TimeService::Instance()->getNSecs()*1e-9;
+            log(Info) << "TrajectoryActionlib: Starting new goal!" << endlog();
+        }
 
         // Take first point in the queue
         const trajectory_msgs::JointTrajectoryPoint& point = t_info.points.front();
@@ -140,8 +144,8 @@ void TrajectoryActionlib::updateHook()
                 int joint_id = bjp.second;
                 if (allowedBodyparts[body_part_id] == true) {
                     desiredPos [body_part_id] [joint_id] = point.positions[k];
-                    desiredVel [body_part_id] [joint_id] = maxvel [body_part_id] [joint_id];
-                    desiredAcc [body_part_id] [joint_id] = maxacc [body_part_id] [joint_id];
+                    desiredVel [body_part_id] [joint_id] = point.velocities[k];
+                    desiredAcc [body_part_id] [joint_id] = point.accelerations[k];
                 } else { // Message received for bodypart that did not get the AllowReadReference!
                     log(Warning) << "TrajectoryActionlib: Message received for bodypart that did not get the AllowReadReference!" << endlog();
                     desiredPos[body_part_id][joint_id] = current_position[body_part_id][joint_id];
@@ -184,6 +188,15 @@ void TrajectoryActionlib::updateHook()
                 goal_handles_.erase(goal_handles_.begin());
             }
         }
+        if ( t_info.dt < 0.1 ) {
+            trajectory_active = true;
+        }
+        else {
+            trajectory_active = false;
+        }
+    }
+    else {
+        trajectory_active = false;
     }
 
     // Send references
@@ -193,10 +206,19 @@ void TrajectoryActionlib::updateHook()
 			
             // Compute the next reference points
             for ( uint i = 0; i < vector_sizes[partNr-1]; i++ ){
-                mRefPoints[partNr-1][i] = mRefGenerators[partNr-1][i].generateReference(desiredPos[partNr-1][i], desiredVel[partNr-1][i], desiredAcc[partNr-1][i], InterpolDts[partNr-1], false, InterpolEpses[partNr-1]);
-                pos_out[partNr-1][i]=mRefPoints[partNr-1][i].pos;
-                vel_out[partNr-1][i]=mRefPoints[partNr-1][i].vel;
-                acc_out[partNr-1][i]=mRefPoints[partNr-1][i].acc;
+                if ( trajectory_active ) { // Somebody clearly thought about this trajectory
+                    //log(Info) << "TrajectoryActionlib: desiredVel: " << desiredVel[partNr-1][i] << "desiredPos: " << desiredPos[partNr-1][i] << "pos_out: " << pos_out[partNr-1][i] << endlog();
+                    pos_out[partNr-1][i]=desiredPos[partNr-1][i];
+                    vel_out[partNr-1][i]=desiredVel[partNr-1][i];
+                    acc_out[partNr-1][i]=desiredAcc[partNr-1][i];
+                }
+                else {
+                    //log(Warning) << "Ugly trajectory detected (dx = " << abs(pos_out[partNr-1][i] - desiredPos[partNr-1][i]) << ")" << endlog();
+                    mRefPoints[partNr-1][i] = mRefGenerators[partNr-1][i].generateReference(desiredPos[partNr-1][i], maxvel[partNr-1][i], maxacc[partNr-1][i], InterpolDts[partNr-1], false, InterpolEpses[partNr-1]);
+                    pos_out[partNr-1][i]=mRefPoints[partNr-1][i].pos;
+                    vel_out[partNr-1][i]=mRefPoints[partNr-1][i].vel;
+                    acc_out[partNr-1][i]=mRefPoints[partNr-1][i].acc;
+                }
             }
 
             posoutport[partNr-1].write( pos_out[partNr-1] );
@@ -248,8 +270,10 @@ void TrajectoryActionlib::goalCallback(GoalHandle gh) {
     }
     if (accept) {
         gh.setAccepted();
-        log(Info)<<"TrajectoryActionlib: Accepted goal"<<endlog();
         TrajectoryInfo t_info(gh);
+        t_info.dt = t_info.points.back().time_from_start.toSec() / t_info.points.size();
+        log(Info)<<"TrajectoryActionlib: Accepted goal. Dt = " << t_info.dt <<endlog();
+
 
         // Push back goal handle
         goal_handles_.push_back(t_info);

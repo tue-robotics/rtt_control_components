@@ -87,13 +87,14 @@ namespace ROS
 
             struct TrajectoryInfo
             {
-                TrajectoryInfo(const GoalHandle& gh) : goal_handle(gh), t_start(-1)
+                TrajectoryInfo(const GoalHandle& gh) : goal_handle(gh), t_start(-1), dt(-1)
                 {
                     for (std::vector<trajectory_msgs::JointTrajectoryPoint>::const_iterator it = gh.getGoal()->trajectory.points.begin(); it != gh.getGoal()->trajectory.points.end(); ++it)
                         points.push(*it);
                 }
 
                 double t_start;
+                double dt;
                 GoalHandle goal_handle;
                 std::queue<trajectory_msgs::JointTrajectoryPoint> points;
             };
@@ -128,6 +129,7 @@ namespace ROS
             int totalNumberOfJoints;
             int numberOfBodyparts;
             double start_time;
+            bool trajectory_active;
 
             // Global variables - vector
             bools allowedBodyparts;
