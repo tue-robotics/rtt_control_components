@@ -13,6 +13,8 @@
 #include <control_msgs/FollowJointTrajectoryAction.h>
 #include <actionlib/action_definition.h>
 #include <rtt/Logger.hpp>
+#include <urdf/model.h>
+
 
 #include <amigo_ref_interpolator/interpolator.h>
 
@@ -119,9 +121,13 @@ namespace ROS
 
 			// Properties
             vector<doubles> minpos;
+            vector<doubles> minpos2;
             vector<doubles> maxpos;
+            vector<doubles> maxpos2;
             vector<doubles> maxvel;
+            vector<doubles> maxvel2; //TODO: Remove maxvel and rename maxvel2 to maxvel
             vector<doubles> maxacc;
+            vector<doubles> maxacc2;
 
             // Global variables - scalar
             bool checked;

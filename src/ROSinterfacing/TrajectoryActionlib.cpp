@@ -311,10 +311,6 @@ void TrajectoryActionlib::AddBodyPart(int partNr, strings JointNames)
     addPort(        ("current_pos"+to_string(partNr)),      currentpos_inport[partNr-1]).doc("Inport for current position for initial position and feedtrough for disabled mode");
 
     // Add Properties
-    addProperty(    "minPos"+to_string(partNr),             minpos[partNr-1] )          .doc("Minimum joint position limit (Homing temporarily supercedes this limits)");
-    addProperty(    "maxPos"+to_string(partNr),             maxpos[partNr-1] )          .doc("Maximum joint position limit (Homing temporarily supercedes this limits)");
-    addProperty(    "maxVel"+to_string(partNr),             maxvel[partNr-1] )          .doc("Maximum joint velocity limit (Homing temporarily lowers this limit)");
-    addProperty(    "maxAcc"+to_string(partNr),             maxacc[partNr-1] )          .doc("Maximum joint acceleration limit");
     addProperty(    "interpolatorDt"+to_string(partNr),     InterpolDts[partNr-1] )     .doc("Interpol Dt");
     addProperty(    "interpolatorEps"+to_string(partNr),    InterpolEpses[partNr-1] )   .doc("Interpol Eps");
 
@@ -327,6 +323,22 @@ void TrajectoryActionlib::AddBodyPart(int partNr, strings JointNames)
     allowedBodyparts[partNr-1] = false;
 
     log(Warning) << "TrajectoryActionlib: Total of "<< totalNumberOfJoints <<" joints for " << numberOfBodyparts << " Bodyparts" << endlog();
+
+    // Get the constraints for each joint from the URDF model
+    urdf::Model Model;
+    Model.initParam("robot_description");
+
+    for (size_t i = 0; i < JointNames.size(); ++i)
+    {
+        boost::shared_ptr<const urdf::Joint> Joint = Model.getJoint(JointNames[i]);
+        minpos[partNr-1][i] = Joint->limits->lower;
+        maxpos[partNr-1][i] = Joint->limits->upper;
+        maxvel[partNr-1][i] = Joint->limits->velocity;
+        maxacc[partNr-1][i] = Joint->limits->effort;
+
+        log(Info) << "TrajectoryActionlib: Bodypart " << partNr << ", Joint " << JointNames[i] << " has these limits: "<< endlog();
+        log(Info) << "minpos="<<minpos[partNr-1][i]<<" maxpos="<<maxpos[partNr-1][i]<<" maxvel="<<maxvel[partNr-1][i]<<" maxacc="<<maxacc[partNr-1][i]<<endlog();
+    }
 }
 
 void TrajectoryActionlib::SendToPos(int partNr, doubles pos)
