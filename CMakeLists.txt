@@ -185,11 +185,14 @@ orocos_component(GravityTorques src/arm/GravityTorques.cpp ${HEADER_FILES})
 orocos_component(GripperControl src/arm/GripperControl.cpp ${HEADER_FILES})
 orocos_component(TorqueSensorsAutoC3 src/arm/TorqueSensorsAutoC3.cpp ${HEADER_FILES})
 orocos_component(TorqueSensors src/arm/TorqueSensors.cpp ${HEADER_FILES})
+orocos_component(HandoverDetector src/arm/HandoverDetector.cpp ${HEADER_FILES})
 target_link_libraries(GravityTorquesManual ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(GravityTorques ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(GripperControl ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(TorqueSensorsAutoC3 ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(TorqueSensors ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
+target_link_libraries(HandoverDetector ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
+
 
 ### Orocos Components - ROS_interfacing ###
 orocos_component(BoolToROS src/ROSinterfacing/BoolToROS.cpp ${HEADER_FILES})
