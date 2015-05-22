@@ -7,11 +7,13 @@ using namespace ARM;
 HandoverDetector::HandoverDetector(const string& name) : TaskContext(name, PreOperational)
 {
 	addProperty( "threshold", threshold).doc("Value to determine outer bounds");
+	addProperty( "sendgrippergoal", sendgrippergoal).doc("Boolean valute to determine wether this orocos component should immediately call to open the gripper");
 	
 	// Port
 	addPort("toggle", 			toggle_inport)			.doc("Toggle port");
 	addPort("torques", 			torque_inport)			.doc("Torque in");
 	addPort("result", 			result_outport)			.doc("Port to which the result is published");
+	addPort("gripper", 			gripper_outport)		.doc("Port to send gripper command");
 }
 
 HandoverDetector::~HandoverDetector(){}
@@ -39,6 +41,8 @@ bool HandoverDetector::startHook()
 		log(Warning)<<"HandoverDetector: Could not start Component: toggle or result port not connected to ROS topic!"<<endlog();
 		return false;
 	}
+	
+	log(Warning)<<"HandoverDetector: Yeeeeeah! started HandoverDetector: !!!!!!!!"<<endlog();
 
 	return true;
 }
@@ -48,6 +52,7 @@ void HandoverDetector::updateHook()
 	if (!toggled) {
 		// Read topic in
 		if (toggle_inport.read(toggle) == NewData) {
+			
 			if (toggle.data == true) {
 				toggled = true;
 				
@@ -57,6 +62,8 @@ void HandoverDetector::updateHook()
 				
 				lowerthreshold = (1.0-threshold)*torques[0];
 				upperthreshold = (1.0+threshold)*torques[0];
+			} else {
+				log(Error)<<"HandoverDetector: Received incorrect data on toggle topic."<<endlog();
 			}
 		}
 	} else {
@@ -77,6 +84,10 @@ void HandoverDetector::updateHook()
 			result_outport.write(HandoverDetected);
 			log(Warning)<<"HandoverDetector: Handover is detected. Both thresholds are reached"<<endlog();
 			toggled = false;
+			if (sendgrippergoal) {
+				gripperCommand.direction = tue_msgs::GripperCommand::OPEN;
+				gripper_outport.write(gripperCommand);
+			}
 		}
 	}
 	
