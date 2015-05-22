@@ -20,7 +20,10 @@ bool HandoverDetector::configureHook()
 {
 	toggle.data = false;
 	toggled = false;
-	toggled_time = 0;
+	lowerthreshold = 0.0;
+	upperthreshold = 0.0;
+	lowerthresholdreached = false;
+	upperthresholdreached = false;
 	
 	return true;
 }
@@ -45,16 +48,33 @@ void HandoverDetector::updateHook()
 		// Read topic in
 		if (toggle_inport.read(toggle) == NewData) {
 			if (toggle.data == true) {
-				log(Warning)<<"HandoverDetector: Toggled Handover Detector"<<endlog();
+				toggled = true;
+				
+				// read torque sensor of joint q1
+				torque_inport.read(torques);
+				log(Warning)<<"HandoverDetector: Toggled Handover Detector with starting value: " << torques[0] << "."<<endlog();
+				
+				lowerthreshold = 0.925*torques[0];
+				upperthreshold = 1.075*torques[0];
 			}
 		}
 	} else {
-		toggled_time++;
-		if (toggled_time >= 60) {
-			std_msgs::Bool HandoverDetected;
+
+		// Check Handover Criterium
+		torque_inport.read(torques);
+		
+		if (torques[0] < lowerthreshold) {
+			lowerthresholdreached = true;
+			log(Warning)<<"HandoverDetector: Lower threshold reached"<<endlog();
+		}
+		if (torques[0] > upperthreshold) {
+			upperthresholdreached = true;
+			log(Warning)<<"HandoverDetector: Upper threshold reached"<<endlog();
+		}
+		if (lowerthresholdreached && upperthresholdreached) {
 			HandoverDetected.data = true;
 			result_outport.write(HandoverDetected);
-			log(Warning)<<"HandoverDetector: Handover Detected"<<endlog();
+			log(Warning)<<"HandoverDetector: Handover is detected. Both thresholds are reached"<<endlog();
 		}
 	}
 	

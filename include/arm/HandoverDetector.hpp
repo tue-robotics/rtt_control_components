@@ -27,7 +27,12 @@ namespace ARM
 
 	std_msgs::Bool toggle;
 	bool toggled;
-	int toggled_time;
+	doubles torques;
+	double lowerthreshold;
+	double upperthreshold;
+	bool lowerthresholdreached;
+	bool upperthresholdreached;
+	std_msgs::Bool HandoverDetected;
 
     public:
 
