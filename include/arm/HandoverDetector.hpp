@@ -20,8 +20,6 @@ namespace ARM
     private:
 
 	InputPort<std_msgs::Bool> toggle_inport;
-	InputPort<doubles> error_inport;
-	InputPort<doubles> controloutput_inport;
 	InputPort<doubles> torque_inport;
 	OutputPort<std_msgs::Bool> result_outport;
 
@@ -33,6 +31,7 @@ namespace ARM
 	bool lowerthresholdreached;
 	bool upperthresholdreached;
 	std_msgs::Bool HandoverDetected;
+	double threshold;
 
     public:
 
