@@ -378,7 +378,7 @@ void TrajectoryActionlib::ResetReference(int partNr)
     for ( uint i = 0; i < N; i++ ){
        mRefGenerators[partNr-1][i].setRefGen(actualPos[i]);
     }
-    log(Warning) <<"TrajectoryActionlib: Reset to" << actualPos[0] <<endlog();
+    log(Warning) <<"TrajectoryActionlib: Reset(0) of partNr: " << partNr << ", to: [" << actualPos[0] << "]" <<endlog();
     
     return;
 }
