@@ -133,12 +133,6 @@ bool Homing::startHook()
 	}
 	desiredVel = homingVel;
 	log(Warning) << prefix <<"_Homing: Resetted homingVel: " << homingVel[0] <<endlog();
-		
-	// Initialize refgen
-    pos_inport.read( position );
-    for ( uint i = 0; i < N; i++ ){
-       mRefGenerators[i].setRefGen(position[i]);
-    }
 
     // Connect Components
     if ( hasPeer( "Supervisor" ) ) {
@@ -284,6 +278,12 @@ bool Homing::startHook()
         }
     }    
     Safety_maxJointErrors.set(updated_maxerr);
+    
+    // Initialize refgen
+    pos_inport.read( position );
+    for ( uint i = 0; i < N; i++ ){
+       mRefGenerators[i].setRefGen(position[i]);
+    }
     
 	return true;
 }
