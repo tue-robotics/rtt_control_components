@@ -53,9 +53,10 @@ namespace SUPERVISORY
         doubles MAX_ERRORS;
         doubles MOTORSAT;
         double MAXCONSATTIME;
+        string prefix;
         strings add_safeties;
         ints errorcntrs;
-
+        int partNr;
 
         // variables
         bool errors;
@@ -64,7 +65,8 @@ namespace SUPERVISORY
         ints firstSatInstance;
         uint n_add_safeties;
 
-
+        TaskContext* TrajectoryActionlib;
+        OperationCaller<void(int)> ResetReference;
 
     public:
 
