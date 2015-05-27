@@ -85,7 +85,8 @@ namespace SUPERVISORY
         bool finishing;
         bool finishingdone;
         int jointNr;
-        int state;
+        int stateA;
+        int stateB;
         int partNr;
         double homing_stroke_goal;
         doubles position;
@@ -107,7 +108,7 @@ namespace SUPERVISORY
         TaskContext* ReadEncoders;
         TaskContext* Safety;
         TaskContext* GripperControl;
-        TaskContext* GlobalReferenceGenerator;
+        TaskContext* TrajectoryActionlib;
         
         // Properties in Component Peers that homing component can modify
         Attribute<doubles> Safety_maxJointErrors;
@@ -116,7 +117,7 @@ namespace SUPERVISORY
         // Functions in Component Peers that homing component can call
         OperationCaller<bool(string)> StartBodyPart;
         OperationCaller<bool(string)> StopBodyPart;
-        OperationCaller<void(int,double)> ResetEncoder;
+        OperationCaller<void(uint,double)> ResetEncoder;
         OperationCaller<void(int)> ResetReferenceRefGen;
         OperationCaller<void(int,doubles)> SendToPos;
 

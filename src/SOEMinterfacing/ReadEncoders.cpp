@@ -17,7 +17,7 @@ ReadEncoders::ReadEncoders(const string& name) : TaskContext(name, PreOperationa
     addProperty( "encoderbits", encoderbits ).doc("Saturation value of the encoder. For example: 65536 for a 16 bit encoder");
     addProperty( "enc2SI", enc2SI ).doc("Value to convert the encoder value to an SI value. Typically 2pi/(encodersteps_per_rev*gearbox)");
     addProperty( "offset", offset ).doc("Offset value in SI units, untested feature");
-    addOperation( "reset", &ReadEncoders::reset, this, OwnThread ).doc("Reset an encoder value to a new value, usefull for homing");
+    addOperation( "ResetEncoder", &ReadEncoders::ResetEncoder, this, OwnThread ).doc("Reset an encoder value to a new value, usefull for homing");
 }
 ReadEncoders::~ReadEncoders(){}
 
@@ -96,7 +96,7 @@ void ReadEncoders::updateHook()
         if(reNull == true){
             log(Info)<<"ReadEncoders: Renull signal received"<<endlog();
             for ( uint i = 0; i < N; i++ ) {
-                reset(i, 0.0);
+                ResetEncoder(i, 0.0);
             }
             reNull = false;
         }
@@ -108,7 +108,7 @@ void ReadEncoders::updateHook()
         if(reset_values.size() == N){
             log(Info)<<"ReadEncoders: initialize signal received"<<endlog();
             for ( uint i = 0; i < N; i++ ) {
-                reset(i, reset_values[i]);
+                ResetEncoder(i, reset_values[i]);
             }
         }
     }
@@ -153,7 +153,7 @@ double ReadEncoders::determineDt()
     return dt;
 }
 
-void ReadEncoders::reset( uint Nreset, double resetvalue )
+void ReadEncoders::ResetEncoder( uint Nreset, double resetvalue )
 {
     // ReInitialising variables
     ienc[Nreset] = 0;

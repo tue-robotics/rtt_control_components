@@ -57,7 +57,6 @@ namespace SOEM
     doubles enc_velocity;
     long double old_time;
     
-
     public:
 
     ReadEncoders(const string& name);
@@ -66,7 +65,7 @@ namespace SOEM
     bool configureHook();
     bool startHook();
     void updateHook();
-    void reset( uint Nreset, double resetvalue );
+    void ResetEncoder( uint Nreset, double resetvalue );
 
     private:
 

@@ -39,7 +39,7 @@ Safety::~Safety(){}
 
 bool Safety::configureHook()
 {  
-	TrajectoryActionlib = false;
+	TrajectoryActionlib = NULL;
 	
     n_add_safeties = add_safeties.size();
     // add an inport and for each additional safety component
@@ -55,6 +55,7 @@ bool Safety::configureHook()
     // Fetch Reset operation
     if (TrajectoryActionlib) {
 		ResetReference = TrajectoryActionlib->getOperation("ResetReference");
+		ResetReference.setCaller(TrajectoryActionlib->engine());
     }
         
     return true;
