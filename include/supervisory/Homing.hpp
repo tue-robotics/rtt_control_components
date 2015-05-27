@@ -112,14 +112,14 @@ namespace SUPERVISORY
         
         // Properties in Component Peers that homing component can modify
         Attribute<doubles> Safety_maxJointErrors;
-        Attribute<bools> AllowReadReferencesRefGen;
+        Attribute<bools> TrajectoryActionlib_allowedBodyparts;
 
         // Functions in Component Peers that homing component can call
-        OperationCaller<bool(string)> StartBodyPart;
-        OperationCaller<bool(string)> StopBodyPart;
-        OperationCaller<void(uint,double)> ResetEncoder;
-        OperationCaller<void(int)> ResetReferenceRefGen;
-        OperationCaller<void(int,doubles)> SendToPos;
+        OperationCaller<bool(string)> 		StartBodyPart;
+        OperationCaller<bool(string)> 		StopBodyPart;
+        OperationCaller<void(doubles)> 		ResetEncoders;
+        OperationCaller<void(int)> 			ResetReferences;
+        OperationCaller<void(int,doubles)> 	SendToPos;
 
         public:
 
