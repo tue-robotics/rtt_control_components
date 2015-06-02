@@ -119,7 +119,8 @@ bool Homing::startHook()
     finishing = false;
     finishingdone = false;
     jointNr = 0;
-    state = 0;
+    stateA = 0;
+    stateB = 0;
     homing_stroke_goal = 0.0;
     position.assign(N,0.0);    
     desiredPos.assign(N,0.0);
@@ -156,14 +157,14 @@ bool Homing::startHook()
 		log(Error) << "Supervisor: Could not access peer " + prefix + "_Safety" << endlog();
 		return false;
 	}
-    if ( hasPeer( "GlobalReferenceGenerator") )	{
-		GlobalReferenceGenerator = getPeer( "GlobalReferenceGenerator");
+    if ( hasPeer( "TrajectoryActionlib") )	{
+		TrajectoryActionlib = getPeer( "TrajectoryActionlib");
 	}
 	else if ( hasPeer( "TrajectoryActionlib") )	{
-		GlobalReferenceGenerator = getPeer( "TrajectoryActionlib");
+		TrajectoryActionlib = getPeer( "TrajectoryActionlib");
 	}
 	else {
-		log(Error) << "Supervisor: Could not access peer GlobalReferenceGenerator" << endlog();
+		log(Error) << "Supervisor: Could not access peer TrajectoryActionlib" << endlog();
 		return false;
 	}
 	if (prefix == "LPERA" || prefix == "RPERA") {
@@ -189,36 +190,38 @@ bool Homing::startHook()
         log(Error) << prefix <<"_Homing: Could not find :" << prefix << "_Safety component! Did you add it as Peer in the ops file?"<<endlog();
         return false;
     }
-    if ( !GlobalReferenceGenerator ) {
-        log(Error) << prefix <<"_Homing: Could not find :" << prefix << "_Safety component! Did you add it as Peer in the ops file?"<<endlog();
-        return false;
-    }
-    
-    if ( !GlobalReferenceGenerator ) {
-        log(Error) << prefix <<"_Homing: Could not find :" << prefix << "_Safety component! Did you add it as Peer in the ops file?"<<endlog();
+    if ( !TrajectoryActionlib ) {
+        log(Error) << prefix <<"_Homing: Could not find : TrajectoryActionlib component! Did you add it as Peer in the ops file?"<<endlog();
         return false;
     }
     
     // Fetch Property Acces
     Safety_maxJointErrors = Safety->attributes()->getAttribute("maxJointErrors");
-	AllowReadReferencesRefGen = GlobalReferenceGenerator->attributes()->getAttribute("allowedBodyparts");
+    TrajectoryActionlib_allowedBodyparts = TrajectoryActionlib->attributes()->getAttribute("allowedBodyparts");
 	
     // Check Property Acces
     if (!Safety_maxJointErrors.ready() ) {
         log(Error) << prefix <<"_Homing: Could not gain acces to property maxJointErrors of the "<< prefix << "_Safety component."<<endlog();
         return false;
     }
-    if ( !AllowReadReferencesRefGen.ready() ) {
-        log(Error) << prefix <<"_Homing: Could not find : AllowReadReferencesRefGen Operation!"<<endlog();
+    if ( !TrajectoryActionlib_allowedBodyparts.ready() ) {
+        log(Error) << prefix <<"_Homing: Could not gain acces to property allowedBodyparts of the TrajectoryActionlib component."<<endlog();
         return false;
     }
     
     // Fetch Operations
-    StartBodyPart = Supervisor->getOperation("StartBodyPart");
-    StopBodyPart = Supervisor->getOperation("StopBodyPart");
-    ResetEncoder = ReadEncoders->getOperation("reset");
-	ResetReferenceRefGen = GlobalReferenceGenerator->getOperation("ResetReference");
-	SendToPos = GlobalReferenceGenerator->getOperation("SendToPos");
+    StartBodyPart 	= Supervisor->getOperation(			"StartBodyPart");
+    StopBodyPart 	= Supervisor->getOperation(			"StopBodyPart");
+    ResetEncoders 	= ReadEncoders->getOperation(		"ResetEncoders");
+	ResetReferences	= TrajectoryActionlib->getOperation("ResetReferences");
+	SendToPos 		= TrajectoryActionlib->getOperation("SendToPos");
+	
+	// Set Execution engines
+	StartBodyPart.setCaller(	Supervisor->engine());
+    StopBodyPart.setCaller(		Supervisor->engine());
+    ResetEncoders.setCaller(	ReadEncoders->engine());
+	ResetReferences.setCaller(	TrajectoryActionlib->engine());
+	SendToPos.setCaller(		TrajectoryActionlib->engine());
 	
     // Check Operations
     if ( !StartBodyPart.ready() ) {
@@ -229,16 +232,16 @@ bool Homing::startHook()
         log(Error) << prefix <<"_Homing: Could not find Supervisor.StopBodyPart Operation!"<<endlog();
         return false;
     }
-    if ( !ResetEncoder.ready() ) {
-        log(Error) << prefix <<"_Homing: Could not find :" << prefix << "_ReadEncoder.reset Operation!"<<endlog();
+    if ( !ResetEncoders.ready() ) {
+        log(Error) << prefix <<"_Homing: Could not find :" << prefix << "_ReadEncoder.ResetEncoders Operation!"<<endlog();
         return false;
     }
-    if ( !ResetReferenceRefGen.ready() ) {
-        log(Error) << prefix <<"_Homing: Could not find : GlobalReferenceGenerator.ResetReference Operation!"<<endlog();
+    if ( !ResetReferences.ready() ) {
+        log(Error) << prefix <<"_Homing: Could not find : TrajectoryActionlib.ResetReferences Operation!"<<endlog();
         return false;
     }
     if ( !SendToPos.ready() ) {
-        log(Error) << prefix <<"_Homing: Could not find : GlobalReferenceGenerator.SendToPos Operation!"<<endlog();
+        log(Error) << prefix <<"_Homing: Could not find : TrajectoryActionlib.SendToPos Operation!"<<endlog();
         return false;
     }
     
@@ -292,26 +295,24 @@ void Homing::updateHook()
 {
     // Check if homing of bodypart is finished
     if(jointNr==N) {
-        if (state != 2) {	// This loop should be entered only once
-			state = 2;
-			
-            // Reset minpos and maxpos parameters, and print which joints are homed
-            string printstring = "[";
-            for (uint j = 0; j<N; j++) {
-                printstring += to_string(require_homing[j]) + ", ";
-            }
-            log(Warning) << prefix <<"_Homing: Homed joints of " << bodypart << ": " << printstring << "]!"<<endlog();
+				
+        if (stateA != 2 ) {	// Stopping and resetting bodypart This loop should be entered only once
+			stateA = 2;
+			stateB = 1;
 
-            // Reset encoders and reset ref gen
-            pos_inport.read( position );
-            StopBodyPart(bodypart);
-                        
-            for (uint j = 0; j<N; j++) {
-                ResetEncoder(homing_order[j]-1,reset_stroke[homing_order[j]-1]);
-            }
+			// Reset encoders and reset ref gen
+			pos_inport.read( position );
+
+			// Stop and Reset Encoders
+			StopBodyPart(bodypart); 
+			ResetEncoders(reset_stroke);
             
-			ResetReferenceRefGen(partNr);
-
+		} else if (stateB < 5) { // Wait a bit
+			stateB++;
+			
+		} else if (stateB == 5) { // Starting bodypart, This loop should be entered only once
+			stateB++;
+						
 			// If the component is LPERA or RPERA then the gripperControl component needs to be started
 			if (prefix == "LPERA" || prefix == "RPERA") {
 				if (!GripperControl->isRunning() )
@@ -319,22 +320,30 @@ void Homing::updateHook()
 					GripperControl->start();
 				}
 			}
-       
-			allowedBodyparts = AllowReadReferencesRefGen.get();
+		
+			// Fetch allowedBodyparts from TrajectoryAction, modify and send back
+			allowedBodyparts = TrajectoryActionlib_allowedBodyparts.get();
  			allowedBodyparts[partNr-1] = true;
-			AllowReadReferencesRefGen.set(allowedBodyparts);
+			TrajectoryActionlib_allowedBodyparts.set(allowedBodyparts);
             
-            StartBodyPart(bodypart);            
-
+            StartBodyPart(bodypart);
 			SendToPos(partNr,homing_endpos);
-            homingfinished_outport.write(true);	
+			
+			// Finised :)
+			string printstring = "[";
+            for (uint j = 0; j<N; j++) {
+                printstring += to_string(require_homing[j]) + ", ";
+            }
+			log(Warning) << prefix <<"_Homing: Finished homing joints of " << bodypart << ": " << printstring << "]!"<<endlog();
+			homingfinished_outport.write(true);	
                         
 		}
+		
 		return;
     }
     
     // Check whether homing is required for this joint
-    if (require_homing[homing_order[jointNr]-1] == 0 && (state < 2) ) {
+    if (require_homing[homing_order[jointNr]-1] == 0 && (stateA < 2) ) {
 
         // Reset parameters
 		updated_maxerr[homing_order[jointNr]-1] = initial_maxerr[homing_order[jointNr]-1];
@@ -353,8 +362,7 @@ void Homing::updateHook()
     // Read positions
     pos_inport.read(position);
 
-    if (state == 0) {
-        // Move to homing goal and evaluate homing criterion
+    if (stateA == 0) { // Move to homing goal and evaluate homing criterion
         updateHomingRef(homing_order[jointNr]-1);
 
         joint_finished = evaluateHomingCriterion(homing_order[jointNr]-1);
@@ -375,16 +383,15 @@ void Homing::updateHook()
             // Reset parameters            
             updated_maxerr[homing_order[jointNr]-1] = initial_maxerr[homing_order[jointNr]-1];
             Safety_maxJointErrors.set(updated_maxerr);
-            state++;
+            stateA++;
             
         }
-    } else {
-        // Move to zero position relative to homing position (homing_stroke_goal)
+    } else if (stateA == 1) {	// Move to zero position relative to homing position (homing_stroke_goal)
         if ( (position[homing_order[jointNr]-1] > (homing_stroke_goal-0.01) ) && (position[homing_order[jointNr]-1] < (homing_stroke_goal+0.01) ) ) {
             if (jointNr != N-1 ) {log(Warning) << prefix <<"_Homing: Finished homing of joint "<< homing_order[jointNr] << ". Proceeding to joint " << homing_order[jointNr+1]<< "! \n " <<endlog();}
             if (jointNr == N-1 ) {log(Warning) << prefix <<"_Homing: Finished homing of last joint "<< homing_order[jointNr] << ". \n" <<endlog();}
             jointNr++;
-            state = 0;
+            stateA = 0;
         }
     }
 

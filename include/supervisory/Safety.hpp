@@ -66,7 +66,7 @@ namespace SUPERVISORY
         uint n_add_safeties;
 
         TaskContext* TrajectoryActionlib;
-        OperationCaller<void(int)> ResetReference;
+        OperationCaller<void(int)> ResetReferences;
 
     public:
 

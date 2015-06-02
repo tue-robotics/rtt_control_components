@@ -167,7 +167,7 @@ namespace ROS
 			void updateHook();
             void AddBodyPart(int partNr, strings JointNames);
             void SendToPos(int partNr, doubles pos);
-            void ResetReference(int partNr);
+            void ResetReferences(int partNr);
             bool CheckConnectionsAndProperties();
             void goalCallback(GoalHandle gh);
             void cancelCallback(GoalHandle gh);

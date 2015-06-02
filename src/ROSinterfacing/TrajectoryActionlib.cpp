@@ -15,11 +15,10 @@ TrajectoryActionlib::TrajectoryActionlib(const string& name) : TaskContext(name,
 		.doc("Send the bodypart to position, used when finished homing")
 		.arg("partNr","The number of the bodypart")     
 		.arg("pos","Position to go to"); 
-    addOperation( "ResetReference", &TrajectoryActionlib::ResetReference, this, OwnThread )
+    addOperation( "ResetReferences", &TrajectoryActionlib::ResetReferences, this, OwnThread )
         .doc("Reset the reference generator to measured current position (used in homing)")
         .arg("partNr","The number of the bodypart");
-
-
+    
     // Actionlib
     // Add action server ports to this task's root service
     rtt_action_server_.addPorts(this->provides());
@@ -37,7 +36,7 @@ TrajectoryActionlib::~TrajectoryActionlib()
     // remove operations
     remove("AddBodyPart");
     remove("SendToPos");
-    remove("ResetReference");
+    remove("ResetReferences");
 }
 
 bool TrajectoryActionlib::configureHook()
@@ -364,10 +363,10 @@ void TrajectoryActionlib::SendToPos(int partNr, doubles pos)
     return;
 }
 
-void TrajectoryActionlib::ResetReference(int partNr)
+void TrajectoryActionlib::ResetReferences(int partNr)
 {
 	if (partNr < 0 || partNr > maxN ) {
-		log(Error) <<"TrajectoryActionlib::ResetReference: Invalid partNr provided: partNr = " << partNr <<endlog();
+		log(Error) <<"TrajectoryActionlib::ResetReferences: Invalid partNr provided: partNr = " << partNr <<endlog();
 		return;
 	}
 	
@@ -378,8 +377,7 @@ void TrajectoryActionlib::ResetReference(int partNr)
     for ( uint i = 0; i < N; i++ ){
        mRefGenerators[partNr-1][i].setRefGen(actualPos[i]);
     }
-    log(Warning) <<"TrajectoryActionlib: Reset(0) of partNr: " << partNr << ", to: [" << actualPos[0] << "]" <<endlog();
-    
+        
     return;
 }
 

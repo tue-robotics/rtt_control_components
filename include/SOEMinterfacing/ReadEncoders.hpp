@@ -46,18 +46,17 @@ namespace SOEM
     // Declaring message types
     double previous_enc_position[maxN];
     doubles SI_values;
-    doubles ENC_value;
-    doubles init_SI_value;
+    doubles ENC_values;
+    doubles init_SI_values;
     int ienc[maxN];
     doubles enc2SI;
-    doubles offset;
+    doubles offsets;
     uint encoderbits;
     ints enc_position;
     ints enc_position_prev;
     doubles enc_velocity;
     long double old_time;
     
-
     public:
 
     ReadEncoders(const string& name);
@@ -66,7 +65,7 @@ namespace SOEM
     bool configureHook();
     bool startHook();
     void updateHook();
-    void reset( uint Nreset, double resetvalue );
+    void ResetEncoders( doubles resetvalues );
 
     private:
 

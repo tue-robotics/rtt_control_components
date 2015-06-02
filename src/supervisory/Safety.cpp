@@ -39,7 +39,7 @@ Safety::~Safety(){}
 
 bool Safety::configureHook()
 {  
-	TrajectoryActionlib = false;
+	TrajectoryActionlib = NULL;
 	
     n_add_safeties = add_safeties.size();
     // add an inport and for each additional safety component
@@ -47,16 +47,25 @@ bool Safety::configureHook()
         addPort( add_safeties[i], safe_inports[i] );
     }
        
-    // Connect Components
+    // Connect and check Component
     if ( hasPeer( "TrajectoryActionlib" ) ) {
 		TrajectoryActionlib 		= getPeer( "TrajectoryActionlib");
+	    if ( !TrajectoryActionlib ) {
+			log(Error) << prefix <<"_Homing: Could not find : TrajectoryActionlib component! Did you add it as Peer in the ops file?"<<endlog();
+			return false;
+		}
 	}
 		  
-    // Fetch Reset operation
+    // Fetch Reset operation and check operation
     if (TrajectoryActionlib) {
-		ResetReference = TrajectoryActionlib->getOperation("ResetReference");
+		ResetReferences = TrajectoryActionlib->getOperation("ResetReferences");
+		ResetReferences.setCaller(TrajectoryActionlib->engine());
+		if ( !ResetReferences.ready() ) {
+			log(Error) << prefix <<"_Homing: Could not find : TrajectoryActionlib.ResetReferences Operation!"<<endlog();
+			return false;
+		}
     }
-        
+       
     return true;
 }
 
@@ -83,7 +92,7 @@ bool Safety::startHook()
    
     // Reset Reference
     if (TrajectoryActionlib) {
-		ResetReference(partNr);
+		ResetReferences(partNr);
 	}
 
     return true;

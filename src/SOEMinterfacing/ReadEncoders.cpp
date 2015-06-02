@@ -16,8 +16,8 @@ ReadEncoders::ReadEncoders(const string& name) : TaskContext(name, PreOperationa
     // Creating Properties
     addProperty( "encoderbits", encoderbits ).doc("Saturation value of the encoder. For example: 65536 for a 16 bit encoder");
     addProperty( "enc2SI", enc2SI ).doc("Value to convert the encoder value to an SI value. Typically 2pi/(encodersteps_per_rev*gearbox)");
-    addProperty( "offset", offset ).doc("Offset value in SI units, untested feature");
-    addOperation( "reset", &ReadEncoders::reset, this, OwnThread ).doc("Reset an encoder value to a new value, usefull for homing");
+    addProperty( "offset", offsets ).doc("Offset value in SI units, untested feature");
+    addOperation( "ResetEncoders", &ReadEncoders::ResetEncoders, this, OwnThread ).doc("Reset an encoder value to a new value, usefull for homing");
 }
 ReadEncoders::~ReadEncoders(){}
 
@@ -26,9 +26,9 @@ bool ReadEncoders::configureHook()
     // Determine number of encoders to be read
     N = enc2SI.size();
     SI_values.assign(N, 0.0);
-    ENC_value.assign(N, 0.0);
-    init_SI_value.assign(N, 0.0);
-    offset.assign(N,0.0);
+    ENC_values.assign(N, 0.0);
+    init_SI_values.assign(N, 0.0);
+    offsets.assign(N,0.0);
     enc_position.assign(N,0);
     enc_position_prev.assign(N,0);
     enc_velocity.assign(N,0.0);
@@ -80,8 +80,8 @@ bool ReadEncoders::startHook()
         // Initialising variables
         ienc[i] = 0;
         previous_enc_position[i] = 0.0; // obsolete
-        init_SI_value[i] = 0.0;
-        init_SI_value[i] = readEncoder(i)-offset[i];
+        init_SI_values[i] = 0.0;
+        init_SI_values[i] = readEncoder(i)-offsets[i];
         enc_position_prev[i] = enc_position[i];
     }
 
@@ -95,9 +95,8 @@ void ReadEncoders::updateHook()
     if(NewData == inport_reNull.read(reNull)){
         if(reNull == true){
             log(Info)<<"ReadEncoders: Renull signal received"<<endlog();
-            for ( uint i = 0; i < N; i++ ) {
-                reset(i, 0.0);
-            }
+            doubles zeros(N,0.0);
+            ResetEncoders(zeros);
             reNull = false;
         }
     }
@@ -107,9 +106,7 @@ void ReadEncoders::updateHook()
     if( NewData == inport_init.read(reset_values)){
         if(reset_values.size() == N){
             log(Info)<<"ReadEncoders: initialize signal received"<<endlog();
-            for ( uint i = 0; i < N; i++ ) {
-                reset(i, reset_values[i]);
-            }
+            ResetEncoders(reset_values);
         }
     }
 
@@ -124,7 +121,7 @@ void ReadEncoders::updateHook()
 
     outport.write(SI_values);
     outport_vel.write(enc_velocity);
-    outport_enc.write(ENC_value);
+    outport_enc.write(ENC_values);
     counter++;
 }
 
@@ -134,14 +131,14 @@ double ReadEncoders::readEncoder( int i )
     inport_enc[i].read(encdata);
 
     uint new_enc_position = encdata.value;
-    ENC_value[i] = encdata.value;
+    ENC_values[i] = encdata.value;
     if( (previous_enc_position[i] - new_enc_position) > encoderbits/2)
         ienc[i]++;
     else if( (previous_enc_position[i] - new_enc_position) < (-1 * (double)encoderbits/2))
         ienc[i]--;
     previous_enc_position[i] = new_enc_position;
     enc_position[i] = ienc[i] * encoderbits + new_enc_position;
-    double SI_value =  ((double)enc_position[i] * enc2SI[i]) - init_SI_value[i] + offset[i];
+    double SI_value =  ((double)enc_position[i] * enc2SI[i]) - init_SI_values[i] + offsets[i];
     return SI_value;
 }
 
@@ -153,14 +150,19 @@ double ReadEncoders::determineDt()
     return dt;
 }
 
-void ReadEncoders::reset( uint Nreset, double resetvalue )
+void ReadEncoders::ResetEncoders( doubles resetvalues )
 {
-    // ReInitialising variables
-    ienc[Nreset] = 0;
-    previous_enc_position[Nreset] = 0.0;
-    init_SI_value[Nreset] = 0.0;
-    init_SI_value[Nreset] = readEncoder(Nreset) - resetvalue;
-    enc_position_prev[Nreset] = enc_position[Nreset];
+	if (resetvalues.size() != N) {
+		log(Error)<<"ReadEncoders: initialize signal received with incorrect size: " << resetvalues.size() << ". Size should be " << N <<"."<<endlog();
+	}
+	
+	for ( uint i = 0; i < resetvalues.size(); i++ ) {
+		ienc[i] = 0;
+		previous_enc_position[i] = 0.0;
+		init_SI_values[i] = 0.0;
+		init_SI_values[i] = readEncoder(i) - resetvalues[i];
+		enc_position_prev[i] = enc_position[i];
+	}
 }
 
 ORO_CREATE_COMPONENT(SOEM::ReadEncoders)
