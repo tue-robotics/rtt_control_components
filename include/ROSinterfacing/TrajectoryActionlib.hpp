@@ -125,7 +125,9 @@ namespace ROS
             InputPort<doubles> currentpos_inport[maxN];
 			OutputPort<doubles> posoutport[maxN];
 			OutputPort<doubles> veloutport[maxN];
-			OutputPort<doubles> accoutport[maxN];
+            OutputPort<doubles> accoutport[maxN];
+            OutputPort<double> debug1port;
+            OutputPort<double> debug2port;
 
 			// Properties
             vector<doubles> minpos;

@@ -68,6 +68,9 @@ bool TrajectoryActionlib::configureHook()
     mRefGenerators.resize(maxN);
     mRefPoints.resize(maxN);
 
+    addPort("debug1", debug1port);
+    addPort("debug2", debug2port);
+
     return true;
 }
 
@@ -223,6 +226,13 @@ void TrajectoryActionlib::updateHook()
             posoutport[partNr-1].write( pos_out[partNr-1] );
             veloutport[partNr-1].write( vel_out[partNr-1] );
             accoutport[partNr-1].write( acc_out[partNr-1] );
+        }
+
+        // Debug
+        if (partNr==2)
+        {
+            debug1port.write( desiredPos[partNr-1][0] ) ;
+            debug2port.write( pos_out[partNr-1][0] );
         }
     }
 }
