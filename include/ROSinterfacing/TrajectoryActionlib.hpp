@@ -101,6 +101,13 @@ namespace ROS
                 std::queue<trajectory_msgs::JointTrajectoryPoint> points;
             };
 
+            struct Setpoint
+            {
+                double x;
+                double v;
+                double a;
+            };
+
             std::vector < TrajectoryInfo > goal_handles_;
 
 			// Convenience typedefs
@@ -173,6 +180,8 @@ namespace ROS
             bool CheckConnectionsAndProperties();
             void goalCallback(GoalHandle gh);
             void cancelCallback(GoalHandle gh);
+            Setpoint Interpolate(double x_in, double x_min, double x_max, double v_max, double a_max, double x_prev, double v_prev);
+
 	};
 }
 #endif
