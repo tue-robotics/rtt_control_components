@@ -64,6 +64,10 @@ namespace SUPERVISORY
         OutputPort<std_msgs::Bool> isenabled_rosport[6];
         OutputPort<diagnostic_msgs::DiagnosticArray> hardwareStatusPort;
         
+        // Properties
+        vector<string> ebutton_order;
+        bool restart_aftererror;
+        
 		//vectors
         bool homeableParts[6];
         bool idleDueToEmergencyButton[6];
@@ -71,15 +75,16 @@ namespace SUPERVISORY
         bool staleParts[6]; // staleparts is used to make sure, components that aren't started will be shown stale on the dashboard
         string bodyParts[6];
         vector<std_msgs::Bool> emergency_switches;
-        vector<string> ebutton_order;
         bools allowedBodyparts;
         bool old_structure;
         
         // scalars
+        bool detected_error;
         bool emergency;     
         bool goodToGO;   
 		long double aquisition_time;
 		long double start_time;
+		long double error_dected_time;
 		int number_of_ebuttons;
 		
 		// msgs

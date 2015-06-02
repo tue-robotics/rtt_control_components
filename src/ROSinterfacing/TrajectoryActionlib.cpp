@@ -15,11 +15,10 @@ TrajectoryActionlib::TrajectoryActionlib(const string& name) : TaskContext(name,
 		.doc("Send the bodypart to position, used when finished homing")
 		.arg("partNr","The number of the bodypart")     
 		.arg("pos","Position to go to"); 
-    addOperation( "ResetReference", &TrajectoryActionlib::ResetReference, this, OwnThread )
+    addOperation( "ResetReferences", &TrajectoryActionlib::ResetReferences, this, OwnThread )
         .doc("Reset the reference generator to measured current position (used in homing)")
         .arg("partNr","The number of the bodypart");
-
-
+    
     // Actionlib
     // Add action server ports to this task's root service
     rtt_action_server_.addPorts(this->provides());
@@ -37,7 +36,7 @@ TrajectoryActionlib::~TrajectoryActionlib()
     // remove operations
     remove("AddBodyPart");
     remove("SendToPos");
-    remove("ResetReference");
+    remove("ResetReferences");
 }
 
 bool TrajectoryActionlib::configureHook()
@@ -332,10 +331,6 @@ void TrajectoryActionlib::AddBodyPart(int partNr, strings JointNames)
     addPort(        ("current_pos"+to_string(partNr)),      currentpos_inport[partNr-1]).doc("Inport for current position for initial position and feedtrough for disabled mode");
 
     // Add Properties
-    addProperty(    "minPos"+to_string(partNr),             minpos[partNr-1] )          .doc("Minimum joint position limit (Homing temporarily supercedes this limits)");
-    addProperty(    "maxPos"+to_string(partNr),             maxpos[partNr-1] )          .doc("Maximum joint position limit (Homing temporarily supercedes this limits)");
-    addProperty(    "maxVel"+to_string(partNr),             maxvel[partNr-1] )          .doc("Maximum joint velocity limit (Homing temporarily lowers this limit)");
-    addProperty(    "maxAcc"+to_string(partNr),             maxacc[partNr-1] )          .doc("Maximum joint acceleration limit");
     addProperty(    "interpolatorDt"+to_string(partNr),     InterpolDts[partNr-1] )     .doc("Interpol Dt");
     addProperty(    "interpolatorEps"+to_string(partNr),    InterpolEpses[partNr-1] )   .doc("Interpol Eps");
 
@@ -348,6 +343,22 @@ void TrajectoryActionlib::AddBodyPart(int partNr, strings JointNames)
     allowedBodyparts[partNr-1] = false;
 
     log(Warning) << "TrajectoryActionlib: Total of "<< totalNumberOfJoints <<" joints for " << numberOfBodyparts << " Bodyparts" << endlog();
+
+    // Get the constraints for each joint from the URDF model
+    urdf::Model Model;
+    Model.initParam("robot_description");
+
+    for (size_t i = 0; i < JointNames.size(); ++i)
+    {
+        boost::shared_ptr<const urdf::Joint> Joint = Model.getJoint(JointNames[i]);
+        minpos[partNr-1][i] = Joint->limits->lower;
+        maxpos[partNr-1][i] = Joint->limits->upper;
+        maxvel[partNr-1][i] = Joint->limits->velocity;
+        maxacc[partNr-1][i] = Joint->limits->effort;
+
+        log(Info) << "TrajectoryActionlib: Bodypart " << partNr << ", Joint " << JointNames[i] << " has these limits: "<< endlog();
+        log(Info) << "minpos="<<minpos[partNr-1][i]<<" maxpos="<<maxpos[partNr-1][i]<<" maxvel="<<maxvel[partNr-1][i]<<" maxacc="<<maxacc[partNr-1][i]<<endlog();
+    }
 }
 
 void TrajectoryActionlib::SendToPos(int partNr, doubles pos)
@@ -373,10 +384,10 @@ void TrajectoryActionlib::SendToPos(int partNr, doubles pos)
     return;
 }
 
-void TrajectoryActionlib::ResetReference(int partNr)
+void TrajectoryActionlib::ResetReferences(int partNr)
 {
 	if (partNr < 0 || partNr > maxN ) {
-		log(Error) <<"TrajectoryActionlib::ResetReference: Invalid partNr provided: partNr = " << partNr <<endlog();
+		log(Error) <<"TrajectoryActionlib::ResetReferences: Invalid partNr provided: partNr = " << partNr <<endlog();
 		return;
 	}
 	
@@ -387,8 +398,7 @@ void TrajectoryActionlib::ResetReference(int partNr)
     for ( uint i = 0; i < N; i++ ){
        mRefGenerators[partNr-1][i].setRefGen(actualPos[i]);
     }
-    log(Warning) <<"TrajectoryActionlib: Reset to" << actualPos[0] <<endlog();
-    
+        
     return;
 }
 
