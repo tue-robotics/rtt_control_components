@@ -54,7 +54,12 @@ Supervisor::Supervisor(const string& name) :
             .arg("partName","The name of the bodypart");  
     addOperation("DisplaySupervisoredPeers", &Supervisor::displaySupervisoredPeers, this, ClientThread)
             .doc("Display the list of peers");
-            
+    
+    // Properties
+	restart_aftererror = false;
+	addProperty( "ebuttonorder", ebutton_order );
+	addProperty( "restart_aftererror", restart_aftererror );
+	        
 	// Ports
 	addPort( "rosshutdown", rosshutdownport );
 	addPort( "rosetherCATenabled", enabled_rosport );
@@ -62,7 +67,6 @@ Supervisor::Supervisor(const string& name) :
 	addPort( "dashboardCmd", dashboardCmdPort ).doc("To receive dashboard commands ");  
 	addPort( "hardware_status", hardwareStatusPort ).doc("To send hardware status to dashboard "); 
 	addPort( "ebutton_status", ebuttonStatusPort ).doc("To send ebutton status to dashboard "); 
-	addProperty( "ebuttonorder", ebutton_order );
 }
 
 Supervisor::~Supervisor()
@@ -93,6 +97,8 @@ bool Supervisor::configureHook()
 	goodToGO = false;
 	start_time = 0.0;
 	aquisition_time = 0.0;
+	error_dected_time = 0.0;
+	detected_error = false;
 	old_structure = false;
 
 	// declaration of msgs
@@ -351,6 +357,30 @@ void Supervisor::updateHook()
 	// send hardware status to dashboard
 	if (goodToGO) {
 		hardwareStatusPort.write(hardwareStatusmsg);
+	}
+	
+	// Check if autonomous restart of a hardware component is required
+	if (restart_aftererror) {
+		if (hardwareStatusmsg.status[0].level == StatusErrormsg.level) {
+			if (!detected_error) {
+				detected_error = true;
+				log(Warning) << "Supervisor: Automatic Restart: Error detected. Starting countdown!" << endlog();
+				error_dected_time = os::TimeService::Instance()->getNSecs()*1e-9;		
+			} else if (os::TimeService::Instance()->getNSecs()*1e-9 - error_dected_time >= 5.0) {	
+				for ( int partNr = 1; partNr < 6; partNr++ ) {
+					if (hardwareStatusmsg.status[partNr].level == StatusErrormsg.level) {
+						log(Warning) << "Supervisor: Automatic Restart: Autonomously Restarting bodypart: " << partNr << " !" << endlog();
+						detected_error = false;
+					
+						// first go Idle then restart bodypart:
+						setState(partNr, StatusIdlemsg);
+						GoOperational(partNr,hardwareStatusmsg);
+					}
+				}
+			}
+		} else {
+				detected_error = false;
+		}	
 	}
     
 	// Check for shutdown command

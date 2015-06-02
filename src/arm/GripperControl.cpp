@@ -149,7 +149,8 @@ void GripperControl::updateHook()
 			//log(Warning)<<"CLOSING GRIPPER torques = "<<torques[GRIPPER_INDEX]<<endlog();
 			if ( (torques[GRIPPER_INDEX] >= threshold_closed && torques[GRIPPER_INDEX] < MAX_TORQUE) || ( gripperHomed && (measPos[GRIPPER_INDEX] < 0.0)) ){
 				log(Warning)<<"Gripper is CLOSED - force"<<endlog();
-				gripperMeasurement.end_position_reached = true;
+				gripperMeasurement.end_position_reached = false;
+				gripperMeasurement.max_torque_reached = true;
 				desiredPos = measPos[GRIPPER_INDEX];
 				completed = true;
 			} 
