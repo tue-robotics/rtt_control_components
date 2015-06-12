@@ -44,38 +44,90 @@ Homing::Homing(const string& name) : TaskContext(name, PreOperational)
     addProperty( "homing_forces",   	homing_forces   ).doc("Force threshold for force sensor homing");
     addProperty( "homing_errors",   	homing_errors   ).doc("Error threshold for endstop homing");
     addProperty( "homing_absPos",   	homing_absPos   ).doc("Value of the absolute sensor at qi=0 for absolute sensor homing");
+
+    //! Init TaskContext pointers as Null pointer
+    Supervisor = NULL;
+    ReadEncoders = NULL;
+    Safety = NULL;
+    GripperControl = NULL;
+    TrajectoryActionlib = NULL;
 }
 
-Homing::~Homing(){}
+Homing::~Homing()
+{
+    //! Delete TaskContext pointers
+    delete Supervisor;
+    delete ReadEncoders;
+    delete Safety;
+    delete TrajectoryActionlib;
+    if (prefix == "LPERA" || prefix == "RPERA") {
+        delete GripperControl;
+    }
+
+    //! Remove Operations
+    remove("StartBodyPart");
+    remove("StopBodyPart");
+    remove("ResetEncoders");
+    remove("ResetReferences");
+    remove("SendToPos");
+}
 
 bool Homing::configureHook()
 {
-    // Input checks generic
-    if (homing_type.size() != N || require_homing.size() != N || homing_order.size() != N  ) {
-        log(Error) << prefix <<"_Homing: size of homing_type ("<<homing_type.size()<<"), require_homing ("<<require_homing.size()<<") or homing_order ("<<homing_order.size()<<") does not match vector_size ("<<N<<")"<<endlog(); 
-        return false;
-    }
-    if (homing_direction.size() != N || homingVel.size() != N || desiredAcc.size() != N || homing_stroke.size() != N || reset_stroke.size() != N || homing_endpos.size() != outport_sizes[0] ) {
-        log(Error) << prefix <<"_Homing: size of homing_direction ("<<homing_direction.size()<<"), homing_velocity ("<<homingVel.size()<<"), homing_acceleration ("<<desiredAcc.size()<<"), homing_stroke ("<<homing_stroke.size()<<"), reset_stroke ("<<reset_stroke.size()<<" or homing_endpos ("<<homing_endpos.size()<<")"<<endlog();
-        return false;
-    }
-	if (partNr < 0 || partNr > 6 ) {        
-		log(Error) << prefix <<"_Homing: invalid partNr: " << partNr << "!"<<endlog();
-        return false;
-    }
-    if (InterpolDt <= 0.0 || InterpolEps <= 0.0 ) {        
-		log(Error) << prefix <<"_Homing: InterpolDt or InterpolEps is invalid can't be equal or less than zero: " << partNr << "!"<<endlog();
-        return false;
-    }
-    
-    // add outports
+    //! add outports
     for ( uint j = 0; j < N_outports; j++ ) {
-        addPort( ("posout"+to_string(j+1)), posoutport[j] ); 
-        addPort( ("velout"+to_string(j+1)), veloutport[j] ); 
-        addPort( ("accout"+to_string(j+1)), accoutport[j] ); 
-	}
+        addPort( ("posout"+to_string(j+1)), posoutport[j] );
+        addPort( ("velout"+to_string(j+1)), veloutport[j] );
+        addPort( ("accout"+to_string(j+1)), accoutport[j] );
+    }
 
-    // Check which types of homing are required 
+
+    //! Property checks
+    // Scalars
+    if (N <= 1 || N > 10 ) {
+        log(Error) << prefix <<"_Homing: Could not configure component: invalid N: " << N << "!"<<endlog();
+        return false;
+    }
+    if (N_outports <= 1 || N_outports > 10 ) {
+        log(Error) << prefix <<"_Homing: Could not configure component: invalid N_outports: " << N_outports << "!"<<endlog();
+        return false;
+    }
+    if (partNr <= 0 || partNr > 6 ) {
+        log(Error) << prefix <<"_Homing: Could not configure component: invalid partNr: " << partNr << "!"<<endlog();
+        return false;
+    }
+    if (InterpolDt <= 0.0 || InterpolEps <= 0.0 ) {
+        log(Error) << prefix <<"_Homing: Could not configure component: InterpolDt or InterpolEps is invalid can't be equal or less than zero: " << partNr << "!"<<endlog();
+        return false;
+    }
+    // Strings
+    if (bodypart == "" || prefix == "" ) {
+        log(Warning) << prefix <<"_Homing: bodypart of prefix is an empty spring. Please set these in your ops file." << partNr << "!"<<endlog();
+    }
+    // Vectors
+    if ( outport_sizes.size() != N_outports ) {
+        log(Error) << prefix <<"_Homing: Could not configure component: invalid size " << outport_sizes.size() << " of outport_sizes. Should be size: "<< N_outports << "." << partNr << "!"<<endlog();
+        return false;
+    }
+    if (homing_type.size() != N || require_homing.size() != N || homing_order.size() != N  ) {
+        log(Error) << prefix <<"_Homing: Could not configure component: size of homing_type ("<<homing_type.size()<<"), require_homing ("<<require_homing.size()<<") or homing_order ("<<homing_order.size()<<") does not match vector_size ("<<N<<")"<<endlog();
+        return false;
+    }
+    if (homing_direction.size() != N || homingVel.size() != N || homing_stroke.size() != N || reset_stroke.size() != N  ) {
+        log(Error) << prefix <<"_Homing: Could not configure component: size of homing_direction ("<<homing_direction.size()<<"), homing_velocity ("<<homingVel.size()<<"), homing_acceleration ("<<desiredAcc.size()<<"), homing_stroke ("<<homing_stroke.size()<<"), reset_stroke ("<<reset_stroke.size()<<" or homing_endpos ("<<homing_endpos.size()<<")"<<endlog();
+        return false;
+    }
+    if (desiredVel.size() != N || desiredAcc.size() != N) {
+        log(Error) << prefix <<"_Homing: Could not configure component: size of desiredVel "<<desiredVel.size()<<" or size of desiredAcc "<<desiredAcc.size()<<" is incorrect. Size should be: " << N << "." <<endlog();
+        return false;
+    }
+    if (homing_endpos.size() != outport_sizes[0]) {
+        log(Error) << prefix <<"_Homing: Could not configure component: size of homing_endpos "<<homing_endpos.size()<<" does not match outport_sizes[0] "<<outport_sizes[0]<< "." <<endlog();
+        return false;
+    }
+
+
+    //! Check which types of homing are required
     homeswitchhoming = false;
     errorhoming     = false;
     absolutehoming  = false;
@@ -90,18 +142,20 @@ bool Homing::configureHook()
         } else if (homing_type[j] == 4) {
             forcehoming = true;
         } else {
-			log(Error) << prefix <<"_Homing: Invalid homing type provided. Choose 1 for homeswitch homing, 2 for servoerror homing, 3 for absolute sensor homing, 4 for force sensor homing"<<endlog();
+            log(Error) << prefix <<"_Homing: Could not configure component: Invalid homing type provided. Choose 1 for homeswitch homing, 2 for servoerror homing, 3 for absolute sensor homing, 4 for force sensor homing"<<endlog();
             return false;
         }
     }
 
-    // Input checks specific for homing types
+
+    //! Input checks specific for homing types
     if ( (forcehoming && homing_forces.size() != N) || (errorhoming && homing_errors.size() != N) || (absolutehoming && homing_absPos.size() != N) ) {
-        log(Error) << prefix <<"_Homing: homing_forces["<< homing_forces.size() <<"], homing_errors["<< homing_errors.size() <<"], homing_absPos["<< homing_absPos.size() <<"] should be size " << N <<"."<<endlog();        
+        log(Error) << prefix <<"_Homing: Could not configure component: homing_forces["<< homing_forces.size() <<"], homing_errors["<< homing_errors.size() <<"], homing_absPos["<< homing_absPos.size() <<"] should be size " << N <<"."<<endlog();
         return false;
     }
     
-    // Resizing
+
+    //! Resizing
     mRefGenerators.resize(N);
     mRefPoints.resize(N);
     outpos.resize(N_outports);
@@ -114,7 +168,7 @@ bool Homing::configureHook()
 
 bool Homing::startHook()
 {
-    // Set variables
+    //! Init
     joint_finished = false;
     finishing = false;
     finishingdone = false;
@@ -122,7 +176,7 @@ bool Homing::startHook()
     stateA = 0;
     stateB = 0;
     homing_stroke_goal = 0.0;
-    position.assign(N,0.0);    
+    position.assign(N,0.0);
     desiredPos.assign(N,0.0);
     initial_maxerr.assign(N,0.0);
     updated_maxerr.assign(N,0.0);
@@ -133,30 +187,37 @@ bool Homing::startHook()
 		outacc[n].assign(outport_sizes[n],0.0);
 	}
 	desiredVel = homingVel;
-	log(Warning) << prefix <<"_Homing: Resetted homingVel: " << homingVel[0] <<endlog();
 
-    // Connect Components
+
+    //! Check peers and set TaskContext pointers to components
+    // Supervisor
     if ( hasPeer( "Supervisor" ) ) {
 		Supervisor 		= getPeer( "Supervisor");
 	}
 	else {
-		log(Error) << "Supervisor: Could not access peer Supervisor" << endlog();
+        log(Error) << "Supervisor: Could not start component: Could not access peer Supervisor" << endlog();
 		return false;
 	}
+
+    // ReadEncoders
 	if ( hasPeer( prefix + "_ReadEncoders" ) ) {
 		ReadEncoders 		= getPeer( prefix + "_ReadEncoders" );
 	}
 	else {
-		log(Error) << "Supervisor: Could not access peer " + prefix + "_ReadEncoders" << endlog();
+        log(Error) << "Supervisor: Could not start component: Could not access peer " + prefix + "_ReadEncoders" << endlog();
 		return false;
 	}
+
+    // Safety
 	if ( hasPeer( prefix + "_Safety" ) ) {
 		Safety 		= getPeer( prefix + "_Safety" );
 	}
 	else {
-		log(Error) << "Supervisor: Could not access peer " + prefix + "_Safety" << endlog();
+        log(Error) << "Supervisor: Could not start component: Could not access peer " + prefix + "_Safety" << endlog();
 		return false;
 	}
+
+    // TrajectoryActionlib
     if ( hasPeer( "TrajectoryActionlib") )	{
 		TrajectoryActionlib = getPeer( "TrajectoryActionlib");
 	}
@@ -164,52 +225,43 @@ bool Homing::startHook()
 		TrajectoryActionlib = getPeer( "TrajectoryActionlib");
 	}
 	else {
-		log(Error) << "Supervisor: Could not access peer TrajectoryActionlib" << endlog();
+        log(Error) << "Supervisor: Could not start component: Could not access peer TrajectoryActionlib" << endlog();
 		return false;
 	}
+
+    // GripperControl (If LPERA or RPERA)
 	if (prefix == "LPERA" || prefix == "RPERA") {
 		if ( hasPeer( prefix + "_GripperControl" ) ) {
 			GripperControl 		= getPeer( prefix + "_GripperControl" );
 		}
 		else {
-			log(Error) << "Supervisor: Could not access peer " + prefix + "_GripperControl" << endlog();
+            log(Error) << "Supervisor: Could not start component: Could not access peer " + prefix + "_GripperControl" << endlog();
 			return false;
 		}
-	}
-	
-    // Check Connections
-    if ( !Supervisor ) {
-        log(Error) << prefix <<"_Homing: Could not find Supervisor component! Did you add it as Peer in the ops file?"<<endlog();
-        return false;
+    } else {
+        // Delete taskcontext pointer
+        delete GripperControl;
     }
-    if ( !ReadEncoders ) {
-        log(Error) << prefix <<"_Homing: Could not find :" << prefix << "_ReadEncoders component! Did you add it as Peer in the ops file?"<<endlog();
-        return false;
-    }
-    if ( !Safety ) {
-        log(Error) << prefix <<"_Homing: Could not find :" << prefix << "_Safety component! Did you add it as Peer in the ops file?"<<endlog();
-        return false;
-    }
-    if ( !TrajectoryActionlib ) {
-        log(Error) << prefix <<"_Homing: Could not find : TrajectoryActionlib component! Did you add it as Peer in the ops file?"<<endlog();
-        return false;
-    }
+
     
-    // Fetch Property Acces
+    //! Property Acces
+    // Fetch acces
     Safety_maxJointErrors = Safety->attributes()->getAttribute("maxJointErrors");
     TrajectoryActionlib_allowedBodyparts = TrajectoryActionlib->attributes()->getAttribute("allowedBodyparts");
 	
-    // Check Property Acces
+    // Check Acces
     if (!Safety_maxJointErrors.ready() ) {
-        log(Error) << prefix <<"_Homing: Could not gain acces to property maxJointErrors of the "<< prefix << "_Safety component."<<endlog();
+        log(Error) << prefix <<"_Homing: Could not start component: Could not gain acces to property maxJointErrors of the "<< prefix << "_Safety component."<<endlog();
         return false;
     }
     if ( !TrajectoryActionlib_allowedBodyparts.ready() ) {
-        log(Error) << prefix <<"_Homing: Could not gain acces to property allowedBodyparts of the TrajectoryActionlib component."<<endlog();
+        log(Error) << prefix <<"_Homing: Could not start component: Could not gain acces to property allowedBodyparts of the TrajectoryActionlib component."<<endlog();
         return false;
     }
     
-    // Fetch Operations
+
+    //! Operations
+    // Fetch
     StartBodyPart 	= Supervisor->getOperation(			"StartBodyPart");
     StopBodyPart 	= Supervisor->getOperation(			"StopBodyPart");
     ResetEncoders 	= ReadEncoders->getOperation(		"ResetEncoders");
@@ -225,52 +277,80 @@ bool Homing::startHook()
 	
     // Check Operations
     if ( !StartBodyPart.ready() ) {
-        log(Error) << prefix <<"_Homing: Could not find Supervisor.StartBodyPart Operation!"<<endlog();
+        log(Error) << prefix <<"_Homing: Could not start component: Could not find Supervisor.StartBodyPart Operation!"<<endlog();
         return false;
     }
     if ( !StopBodyPart.ready() ) {
-        log(Error) << prefix <<"_Homing: Could not find Supervisor.StopBodyPart Operation!"<<endlog();
+        log(Error) << prefix <<"_Homing: Could not start component: Could not find Supervisor.StopBodyPart Operation!"<<endlog();
         return false;
     }
     if ( !ResetEncoders.ready() ) {
-        log(Error) << prefix <<"_Homing: Could not find :" << prefix << "_ReadEncoder.ResetEncoders Operation!"<<endlog();
+        log(Error) << prefix <<"_Homing: Could not start component: Could not find :" << prefix << "_ReadEncoder.ResetEncoders Operation!"<<endlog();
         return false;
     }
     if ( !ResetReferences.ready() ) {
-        log(Error) << prefix <<"_Homing: Could not find : TrajectoryActionlib.ResetReferences Operation!"<<endlog();
+        log(Error) << prefix <<"_Homing: Could not start component: Could not find : TrajectoryActionlib.ResetReferences Operation!"<<endlog();
         return false;
     }
     if ( !SendToPos.ready() ) {
-        log(Error) << prefix <<"_Homing: Could not find : TrajectoryActionlib.SendToPos Operation!"<<endlog();
+        log(Error) << prefix <<"_Homing: Could not start component: Could not find : TrajectoryActionlib.SendToPos Operation!"<<endlog();
         return false;
     }
     
-    // Check homing type specific port connections
+
+    //! Check port connections
+    // Generic
+    if (!pos_inport.connected()) {
+        log(Error) << prefix <<"_Homing: Could not start component: pos_inport not connected!"<<endlog();
+        return false;
+    }
+    if (!homingfinished_outport.connected()) {
+        log(Error) << prefix <<"_Homing: Could not start component: homingfinished_outport not connected!"<<endlog();
+        return false;
+    }
+    for ( uint j = 0; j < N_outports; j++ ) {
+        if (!posoutport[j].connected()) {
+            log(Error) << prefix <<"_Homing: Could not start component: posoutport[" << j << "] not connected!"<<endlog();
+            return false;
+        }
+        if (!veloutport[j].connected()) {
+            log(Error) << prefix <<"_Homing: Could not start component: veloutport[" << j << "] not connected!"<<endlog();
+            return false;
+        }
+        if (!accoutport[j].connected()) {
+            log(Error) << prefix <<"_Homing: Could not start component: accoutport[" << j << "] not connected!"<<endlog();
+            return false;
+        }
+    }
+
+    // Homing type specific
     if (homeswitchhoming) {
         if (!homeswitch_inport.connected()) {
-            log(Error) << prefix <<"_Homing: homeswitch_inport not connected!"<<endlog();
+            log(Error) << prefix <<"_Homing: Could not start component: homeswitch_inport not connected!"<<endlog();
             return false;
         }
     }
     if (errorhoming) {
         if (!jointerrors_inport.connected()) {
-            log(Error) << prefix <<"_Homing: jointerrors_inport not connected!"<<endlog();
+            log(Error) << prefix <<"_Homing: Could not start component:  jointerrors_inport not connected!"<<endlog();
             return false;
         }
     }
     if (absolutehoming) {
         if (!absPos_inport.connected()) {
-            log(Error) << prefix <<"_Homing: absPos_inport not connected!"<<endlog();
+            log(Error) << prefix <<"_Homing: Could not start component:  absPos_inport not connected!"<<endlog();
             return false;
         }
     }
     if (forcehoming) {
         if (!forces_inport.connected()) {
-            log(Error) << prefix <<"_Homing: forces_inport not connected!"<<endlog();
+            log(Error) << prefix <<"_Homing: Could not start component:  forces_inport not connected!"<<endlog();
             return false;
         }
     }
-    
+
+
+    //! Increase allowed joint errors
     // Fetch initial property values
     initial_maxerr = Safety_maxJointErrors.get();    
 
@@ -282,7 +362,8 @@ bool Homing::startHook()
     }    
     Safety_maxJointErrors.set(updated_maxerr);
     
-    // Initialize refgen
+
+    //! Initialize refgen
     pos_inport.read( position );
     for ( uint i = 0; i < N; i++ ){
        mRefGenerators[i].setRefGen(position[i]);

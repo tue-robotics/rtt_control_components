@@ -6,7 +6,7 @@ using namespace ROS;
 
 TrajectoryActionlib::TrajectoryActionlib(const string& name) : TaskContext(name, PreOperational)
 {
-    // Operations
+    //! Operations
     addOperation("AddBodyPart", &TrajectoryActionlib::AddBodyPart, this, OwnThread)
         .doc("Add a body part by specifying its partNr and its jointNames")
         .arg("partNr","The number of the bodypart")
@@ -19,7 +19,7 @@ TrajectoryActionlib::TrajectoryActionlib(const string& name) : TaskContext(name,
         .doc("Reset the reference generator to measured current position (used in homing)")
         .arg("partNr","The number of the bodypart");
     
-    // Actionlib
+    //! Actionlib
     // Add action server ports to this task's root service
     rtt_action_server_.addPorts(this->provides());
 
@@ -27,13 +27,13 @@ TrajectoryActionlib::TrajectoryActionlib(const string& name) : TaskContext(name,
     rtt_action_server_.registerGoalCallback(boost::bind(&TrajectoryActionlib::goalCallback, this, _1));
     rtt_action_server_.registerCancelCallback(boost::bind(&TrajectoryActionlib::cancelCallback, this, _1));
 
-	// AddAttribute
+    //! AddAttribute
 	addAttribute( "allowedBodyparts", allowedBodyparts );
 }
 
 TrajectoryActionlib::~TrajectoryActionlib()
-{
-    // remove operations
+{    
+    //! remove operations
     remove("AddBodyPart");
     remove("SendToPos");
     remove("ResetReferences");
@@ -41,23 +41,11 @@ TrajectoryActionlib::~TrajectoryActionlib()
 
 bool TrajectoryActionlib::configureHook()
 {
-    // Initialize
+    //! Resize
     minpos.resize(maxN);
     maxpos.resize(maxN);
     maxvel.resize(maxN);
     maxacc.resize(maxN);
-
-    checked = false;
-    totalNumberOfJoints = 0;
-    numberOfBodyparts = 0;
-    start_time = 0.0;
-
-    allowedBodyparts.resize(maxN);
-    allowedBodyparts_prev.resize(maxN);
-    vector_sizes.assign(maxN,0);
-    InterpolDts.assign(maxN,0.0);
-    InterpolEpses.assign(maxN,0.0);
-
     desiredPos.resize(maxN);
     desiredVel.resize(maxN);
     desiredAcc.resize(maxN);
@@ -67,6 +55,17 @@ bool TrajectoryActionlib::configureHook()
     current_position.resize(maxN);
     mRefGenerators.resize(maxN);
     mRefPoints.resize(maxN);
+    allowedBodyparts.resize(maxN);
+    allowedBodyparts_prev.resize(maxN);
+
+    //! Init
+    checked = false;
+    totalNumberOfJoints = 0;
+    numberOfBodyparts = 0;
+    start_time = 0.0;
+    vector_sizes.assign(maxN,0);
+    InterpolDts.assign(maxN,0.0);
+    InterpolEpses.assign(maxN,0.0);
 
     return true;
 }
