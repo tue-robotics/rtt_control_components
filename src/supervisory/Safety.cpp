@@ -40,12 +40,8 @@ Safety::Safety(const string& name) : TaskContext(name, PreOperational)
 
 Safety::~Safety()
 {
-    //! Delete TaskContext pointers
-    delete TrajectoryActionlib;
-
     //! Remove Operations
     remove("ResetReferences");
-
 }
 
 bool Safety::configureHook()
@@ -70,7 +66,7 @@ bool Safety::configureHook()
         log(Error) << prefix <<"_Safety: Could not configure component: maxErrors.size() : " << maxErrors.size()<<  "!=" << Nj << ". Or motorSat.size() : " << motorSat.size()<< "!=" << Nm << "." << endlog();
         return false;
     }
-    if (add_safety_portnames.size() <= 0 || add_safety_portnames.size() > maxN ) {
+    if (add_safety_portnames.size() > maxN ) {
         log(Error) << prefix <<"_Safety: Could not configure component: invalid add_safety_portnames.size() : " << add_safety_portnames.size() << "!"<<endlog();
         return false;
     }
@@ -129,7 +125,7 @@ bool Safety::startHook()
             return false;
         }
     }
-    if (!enable_outport.connected() || error_outport.connected()) {
+    if (!enable_outport.connected() || !error_outport.connected()) {
         log(Error) << prefix <<"_Safety: Could not start component: Error_outport or enable_outport is not connected!"<<endlog();
         return false;
     }

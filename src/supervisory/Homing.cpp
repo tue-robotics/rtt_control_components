@@ -55,15 +55,6 @@ Homing::Homing(const string& name) : TaskContext(name, PreOperational)
 
 Homing::~Homing()
 {
-    //! Delete TaskContext pointers
-    delete Supervisor;
-    delete ReadEncoders;
-    delete Safety;
-    delete TrajectoryActionlib;
-    if (prefix == "LPERA" || prefix == "RPERA") {
-        delete GripperControl;
-    }
-
     //! Remove Operations
     remove("StartBodyPart");
     remove("StopBodyPart");
@@ -84,16 +75,16 @@ bool Homing::configureHook()
 
     //! Property checks
     // Scalars
-    if (N <= 1 || N > 10 ) {
-        log(Error) << prefix <<"_Homing: Could not configure component: invalid N: " << N << "!"<<endlog();
+    if (N <= 0 || N > 10 ) {
+        log(Error) << prefix <<"_Homing: Could not configure component: Invalid N: " << N << "!"<<endlog();
         return false;
     }
-    if (N_outports <= 1 || N_outports > 10 ) {
-        log(Error) << prefix <<"_Homing: Could not configure component: invalid N_outports: " << N_outports << "!"<<endlog();
+    if (N_outports <= 0 || N_outports > 10 ) {
+        log(Error) << prefix <<"_Homing: Could not configure component: Invalid N_outports: " << N_outports << "!"<<endlog();
         return false;
     }
     if (partNr <= 0 || partNr > 6 ) {
-        log(Error) << prefix <<"_Homing: Could not configure component: invalid partNr: " << partNr << "!"<<endlog();
+        log(Error) << prefix <<"_Homing: Could not configure component: Invalid partNr: " << partNr << "!"<<endlog();
         return false;
     }
     if (InterpolDt <= 0.0 || InterpolEps <= 0.0 ) {
@@ -106,23 +97,23 @@ bool Homing::configureHook()
     }
     // Vectors
     if ( outport_sizes.size() != N_outports ) {
-        log(Error) << prefix <<"_Homing: Could not configure component: invalid size " << outport_sizes.size() << " of outport_sizes. Should be size: "<< N_outports << "." << partNr << "!"<<endlog();
+        log(Error) << prefix <<"_Homing: Could not configure component: Invalid size " << outport_sizes.size() << " of outport_sizes. Should be size: "<< N_outports << "." << partNr << "!"<<endlog();
         return false;
     }
     if (homing_type.size() != N || require_homing.size() != N || homing_order.size() != N  ) {
-        log(Error) << prefix <<"_Homing: Could not configure component: size of homing_type ("<<homing_type.size()<<"), require_homing ("<<require_homing.size()<<") or homing_order ("<<homing_order.size()<<") does not match vector_size ("<<N<<")"<<endlog();
+        log(Error) << prefix <<"_Homing: Could not configure component: Size of homing_type ("<<homing_type.size()<<"), require_homing ("<<require_homing.size()<<") or homing_order ("<<homing_order.size()<<") does not match vector_size ("<<N<<")"<<endlog();
         return false;
     }
     if (homing_direction.size() != N || homingVel.size() != N || homing_stroke.size() != N || reset_stroke.size() != N  ) {
-        log(Error) << prefix <<"_Homing: Could not configure component: size of homing_direction ("<<homing_direction.size()<<"), homing_velocity ("<<homingVel.size()<<"), homing_acceleration ("<<desiredAcc.size()<<"), homing_stroke ("<<homing_stroke.size()<<"), reset_stroke ("<<reset_stroke.size()<<" or homing_endpos ("<<homing_endpos.size()<<")"<<endlog();
+        log(Error) << prefix <<"_Homing: Could not configure component: Size of homing_direction ("<<homing_direction.size()<<"), homing_velocity ("<<homingVel.size()<<"), homing_acceleration ("<<desiredAcc.size()<<"), homing_stroke ("<<homing_stroke.size()<<"), reset_stroke ("<<reset_stroke.size()<<" or homing_endpos ("<<homing_endpos.size()<<")"<<endlog();
         return false;
     }
-    if (desiredVel.size() != N || desiredAcc.size() != N) {
-        log(Error) << prefix <<"_Homing: Could not configure component: size of desiredVel "<<desiredVel.size()<<" or size of desiredAcc "<<desiredAcc.size()<<" is incorrect. Size should be: " << N << "." <<endlog();
+    if (desiredAcc.size() != N) {
+        log(Error) << prefix <<"_Homing: Could not configure component: Size of desiredAcc "<<desiredAcc.size()<<" is incorrect. Size should be: " << N << "." <<endlog();
         return false;
     }
     if (homing_endpos.size() != outport_sizes[0]) {
-        log(Error) << prefix <<"_Homing: Could not configure component: size of homing_endpos "<<homing_endpos.size()<<" does not match outport_sizes[0] "<<outport_sizes[0]<< "." <<endlog();
+        log(Error) << prefix <<"_Homing: Could not configure component: Size of homing_endpos "<<homing_endpos.size()<<" does not match outport_sizes[0] "<<outport_sizes[0]<< "." <<endlog();
         return false;
     }
 
@@ -311,14 +302,6 @@ bool Homing::startHook()
     for ( uint j = 0; j < N_outports; j++ ) {
         if (!posoutport[j].connected()) {
             log(Error) << prefix <<"_Homing: Could not start component: posoutport[" << j << "] not connected!"<<endlog();
-            return false;
-        }
-        if (!veloutport[j].connected()) {
-            log(Error) << prefix <<"_Homing: Could not start component: veloutport[" << j << "] not connected!"<<endlog();
-            return false;
-        }
-        if (!accoutport[j].connected()) {
-            log(Error) << prefix <<"_Homing: Could not start component: accoutport[" << j << "] not connected!"<<endlog();
             return false;
         }
     }
