@@ -40,6 +40,9 @@ Safety::Safety(const string& name) : TaskContext(name, PreOperational)
 
 Safety::~Safety()
 {
+	//! Set TaskContext pointers to NULL;
+	TrajectoryActionlib = NULL;
+	
     //! Remove Operations
     remove("ResetReferences");
 }

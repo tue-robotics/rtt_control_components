@@ -74,6 +74,23 @@ Supervisor::Supervisor(const string& name) :
 
 Supervisor::~Supervisor()
 {
+	//! Set TaskContext pointers to NULL
+    GlobalReferenceGenerator = NULL;
+    for( int j = 0; j < AllwaysOnList.size(); j++ ) {
+		AllwaysOnList[j] = NULL;
+	}
+	for( int i = 0; i < 6; i++ ) {
+		for( int j = 0; j < OpOnlyList.size(); j++ ) {
+			AllwaysOnList[i][j] = NULL;
+		}
+		for( int j = 0; j < HomingOnlyList.size(); j++ ) {
+			AllwaysOnList[i][j] = NULL;
+		}
+		for( int j = 0; j < EnabledList.size(); j++ ) {
+			AllwaysOnList[i][j] = NULL;
+		}
+	}
+	
     //! remove operations
 	remove("CreateRobotObject");
 	remove("AddBodyPart");	

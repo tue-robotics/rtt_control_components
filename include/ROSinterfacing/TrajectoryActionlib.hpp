@@ -1,7 +1,7 @@
 #ifndef TrajectoryActionlib_HPP
 #define TrajectoryActionlib_HPP
 
-#define maxN 5 //Maximum bodyparts size
+#define maxN 5 //Maximum number of bodyparts
 
 #include <rtt/Component.hpp>
 #include <rtt/TaskContext.hpp>

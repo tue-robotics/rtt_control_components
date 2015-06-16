@@ -32,7 +32,11 @@ ReferenceGenerator::ReferenceGenerator(const string& name) : TaskContext(name, P
     addOperation( "resetReference", &ReferenceGenerator::resetReference, this, OwnThread ).doc("Reset the reference generator to measured current position (used in homing)");
 }
 
-ReferenceGenerator::~ReferenceGenerator(){}
+ReferenceGenerator::~ReferenceGenerator()
+{
+	//! Remove Operations
+	remove("resetReference");
+}
 
 bool ReferenceGenerator::configureHook()
 {

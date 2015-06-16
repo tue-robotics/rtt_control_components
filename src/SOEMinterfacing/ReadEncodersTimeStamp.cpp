@@ -22,7 +22,11 @@ ReadEncodersTimeStamp::ReadEncodersTimeStamp(const string& name) : TaskContext(n
   addProperty( "time2enc", time2enc ).doc("Amount of encoder inpust that belong to the time value. Example: 2 time, 4 enc then array(2.0,2.0)");
   addOperation( "reset", &ReadEncodersTimeStamp::reset, this, OwnThread ).doc("Reset an encoder value to a new value, usefull for homing");
 }
-ReadEncodersTimeStamp::~ReadEncodersTimeStamp(){}
+ReadEncodersTimeStamp::~ReadEncodersTimeStamp()
+{
+	//! Remove Operations
+	remove("reset");
+}
 
 bool ReadEncodersTimeStamp::configureHook()
 {

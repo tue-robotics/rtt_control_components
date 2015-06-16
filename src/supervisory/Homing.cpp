@@ -55,6 +55,13 @@ Homing::Homing(const string& name) : TaskContext(name, PreOperational)
 
 Homing::~Homing()
 {
+	//! Set TaskContext pointers to NULL;
+    Supervisor = NULL;
+    ReadEncoders = NULL;
+    Safety = NULL;
+    GripperControl = NULL;
+    TrajectoryActionlib = NULL;
+	
     //! Remove Operations
     remove("StartBodyPart");
     remove("StopBodyPart");
