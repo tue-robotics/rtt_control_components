@@ -306,6 +306,19 @@ void Supervisor::updateHook()
 			if (dashboardCmdmsg.data[0] == 0) { // 0 = all bodyparts
                 if (dashboardCmdmsg.data[1] == HOMING_CMD && emergency == false ) {
 					log(Warning) << "Supervisor: Received Homing request from dashboard for all parts" << endlog();      
+					
+					// First set allowed read references
+					if (!old_structure) {
+						allowedBodyparts = AllowReadReferencesRefGen.get();
+						for ( int partNr = 1; partNr < 6; partNr++ ) {
+							if (homeableParts[partNr]) { 
+								allowedBodyparts[partNr-1] = false;
+							}
+						}						
+						AllowReadReferencesRefGen.set(allowedBodyparts);
+					}
+					
+					// Go Homing
 					for ( int partNr = 1; partNr < 6; partNr++ ) {
 						if (homeableParts[partNr]) { 
 							GoHoming(partNr,hardwareStatusmsg);
@@ -332,6 +345,15 @@ void Supervisor::updateHook()
                 if (dashboardCmdmsg.data[1] == HOMING_CMD && emergency == false) {
 					log(Warning) << "Supervisor: Received Homing request from dashboard for partNr: [" <<  (int) dashboardCmdmsg.data[0] << "]" << endlog();      
 					GoHoming((int) dashboardCmdmsg.data[0],hardwareStatusmsg);
+					
+					// First set allowed read references
+					if (!old_structure) {
+						allowedBodyparts = AllowReadReferencesRefGen.get();
+						if (homeableParts[(int) dashboardCmdmsg.data[0]]) { 
+							allowedBodyparts[(int) dashboardCmdmsg.data[0]-1] = false;
+						}
+						AllowReadReferencesRefGen.set(allowedBodyparts);
+					}
 				}
                 if (dashboardCmdmsg.data[1] == START_CMD && emergency == false) {
 					log(Warning) << "Supervisor: Received Start request from dashboard for partNr: [" << (int) dashboardCmdmsg.data[0] << "]" << endlog(); 
@@ -594,11 +616,6 @@ bool Supervisor::GoHoming(int partNr, diagnostic_msgs::DiagnosticArray statusArr
 	if (staleParts[partNr] == false) {
 		if (statusArray.status[partNr].level != StatusErrormsg.level) {
 			stopList( OpOnlyList[partNr] );
-			if (!old_structure) {
-				allowedBodyparts = AllowReadReferencesRefGen.get();
-				allowedBodyparts[partNr-1] = false;
-				AllowReadReferencesRefGen.set(allowedBodyparts);
-			}
 			startList( EnabledList[partNr] );
 			startList( HomingOnlyList[partNr] );
 			setState(partNr, StatusHomingmsg);

@@ -359,6 +359,8 @@ bool Homing::startHook()
        mRefGenerators[i].setRefGen(position[i]);
     }
     
+    log(Warning) << prefix <<"_Homing: Started!"<<endlog();
+    
 	return true;
 }
 

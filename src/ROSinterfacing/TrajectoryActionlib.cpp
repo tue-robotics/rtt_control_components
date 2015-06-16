@@ -369,14 +369,18 @@ void TrajectoryActionlib::ResetReferences(int partNr)
 		return;
 	}
 	
-    //Set the starting value to the current actual value
+    // Reset the reference generator
     uint N = minpos[partNr-1].size();
     doubles actualPos(N,0.0);
     currentpos_inport[partNr-1].read( actualPos );
     for ( uint i = 0; i < N; i++ ){
        mRefGenerators[partNr-1][i].setRefGen(actualPos[i]);
     }
-        
+    
+    if (actualPos.size() > 2) {
+		log(Warning) <<"TrajectoryActionlib::ResetReferences with actualPos[ " << actualPos[0] << "," << actualPos[1] << "," << actualPos[2] << "," << actualPos[3] << "," << actualPos[4] << "," << actualPos[5] << "," << actualPos[6] << "]" <<endlog();
+	}	
+	
     return;
 }
 

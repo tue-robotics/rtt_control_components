@@ -298,6 +298,10 @@ void Controller::updateHook()
 			// Compute joint errors and Apply Gain
             jointErrors[i] = references[i]-positions[i];
             output_Gains[i] = jointErrors[i]*gains[i];
+            
+            if (jointErrors[i] < -0.1 || jointErrors[i] > 0.1) {
+				//log(Warning)<<"Controller: ERROR[" << i << "] IS:" << jointErrors[i] << ". This resulted from a reference of " << references[i] << " and a current position of : " << positions[i] << " !"<<endlog();
+			}
         
 			// Apply Weak Integrator
 			if (WeakIntegrator) {

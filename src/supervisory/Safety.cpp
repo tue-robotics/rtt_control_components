@@ -101,7 +101,7 @@ bool Safety::configureHook()
 
         // Fetch Operation
 		ResetReferences = TrajectoryActionlib->getOperation("ResetReferences");
-
+		
         // SetCaller
         ResetReferences.setCaller(TrajectoryActionlib->engine());
 
@@ -150,6 +150,8 @@ bool Safety::startHook()
             return false;
         }
 	}
+
+	log(Warning) << prefix <<"_Safety: Started!"<<endlog();
 
     return true;
 }
