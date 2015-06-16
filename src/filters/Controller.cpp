@@ -25,10 +25,10 @@ Controller::Controller(const string& name) :
 {
     // Properties
     addProperty("vector_size",                  vector_size)            .doc("Number of controllers");
+    addProperty("number_of_refports",           N_refinports)           .doc("Number of inports");
     addProperty("number_of_ffwports",           N_ffwinports)     		.doc("The amount of feed forward ports");
     addProperty("controllers",                  controllers)            .doc("List of used controllers");
     addProperty("sampling_time",                Ts)                     .doc("Sampling time");
-    addProperty("number_of_refports",           N_refinports)           .doc("Number of inports");
     addProperty("refinport_sizes",              inport_sizes)           .doc("Sizes of inports");
 
     // Controller Properties (You don't have to fill in the unused filters)
@@ -75,20 +75,12 @@ Controller::~Controller()
 
 bool Controller::configureHook()
 {
-    // Add Inports and FFW ports
-    for ( uint j = 0; j < N_refinports; j++ ) {
-        addPort( ("ref_in"+to_string(j+1)),		references_inport[j] )		.doc("Control Reference port");
-    }
-    for (uint j = 0; j < N_ffwinports; j++) {
-        addPort( ("ffw_in" + to_string(j+1)),	ffw_inport[j])				.doc("One of the FFW inports");
-    }
-
-    // Determine which controllers are demanded and declare their properties
+    //! Determine which controllers are required
     WeakIntegrator = false;
     LeadLag = false;
     Notch = false;
     LowPass = false;
-    
+
     for (uint i = 0; i < controllers.size(); i++) {
         if (controllers[i] == "WeakIntegrator") {
             WeakIntegrator = true;
@@ -104,7 +96,86 @@ bool Controller::configureHook()
         }
     }
 
-    // create filters
+
+    //! Check input properties
+    // Generic checks
+    if (vector_size < 1 || Ts <= 0.0) {
+        log(Error)<<"Controller: Could not configure component: vector_size or Ts parameter is invalid!"<<endlog();
+        return false;
+    }
+    if ( (N_refinports < 1) || (N_refinports > 3) ) {
+        log(Error)<<"Controller: Could not configure component: The number of reference input ports: " << N_refinports << ", should be at least 1 and at most 3!"<<endlog();
+        return false;
+    }
+    if ( (N_ffwinports < 0) || (N_ffwinports > 3) ) {
+        log(Error)<<"Controller: Could not configure component: The number of ffw input ports: " << N_ffwinports << ", Cant be negative and can be at most 3!"<<endlog();
+        return false;
+    }
+    if (inport_sizes.size() != N_refinports){
+        log(Error)<<"Controller: Could not configure component: The size of inport_sizes: " << inport_sizes.size() << ", should match N_refinports: " << N_refinports << "!"<<endlog();
+        return false;
+    }
+
+    // Check controller property sizes
+    if ( gains.size() != vector_size ) {
+        log(Error)<<"Controller: Could not configure component: Wrong size of one of the gains!"<<endlog();
+        return false;
+    }
+    if ( WeakIntegrator && (fz_WeakIntegrator.size() != vector_size )) {
+        log(Error)<<"Controller: Could not configure component: Wrong size of one of the weak integrator!"<<endlog();
+        return false;
+    }
+    if ( LeadLag && (fz_LeadLag.size() != vector_size || fp_LeadLag.size() != vector_size )) {
+        log(Error)<<"Controller: Could not configure component: Wrong size of one of the lead lag filter!"<<endlog();
+        return false;
+    }
+    if ( Notch && (fz_Notch.size() != vector_size || dz_Notch.size() != vector_size || fp_Notch.size() != vector_size || dp_Notch.size() != vector_size )) {
+        log(Error)<<"Controller: Could not configure component: Wrong size of one of the notch filter!"<<endlog();
+        return false;
+    }
+    if ( LowPass && (fp_LowPass.size() != vector_size || dp_LowPass.size() != vector_size )) {
+        log(Error)<<"Controller: Could not configure component: Wrong size of one of the low pass!"<<endlog();
+        return false;
+    }
+
+    // Check for invalid control parameters
+    for (uint i = 0; i < vector_size; i++) {
+        if (WeakIntegrator) {
+            if ( fz_WeakIntegrator[i] < 0.0) {
+                log(Error)<<"Controller: Could not configure component: Wrong sign of one of the weak integrator parameters!"<<endlog();
+                return false;
+            }
+        }
+        if (LeadLag) {
+            if ( fz_LeadLag[i] < 0.0 || fp_LeadLag[i] < 0.0 ) {
+                log(Error)<<"Controller: Could not configure component: Wrong sign of one of the leadlag parameters!"<<endlog();
+                return false;
+            }
+        }
+        if (Notch) {
+            if ( fz_Notch[i] < 0.0 || dz_Notch[i] < 0.0 || fp_Notch[i] < 0.0 || dp_Notch[i] < 0.0) {
+                log(Error)<<"Controller: Could not configure component: Wrong sign of one of the notch parameters!"<<endlog();
+                return false;
+            }
+        }
+        if (LowPass) {
+            if ( fp_LowPass[i] < 0.0 || dp_LowPass[i] < 0.0 ) {
+                log(Error)<<"Controller: Could not configure component: Wrong sign of one of the low pass parameters!"<<endlog();
+                return false;
+            }
+        }
+    }
+
+
+    //! Add Inports and FFW ports
+    for ( uint j = 0; j < N_refinports; j++ ) {
+        addPort( ("ref_in"+to_string(j+1)),		references_inport[j] )		.doc("Control Reference port");
+    }
+    for (uint j = 0; j < N_ffwinports; j++) {
+        addPort( ("ffw_in" + to_string(j+1)),	ffw_inport[j])				.doc("One of the FFW inports");
+    }
+
+    //! Create filters
     if (WeakIntegrator) {
         filters_WeakIntegrator.resize(vector_size);
         for (uint i = 0; i < vector_size; i++) {
@@ -134,85 +205,25 @@ bool Controller::configureHook()
         }
     }
 
-    // Check input data sizes
-    if ( gains.size() != vector_size ) {
-        log(Error)<<"Controller: Could not configure component: Wrong size of one of the gains!"<<endlog();
-        return false;
-    }
-    if ( WeakIntegrator && (fz_WeakIntegrator.size() != vector_size )) {
-        log(Error)<<"Controller: Could not configure component: Wrong size of one of the weak integrator!"<<endlog();
-        return false;
-    }
-    if ( LeadLag && (fz_LeadLag.size() != vector_size || fp_LeadLag.size() != vector_size )) {
-        log(Error)<<"Controller: Could not configure component: Wrong size of one of the lead lag filter!"<<endlog();
-        return false;
-    }
-    if ( Notch && (fz_Notch.size() != vector_size || dz_Notch.size() != vector_size || fp_Notch.size() != vector_size || dp_Notch.size() != vector_size )) {
-        log(Error)<<"Controller: Could not configure component: Wrong size of one of the notch filter!"<<endlog();
-        return false;
-    }
-    if ( LowPass && (fp_LowPass.size() != vector_size || dp_LowPass.size() != vector_size )) {
-        log(Error)<<"Controller: Could not configure component: Wrong size of one of the low pass!"<<endlog();
-        return false;
-    }
-
-    // Check input data signs
-    if (vector_size < 1 || Ts <= 0.0) {
-        log(Error)<<"Controller: Could not configure component: vector_size or Ts parameter is invalid!"<<endlog();
-        return false;
-    }
-    for (uint i = 0; i < vector_size; i++) {
-        if (WeakIntegrator) {
-            if ( fz_WeakIntegrator[i] < 0.0) {
-                log(Error)<<"Controller: Could not configure component: Wrong sign of one of the weak integrator parameters!"<<endlog();
-                return false;
-            }
-        }
-        if (LeadLag) {
-            if ( fz_LeadLag[i] < 0.0 || fp_LeadLag[i] < 0.0 ) {
-                log(Error)<<"Controller: Could not configure component: Wrong sign of one of the leadlag parameters!"<<endlog();
-                return false;
-            }
-        }
-        if (Notch) {
-            if ( fz_Notch[i] < 0.0 || dz_Notch[i] < 0.0 || fp_Notch[i] < 0.0 || dp_Notch[i] < 0.0) {
-                log(Error)<<"Controller: Could not configure component: Wrong sign of one of the notch parameters!"<<endlog();
-                return false;
-            }
-        }
-        if (LowPass) {
-            if ( fp_LowPass[i] < 0.0 || dp_LowPass[i] < 0.0 ) {
-                log(Error)<<"Controller: Could not configure component: Wrong sign of one of the low pass parameters!"<<endlog();
-                return false;
-            }
-        }
-    }
-    
-    // Check
-	if ( (N_refinports < 1) || (N_refinports > 3) ) {
-		log(Error)<<"Controller: Could not configure component: The number of reference input ports: " << N_refinports << ", should be at least 1 and at most 3!"<<endlog();
-		return false;
-	}
-	if ( (N_ffwinports < 0) || (N_ffwinports > 3) ) {
-		log(Error)<<"Controller: Could not configure component: The number of ffw input ports: " << N_ffwinports << ", Cant be negative and can be at most 3!"<<endlog();
-		return false;
-	}
-
     return true;
 }
 
 bool Controller::startHook()
 {
-    // Check validity of Ports:
+    //! Init
+    safe = false;
+
+
+    //! Check port connections:
+    // input ports
     if ( !positions_inport.connected() ) {
         log(Error)<<"Controller: Could not start component: pos_in is not connected!"<<endlog();
         return false;
     }
-    
-    if ( !controleffort_outport.connected() ) {
-        log(Error)<<"Controller: Could not start component:  Outputport not connected!"<<endlog();
+    if ( !enable_inport.connected() ) {
+        log(Error)<<"Controller: Could not start component:  enable port is not connected!"<<endlog();
         return false;
-    }    
+    }
     for (uint j = 0; j < N_ffwinports; j++) {
         if ( !ffw_inport[j].connected() ) {
             log(Error)<<"Controller: Could not start component: ffw_in" << j + 1 << " not connected!"<<endlog();
@@ -225,9 +236,14 @@ bool Controller::startHook()
             return false;
         }
     }
-
-    // Initialize
-    safe = false;
+    // output ports
+    if ( !controleffort_outport.connected() ) {
+        log(Error)<<"Controller: Could not start component:  Outputport not connected!"<<endlog();
+        return false;
+    }
+    if ( !jointerrors_outport.connected() ) {
+        log(Warning)<<"Controller: Be carefull. No component is listening to the jointerrors. For safe operation connect the jointerrors output port to the safety component!"<<endlog();
+    }
 
     return true;
 }
