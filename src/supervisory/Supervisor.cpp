@@ -80,14 +80,14 @@ Supervisor::~Supervisor()
 		AllwaysOnList[j] = NULL;
 	}
 	for( int i = 0; i < 6; i++ ) {
-		for( int j = 0; j < OpOnlyList.size(); j++ ) {
-			AllwaysOnList[i][j] = NULL;
+		for( int j = 0; j < OpOnlyList[i].size(); j++ ) {
+			OpOnlyList[i][j] = NULL;
 		}
-		for( int j = 0; j < HomingOnlyList.size(); j++ ) {
-			AllwaysOnList[i][j] = NULL;
+		for( int j = 0; j < HomingOnlyList[i].size(); j++ ) {
+			HomingOnlyList[i][j] = NULL;
 		}
-		for( int j = 0; j < EnabledList.size(); j++ ) {
-			AllwaysOnList[i][j] = NULL;
+		for( int j = 0; j < EnabledList[i].size(); j++ ) {
+			EnabledList[i][j] = NULL;
 		}
 	}
 	
