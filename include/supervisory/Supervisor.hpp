@@ -133,6 +133,7 @@ namespace SUPERVISORY
         virtual bool GoIdle(int partNr, diagnostic_msgs::DiagnosticArray statusArray);
         virtual bool GoHoming(int partNr, diagnostic_msgs::DiagnosticArray statusArray);
         virtual bool GoError(int partNr, diagnostic_msgs::DiagnosticArray statusArray);
+        virtual void setAllowed(int partNr, bool allowed);
         virtual bool setState(int partNr, diagnostic_msgs::DiagnosticStatus state);
 
     protected:

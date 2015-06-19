@@ -222,12 +222,11 @@ bool Supervisor::startHook()
 			log(Error) << "Supervisor: Could not gain acces to GlobalReferenceGenerator.AllowReadReferences"<<endlog();
 			return false;
 		}
-		
-		bools disable_all(6);
-		for ( int j = 1; j < 6; j++ ) {
-			disable_all[j] = false;
-		}
-		AllowReadReferencesRefGen.set(disable_all);
+
+        // Set all Allowances to false
+        for ( int j = 1; j < 6; j++ ) {
+            setAllowed(j,false);
+        }
 	}
 
     return true;
@@ -306,24 +305,10 @@ void Supervisor::updateHook()
 			if (dashboardCmdmsg.data[0] == 0) { // 0 = all bodyparts
                 if (dashboardCmdmsg.data[1] == HOMING_CMD && emergency == false ) {
 					log(Warning) << "Supervisor: Received Homing request from dashboard for all parts" << endlog();      
-					
-					// First set allowed read references
-					if (!old_structure) {
-						allowedBodyparts = AllowReadReferencesRefGen.get();
-						for ( int partNr = 1; partNr < 6; partNr++ ) {
-							if (homeableParts[partNr]) { 
-								allowedBodyparts[partNr-1] = false;
-							}
-						}						
-						AllowReadReferencesRefGen.set(allowedBodyparts);
-					}
-					
-					// Go Homing
-					for ( int partNr = 1; partNr < 6; partNr++ ) {
+                    for ( int partNr = 1; partNr < 6; partNr++ ) {
 						if (homeableParts[partNr]) { 
 							GoHoming(partNr,hardwareStatusmsg);
-							}
-						else { 
+						} else { 
 							GoOperational(partNr,hardwareStatusmsg);
 						}
 					}
@@ -332,6 +317,7 @@ void Supervisor::updateHook()
 					log(Warning) << "Supervisor: Received Start request from dashboard for all parts" << endlog(); 
 					for ( int partNr = 1; partNr < 6; partNr++ ) {
 						GoOperational(partNr,hardwareStatusmsg);
+						setAllowed(partNr,true);
 					}
 				}
                 if (dashboardCmdmsg.data[1] == STOP_CMD && emergency == false) {
@@ -345,19 +331,12 @@ void Supervisor::updateHook()
                 if (dashboardCmdmsg.data[1] == HOMING_CMD && emergency == false) {
 					log(Warning) << "Supervisor: Received Homing request from dashboard for partNr: [" <<  (int) dashboardCmdmsg.data[0] << "]" << endlog();      
 					GoHoming((int) dashboardCmdmsg.data[0],hardwareStatusmsg);
-					
-					// First set allowed read references
-					if (!old_structure) {
-						allowedBodyparts = AllowReadReferencesRefGen.get();
-						if (homeableParts[(int) dashboardCmdmsg.data[0]]) { 
-							allowedBodyparts[(int) dashboardCmdmsg.data[0]-1] = false;
-						}
-						AllowReadReferencesRefGen.set(allowedBodyparts);
-					}
 				}
                 if (dashboardCmdmsg.data[1] == START_CMD && emergency == false) {
 					log(Warning) << "Supervisor: Received Start request from dashboard for partNr: [" << (int) dashboardCmdmsg.data[0] << "]" << endlog(); 
 					GoOperational((int) dashboardCmdmsg.data[0],hardwareStatusmsg);
+					setAllowed((int) dashboardCmdmsg.data[0],true);
+				
 				}
                 if (dashboardCmdmsg.data[1] == STOP_CMD && emergency == false) {
 					log(Warning) << "Supervisor: Received Stop request from dashboard for partNr: [" << (int) dashboardCmdmsg.data[0] << "]" << endlog();  
@@ -367,7 +346,7 @@ void Supervisor::updateHook()
 					log(Warning) << "Supervisor: Received Reset Error request from dashboard for partNr: [" << (int) dashboardCmdmsg.data[0] << "]" << endlog();
 					setState(dashboardCmdmsg.data[0], StatusIdlemsg);
 				}
-			}  
+			}
 		}
 	}
 
@@ -565,6 +544,19 @@ bool Supervisor::setState(int partNr, diagnostic_msgs::DiagnosticStatus state)
 	return true;
 }
 
+void Supervisor::setAllowed(int partNr, bool allowed)
+{
+    if (!old_structure) {
+        // Fetch
+        allowedBodyparts = AllowReadReferencesRefGen.get();
+        // Set
+        allowedBodyparts[partNr-1] = false;
+        // Set
+        AllowReadReferencesRefGen.set(allowedBodyparts);
+    }
+    return;
+}
+
 bool Supervisor::GoOperational(int partNr, diagnostic_msgs::DiagnosticArray statusArray)
 {
 	if (staleParts[partNr] == false) {
@@ -579,6 +571,7 @@ bool Supervisor::GoOperational(int partNr, diagnostic_msgs::DiagnosticArray stat
 			
 			if (statusArray.status[partNr].level != StatusHomingmsg.level) {		// if in homing state, the EnabledList does not need to be restarted
 				startList( EnabledList[partNr] );
+				setAllowed(partNr, true);
 			}
 			setState(partNr, StatusOperationalmsg);
 		}
