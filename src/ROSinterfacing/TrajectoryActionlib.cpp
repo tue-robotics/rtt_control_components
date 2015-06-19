@@ -347,7 +347,6 @@ void TrajectoryActionlib::SendToPos(int partNr, doubles pos)
 	if (allowedBodyparts[partNr-1] == false) {
 		log(Warning) << "TrajectoryActionlib: Received SendToPos for bodypart that is not yet allowed" << endlog();
 	}	
-	log(Warning)<< "TrajectoryActionlib: Received SendToPos goal: " << pos[0] << "!"<< endlog();
 		
 	for ( uint joint_id = 0; joint_id < pos.size(); joint_id++ ){
 		desiredPos [partNr-1] [joint_id] = min( pos[joint_id]            		, maxpos     [partNr-1][joint_id]);
@@ -356,8 +355,8 @@ void TrajectoryActionlib::SendToPos(int partNr, doubles pos)
 		desiredAcc [partNr-1] [joint_id] = maxacc [partNr-1] [joint_id];
 	}
 			
-	log(Info)<< "TrajectoryActionlib: Processed SendToPos goal:" << desiredPos[partNr-1][0] << "!"<< endlog();
-	log(Info) << "TrajectoryActionlib:  Allowed:     [" << allowedBodyparts[0] << "," << allowedBodyparts[1] << "," << allowedBodyparts[2] << "," << allowedBodyparts[3] << "," << allowedBodyparts[4] << "]" <<endlog();
+	//log(Info)<< "TrajectoryActionlib: Processed SendToPos goal:" << desiredPos[partNr-1][0] << "!"<< endlog();
+	//log(Info) << "TrajectoryActionlib:  Allowed:     [" << allowedBodyparts[0] << "," << allowedBodyparts[1] << "," << allowedBodyparts[2] << "," << allowedBodyparts[3] << "," << allowedBodyparts[4] << "]" <<endlog();
 
     return;
 }
@@ -377,9 +376,9 @@ void TrajectoryActionlib::ResetReferences(int partNr)
        mRefGenerators[partNr-1][i].setRefGen(actualPos[i]);
     }
     
-    if (actualPos.size() > 2) {
-		log(Warning) <<"TrajectoryActionlib::ResetReferences with actualPos[ " << actualPos[0] << "," << actualPos[1] << "," << actualPos[2] << "," << actualPos[3] << "," << actualPos[4] << "," << actualPos[5] << "," << actualPos[6] << "]" <<endlog();
-	}	
+    //if (actualPos.size() > 2) {
+	//	log(Info) <<"TrajectoryActionlib::ResetReferences with actualPos[ " << actualPos[0] << "," << actualPos[1] << "," << actualPos[2] << "," << actualPos[3] << "," << actualPos[4] << "," << actualPos[5] << "," << actualPos[6] << "]" <<endlog();
+	//}	
 	
     return;
 }

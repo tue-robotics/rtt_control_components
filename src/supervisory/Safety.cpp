@@ -151,8 +151,6 @@ bool Safety::startHook()
         }
 	}
 
-	log(Warning) << prefix <<"_Safety: Started!"<<endlog();
-
     return true;
 }
 
