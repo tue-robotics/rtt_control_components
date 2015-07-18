@@ -548,7 +548,7 @@ void Supervisor::setAllowed(int partNr, bool allowed)
         // Fetch
         allowedBodyparts = AllowReadReferencesRefGen.get();
         // Set
-        allowedBodyparts[partNr-1] = false;
+        allowedBodyparts[partNr-1] = allowed;
         // Set
         AllowReadReferencesRefGen.set(allowedBodyparts);
     }
