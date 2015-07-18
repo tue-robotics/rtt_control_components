@@ -560,18 +560,15 @@ void Supervisor::setAllowed(int partNr, bool allowed)
 bool Supervisor::GoOperational(int partNr, diagnostic_msgs::DiagnosticArray statusArray)
 {
 	if (staleParts[partNr] == false) {
-		if (statusArray.status[partNr].level != StatusErrormsg.level) {				// if in error state, GoOp is blocked
+		if (statusArray.status[partNr].level != StatusErrormsg.level) {				// continue only if not in error state
 			stopList( HomingOnlyList[partNr] );
 			startList( OpOnlyList[partNr] );
 			if (!old_structure) { 
-				allowedBodyparts = AllowReadReferencesRefGen.get();
-				allowedBodyparts[partNr-1] = true;
-				AllowReadReferencesRefGen.set(allowedBodyparts);
+				setAllowed(partNr, true);
 			}
 			
-			if (statusArray.status[partNr].level != StatusHomingmsg.level) {		// if in homing state, the EnabledList does not need to be restarted
+			if (statusArray.status[partNr].level != StatusHomingmsg.level) {		// if not in homing state, the EnabledList does not need to be restarted
 				startList( EnabledList[partNr] );
-				setAllowed(partNr, true);
 			}
 			setState(partNr, StatusOperationalmsg);
 		}
@@ -588,11 +585,11 @@ bool Supervisor::GoIdle(int partNr, diagnostic_msgs::DiagnosticArray statusArray
 		stopList( EnabledList[partNr] );
 		stopList( HomingOnlyList[partNr] );
 		stopList( OpOnlyList[partNr] );
+		
 		if (!old_structure) {
-			allowedBodyparts = AllowReadReferencesRefGen.get();
-			allowedBodyparts[partNr-1] = false;
-			AllowReadReferencesRefGen.set(allowedBodyparts);
+			setAllowed(partNr, false);
 		}
+		
 		if (statusArray.status[partNr].level != StatusErrormsg.level) {
 			setState(partNr, StatusIdlemsg);
 		}
@@ -607,11 +604,15 @@ bool Supervisor::GoIdle(int partNr, diagnostic_msgs::DiagnosticArray statusArray
 bool Supervisor::GoHoming(int partNr, diagnostic_msgs::DiagnosticArray statusArray)
 {
 	if (staleParts[partNr] == false) {
-		if (statusArray.status[partNr].level != StatusErrormsg.level) {
+		if (statusArray.status[partNr].level != StatusErrormsg.level) { // if not from error
 			stopList( OpOnlyList[partNr] );
 			startList( EnabledList[partNr] );
 			startList( HomingOnlyList[partNr] );
 			setState(partNr, StatusHomingmsg);
+			
+			if (!old_structure) {
+				setAllowed(partNr, false);
+			}
 		}
 	}
 	else {
@@ -629,9 +630,7 @@ bool Supervisor::GoError(int partNr, diagnostic_msgs::DiagnosticArray statusArra
 		stopList( OpOnlyList[partNr] );
 
 		if (!old_structure) {
-			allowedBodyparts = AllowReadReferencesRefGen.get();
-			allowedBodyparts[partNr-1] = false;
-			AllowReadReferencesRefGen.set(allowedBodyparts);
+			setAllowed(partNr, false);
 		}
 		setState(partNr, StatusErrormsg);
 	}
