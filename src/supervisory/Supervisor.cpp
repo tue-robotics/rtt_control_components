@@ -317,7 +317,6 @@ void Supervisor::updateHook()
 					log(Warning) << "Supervisor: Received Start request from dashboard for all parts" << endlog(); 
 					for ( int partNr = 1; partNr < 6; partNr++ ) {
 						GoOperational(partNr,hardwareStatusmsg);
-						setAllowed(partNr,true);
 					}
 				}
                 if (dashboardCmdmsg.data[1] == STOP_CMD && emergency == false) {
@@ -335,7 +334,6 @@ void Supervisor::updateHook()
                 if (dashboardCmdmsg.data[1] == START_CMD && emergency == false) {
 					log(Warning) << "Supervisor: Received Start request from dashboard for partNr: [" << (int) dashboardCmdmsg.data[0] << "]" << endlog(); 
 					GoOperational((int) dashboardCmdmsg.data[0],hardwareStatusmsg);
-					setAllowed((int) dashboardCmdmsg.data[0],true);
 				
 				}
                 if (dashboardCmdmsg.data[1] == STOP_CMD && emergency == false) {
@@ -564,6 +562,7 @@ bool Supervisor::GoOperational(int partNr, diagnostic_msgs::DiagnosticArray stat
 			stopList( HomingOnlyList[partNr] );
 			startList( OpOnlyList[partNr] );
 			if (!old_structure) { 
+				log(Warning) << "Supervisor::GoOperational: Allowing bodypart:     [" << partNr << "]" <<endlog();
 				setAllowed(partNr, true);
 			}
 			
@@ -587,6 +586,7 @@ bool Supervisor::GoIdle(int partNr, diagnostic_msgs::DiagnosticArray statusArray
 		stopList( OpOnlyList[partNr] );
 		
 		if (!old_structure) {
+			log(Warning) << "Supervisor::GoIdle: Allowing bodypart:     [" << partNr << "]" <<endlog();
 			setAllowed(partNr, false);
 		}
 		
@@ -611,6 +611,7 @@ bool Supervisor::GoHoming(int partNr, diagnostic_msgs::DiagnosticArray statusArr
 			setState(partNr, StatusHomingmsg);
 			
 			if (!old_structure) {
+				log(Warning) << "Supervisor::GoHoming: Allowing bodypart:     [" << partNr << "]" <<endlog();
 				setAllowed(partNr, false);
 			}
 		}
@@ -630,6 +631,7 @@ bool Supervisor::GoError(int partNr, diagnostic_msgs::DiagnosticArray statusArra
 		stopList( OpOnlyList[partNr] );
 
 		if (!old_structure) {
+			log(Warning) << "Supervisor::GoError: Allowing bodypart:     [" << partNr << "]" <<endlog();
 			setAllowed(partNr, false);
 		}
 		setState(partNr, StatusErrormsg);
