@@ -193,7 +193,7 @@ bool Homing::startHook()
 		Supervisor 		= getPeer( "Supervisor");
 	}
 	else {
-        log(Error) << "Supervisor: Could not start component: Could not access peer Supervisor" << endlog();
+        log(Error) << prefix <<"_Homing: Could not start component: Could not access peer Supervisor" << endlog();
 		return false;
 	}
 
@@ -202,7 +202,7 @@ bool Homing::startHook()
 		ReadEncoders 		= getPeer( prefix + "_ReadEncoders" );
 	}
 	else {
-        log(Error) << "Supervisor: Could not start component: Could not access peer " + prefix + "_ReadEncoders" << endlog();
+        log(Error) << "Homing: Could not start component: Could not access peer " + prefix + "_ReadEncoders" << endlog();
 		return false;
 	}
 
@@ -211,7 +211,7 @@ bool Homing::startHook()
 		Safety 		= getPeer( prefix + "_Safety" );
 	}
 	else {
-        log(Error) << "Supervisor: Could not start component: Could not access peer " + prefix + "_Safety" << endlog();
+        log(Error) << prefix <<"_Homing: Could not start component: Could not access peer " + prefix + "_Safety" << endlog();
 		return false;
 	}
 
@@ -223,7 +223,7 @@ bool Homing::startHook()
 		TrajectoryActionlib = getPeer( "TrajectoryActionlib");
 	}
 	else {
-        log(Error) << "Supervisor: Could not start component: Could not access peer TrajectoryActionlib" << endlog();
+        log(Error) << prefix <<"_Homing: Could not start component: Could not access peer TrajectoryActionlib" << endlog();
 		return false;
 	}
 
@@ -233,7 +233,7 @@ bool Homing::startHook()
 			GripperControl 		= getPeer( prefix + "_GripperControl" );
 		}
 		else {
-            log(Error) << "Supervisor: Could not start component: Could not access peer " + prefix + "_GripperControl" << endlog();
+            log(Error) << prefix <<"_Homing: Could not start component: Could not access peer " + prefix + "_GripperControl" << endlog();
 			return false;
 		}
     } else {
