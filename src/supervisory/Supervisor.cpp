@@ -99,13 +99,8 @@ bool Supervisor::configureHook()
 	goodToGO = false;
 	start_time = 0.0;
 	aquisition_time = 0.0;
-	error_dected_time = 0.0;
-	detected_error = false;
-	old_structure = false;
 
     // Msgs
-    rosenabledmsg.data = true;
-	rosdisabledmsg.data = false;
 	dashboardCmdmsg.data.assign(2, 0.0);	
 	StatusStalemsg.level = 0;
 	StatusIdlemsg.level = 1;
@@ -218,7 +213,6 @@ void Supervisor::updateHook()
 	}
 	else if ( new_time - aquisition_time > 1.0 ) {
 		ROS_ERROR_STREAM("Supervisor: Soem crashed!");
-		enabled_rosport.write( rosdisabledmsg );
 	} 
 	
 	// Check if emergency button pressed: (by reading last ebutton which is a AND of all ebuttons)

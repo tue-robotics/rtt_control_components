@@ -84,8 +84,6 @@ namespace SUPERVISORY
 
         // Msgs
         std_msgs::UInt8MultiArray dashboardCmdmsg;
-        std_msgs::Bool rosenabledmsg;
-        std_msgs::Bool rosdisabledmsg;
         diagnostic_msgs::DiagnosticStatus StatusStalemsg;
         diagnostic_msgs::DiagnosticStatus StatusOperationalmsg;
         diagnostic_msgs::DiagnosticStatus StatusIdlemsg;
