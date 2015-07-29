@@ -43,7 +43,7 @@ namespace SUPERVISORY
     class Supervisor
     : public RTT::TaskContext
       {
-      public:
+		public:
       
         //! Ports
         // In
@@ -118,9 +118,9 @@ namespace SUPERVISORY
         virtual bool StopBodyPart( string partName );
 
         Supervisor(const string& name);
-        virtual ~Supervisor();
+        virtual ~Supervisor();    
 
-    protected:
+		protected:
 
         virtual bool AddPeerCheckList( string peerName, vector<TaskContext*> List );
         virtual bool startList( vector<TaskContext*> List );
