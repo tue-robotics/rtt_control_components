@@ -12,18 +12,21 @@ ADIns::ADIns(const string& name) : TaskContext(name, PreOperational)
 {
 	//! Operations
     addOperation("AddAnalogIns", &ADIns::AddAnalogIns, this, OwnThread)
-            .doc("Add one or more analog ins")
-            .arg("INPORT_DIMENSIONS","Array containing for each inport an entry with value the size of that input port")
-            .arg("OUTPORT_DIMENSIONS","Array containing for each outport an entry with value the size of that output port")
-            .arg("FROM_WHICH_INPORT","Array specifying where the input from the inports should go - first specify from which inport")
-            .arg("FROM_WHICH_ENTRY","Array specifying where the input from the inports should go - second specify which entry");
+		.doc("Add one or more analog ins")
+		.arg("INPORT_DIMENSIONS","Array containing for each inport an entry with value the size of that input port")
+		.arg("OUTPORT_DIMENSIONS","Array containing for each outport an entry with value the size of that output port")
+		.arg("FROM_WHICH_INPORT","Array specifying where the input from the inports should go - first specify from which inport")
+		.arg("FROM_WHICH_ENTRY","Array specifying where the input from the inports should go - second specify which entry");
+	addOperation("AddDigitalIns", &ADIns::AddDigitalIns, this, OwnThread)
+		.doc("Add one or more digital ins")
+		.arg("N_DIGITAL_INS","Number of digital ins")
+		.arg("FLIP_OUT","Array of booleans, wether or not each digital in boolean should be flipped");
 }
 ADIns::~ADIns(){}
 
 bool ADIns::configureHook()
 {
-	//! init
-	
+	//! init	
 	// Global
 	start_time = os::TimeService::Instance()->getNSecs()*1e-9;
 	goodToGO = false;
@@ -37,7 +40,6 @@ bool ADIns::configureHook()
 	// Digital
 	n_inports_D = 0;
 	n_outports_D = 0;
-
 }
 
 bool ADIns::startHook(){}
@@ -76,7 +78,7 @@ void ADIns::updateHook()
 		}
 	}
 
-	//! AnalogIns	
+	//! AnalogIns
     // Initialize in- and outport messages
 	std::vector< soem_beckhoff_drivers::AnalogMsg > inputdata_msgs;
     std::vector< doubles > outputdata;
@@ -98,10 +100,8 @@ void ADIns::updateHook()
 
 	// Do mapping of input entries on into outputdata and write to port
     uint k = 0;
-    for( uint i = 0; i < n_outports_A; ++i )
-    {
-        for( uint j = 0; j < outport_dimensions_A[i]; ++j)
-        {
+    for( uint i = 0; i < n_outports_A; ++i ) {
+        for( uint j = 0; j < outport_dimensions_A[i]; ++j) {
             outputdata[i][j] = inputdata_msgs[ from_which_inport_A[k]-1 ].values[ from_which_entry_A[k]-1 ];
             ++k;
         }
@@ -196,33 +196,33 @@ void ADIns::AddAnalogIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, 
 }
 
 void ADIns::AddDigitalIns(int N_DIGITAL_INS, doubles FLIP_OUT)
-{
+{	
 	//! Checking of input properties	
 	// Check if the number of to be added digital ins lies between one and MAX_PORTS
     if(N_DIGITAL_INS < 1 || N_DIGITAL_INS > MAX_PORTS) {
         log(Error) << "ADIns::AddDigitalIns: Could not add AnalogIn. Invalid size of inport: " << N_DIGITAL_INS << "!" << endlog();
         return;
     }
-    
+        
     // Add number of in and outputs respectively to N_INPORTS and N_OUTPORTS
     if(FLIP_OUT.size() != N_DIGITAL_INS) {
         log(Error) << "ADIns::AddDigitalIns: Could not add AnalogIn. Invalid size of FLIP_OUT: " << FLIP_OUT.size() << ". Should match N_DIGITAL_INS:" << N_DIGITAL_INS << "!" << endlog();
         return;
-    }   
-    
+    }
+        
 	//! Add DigitalIn
 	// Add ports
 	addPort( "Din"+to_string(n_inports_D+1), inports_D[n_inports_D] );
 	for ( uint i = (n_outports_D); i < (n_outports_D+N_DIGITAL_INS); i++ ) {
 		addPort("Dout"+to_string(i+1), outports_D[i]);
 	}
-	
+			
 	// Update flip
-	flip_D.resize(n_outports_D);
-	for ( uint i = (n_outports_D); i < (n_outports_D+N_DIGITAL_INS); i++ ) {
+	flip_D.resize(flip_D.size()+FLIP_OUT.size());
+	for ( uint i = 0; i < N_DIGITAL_INS; i++ ) {
 		flip_D[n_outports_D+i] = FLIP_OUT[i];
 	}
-	
+		
 	// Update the global properties
 	n_inports_D++;
 	n_outports_D += N_DIGITAL_INS;
