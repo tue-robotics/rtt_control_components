@@ -7,7 +7,7 @@
 #include <rtt/Port.hpp>
 #include <soem_beckhoff_drivers/AnalogMsg.h>
 #include <soem_beckhoff_drivers/DigitalMsg.h>
-#include <std_msgs/Bool.h>
+#include <soem_beckhoff_drivers/EncoderMsg.h>
 
 #define MAX_PORTS 20 /* maximum number of ports */
 
@@ -21,9 +21,10 @@
  * k Loops over the number of entries with a givven port
  *  
  * To Do
- * Make sure that the output of this component are not messages (Before that all components listening to this component need to be adapted)
- * If outputs are not messages, then the structure of the analogIns can be used for digitalins as well
- * Implement and Test DigitalIns
+ * The output of this component are not messages (thus all components listening to this component need to be adapted)
+ * Fix order issue
+ * Test with more difficult mappings
+ * Add portnames such that if the spindle is not started, then the arm will still have the same port names. For Example ADIns.leftarm_Ain1
  * Add math operations to inputs (such that directly the measured torque can be outputted, or the motor2jointspace conversion)
  * Add ReadEncoders
 */
@@ -39,6 +40,7 @@ namespace SOEM
 	typedef vector<double> doubles;
 	typedef vector<int> ints;
 	typedef vector<bool> bools;
+	typedef vector<string> strings;
 	
 	class ADIns
         : public RTT::TaskContext
@@ -62,6 +64,7 @@ namespace SOEM
 		uint n_outport_entries_A;
 		
 		// Vectors
+		strings added_bodyparts_A;
 		ints inport_dimensions_A;
 		ints outport_dimensions_A;
 		ints from_which_inport_A;
@@ -83,6 +86,7 @@ namespace SOEM
 		uint n_outport_entries_D;
 		
 		// Vectors
+		strings added_bodyparts_D;
 		ints inport_dimensions_D;
 		ints outport_dimensions_D;
 		ints from_which_inport_D;
@@ -94,7 +98,7 @@ namespace SOEM
 
 		//! EncoderIns
 		// Ports
-		InputPort<soem_beckhoff_drivers::DigitalMsg> inports_E[MAX_PORTS];
+		InputPort<soem_beckhoff_drivers::EncoderMsg> inports_E[MAX_PORTS];
 		OutputPort<ints> outports_E[MAX_PORTS];
 	
 		// Scalars
@@ -104,19 +108,20 @@ namespace SOEM
 		uint n_outport_entries_E;
 		
 		// Vectors
+		strings added_bodyparts_E;
 		ints inport_dimensions_E;
 		ints outport_dimensions_E;
 		ints from_which_inport_E;
 		ints from_which_entry_E;
 		
 		// In/Output
-		std::vector< soem_beckhoff_drivers::DigitalMsg > input_msgs_E;
+		std::vector< soem_beckhoff_drivers::EncoderMsg > input_msgs_E;
 		std::vector< ints > output_E;
 
 		//! Functions to add inputs
-		virtual void AddAnalogIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY);
-		virtual void AddDigitalIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY);
-		virtual void AddEncoderIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY);
+		virtual void AddAnalogIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY, string PARTNAME);
+		virtual void AddDigitalIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY, string PARTNAME);
+		virtual void AddEncoderIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY, string PARTNAME);
 
 		//! Component Hooks
 		virtual bool configureHook();
