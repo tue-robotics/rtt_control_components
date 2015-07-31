@@ -1,23 +1,10 @@
-/**************************************************************************
- *                                                                        *
- *   S. Marinkov                                                           *
- *   Eindhoven University of Technology                                   *
- *   2011                                                                 *
- *                                                                        *
- **************************************************************************/
-#include <rtt/TaskContext.hpp>
-#include <rtt/Port.hpp>
-#include <rtt/Component.hpp>
-
-#include "GripperControl.hpp"
-
-#define MAX_TORQUE 150.0
+#include "GripperController.hpp"
 
 using namespace std;
 using namespace RTT;
-using namespace ARM;
+using namespace GRIPPERCONTROLLER;
 
-GripperControl::GripperControl(const std::string& name) : TaskContext(name, PreOperational)
+GripperController::GripperController(const std::string& name) : TaskContext(name, PreOperational)
 {
 	/// Inports
 	addPort("gripper_command", gripperCommandPort);
@@ -42,9 +29,9 @@ GripperControl::GripperControl(const std::string& name) : TaskContext(name, PreO
     addProperty( "InterpolEps", InterpolEps);
 }
 
-GripperControl::~GripperControl() {}
+GripperController::~GripperController(){}
 
-bool GripperControl::configureHook() 
+bool GripperController::configureHook() 
 {	
 	torques.assign(8,0.0); 
 	measPos.assign(8,0.0);
@@ -55,7 +42,7 @@ bool GripperControl::configureHook()
 	return true;
 }
 
-bool GripperControl::startHook() 
+bool GripperController::startHook() 
 {
     // Check validity of Ports:
     if ( !gripperCommandPort.connected() || !torqueInPort.connected() || !positionInPort.connected()) {
@@ -82,7 +69,7 @@ bool GripperControl::startHook()
 	return true;
 }
 
-void GripperControl::updateHook()
+void GripperController::updateHook()
 {
 	bool resetGripper;
     doubles outpos(1,0.0);
@@ -178,5 +165,4 @@ void GripperControl::updateHook()
 		
 }
 
-ORO_CREATE_COMPONENT(ARM::GripperControl)
-
+ORO_CREATE_COMPONENT(GRIPPERCONTROLLER::GripperController)

@@ -3,6 +3,9 @@
 
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
+#include <rtt/Component.hpp>
+#include <ros/ros.h>
+
 #include <diagnostic_msgs/DiagnosticArray.h>
 #include <diagnostic_msgs/DiagnosticStatus.h>
 #include <std_msgs/UInt8MultiArray.h>
@@ -15,7 +18,7 @@
 using namespace std;
 using namespace RTT;
 
-namespace SUPERVISORY
+namespace SUPERVISOR
 {
 	typedef vector<double> doubles;
 	typedef vector<int> ints;

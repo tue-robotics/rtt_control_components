@@ -3,14 +3,19 @@
 
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
+#include <rtt/Component.hpp>
+#include <rtt/OperationCaller.hpp>
+#include <ros/ros.h>
+
 #include <std_msgs/Bool.h>
+#include <std_msgs/UInt8.h>
 
 #define maxN 10 // maximum number of inputs and outputs
 
 using namespace std;
 using namespace RTT;
 
-namespace SUPERVISORY
+namespace SAFETY
 {
     typedef vector<double> doubles;
     typedef vector<int> ints;

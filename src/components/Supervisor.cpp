@@ -1,10 +1,8 @@
-#include <rtt/Component.hpp>
 #include "Supervisor.hpp"
-#include <ros/ros.h>
 
 using namespace std;
 using namespace RTT;
-using namespace SUPERVISORY;
+using namespace SUPERVISOR;
 
 Supervisor::Supervisor(const string& name) :
     TaskContext(name, PreOperational)
@@ -644,4 +642,4 @@ bool Supervisor::GoError(int partNr, diagnostic_msgs::DiagnosticArray statusArra
     return true;
 }
 
-ORO_CREATE_COMPONENT(SUPERVISORY::Supervisor)
+ORO_CREATE_COMPONENT(SUPERVISOR::Supervisor)

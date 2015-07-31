@@ -1,20 +1,22 @@
-#ifndef RGB_CONTROLLER_HPP
-#define RGB_CONTROLLER_HPP
+#ifndef RGBCONTROLLER_HPP
+#define RGBCONTROLLER_HPP
 
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
 #include <rtt/Component.hpp>
+#include <rtt/os/TimeService.hpp>
+
 #include "std_msgs/ColorRGBA.h"
 
 
 using namespace std;
 using namespace RTT;
 
-namespace LIGHTING {
+namespace RGBCONTROLLER {
 
 typedef std::vector<double> doubles;
 
-class rgb_controller : public RTT::TaskContext {
+class RgbController : public RTT::TaskContext {
 		private:
 
 			OutputPort<bool> red_port;
@@ -34,8 +36,8 @@ class rgb_controller : public RTT::TaskContext {
 			int blue;
 
 		public:
-			rgb_controller(const std::string& name);
-			~rgb_controller(){};
+			RgbController(const std::string& name);
+			~RgbController(){};
 
 			bool configureHook();
 			bool startHook();		  

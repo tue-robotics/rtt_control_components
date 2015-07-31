@@ -1,8 +1,13 @@
 #ifndef HOMING_HPP
 #define HOMING_HPP
 
+
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
+#include <rtt/Component.hpp>
+#include <rtt/OperationCaller.hpp>
+#include <ros/ros.h>
+
 #include <std_msgs/Bool.h>
 #include <amigo_ref_interpolator/interpolator.h>
 
@@ -16,7 +21,7 @@ inline string to_string (const T& t){
   return ss.str();
 };
 
-namespace SUPERVISORY
+namespace HOMING
 {
     /*! \class Homing
     *  	\brief Defines Orocos component for homing hardware

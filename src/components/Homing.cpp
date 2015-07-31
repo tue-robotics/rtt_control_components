@@ -1,15 +1,8 @@
-#include <rtt/TaskContext.hpp>
-#include <rtt/Port.hpp>
-#include <rtt/Component.hpp>
-#include <rtt/OperationCaller.hpp>
-
 #include "Homing.hpp"
-
-#include <ros/ros.h>
 
 using namespace std;
 using namespace RTT;
-using namespace SUPERVISORY;
+using namespace HOMING;
 
 Homing::Homing(const string& name) : TaskContext(name, PreOperational)
 {  
@@ -559,4 +552,4 @@ bool Homing::evaluateHomingCriterion( uint jointID)
     return result;
 }
 
-ORO_CREATE_COMPONENT(SUPERVISORY::Homing)
+ORO_CREATE_COMPONENT(HOMING::Homing)

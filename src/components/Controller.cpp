@@ -1,27 +1,10 @@
-/** Controller.hpp
- *
- * @class Controller
- *
- * \author Max Baeten
- * \date August, 2014
- * \version 1.0
- *
- */
-
-#include <rtt/TaskContext.hpp>
-#include <rtt/Port.hpp>
-#include <rtt/Component.hpp>
-
 #include "Controller.hpp"
-
-#include <ros/ros.h>
 
 using namespace std;
 using namespace RTT;
-using namespace FILTERS;
+using namespace CONTROLLER;
 
-Controller::Controller(const string& name) : 
-    TaskContext(name, PreOperational)
+Controller::Controller(const string& name) : TaskContext(name, PreOperational)
 {
     // Properties
     addProperty("vector_size",                  vector_size)            .doc("Number of controllers");
@@ -388,4 +371,4 @@ void Controller::stopHook()
     return ;
 }
 
-ORO_CREATE_COMPONENT(FILTERS::Controller)
+ORO_CREATE_COMPONENT(CONTROLLER::Controller)

@@ -2,9 +2,8 @@
 #define ACTUATORENABLER_HPP
 
 #include <rtt/TaskContext.hpp>
+#include <rtt/Component.hpp>
 #include <rtt/Port.hpp>
-#include <std_msgs/Bool.h>
-#include <sensor_msgs/JointState.h>
 
 #define maxN 5 // maximum number of inputs and outputs
 
@@ -19,7 +18,7 @@ inline string to_string (const T& t){
 
 using namespace RTT;
 
-namespace SUPERVISORY
+namespace ACTUATORENABLER
 {
 	typedef vector<double> doubles;
 	typedef vector<int> ints;

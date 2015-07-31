@@ -1,17 +1,8 @@
-#include <rtt/TaskContext.hpp>
-#include <rtt/Port.hpp>
-#include <std_msgs/Bool.h>
-#include <std_msgs/UInt8.h>
-#include <rtt/Component.hpp>
-#include <rtt/OperationCaller.hpp>
-
 #include "Safety.hpp"
-
-#include <ros/ros.h>
 
 using namespace std;
 using namespace RTT;
-using namespace SUPERVISORY;
+using namespace SAFETY;
 
 Safety::Safety(const string& name) : TaskContext(name, PreOperational)
 {
@@ -223,4 +214,4 @@ void Safety::stopHook()
     enable_outport.write(false);
 }
 
-ORO_CREATE_COMPONENT(SUPERVISORY::Safety)
+ORO_CREATE_COMPONENT(SAFETY::Safety)

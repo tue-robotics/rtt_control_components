@@ -1,27 +1,12 @@
-/***************************************************************************
- tag: Ton Peters  Oktober 2014  DynamixelController.hpp
- tag: Janno Lunenburg  Fri August 13 16:00:00 CET 2013  PanTiltControllerJointState.hpp
-
- PanTiltController.cpp -  description
- -------------------
- begin                : Sat February 19 2011
- copyright            : (C) 2011 Sava Marinkov
- email                : s.marinkov@student.tue.nl
-
- ***************************************************************************/
-
-#include <rtt/TaskContext.hpp>
-#include <rtt/Port.hpp>
-#include <rtt/Component.hpp>
 #include "DynamixelController.hpp"
 
 using namespace std;
 using namespace RTT;
 using namespace soem_beckhoff_drivers;
-using namespace DYNAMIXEL;
+using namespace DYNAMIXELCONTROLLER;
 
-DynamixelController::DynamixelController(const std::string& name) :
-    TaskContext(name, PreOperational) {
+DynamixelController::DynamixelController(const std::string& name) : TaskContext(name, PreOperational) 
+{
     addPort("instruction", instructionPort).doc("Dynamixel instruction packet port");
     addPort("status", statusPort).doc("Dynamixel status packet port");
     addPort("serialRunning", serialRunningPort).doc("Serial device running port");
@@ -532,4 +517,4 @@ void DynamixelController::printErrorCode(void)
     }
 }
 
-ORO_CREATE_COMPONENT(DYNAMIXEL::DynamixelController)
+ORO_CREATE_COMPONENT(DYNAMIXELCONTROLLER::DynamixelController)

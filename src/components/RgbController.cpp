@@ -1,26 +1,22 @@
-#include <rtt/TaskContext.hpp>
-#include <rtt/Port.hpp>
-#include <rtt/Component.hpp>
-#include "rgb_controller.hpp"
-#include <rtt/os/TimeService.hpp>
+#include "RgbController.hpp"
 
 using namespace std;
 using namespace RTT;
-using namespace LIGHTING;
+using namespace RGBCONTROLLER;
 
-rgb_controller::rgb_controller(const std::string& name) :
-	TaskContext(name, PreOperational) {
+RgbController::RgbController(const std::string& name) :	TaskContext(name, PreOperational) 
+{
 	addPort("red", red_port);
 	addPort("green", green_port);
 	addPort("blue", blue_port);
 	addPort("rgbtopic", rgbPort);
 }
 
-bool rgb_controller::configureHook() {
+bool RgbController::configureHook() {
 	return true;
 }
 
-bool rgb_controller::startHook() {
+bool RgbController::startHook() {
 	counter = 0;
 	
 	rgbred = 0;
@@ -30,7 +26,7 @@ bool rgb_controller::startHook() {
 	return true;
 }
 
-void rgb_controller::updateHook() {
+void RgbController::updateHook() {
 
 	if ( counter == 0 )
 	{
@@ -60,4 +56,4 @@ void rgb_controller::updateHook() {
 
 }
 
-ORO_CREATE_COMPONENT(LIGHTING::rgb_controller)
+ORO_CREATE_COMPONENT(RGBCONTROLLER::RgbController)

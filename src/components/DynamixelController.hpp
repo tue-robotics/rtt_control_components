@@ -28,7 +28,7 @@ using namespace std;
 using namespace RTT;
 using namespace soem_beckhoff_drivers;
 
-namespace DYNAMIXEL {
+namespace DYNAMIXELCONTROLLER {
 
     /**
        * @brief A Component that controls multiple dynamixels

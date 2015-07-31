@@ -1,17 +1,8 @@
-#include <rtt/TaskContext.hpp>
-#include <rtt/Port.hpp>
-#include <std_msgs/Bool.h>
-#include <std_msgs/UInt8.h>
-#include <rtt/Component.hpp>
-#include <rtt/OperationCaller.hpp>
-
 #include "ActuatorEnabler.hpp"
-
-#include <ros/ros.h>
 
 using namespace std;
 using namespace RTT;
-using namespace SUPERVISORY;
+using namespace ACTUATORENABLER;
 
 ActuatorEnabler::ActuatorEnabler(const string& name) : TaskContext(name, PreOperational), N_safeIn(1)
 {
@@ -86,4 +77,4 @@ void ActuatorEnabler::updateHook()
 	actuatorEnablePort.write(enable);
 }
 
-ORO_CREATE_COMPONENT(SUPERVISORY::ActuatorEnabler)
+ORO_CREATE_COMPONENT(ACTUATORENABLER::ActuatorEnabler)

@@ -1,25 +1,20 @@
-/**************************************************************************
- *                                                                        *
- *   S. Marinkov                                                           *
- *   Eindhoven University of Technology                                   *
- *   2011                                                                 *
- *                                                                        *
- **************************************************************************/
-
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
+#include <rtt/Component.hpp>
+
 #include <std_msgs/Bool.h>
 #include <tue_msgs/GripperCommand.h>
 #include <tue_msgs/GripperMeasurement.h>
 #include <amigo_ref_interpolator/interpolator.h>
 
 #define PI 3.141592654
-#define GRIPPER_INDEX	7
+#define MAX_TORQUE 150.0
+#define GRIPPER_INDEX	7                       
 
 using namespace std;
 using namespace RTT;
 
-namespace ARM
+namespace GRIPPERCONTROLLER
 {
 	typedef std::vector<double> doubles;
 	
@@ -30,7 +25,7 @@ namespace ARM
 	 * opens the gripper to a predefined position.
 	 */
 	
-	class GripperControl : 
+	class GripperController : 
 
 	  public RTT::TaskContext
 	  {
@@ -70,8 +65,8 @@ namespace ARM
 	  
 	public:
 
-	  GripperControl(const std::string& name);	  
-	  ~GripperControl();
+	  GripperController(const std::string& name);	  
+	  ~GripperController();
 	  
 	  bool configureHook();
 	  bool startHook();

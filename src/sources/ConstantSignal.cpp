@@ -61,11 +61,8 @@ bool ConstantSignal::startHook()
 
 void ConstantSignal::updateHook()
 {
-  doubles output(vector_size,0.0);
-  
-  for ( uint i = 0; i < vector_size; i++ ) {
-	  output[i]=value[i];
-  }
+  soem_beckhoff_drivers::EncoderMsg output;
+  output.value =  (int) value[0];
    
   // Write the outputs
   outport.write( output );

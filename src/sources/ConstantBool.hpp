@@ -13,6 +13,7 @@
 
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
+#include <soem_beckhoff_drivers/DigitalMsg.h>
 
 using namespace std;
 using namespace RTT;
@@ -35,7 +36,7 @@ namespace SOURCES
     private:
 
 		/* Declaring and output port*/
-		OutputPort<bool> outport;
+		OutputPort<soem_beckhoff_drivers::DigitalMsg> outport;
 
 		double Ts;
 

@@ -1,12 +1,8 @@
-#include <rtt/TaskContext.hpp>
-#include <rtt/Port.hpp>
-#include <rtt/Component.hpp>
-
 #include "EtherCATread.hpp"
 
 using namespace std;
 using namespace RTT;
-using namespace SOEM;
+using namespace ETHERCATREAD;
 
 EtherCATread::EtherCATread(const string& name) : TaskContext(name, PreOperational)
 {
@@ -467,4 +463,4 @@ void EtherCATread::AddEncoderIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIME
 	return;
 }
 
-ORO_CREATE_COMPONENT(SOEM::EtherCATread)
+ORO_CREATE_COMPONENT(ETHERCATREAD::EtherCATread)

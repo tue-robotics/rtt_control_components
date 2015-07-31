@@ -55,7 +55,13 @@ bool ConstantBool::startHook()
 void ConstantBool::updateHook()
 {
   // Write the outputs
-  outport.write( value );
+  soem_beckhoff_drivers::DigitalMsg valuemsg;
+  valuemsg.values.resize(4);
+  valuemsg.values[0] = false;
+  valuemsg.values[1] = true;
+  valuemsg.values[2] = false;
+  valuemsg.values[3] = true;
+  outport.write( valuemsg );
 }
 
 ORO_CREATE_COMPONENT(SOURCES::ConstantBool)

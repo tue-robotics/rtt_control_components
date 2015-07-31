@@ -1,16 +1,15 @@
 #ifndef ETHERCATREAD_HPP
 #define ETHERCATREAD_HPP
 
-#include <vector>
-#include <string>
 #include <rtt/TaskContext.hpp>
+#include <rtt/Component.hpp>
 #include <rtt/Port.hpp>
+
 #include <soem_beckhoff_drivers/AnalogMsg.h>
 #include <soem_beckhoff_drivers/DigitalMsg.h>
 #include <soem_beckhoff_drivers/EncoderMsg.h>
 
 #define MAX_PORTS 20 /* maximum number of ports */
-
 
 /*
  * Description:
@@ -35,7 +34,7 @@ using namespace RTT;
 template <class T>
 inline string to_string (const T& t) { stringstream ss; ss << t; return ss.str(); }
 
-namespace SOEM
+namespace ETHERCATREAD
 {
 	typedef vector<double> doubles;
 	typedef vector<int> ints;

@@ -1,23 +1,15 @@
-/** Controller.hpp
- *
- * @class Controller
- *
- * \author Max Baeten
- * \date August, 2014
- * \version 1.0
- *
- */
-
 #ifndef CONTROLLER_HPP
 #define CONTROLLER_HPP
 
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
-#include <vector>
+#include <rtt/Component.hpp>
+
 #include <scl/filters/DWeakIntegrator.hpp>
 #include <scl/filters/DSecondOrderLowpass.hpp>
 #include <scl/filters/DLeadLag.hpp>
 #include <scl/filters/DSkewedNotch.hpp>
+
 #include <sensor_msgs/JointState.h>
 
 using namespace std;
@@ -30,7 +22,7 @@ inline string to_string (const T& t){
   return ss.str();
 };
 
-namespace FILTERS
+namespace CONTROLLER
 {
     typedef vector<double> doubles;
     typedef vector<int> ints;
