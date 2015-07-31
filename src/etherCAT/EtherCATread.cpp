@@ -2,30 +2,30 @@
 #include <rtt/Port.hpp>
 #include <rtt/Component.hpp>
 
-#include "ADIns.hpp"
+#include "EtherCATread.hpp"
 
 using namespace std;
 using namespace RTT;
 using namespace SOEM;
 
-ADIns::ADIns(const string& name) : TaskContext(name, PreOperational)
+EtherCATread::EtherCATread(const string& name) : TaskContext(name, PreOperational)
 {
 	//! Operations
-    addOperation("AddAnalogIns", &ADIns::AddAnalogIns, this, OwnThread)
+    addOperation("AddAnalogIns", &EtherCATread::AddAnalogIns, this, OwnThread)
 		.doc("Add one or more analog ins")
 		.arg("INPORT_DIMENSIONS","Array containing for each inport an entry with value the size of that input port")
 		.arg("OUTPORT_DIMENSIONS","Array containing for each outport an entry with value the size of that output port")
 		.arg("FROM_WHICH_INPORT","Array specifying where the input from the inports should go - first specify from which inport")
 		.arg("FROM_WHICH_ENTRY","Array specifying where the input from the inports should go - second specify which entry")
 		.arg("PARTNAME","String specifying the name of the part");
-    addOperation("AddDigitalIns", &ADIns::AddDigitalIns, this, OwnThread)
+    addOperation("AddDigitalIns", &EtherCATread::AddDigitalIns, this, OwnThread)
 		.doc("Add one or more Digital ins")
 		.arg("INPORT_DIMENSIONS","Array containing for each inport an entry with value the size of that input port")
 		.arg("OUTPORT_DIMENSIONS","Array containing for each outport an entry with value the size of that output port")
 		.arg("FROM_WHICH_INPORT","Array specifying where the input from the inports should go - first specify from which inport")
 		.arg("FROM_WHICH_ENTRY","Array specifying where the input from the inports should go - second specify which entry")
 		.arg("PARTNAME","String specifying the name of the part");
-    addOperation("AddEncoderIns", &ADIns::AddEncoderIns, this, OwnThread)
+    addOperation("AddEncoderIns", &EtherCATread::AddEncoderIns, this, OwnThread)
 		.doc("Add one or more Encoder ins")
 		.arg("INPORT_DIMENSIONS","Array containing for each inport an entry with value the size of that input port")
 		.arg("OUTPORT_DIMENSIONS","Array containing for each outport an entry with value the size of that output port")
@@ -33,9 +33,9 @@ ADIns::ADIns(const string& name) : TaskContext(name, PreOperational)
 		.arg("FROM_WHICH_ENTRY","Array specifying where the input from the inports should go - second specify which entry")
 		.arg("PARTNAME","String specifying the name of the part");
 }
-ADIns::~ADIns(){}
+EtherCATread::~EtherCATread(){}
 
-bool ADIns::configureHook()
+bool EtherCATread::configureHook()
 {
 	//! init	
 	// Global
@@ -61,9 +61,9 @@ bool ADIns::configureHook()
 	n_outport_entries_E = 0;
 }
 
-bool ADIns::startHook(){}
+bool EtherCATread::startHook(){}
 
-void ADIns::updateHook()
+void EtherCATread::updateHook()
 {
 	//! 8 seconds after boot, Check all connections
 	if (!goodToGO) {
@@ -75,36 +75,36 @@ void ADIns::updateHook()
 		// AnalogIns
 		for(uint i = 0; i < n_inports_A; i++) {
 			if ( !inports_A[i].connected() ) {
-				log(Error) << "ADIns: Analog inport " << inports_A[i].getName() << " is not connected." << endlog();
+				log(Error) << "EtherCATread: Analog inport " << inports_A[i].getName() << " is not connected." << endlog();
 			}
 		}
 		for(uint i = 0; i < n_outports_A; i++) {
 			if ( !outports_A[i].connected() ) {
-				log(Info) << "ADIns: Analog outport " << outports_A[i].getName() << " is not connected." << endlog();
+				log(Info) << "EtherCATread: Analog outport " << outports_A[i].getName() << " is not connected." << endlog();
 			}
 		}
 		
 		// DigitalIns
 		for(uint i = 0; i < n_inports_D; i++) {
 			if ( !inports_D[i].connected() ) {
-				log(Error) << "ADIns: Digital inport " << inports_D[i].getName() << " is not connected." << endlog();
+				log(Error) << "EtherCATread: Digital inport " << inports_D[i].getName() << " is not connected." << endlog();
 			}
 		}
 		for(uint i = 0; i < n_outports_D; i++) {
 			if ( !outports_D[i].connected() ) {
-				log(Info) << "ADIns: Digital outport " << outports_D[i].getName() << " is not connected." << endlog();
+				log(Info) << "EtherCATread: Digital outport " << outports_D[i].getName() << " is not connected." << endlog();
 			}
 		}
 		
 		// EncoderIns
 		for(uint i = 0; i < n_inports_E; i++) {
 			if ( !inports_E[i].connected() ) {
-				log(Error) << "ADIns: Encoder inport " << inports_E[i].getName() << " is not connected." << endlog();
+				log(Error) << "EtherCATread: Encoder inport " << inports_E[i].getName() << " is not connected." << endlog();
 			}
 		}
 		for(uint i = 0; i < n_outports_E; i++) {
 			if ( !outports_E[i].connected() ) {
-				log(Info) << "ADIns: Encoder outport " << outports_E[i].getName() << " is not connected." << endlog();
+				log(Info) << "EtherCATread: Encoder outport " << outports_E[i].getName() << " is not connected." << endlog();
 			}
 		}
 	}
@@ -160,7 +160,7 @@ void ADIns::updateHook()
 	return;
 }
 
-void ADIns::AddAnalogIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY, string PARTNAME)
+void EtherCATread::AddAnalogIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY, string PARTNAME)
 {
 	// Init 
 	uint N_INPORTS = INPORT_DIMENSIONS.size();
@@ -172,32 +172,32 @@ void ADIns::AddAnalogIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, 
 	// Check if the AnalogIns is already added for this bodypart
 	for(uint l = 0; l < added_bodyparts_A.size(); l++) {
 		if (PARTNAME == added_bodyparts_A[l]) {
-			log(Error) << "ADIns (" << PARTNAME << ")::AddAnalogIns: Could not add AnalogIn. There is already an AnalogIn for bodypart " << PARTNAME << "!" << endlog();
+			log(Error) << "EtherCATread (" << PARTNAME << ")::AddAnalogIns: Could not add AnalogIn. There is already an AnalogIn for bodypart " << PARTNAME << "!" << endlog();
 			return;
 		}
 	}
     
 	// Check for invalid number of ports
     if(N_INPORTS < 1 || N_INPORTS > MAX_PORTS) {
-        log(Error) << "ADIns (" << PARTNAME << ")::AddAnalogIns: Could not add AnalogIn. Invalid number of inports: " << N_INPORTS << "!" << endlog();
+        log(Error) << "EtherCATread (" << PARTNAME << ")::AddAnalogIns: Could not add AnalogIn. Invalid number of inports: " << N_INPORTS << "!" << endlog();
         return;
     }
     if(N_OUTPORTS < 1 || N_OUTPORTS > MAX_PORTS) {
-        log(Error) << "ADIns (" << PARTNAME << ")::AddAnalogIns: Could not add AnalogIn. Invalid number of outports: " << N_OUTPORTS << "!" << endlog();
+        log(Error) << "EtherCATread (" << PARTNAME << ")::AddAnalogIns: Could not add AnalogIn. Invalid number of outports: " << N_OUTPORTS << "!" << endlog();
         return;
     }
 
 	// Count the number of entries respectively for N_INPORT_ENTRIES and N_OUTPORT_ENTRIES
     for(uint i = 0; i < N_INPORTS; i++) {
         if(INPORT_DIMENSIONS[i] < 1) {
-            log(Error) << "ADIns (" << PARTNAME << ")::AddAnalogIns: Could not add AnalogIn. Inport_dimensions cannot contain value smaller than one!" << endlog();
+            log(Error) << "EtherCATread (" << PARTNAME << ")::AddAnalogIns: Could not add AnalogIn. Inport_dimensions cannot contain value smaller than one!" << endlog();
             return;
         }
         N_INPORT_ENTRIES += INPORT_DIMENSIONS[i];
     }
     for(uint i = 0; i < N_OUTPORTS; i++) {
         if(OUTPORT_DIMENSIONS[i] < 1) {
-            log(Error) << "ADIns (" << PARTNAME << ")::AddAnalogIns: Could not add AnalogIn. Outport_dimensions cannot contain value smaller than one!" << endlog();
+            log(Error) << "EtherCATread (" << PARTNAME << ")::AddAnalogIns: Could not add AnalogIn. Outport_dimensions cannot contain value smaller than one!" << endlog();
             return;
         }
         N_OUTPORT_ENTRIES += OUTPORT_DIMENSIONS[i];
@@ -205,18 +205,18 @@ void ADIns::AddAnalogIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, 
 
 	// Check if the total number of entries matches the size of FROM_WHICH_INPORT and FROM_WHICH_ENTRY
     if ((FROM_WHICH_INPORT.size() != N_OUTPORT_ENTRIES) || (FROM_WHICH_ENTRY.size() != N_OUTPORT_ENTRIES)) {
-        log(Error) << "ADIns (" << PARTNAME << ")::AddAnalogIns: Could not add AnalogIn. The number of entries in from_which_inport_A and from_which_entry_A should equal the total number of output values." << endlog();
+        log(Error) << "EtherCATread (" << PARTNAME << ")::AddAnalogIns: Could not add AnalogIn. The number of entries in from_which_inport_A and from_which_entry_A should equal the total number of output values." << endlog();
         return;
     }
 
 	// Check validity of each entry in the FROM_WHICH_INPORT and FROM_WHICH_ENTRY 
     for(uint j = 0; j < N_OUTPORT_ENTRIES; ++j) {
         if( FROM_WHICH_INPORT[j] > (n_inports_A+N_INPORTS) || FROM_WHICH_INPORT[j] <= 0 ) {
-            log(Error) << "ADIns (" << PARTNAME << ")::AddAnalogIns: Could not add AnalogIn. From_which_inport array contains port no. " << FROM_WHICH_INPORT[j] << " which does not exist according to inport_dimensions_A!" << endlog();
+            log(Error) << "EtherCATread (" << PARTNAME << ")::AddAnalogIns: Could not add AnalogIn. From_which_inport array contains port no. " << FROM_WHICH_INPORT[j] << " which does not exist according to inport_dimensions_A!" << endlog();
             return;
         }
         else if ( FROM_WHICH_ENTRY[j] > INPORT_DIMENSIONS[ FROM_WHICH_INPORT[j]-1-n_inports_A] || FROM_WHICH_ENTRY[j] <= 0 ) {
-            log(Error) << "ADIns (" << PARTNAME << ")::AddAnalogIns: Could not add AnalogIn. From_which_entry array contains entry no. " << FROM_WHICH_ENTRY[j] << " which does not exist for inport no. " << FROM_WHICH_INPORT[j] << "!" << endlog();
+            log(Error) << "EtherCATread (" << PARTNAME << ")::AddAnalogIns: Could not add AnalogIn. From_which_entry array contains entry no. " << FROM_WHICH_ENTRY[j] << " which does not exist for inport no. " << FROM_WHICH_INPORT[j] << "!" << endlog();
             return;
         }
     }
@@ -258,12 +258,12 @@ void ADIns::AddAnalogIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, 
         output_A[i].resize( outport_dimensions_A[i] );
     }
     
-    log(Warning) << "ADIns (" << PARTNAME << ")::AddAnalogIns: Succesfully added AnalogIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports!" << endlog();
+    log(Warning) << "EtherCATread (" << PARTNAME << ")::AddAnalogIns: Succesfully added AnalogIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports!" << endlog();
     
 	return;
 }
 
-void ADIns::AddDigitalIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY, string PARTNAME)
+void EtherCATread::AddDigitalIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY, string PARTNAME)
 {
 	// Init 
 	uint N_INPORTS = INPORT_DIMENSIONS.size();
@@ -275,32 +275,32 @@ void ADIns::AddDigitalIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS,
 	// Check if the DigitalIns is already added for this bodypart
 	for(uint l = 0; l < added_bodyparts_D.size(); l++) {
 		if (PARTNAME == added_bodyparts_D[l]) {
-			log(Error) << "ADIns (" << PARTNAME << ")::AddDigitalIns: Could not add AnalogIn. There is already an AnalogIn for bodypart " << PARTNAME << "!" << endlog();
+			log(Error) << "EtherCATread (" << PARTNAME << ")::AddDigitalIns: Could not add AnalogIn. There is already an AnalogIn for bodypart " << PARTNAME << "!" << endlog();
 			return;
 		}
 	}
     
 	// Check for invalid number of ports
     if(N_INPORTS < 1 || N_INPORTS > MAX_PORTS) {
-        log(Error) << "ADIns (" << PARTNAME << ")::AddDigitalIns: Could not add DigitalIn. Invalid number of inports: " << N_INPORTS << "!" << endlog();
+        log(Error) << "EtherCATread (" << PARTNAME << ")::AddDigitalIns: Could not add DigitalIn. Invalid number of inports: " << N_INPORTS << "!" << endlog();
         return;
     }
     if(N_OUTPORTS < 1 || N_OUTPORTS > MAX_PORTS) {
-        log(Error) << "ADIns (" << PARTNAME << ")::AddDigitalIns: Could not add DigitalIn. Invalid number of outports: " << N_OUTPORTS << "!" << endlog();
+        log(Error) << "EtherCATread (" << PARTNAME << ")::AddDigitalIns: Could not add DigitalIn. Invalid number of outports: " << N_OUTPORTS << "!" << endlog();
         return;
     }
 
 	// Count the number of entries respectively for N_INPORT_ENTRIES and N_OUTPORT_ENTRIES
     for(uint i = 0; i < N_INPORTS; i++) {
         if(INPORT_DIMENSIONS[i] < 1) {
-            log(Error) << "ADIns (" << PARTNAME << ")::AddDigitalIns: Could not add DigitalIn. Inport_dimensions cannot contain value smaller than one!" << endlog();
+            log(Error) << "EtherCATread (" << PARTNAME << ")::AddDigitalIns: Could not add DigitalIn. Inport_dimensions cannot contain value smaller than one!" << endlog();
             return;
         }
         N_INPORT_ENTRIES += INPORT_DIMENSIONS[i];
     }
     for(uint i = 0; i < N_OUTPORTS; i++) {
         if(OUTPORT_DIMENSIONS[i] < 1) {
-            log(Error) << "ADIns (" << PARTNAME << ")::AddDigitalIns: Could not add DigitalIn. Outport_dimensions cannot contain value smaller than one!" << endlog();
+            log(Error) << "EtherCATread (" << PARTNAME << ")::AddDigitalIns: Could not add DigitalIn. Outport_dimensions cannot contain value smaller than one!" << endlog();
             return;
         }
         N_OUTPORT_ENTRIES += OUTPORT_DIMENSIONS[i];
@@ -308,18 +308,18 @@ void ADIns::AddDigitalIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS,
 
 	// Check if the total number of entries matches the size of FROM_WHICH_INPORT and FROM_WHICH_ENTRY
     if ((FROM_WHICH_INPORT.size() != N_OUTPORT_ENTRIES) || (FROM_WHICH_ENTRY.size() != N_OUTPORT_ENTRIES)) {
-        log(Error) << "ADIns (" << PARTNAME << ")::AddDigitalIns: Could not add DigitalIn. The number of entries in from_which_inport_D and from_which_entry_D should equal the total number of output values." << endlog();
+        log(Error) << "EtherCATread (" << PARTNAME << ")::AddDigitalIns: Could not add DigitalIn. The number of entries in from_which_inport_D and from_which_entry_D should equal the total number of output values." << endlog();
         return;
     }
 
 	// Check validity of each entry in the FROM_WHICH_INPORT and FROM_WHICH_ENTRY 
     for(uint j = 0; j < N_OUTPORT_ENTRIES; j++) {
         if( FROM_WHICH_INPORT[j] > (n_inports_D+N_INPORTS) || FROM_WHICH_INPORT[j] <= 0 ) {
-            log(Error) << "ADIns (" << PARTNAME << ")::AddDigitalIns: Could not add DigitalIn. From_which_inport array contains port no. " << FROM_WHICH_INPORT[j] << " which does not exist according to inport_dimensions_D!" << endlog();
+            log(Error) << "EtherCATread (" << PARTNAME << ")::AddDigitalIns: Could not add DigitalIn. From_which_inport array contains port no. " << FROM_WHICH_INPORT[j] << " which does not exist according to inport_dimensions_D!" << endlog();
             return;
         }
         else if ( FROM_WHICH_ENTRY[j] > INPORT_DIMENSIONS[ FROM_WHICH_INPORT[j]-1-n_inports_D] || FROM_WHICH_ENTRY[j] <= 0 ) {
-            log(Error) << "ADIns (" << PARTNAME << ")::AddDigitalIns: Could not add DigitalIn. From_which_entry array contains entry no. " << FROM_WHICH_ENTRY[j] << " which does not exist for inport no. " << FROM_WHICH_INPORT[j] << "!" << endlog();
+            log(Error) << "EtherCATread (" << PARTNAME << ")::AddDigitalIns: Could not add DigitalIn. From_which_entry array contains entry no. " << FROM_WHICH_ENTRY[j] << " which does not exist for inport no. " << FROM_WHICH_INPORT[j] << "!" << endlog();
             return;
         }
     }
@@ -361,12 +361,12 @@ void ADIns::AddDigitalIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS,
         output_D[i].resize( outport_dimensions_D[i] );
     }
     
-    log(Warning) << "ADIns (" << PARTNAME << ")::AddDigitalIns: Succesfully added DigitalIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports!" << endlog();
+    log(Warning) << "EtherCATread (" << PARTNAME << ")::AddDigitalIns: Succesfully added DigitalIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports!" << endlog();
     
 	return;
 }
 
-void ADIns::AddEncoderIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY, string PARTNAME)
+void EtherCATread::AddEncoderIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY, string PARTNAME)
 {
 	// Init 
 	uint N_INPORTS = INPORT_DIMENSIONS.size();
@@ -378,32 +378,32 @@ void ADIns::AddEncoderIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS,
 	// Check if the EncoderIns is already added for this bodypart
 	for(uint l = 0; l < added_bodyparts_E.size(); l++) {
 		if (PARTNAME == added_bodyparts_E[l]) {
-			log(Error) << "ADIns (" << PARTNAME << ")::AddEncoderIns: Could not add AnalogIn. There is already an AnalogIn for bodypart " << PARTNAME << "!" << endlog();
+			log(Error) << "EtherCATread (" << PARTNAME << ")::AddEncoderIns: Could not add AnalogIn. There is already an AnalogIn for bodypart " << PARTNAME << "!" << endlog();
 			return;
 		}
 	}
     
 	// Check for invalid number of ports
     if(N_INPORTS < 1 || N_INPORTS > MAX_PORTS) {
-        log(Error) << "ADIns (" << PARTNAME << ")::AddEncoderIns: Could not add EncoderIn. Invalid number of inports: " << N_INPORTS << "!" << endlog();
+        log(Error) << "EtherCATread (" << PARTNAME << ")::AddEncoderIns: Could not add EncoderIn. Invalid number of inports: " << N_INPORTS << "!" << endlog();
         return;
     }
     if(N_OUTPORTS < 1 || N_OUTPORTS > MAX_PORTS) {
-        log(Error) << "ADIns (" << PARTNAME << ")::AddEncoderIns: Could not add EncoderIn. Invalid number of outports: " << N_OUTPORTS << "!" << endlog();
+        log(Error) << "EtherCATread (" << PARTNAME << ")::AddEncoderIns: Could not add EncoderIn. Invalid number of outports: " << N_OUTPORTS << "!" << endlog();
         return;
     }
 
 	// Count the number of entries respectively for N_INPORT_ENTRIES and N_OUTPORT_ENTRIES
     for(uint i = 0; i < N_INPORTS; i++) {
         if(INPORT_DIMENSIONS[i] != 1) {
-            log(Error) << "ADIns (" << PARTNAME << ")::AddEncoderIns: Could not add EncoderIn. All inport_dimensions should be be 1!" << endlog();
+            log(Error) << "EtherCATread (" << PARTNAME << ")::AddEncoderIns: Could not add EncoderIn. All inport_dimensions should be be 1!" << endlog();
             return;
         }
         N_INPORT_ENTRIES += INPORT_DIMENSIONS[i];
     }
     for(uint i = 0; i < N_OUTPORTS; i++) {
         if(OUTPORT_DIMENSIONS[i] < 1) {
-            log(Error) << "ADIns (" << PARTNAME << ")::AddEncoderIns: Could not add EncoderIn. Outport_dimensions cannot contain value smaller than one!" << endlog();
+            log(Error) << "EtherCATread (" << PARTNAME << ")::AddEncoderIns: Could not add EncoderIn. Outport_dimensions cannot contain value smaller than one!" << endlog();
             return;
         }
         N_OUTPORT_ENTRIES += OUTPORT_DIMENSIONS[i];
@@ -411,18 +411,18 @@ void ADIns::AddEncoderIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS,
 
 	// Check if the total number of entries matches the size of FROM_WHICH_INPORT and FROM_WHICH_ENTRY
     if ((FROM_WHICH_INPORT.size() != N_OUTPORT_ENTRIES) || (FROM_WHICH_ENTRY.size() != N_OUTPORT_ENTRIES)) {
-        log(Error) << "ADIns (" << PARTNAME << ")::AddEncoderIns: Could not add EncoderIn. The number of entries in from_which_inport_E and from_which_entry_E should equal the total number of output values." << endlog();
+        log(Error) << "EtherCATread (" << PARTNAME << ")::AddEncoderIns: Could not add EncoderIn. The number of entries in from_which_inport_E and from_which_entry_E should equal the total number of output values." << endlog();
         return;
     }
 
 	// Check validity of each entry in the FROM_WHICH_INPORT and FROM_WHICH_ENTRY 
     for(uint j = 0; j < N_OUTPORT_ENTRIES; j++) {
         if( FROM_WHICH_INPORT[j] > (n_inports_E+N_INPORTS) || FROM_WHICH_INPORT[j] <= 0 ) {
-            log(Error) << "ADIns (" << PARTNAME << ")::AddEncoderIns: Could not add EncoderIn. From_which_inport array contains port no. " << FROM_WHICH_INPORT[j] << " which does not exist according to inport_dimensions_E!" << endlog();
+            log(Error) << "EtherCATread (" << PARTNAME << ")::AddEncoderIns: Could not add EncoderIn. From_which_inport array contains port no. " << FROM_WHICH_INPORT[j] << " which does not exist according to inport_dimensions_E!" << endlog();
             return;
         }
         else if ( FROM_WHICH_ENTRY[j] > INPORT_DIMENSIONS[ FROM_WHICH_INPORT[j]-1] || FROM_WHICH_ENTRY[j] <= 0 ) {
-            log(Error) << "ADIns (" << PARTNAME << ")::AddEncoderIns: Could not add EncoderIn. From_which_entry array contains entry no. " << FROM_WHICH_ENTRY[j] << " which does not exist for inport no. " << FROM_WHICH_INPORT[j] << "!" << endlog();
+            log(Error) << "EtherCATread (" << PARTNAME << ")::AddEncoderIns: Could not add EncoderIn. From_which_entry array contains entry no. " << FROM_WHICH_ENTRY[j] << " which does not exist for inport no. " << FROM_WHICH_INPORT[j] << "!" << endlog();
             return;
         }
     }
@@ -462,9 +462,9 @@ void ADIns::AddEncoderIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS,
         output_E[i].resize( outport_dimensions_E[i] );
     }
     
-    log(Warning) << "ADIns (" << PARTNAME << ")::AddEncoderIns: Succesfully added EncoderIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports!" << endlog();
+    log(Warning) << "EtherCATread (" << PARTNAME << ")::AddEncoderIns: Succesfully added EncoderIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports!" << endlog();
     
 	return;
 }
 
-ORO_CREATE_COMPONENT(SOEM::ADIns)
+ORO_CREATE_COMPONENT(SOEM::EtherCATread)
