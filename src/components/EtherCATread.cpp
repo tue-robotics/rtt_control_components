@@ -116,10 +116,11 @@ void EtherCATread::updateHook()
     for( uint i = 0; i < n_outports_A; i++ ) {
         for( uint k = 0; k < outport_dimensions_A[i]; ++k) {
             output_A[i][k] = input_msgs_A[ from_which_inport_A[j]-1 ].values[ from_which_entry_A[j]-1 ];
-            ++j;
+            j++;
         }
         outports_A[i].write(output_A[i]);
     }
+    
     
     //! DigitalIns
     // Read input ports
@@ -132,7 +133,7 @@ void EtherCATread::updateHook()
     for( uint i = 0; i < n_outports_D; i++ ) {
         for( uint k = 0; k < outport_dimensions_D[i]; ++k) {
             output_D[i][k] = input_msgs_D[ from_which_inport_D[j]-1 ].values[ from_which_entry_D[j]-1 ];
-            ++j;
+            j++;
         }
         outports_D[i].write(output_D[i]);
     }
@@ -142,17 +143,17 @@ void EtherCATread::updateHook()
     for( uint i = 0; i < n_inports_E; i++ ) {
 		inports_E[i].read(input_msgs_E[i]);
     }
-
+	
 	// Do mapping of input entries on into output and write to port
     j = 0;
     for( uint i = 0; i < n_outports_E; i++ ) {
         for( uint k = 0; k < outport_dimensions_E[i]; ++k) {
-            output_E[i][k] = input_msgs_E[ from_which_inport_E[j]-1 ].value;
-            ++j;
+            output_E[i][k] = input_msgs_E[from_which_inport_E[j]-1].value;
+            j++;
         }
         outports_E[i].write(output_E[i]);
     }
-	
+    
 	return;
 }
 
@@ -163,6 +164,8 @@ void EtherCATread::AddAnalogIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMEN
 	uint N_OUTPORTS = OUTPORT_DIMENSIONS.size();
 	uint N_INPORT_ENTRIES = 0;
 	uint N_OUTPORT_ENTRIES = 0;
+	
+	log(Warning) << "EtherCATread (" << PARTNAME << ")::ADDING: [ " << INPORT_DIMENSIONS.size() << " , " << OUTPORT_DIMENSIONS.size() << " , " << FROM_WHICH_INPORT.size() << " , " << FROM_WHICH_ENTRY.size() << " ]!" << endlog();
 
 	//! Check configuration
 	// Check if the AnalogIns is already added for this bodypart
@@ -206,7 +209,7 @@ void EtherCATread::AddAnalogIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMEN
     }
 
 	// Check validity of each entry in the FROM_WHICH_INPORT and FROM_WHICH_ENTRY 
-    for(uint j = 0; j < N_OUTPORT_ENTRIES; ++j) {
+    for(uint j = 0; j < N_OUTPORT_ENTRIES; j++) {
         if( FROM_WHICH_INPORT[j] > (n_inports_A+N_INPORTS) || FROM_WHICH_INPORT[j] <= 0 ) {
             log(Error) << "EtherCATread (" << PARTNAME << ")::AddAnalogIns: Could not add AnalogIn. From_which_inport array contains port no. " << FROM_WHICH_INPORT[j] << " which does not exist according to inport_dimensions_A!" << endlog();
             return;
@@ -218,12 +221,19 @@ void EtherCATread::AddAnalogIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMEN
     }
     
     //! Now that all inputs have been properly examined. The in- and outports can be created
-    for( uint i = 0; i < N_INPORTS; i++ ) {
-		addEventPort( PARTNAME+"_Ain"+to_string(i+1), inports_A[i] );
+    for( uint i = n_inports_A; i < (n_inports_A+N_INPORTS); i++ ) {
+		addEventPort( PARTNAME+"_Ain"+to_string(i+1-n_inports_A), inports_A[i] );
 	}
-    for( uint i = 0; i < N_OUTPORTS; i++ ) {
-        addPort( PARTNAME+"_Aout"+to_string(i+1), outports_A[i] );
+    for( uint i = n_outports_A; i < (n_outports_A+N_OUTPORTS); i++ ) {
+        addPort( PARTNAME+"_Aout"+to_string(i+1-n_outports_A), outports_A[i] );
     }
+    
+    //! Update from_which_inport property (Necessary since when in the ops file the first inport is selected this means the first inport for this bodypart)
+    for( uint j = 0; j < N_OUTPORT_ENTRIES; j++ ) {
+		if (n_inports_A != 0) {
+			FROM_WHICH_INPORT[j] += (double) n_inports_A;
+		}
+	}
     
     //! And the temperary properties can be added to the global properties
     added_bodyparts_A.push_back(PARTNAME);
@@ -249,13 +259,15 @@ void EtherCATread::AddAnalogIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMEN
     for( uint i = 0; i < n_inports_A; i++ ) {
         input_msgs_A[i].values.resize( inport_dimensions_A[i] );
 	}
+
     output_A.resize(n_outports_A);
     for( uint i = 0; i < n_outports_A; i++ ) {
         output_A[i].resize( outport_dimensions_A[i] );
     }
     
     log(Warning) << "EtherCATread (" << PARTNAME << ")::AddAnalogIns: Succesfully added AnalogIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports!" << endlog();
-    
+    log(Warning) << "EtherCATread (" << PARTNAME << ")::AddEncoderIns: Total inports are now " << n_inports_A << " inports and " << n_outports_A << " outports!" << endlog();
+
 	return;
 }
 
@@ -266,6 +278,8 @@ void EtherCATread::AddDigitalIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIME
 	uint N_OUTPORTS = OUTPORT_DIMENSIONS.size();
 	uint N_INPORT_ENTRIES = 0;
 	uint N_OUTPORT_ENTRIES = 0;
+	
+	log(Warning) << "EtherCATread (" << PARTNAME << ")::ADDING: [ " << INPORT_DIMENSIONS.size() << " , " << OUTPORT_DIMENSIONS.size() << " , " << FROM_WHICH_INPORT.size() << " , " << FROM_WHICH_ENTRY.size() << " ]!" << endlog();
 
 	//! Check configuration	
 	// Check if the DigitalIns is already added for this bodypart
@@ -321,12 +335,19 @@ void EtherCATread::AddDigitalIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIME
     }
     
     //! Now that all inputs have been properly examined. The in- and outports can be created
-    for( uint i = 0; i < N_INPORTS; i++ ) {
-		addEventPort( PARTNAME+"_Din"+to_string(i+1), inports_A[i] );
+    for( uint i = n_inports_D; i < (n_inports_D+N_INPORTS); i++ ) {
+		addEventPort( PARTNAME+"_Din"+to_string(i+1-n_inports_D), inports_D[i] );
 	}
-    for( uint i = 0; i < N_OUTPORTS; i++ ) {
-        addPort( PARTNAME+"_Dout"+to_string(i+1), outports_A[i] );
+    for( uint i = n_outports_D; i < (n_outports_D+N_OUTPORTS); i++ ) {
+        addPort( PARTNAME+"_Dout"+to_string(i+1-n_outports_D), outports_D[i] );
     }
+    
+    //! Update from_which_inport property (Necessary since when in the ops file the first inport is selected this means the first inport for this bodypart)
+    for( uint j = 0; j < N_OUTPORT_ENTRIES; j++ ) {
+		if (n_inports_D != 0) {
+			FROM_WHICH_INPORT[j] += (double) n_inports_D;
+		}
+	}
     
     //! And the temperary properties can be added to the global properties
     added_bodyparts_D.push_back(PARTNAME);
@@ -346,19 +367,21 @@ void EtherCATread::AddDigitalIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIME
 	for( uint j = 0; j < N_OUTPORT_ENTRIES; j++ ) {
 		from_which_entry_D.push_back((int) FROM_WHICH_ENTRY[j]);
 	}
-    
+	
     //! Resizing in- and outport messages
     input_msgs_D.resize(n_inports_D);
     for( uint i = 0; i < n_inports_D; i++ ) {
         input_msgs_D[i].values.resize( inport_dimensions_D[i] );
 	}
+
     output_D.resize(n_outports_D);
     for( uint i = 0; i < n_outports_D; i++ ) {
         output_D[i].resize( outport_dimensions_D[i] );
     }
     
     log(Warning) << "EtherCATread (" << PARTNAME << ")::AddDigitalIns: Succesfully added DigitalIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports!" << endlog();
-    
+    log(Warning) << "EtherCATread (" << PARTNAME << ")::AddEncoderIns: Total inports are now " << n_inports_D << " inports and " << n_outports_D << " outports!" << endlog();
+
 	return;
 }
 
@@ -369,6 +392,8 @@ void EtherCATread::AddEncoderIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIME
 	uint N_OUTPORTS = OUTPORT_DIMENSIONS.size();
 	uint N_INPORT_ENTRIES = 0;
 	uint N_OUTPORT_ENTRIES = 0;
+	
+	log(Warning) << "EtherCATread (" << PARTNAME << ")::ADDING: [ " << INPORT_DIMENSIONS.size() << " , " << OUTPORT_DIMENSIONS.size() << " , " << FROM_WHICH_INPORT.size() << " , " << FROM_WHICH_ENTRY.size() << " ]!" << endlog();
 
 	//! Check configuration	
 	// Check if the EncoderIns is already added for this bodypart
@@ -424,12 +449,20 @@ void EtherCATread::AddEncoderIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIME
     }
     
     //! Now that all inputs have been properly examined. The in- and outports can be created
-    for( uint i = n_inport_entries_E; i < n_inport_entries_E+N_INPORTS; i++ ) {
-		addEventPort( PARTNAME+"_Ein"+to_string(i+1-n_inport_entries_E), inports_E[i] );
+    for( uint i = n_inports_E; i < (n_inports_E+N_INPORTS); i++ ) {
+		addEventPort( PARTNAME+"_Ein"+to_string(i+1-n_inports_E), inports_E[i] );
 	}
-    for( uint i = n_outport_entries_E; i < n_outport_entries_E+N_OUTPORTS; i++ ) {
-        addPort( PARTNAME+"_Eout"+to_string(i+1-n_inport_entries_E), outports_E[i] );
+    for( uint i = n_outports_E; i < (n_outports_E+N_OUTPORTS); i++ ) {
+        addPort( PARTNAME+"_Eout"+to_string(i+1-n_outports_E), outports_E[i] );
     }
+    
+    //! Update from_which_inport property (Necessary since when in the ops file the first inport is selected this means the first inport for this bodypart)
+    for( uint j = 0; j < N_OUTPORT_ENTRIES; j++ ) {
+		if (n_inports_E != 0) {
+			log(Warning) << "EtherCATread (" << PARTNAME << ")::AddEncoderIns: Updated FROM_WHICH_INPORT[" << j << "] from " << FROM_WHICH_INPORT[j] << " to " << FROM_WHICH_INPORT[j] + (double) n_inports_E << "!" << endlog();
+			FROM_WHICH_INPORT[j] += (double) n_inports_E;
+		}
+	}
     
     //! And the temperary properties can be added to the global properties
     added_bodyparts_E.push_back(PARTNAME);
@@ -449,16 +482,18 @@ void EtherCATread::AddEncoderIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIME
 	for( uint j = 0; j < N_OUTPORT_ENTRIES; j++ ) {
 		from_which_entry_E.push_back((int) FROM_WHICH_ENTRY[j]);
 	}
-    
+	
     //! Resizing in- and outport messages
     input_msgs_E.resize(n_inports_E);
     // input message size for an encoder can only be one so no need to resize here
+
     output_E.resize(n_outports_E);
     for( uint i = 0; i < n_outports_E; i++ ) {
         output_E[i].resize( outport_dimensions_E[i] );
     }
     
     log(Warning) << "EtherCATread (" << PARTNAME << ")::AddEncoderIns: Succesfully added EncoderIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports!" << endlog();
+    log(Warning) << "EtherCATread (" << PARTNAME << ")::AddEncoderIns: Total inports are now " << n_inports_E << " inports and " << n_outports_E << " outports!" << endlog();
     
 	return;
 }
