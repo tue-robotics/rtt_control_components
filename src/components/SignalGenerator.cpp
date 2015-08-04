@@ -124,16 +124,16 @@ void SignalGenerator::AddDigitalSignal(uint VECTOR_SIZE, doubles DEFAULT_VALUES,
 		return;
 	}
 	
-	//! Update n_analog_signal counter and bools analog_message 
+	//! Update n_digital_signal counter and bools digital_message 
 	n_digital_signal++;
-	digital_message.resize(n_analog_signal);
+	digital_message.resize(n_digital_signal);
 	digital_message[n_digital_signal-1] = DIGITAL_MESSAGE;
 	
 	//! Resize output_property_D and add as property then assign DEFAULT_VALUES (This way upon runtime the property can be used to update)
 	output_property_D.resize(n_digital_signal);
 	output_property_D[n_digital_signal-1].resize(VECTOR_SIZE);
-	addProperty( "D"+to_string(n_analog_signal)+"values", output_property_D[n_digital_signal-1]);		
-	for( uint i = 0; i < output_property_D[n_analog_signal-1].size(); i++ ) {
+	addProperty( "D"+to_string(n_digital_signal)+"values", output_property_D[n_digital_signal-1]);		
+	for( uint i = 0; i < output_property_D[n_digital_signal-1].size(); i++ ) {
 		output_property_D[n_digital_signal-1][i] = DEFAULT_VALUES[i];
 	}
 
