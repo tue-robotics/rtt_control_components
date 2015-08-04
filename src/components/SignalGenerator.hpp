@@ -18,9 +18,9 @@
  * sinuses, noise and much more. Feel free to add missing signal 
  * generators
  * 
+ * To do fix ls bad alloc error 
  * To do add possibility to internally add two sources to output on one port
- * To do add parameters as is normally done which will make the setValue function obsolete
- * To do add math functions such as setSine
+ * Make it possible to add a sine to output
 */
 
 using namespace std;

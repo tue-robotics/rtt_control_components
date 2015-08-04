@@ -107,10 +107,10 @@ void SignalGenerator::AddAnalogSignal(uint VECTOR_SIZE, doubles DEFAULT_VALUES, 
 	//! Add port
 	if (ANALOG_MESSAGE) {
 		addPort( "analogOut"+to_string(n_analog_signal), outports_A_msg[n_analog_signal-1] );
-		log(Warning) << "SignalGenerator::Adding AnalogMsg signal with size: " << VECTOR_SIZE << "!" << endlog();
+		log(Warning) << "SignalGenerator::Adding AnalogMsg signal " << n_analog_signal << " with size: " << VECTOR_SIZE << "!" << endlog();
 	} else {
 		addPort( "analogOut"+to_string(n_analog_signal), outports_A[n_analog_signal-1] );
-		log(Warning) << "SignalGenerator::Adding doubles signal with size: " << VECTOR_SIZE << "!" << endlog();
+		log(Warning) << "SignalGenerator::Adding doubles signal  " << n_analog_signal << "  with size: " << VECTOR_SIZE << "!" << endlog();
 	}
 
 	return;
@@ -149,10 +149,10 @@ void SignalGenerator::AddDigitalSignal(uint VECTOR_SIZE, doubles DEFAULT_VALUES,
 	//! Add port
 	if (DIGITAL_MESSAGE) {
 		addPort( "digitalOut"+to_string(n_digital_signal), outports_D_msg[n_digital_signal-1] );
-		log(Warning) << "SignalGenerator::Adding DigitalMsg signal with size: " << VECTOR_SIZE << "!" << endlog();
+		log(Warning) << "SignalGenerator::Adding DigitalMsg signal " << n_digital_signal << " with size: " << VECTOR_SIZE << "!" << endlog();
 	} else {
 		addPort( "digitalOut"+to_string(n_digital_signal), outports_D[n_digital_signal-1] );
-		log(Warning) << "SignalGenerator::Adding ints signal with size: " << VECTOR_SIZE << "!" << endlog();
+		log(Warning) << "SignalGenerator::Adding ints signal " << n_digital_signal << "  with size: " << VECTOR_SIZE << "!" << endlog();
 	}
 
 	return;

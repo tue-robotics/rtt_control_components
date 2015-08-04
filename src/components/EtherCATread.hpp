@@ -20,12 +20,9 @@
  * k Loops over the number of entries with a givven port
  *  
  * To Do
- * The output of this component are not messages (thus all components listening to this component need to be adapted)
- * Fix order issue
- * Test with more difficult mappings
- * Add portnames such that if the spindle is not started, then the arm will still have the same port names. For Example EtherCATread.leftarm_Ain1
- * Add math operations to inputs (such that directly the measured torque can be outputted, or the motor2jointspace conversion)
- * Add ReadEncoders
+ * Test with more complex structures
+ * Add standard math operations to inputs (such that directly the measured torque can be outputted, or the motor2jointspace conversion)
+ * Add read encoders operation
 */
 
 using namespace std;
