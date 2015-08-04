@@ -19,6 +19,8 @@
  * generators
  * 
  * To do add possibility to internally add two sources to output on one port
+ * To do add parameters as is normally done which will make the setValue function obsolete
+ * To do add math functions such as setSine
 */
 
 using namespace std;
@@ -39,20 +41,37 @@ namespace SIGNALGENERATOR
 	{
 		public:
 		
-		//! Constant Signal
-		// Ports
+		//! Analog
 		OutputPort<doubles> outports_A[MAX_PORTS];
 		OutputPort<soem_beckhoff_drivers::AnalogMsg> outports_A_msg[MAX_PORTS];
-		// Output
 		vector<doubles> output_A;
+		vector<doubles> output_property_A;
 		vector<soem_beckhoff_drivers::AnalogMsg> output_A_msgs;
-		// global parameters
-		uint n_constant_signal;
-		bools analog_message;
+		uint n_analog_signal;
+		bools analog_message;		
 		
-		//! Functions to add inputs
-		virtual void AddConstantSignal(uint VECTOR_SIZE, doubles OUTPUT_VALUES, bool ANALOG_MESSAGE);
-
+		//! Digital
+		OutputPort<ints> outports_D[MAX_PORTS];
+		OutputPort<soem_beckhoff_drivers::DigitalMsg> outports_D_msg[MAX_PORTS];
+		vector<ints> output_D;
+		vector<doubles> output_property_D;
+		vector<soem_beckhoff_drivers::DigitalMsg> output_D_msgs;
+		uint n_digital_signal;
+		bools digital_message;
+		
+		//! Encoder (only possible with encodermsg, otherwise a digital signal can be used)
+		OutputPort<soem_beckhoff_drivers::EncoderMsg> outports_E_msg[MAX_PORTS];
+		vector<soem_beckhoff_drivers::EncoderMsg> output_E_msgs;
+		ints output_E;
+		ints output_property_E;
+		uint n_encoder_signal;
+		bools encoder_message;
+		
+		//! Functions to add inputs (By default these signals will have a constant output as defined in DEFAULT_VALUES)
+		virtual void AddAnalogSignal(uint VECTOR_SIZE, doubles DEFAULT_VALUES, bool ANALOG_MESSAGE);
+		virtual void AddDigitalSignal(uint VECTOR_SIZE, doubles DEFAULT_VALUES, bool DIGITAL_MESSAGE);
+		virtual void AddEncoderSignal(double DEFAULT_VALUE);
+		
 		//! Component Hooks
 		virtual bool configureHook();
 		virtual bool startHook();

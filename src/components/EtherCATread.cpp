@@ -266,7 +266,7 @@ void EtherCATread::AddAnalogIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMEN
     }
     
     log(Warning) << "EtherCATread (" << PARTNAME << ")::AddAnalogIns: Succesfully added AnalogIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports!" << endlog();
-    log(Warning) << "EtherCATread (" << PARTNAME << ")::AddEncoderIns: Total inports are now " << n_inports_A << " inports and " << n_outports_A << " outports!" << endlog();
+    log(Warning) << "EtherCATread (" << PARTNAME << ")::AddAnalogIns: Total inports are now " << n_inports_A << " inports and " << n_outports_A << " outports!" << endlog();
 
 	return;
 }
@@ -380,7 +380,7 @@ void EtherCATread::AddDigitalIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIME
     }
     
     log(Warning) << "EtherCATread (" << PARTNAME << ")::AddDigitalIns: Succesfully added DigitalIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports!" << endlog();
-    log(Warning) << "EtherCATread (" << PARTNAME << ")::AddEncoderIns: Total inports are now " << n_inports_D << " inports and " << n_outports_D << " outports!" << endlog();
+    log(Warning) << "EtherCATread (" << PARTNAME << ")::AddDigitalIns: Total inports are now " << n_inports_D << " inports and " << n_outports_D << " outports!" << endlog();
 
 	return;
 }
