@@ -73,7 +73,7 @@ namespace SIGNALGENERATOR
 		//! Functions to edit outputs
 		//virtual void SetSine(double DEFAULT_VALUE);
 		virtual void ClearSignal(string TYPE, int ID);
-		//virtual void AddSine(double DEFAULT_VALUE);
+		virtual void CalculateRamp();
 		
 		//! Component Hooks
 		virtual bool configureHook();

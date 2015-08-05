@@ -213,4 +213,12 @@ void SignalGenerator::ClearSignal(string TYPE, int ID)
 	return;
 }
 
+void SignalGenerator::CalculateRamp()
+{
+
+	return;
+}
+
+
+
 ORO_CREATE_COMPONENT(SIGNALGENERATOR::SignalGenerator)
