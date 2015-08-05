@@ -40,7 +40,21 @@ namespace SIGNALGENERATOR
 	{
 		public:
 		
+		// Global
+		double TS;
+		
+		//! Functions to add outputs (and to clear one of them) (By default these signals will have a constant output as defined in DEFAULT_VALUES)
+		virtual void AddAnalogSignal(uint VECTOR_SIZE, doubles DEFAULT_VALUES, bool ANALOG_MESSAGE);
+		virtual void AddDigitalSignal(uint VECTOR_SIZE, doubles DEFAULT_VALUES, bool DIGITAL_MESSAGE);
+		virtual void AddEncoderSignal(double DEFAULT_VALUE);
+		virtual void ClearSignal(string TYPE, int ID);
+		
+		/*
+		 * TYPE SPECIFIC
+		*/
+		
 		//! Analog
+		// General
 		OutputPort<doubles> outports_A[MAX_PORTS];
 		OutputPort<soem_beckhoff_drivers::AnalogMsg> outports_A_msg[MAX_PORTS];
 		doubles output_A[MAX_PORTS];
@@ -48,6 +62,29 @@ namespace SIGNALGENERATOR
 		soem_beckhoff_drivers::AnalogMsg output_A_msgs[MAX_PORTS];;
 		bool analog_message[MAX_PORTS];
 		uint n_analog_signal;	
+		
+		// Source specific
+		bool ramp_status[MAX_PORTS];
+		doubles ramp_slope[MAX_PORTS];
+		doubles ramp_endvalue[MAX_PORTS];
+		
+		bool noise_status[MAX_PORTS];
+		
+		bool sine_status[MAX_PORTS];
+		
+		bool step_status[MAX_PORTS];
+		
+		// Functions
+		virtual void AddRamp(int ID, doubles STARTVALUE, doubles SLOPE, doubles FINALVALUE);
+		virtual void AddNoise(int ID, doubles MEAN, doubles VARIANCE);
+		virtual void AddSine(int ID, doubles AMPLITUDE, doubles FREQUENCY);
+		virtual void AddStep(int ID, doubles STEPTIME, doubles FINALVALUE);
+		
+		virtual void CalculateRamp();
+		virtual void CalculateNoise();
+		virtual void CalculateSine();
+		virtual void CalculateStep();
+	
 		
 		//! Digital
 		OutputPort<ints> outports_D[MAX_PORTS];
@@ -65,15 +102,9 @@ namespace SIGNALGENERATOR
 		int output_property_E[MAX_PORTS];
 		uint n_encoder_signal;
 		
-		//! Functions to add outputs (By default these signals will have a constant output as defined in DEFAULT_VALUES)
-		virtual void AddAnalogSignal(uint VECTOR_SIZE, doubles DEFAULT_VALUES, bool ANALOG_MESSAGE);
-		virtual void AddDigitalSignal(uint VECTOR_SIZE, doubles DEFAULT_VALUES, bool DIGITAL_MESSAGE);
-		virtual void AddEncoderSignal(double DEFAULT_VALUE);
-		
-		//! Functions to edit outputs
-		//virtual void SetSine(double DEFAULT_VALUE);
-		virtual void ClearSignal(string TYPE, int ID);
-		virtual void CalculateRamp();
+
+
+
 		
 		//! Component Hooks
 		virtual bool configureHook();
