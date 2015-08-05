@@ -18,9 +18,8 @@
  * sinuses, noise and much more. Feel free to add missing signal 
  * generators
  * 
- * To do fix ls bad alloc error 
+ * Make it possible to add different signals (sine, ramp, noise, etc.)
  * To do add possibility to internally add two sources to output on one port
- * Make it possible to add a sine to output
 */
 
 using namespace std;
@@ -44,33 +43,37 @@ namespace SIGNALGENERATOR
 		//! Analog
 		OutputPort<doubles> outports_A[MAX_PORTS];
 		OutputPort<soem_beckhoff_drivers::AnalogMsg> outports_A_msg[MAX_PORTS];
-		vector<doubles> output_A;
-		vector<doubles> output_property_A;
-		vector<soem_beckhoff_drivers::AnalogMsg> output_A_msgs;
-		uint n_analog_signal;
-		bools analog_message;		
+		doubles output_A[MAX_PORTS];
+		doubles output_property_A[MAX_PORTS];
+		soem_beckhoff_drivers::AnalogMsg output_A_msgs[MAX_PORTS];;
+		bool analog_message[MAX_PORTS];
+		uint n_analog_signal;	
 		
 		//! Digital
 		OutputPort<ints> outports_D[MAX_PORTS];
 		OutputPort<soem_beckhoff_drivers::DigitalMsg> outports_D_msg[MAX_PORTS];
-		vector<ints> output_D;
-		vector<doubles> output_property_D;
-		vector<soem_beckhoff_drivers::DigitalMsg> output_D_msgs;
+		ints output_D[MAX_PORTS];
+		doubles output_property_D[MAX_PORTS];
+		soem_beckhoff_drivers::DigitalMsg output_D_msgs[MAX_PORTS];
+		bool digital_message[MAX_PORTS];
 		uint n_digital_signal;
-		bools digital_message;
 		
 		//! Encoder (only possible with encodermsg, otherwise a digital signal can be used)
 		OutputPort<soem_beckhoff_drivers::EncoderMsg> outports_E_msg[MAX_PORTS];
-		vector<soem_beckhoff_drivers::EncoderMsg> output_E_msgs;
-		ints output_E;
-		ints output_property_E;
+		soem_beckhoff_drivers::EncoderMsg output_E_msgs[MAX_PORTS];
+		int output_E[MAX_PORTS];
+		int output_property_E[MAX_PORTS];
 		uint n_encoder_signal;
-		bools encoder_message;
 		
-		//! Functions to add inputs (By default these signals will have a constant output as defined in DEFAULT_VALUES)
+		//! Functions to add outputs (By default these signals will have a constant output as defined in DEFAULT_VALUES)
 		virtual void AddAnalogSignal(uint VECTOR_SIZE, doubles DEFAULT_VALUES, bool ANALOG_MESSAGE);
 		virtual void AddDigitalSignal(uint VECTOR_SIZE, doubles DEFAULT_VALUES, bool DIGITAL_MESSAGE);
 		virtual void AddEncoderSignal(double DEFAULT_VALUE);
+		
+		//! Functions to edit outputs
+		//virtual void SetSine(double DEFAULT_VALUE);
+		virtual void ClearSignal(string TYPE, int ID);
+		//virtual void AddSine(double DEFAULT_VALUE);
 		
 		//! Component Hooks
 		virtual bool configureHook();

@@ -6,7 +6,7 @@ using namespace SIGNALGENERATOR;
 
 SignalGenerator::SignalGenerator(const string& name) : TaskContext(name, PreOperational)
 {
-	//! Operations
+	//! adding outputs
     addOperation("AddAnalogSignal", &SignalGenerator::AddAnalogSignal, this, OwnThread)
 		.doc("Add a constant signal port")
 		.arg("vector_size","Number of outputs of the particular port")
@@ -20,6 +20,12 @@ SignalGenerator::SignalGenerator(const string& name) : TaskContext(name, PreOper
     addOperation("AddEncoderSignal", &SignalGenerator::AddEncoderSignal, this, OwnThread)
 		.doc("Add a constant signal port")
 		.arg("default_value","Array containing the default value");
+		
+	//! Editing outputs
+	addOperation("ClearSignal", &SignalGenerator::ClearSignal, this, OwnThread)
+		.doc("Clears a signal to 0")
+		.arg("type","Type of output ['Analog','Digital','Encoder']")
+		.arg("id","ID number of that signal type");
 }
 
 SignalGenerator::~SignalGenerator(){}
@@ -68,6 +74,7 @@ void SignalGenerator::updateHook()
 	}
 	// Encoder
 	for( uint j = 0; j < n_encoder_signal; j++ ) {
+		output_E_msgs[j].value = output_property_E[j];
 		outports_E_msg[j].write(output_E_msgs[j]);
 	}
 	
@@ -78,38 +85,38 @@ void SignalGenerator::AddAnalogSignal(uint VECTOR_SIZE, doubles DEFAULT_VALUES, 
 {
 	//! Input property checks
 	if (VECTOR_SIZE != DEFAULT_VALUES.size()) {
-		log(Error) << "SignalGenerator::AddAnalogSignal: Could not add ConstantSignal. The size of DEFAULT_VALUES: " << DEFAULT_VALUES.size() << " should match VECTOR_SIZE: " << VECTOR_SIZE << "!" << endlog();
+		log(Error) << "SignalGenerator::AddAnalogSignal: Could not add analog signal. The size of DEFAULT_VALUES: " << DEFAULT_VALUES.size() << " should match VECTOR_SIZE: " << VECTOR_SIZE << "!" << endlog();
+		return;
+	}
+	if (n_analog_signal == MAX_PORTS) {
+		log(Error) << "SignalGenerator::AddAnalogSignal: Could not add analog signal. There are already 10 analog signals going out!" << endlog();
 		return;
 	}
 	
 	//! Update n_analog_signal counter and bools analog_message 
 	n_analog_signal++;
-	analog_message.resize(n_analog_signal);
 	analog_message[n_analog_signal-1] = ANALOG_MESSAGE;
 
-	//! Resize output_property_A and add as property then assign DEFAULT_VALUES (This way upon runtime the property can be used to update)
-	output_property_A.resize(n_analog_signal);
+	//! Resize and add as property then assign DEFAULT_VALUES (This way upon runtime the property can be used to update)
 	output_property_A[n_analog_signal-1].resize(VECTOR_SIZE);
 	addProperty( "A"+to_string(n_analog_signal)+"values", output_property_A[n_analog_signal-1] );		
 	for( uint i = 0; i < output_property_A[n_analog_signal-1].size(); i++ ) {
 		output_property_A[n_analog_signal-1][i] = DEFAULT_VALUES[i];
 	}
 	
-	//! Resize actual outputs	
+	//! Init output
 	if (ANALOG_MESSAGE) {
-		output_A_msgs.resize(n_analog_signal);
 		output_A_msgs[n_analog_signal-1].values.assign(VECTOR_SIZE, 0.0);
 	} else {
-		output_A.resize(n_analog_signal);
 		output_A[n_analog_signal-1].assign(VECTOR_SIZE, 0.0);
 	}
 
 	//! Add port
 	if (ANALOG_MESSAGE) {
-		addPort( "analogOut"+to_string(n_analog_signal), outports_A_msg[n_analog_signal-1] );
+		addPort( "analogOut"+to_string(n_analog_signal), outports_A_msg[n_analog_signal-1] ).doc("Analog outport "+to_string(n_analog_signal)+" <AnalogMsg>");
 		log(Warning) << "SignalGenerator::Adding AnalogMsg signal " << n_analog_signal << " with size: " << VECTOR_SIZE << "!" << endlog();
 	} else {
-		addPort( "analogOut"+to_string(n_analog_signal), outports_A[n_analog_signal-1] );
+		addPort( "analogOut"+to_string(n_analog_signal), outports_A[n_analog_signal-1] ).doc("Analog outport "+to_string(n_analog_signal)+" <doubles>");
 		log(Warning) << "SignalGenerator::Adding doubles signal  " << n_analog_signal << "  with size: " << VECTOR_SIZE << "!" << endlog();
 	}
 
@@ -120,17 +127,19 @@ void SignalGenerator::AddDigitalSignal(uint VECTOR_SIZE, doubles DEFAULT_VALUES,
 {
 	//! Input property checks
 	if (VECTOR_SIZE != DEFAULT_VALUES.size()) {
-		log(Error) << "SignalGenerator::AddDigitalSignal: Could not add ConstantSignal. The size of DEFAULT_VALUES: " << DEFAULT_VALUES.size() << " should match VECTOR_SIZE: " << VECTOR_SIZE << "!" << endlog();
+		log(Error) << "SignalGenerator::AddDigitalSignal: Could not add digital signal. The size of DEFAULT_VALUES: " << DEFAULT_VALUES.size() << " should match VECTOR_SIZE: " << VECTOR_SIZE << "!" << endlog();
 		return;
 	}
+	if (n_digital_signal == MAX_PORTS) {
+		log(Error) << "SignalGenerator::AddAnalogSignal: Could not add digital signal. There are already 10 digital signals going out!" << endlog();
+		return;
+	}	
 	
 	//! Update n_digital_signal counter and bools digital_message 
 	n_digital_signal++;
-	digital_message.resize(n_digital_signal);
 	digital_message[n_digital_signal-1] = DIGITAL_MESSAGE;
 	
 	//! Resize output_property_D and add as property then assign DEFAULT_VALUES (This way upon runtime the property can be used to update)
-	output_property_D.resize(n_digital_signal);
 	output_property_D[n_digital_signal-1].resize(VECTOR_SIZE);
 	addProperty( "D"+to_string(n_digital_signal)+"values", output_property_D[n_digital_signal-1]);		
 	for( uint i = 0; i < output_property_D[n_digital_signal-1].size(); i++ ) {
@@ -139,19 +148,17 @@ void SignalGenerator::AddDigitalSignal(uint VECTOR_SIZE, doubles DEFAULT_VALUES,
 
 	//! Resize actual outputs	
 	if (DIGITAL_MESSAGE) {
-		output_D_msgs.resize(n_digital_signal);
 		output_D_msgs[n_digital_signal-1].values.assign(VECTOR_SIZE, 0);
 	} else {
-		output_D.resize(n_digital_signal);
 		output_D[n_digital_signal-1].assign(VECTOR_SIZE, 0);
 	}
 
 	//! Add port
 	if (DIGITAL_MESSAGE) {
-		addPort( "digitalOut"+to_string(n_digital_signal), outports_D_msg[n_digital_signal-1] );
+		addPort( "digitalOut"+to_string(n_digital_signal), outports_D_msg[n_digital_signal-1] ).doc("Digital outport "+to_string(n_digital_signal)+" <DigitalMsg>");
 		log(Warning) << "SignalGenerator::Adding DigitalMsg signal " << n_digital_signal << " with size: " << VECTOR_SIZE << "!" << endlog();
 	} else {
-		addPort( "digitalOut"+to_string(n_digital_signal), outports_D[n_digital_signal-1] );
+		addPort( "digitalOut"+to_string(n_digital_signal), outports_D[n_digital_signal-1] ).doc("Digital outport "+to_string(n_digital_signal)+" <ints>");
 		log(Warning) << "SignalGenerator::Adding ints signal " << n_digital_signal << "  with size: " << VECTOR_SIZE << "!" << endlog();
 	}
 
@@ -159,20 +166,50 @@ void SignalGenerator::AddDigitalSignal(uint VECTOR_SIZE, doubles DEFAULT_VALUES,
 }
 
 void SignalGenerator::AddEncoderSignal(double DEFAULT_VALUE)
-{	
-	//! Resizing
-	output_E_msgs.resize((n_encoder_signal+1));
-	
-	//! Generate Output
-	output_E_msgs[n_encoder_signal].value = DEFAULT_VALUE;
-	
+{
+	//! Check
+	if (n_encoder_signal == MAX_PORTS) {
+		log(Error) << "SignalGenerator::AddEncoderSignal: Could not add encoder signal. There are already 10 encoder signals going out!" << endlog();
+		return;
+	}
+		
 	//! Update global parameters
 	n_encoder_signal++;
+	
+	//! Resize and add as property then assign DEFAULT_VALUES (This way upon runtime the property can be used to update)
+	addProperty( "E"+to_string(n_encoder_signal)+"value", output_property_E[n_encoder_signal-1] );		
+	output_property_E[n_encoder_signal-1] = DEFAULT_VALUE;
 	
 	//! Add port
 	addPort( "encoderOut"+to_string(n_encoder_signal), outports_E_msg[n_encoder_signal-1] );
 	log(Warning) << "SignalGenerator::Adding EncoderMsg Signal!" << endlog();
 	
+	return;
+}
+
+void SignalGenerator::ClearSignal(string TYPE, int ID)
+{
+	//! Check
+	if( ID <= 0 || ID > MAX_PORTS) {
+		log(Error) << "SignalGenerator::ClearSignal: Could not clear signal. Invalid ID: " << ID << ".  1 <= ID <= " << MAX_PORTS << "!" << endlog();
+		return;
+	}
+
+	if (TYPE == "Analog" || TYPE == "analog") {
+		for( uint i = 0; i < output_property_A[ID-1].size(); i++ ) {
+			output_property_A[ID-1][i] = 0.0;
+		}
+	} else if (TYPE == "Digital" || TYPE == "digital") {
+		for( uint i = 0; i < output_property_D[ID-1].size(); i++ ) {
+			output_property_D[ID-1][i] = 0;
+		}
+	} else if (TYPE == "Encoder" || TYPE == "encoder") {
+		output_property_E[ID-1] = 0;
+	} else {
+		log(Error) << "SignalGenerator::ClearSignal: Could not clear signal. Wrong type: " << TYPE << ". Should be on of the following ['Analog','Digital','Encoder']!" << endlog();
+		return;
+	}
+
 	return;
 }
 
