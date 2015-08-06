@@ -6,7 +6,7 @@
 #include <rtt/Port.hpp>
 #include <rtt/Component.hpp>
 #include <rtt/OperationCaller.hpp>
-#include <ros/ros.h>
+
 
 #include <std_msgs/Bool.h>
 #include <amigo_ref_interpolator/interpolator.h>

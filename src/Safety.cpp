@@ -152,7 +152,6 @@ void Safety::updateHook()
     for ( uint i = 0; i < Nj; i++ ) {
         if( (fabs(jointErrors[i])>maxErrors[i]) ) {
             if( errors == false && errorcntrs[i] >= 3) {
-                ROS_ERROR_STREAM( "Safety: Error of joint q"<<i+1<<" exceeded limit ("<<maxErrors[i]<<"). jointErrors["<<i<<"] = " << jointErrors[i] << " output disabled." );
                 log(Error) << prefix <<"_Safety: Error of joint q"<<i+1<<" exceeded limit ("<<maxErrors[i]<<"). jointErrors["<<i<<"] = " << jointErrors[i] << " output disabled." <<endlog();
                 errors = true;
             } else if ( errors == false && errorcntrs[i] < 3) {
@@ -180,7 +179,6 @@ void Safety::updateHook()
         }
         if(fabs(timeNow-timeReachedSaturation[i])>=maxConSatTime){
             if(errors==false){ // This check makes sure it is printed only once.
-                ROS_ERROR_STREAM( "Safety: Motor output "<<i+1<<" satured too long (absolute "<<maxConSatTime<<" sec above "<<fabs(motorSat[i])<<"). output disabled." );
                 log(Error) << prefix <<"_Safety: Motor output "<<i+1<<" satured too long (absolute "<<maxConSatTime<<" sec above "<<fabs(motorSat[i])<<"). output disabled." <<endlog();
                 errors = true;
             }
@@ -194,7 +192,6 @@ void Safety::updateHook()
         if ( addsafety_inports[i].read(safe_i) == NewData ){
             if ( !safe_i.data && !errors){
 				errors = true;
-                ROS_ERROR_STREAM( "Safety: error in additional safety: "<< add_safety_portnames[i] << ". output disabled." );
                 log(Error) << prefix <<"_Safety: error in additional safety: "<< add_safety_portnames[i] << ". output disabled." <<endlog();
             }
         }
