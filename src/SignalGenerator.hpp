@@ -10,16 +10,39 @@
 #include <soem_beckhoff_drivers/EncoderMsg.h>
 
 #define MAX_PORTS 10 /* maximum number of ports */
+#define PI 3.14159265358979
 
 /*
  * Description:
  * 
- * This component can be used to generate ramp signals, constant signals
- * sinuses, noise and much more. Feel free to add missing signal 
- * generators
+ * This component can be used to generate signals. Three formats are
+ * distuinguished: Analog (Float), Integer (int) and Digital (bool). The 
+ * outputs are vectors of which each individuel output can be controlled.
  * 
- * Make it possible to add different signals (sine, ramp, noise, etc.)
+ * The output can either be a direct output or packed inside a soem 
+ * beckhoff message. Analog (AnalogMsg), Integer (EncoderMsg), Digital
+ * (DigitalMsg). Note that an integer output can only be a vector 
+ * if it is not inside the  EncoderMsg.
+ * 
+ * To use this component
+ * 1) Start it normally in .ops script without setting any properties
+ * 2) Use the functions AddAnalogSignal, AddIntegerSignal, AddDigitalSignal
+ *    to add outputs
+ * 3) Use the functions below to shape the output by adding base signals
+ *    to them. If none of these are called the output is the constant 
+ *    default value.
+ * 
+ * 		Analog: AddRamp_A, AddNoise_A, AddSine_A, AddStep_A
+ * 		Digital:		
+ * 		Integer: 
+ * 
+ * 
+ * To Do:
+ * 
+ * Fix all analog outputs
+ * 
  * To do add possibility to internally add two sources to output on one port
+ * Add boolean out
 */
 
 using namespace std;
@@ -42,49 +65,53 @@ namespace SIGNALGENERATOR
 		
 		//! Global
 		double TS;
-		
-		//! Add output functions (By default these signals will have a constant output as defined in DEFAULT_VALUES)
+		long double start_time;
+
+		// functions
+		virtual void SetOutputZero();
+		virtual void WriteOutput();
+		virtual void AddIntegerSignal(uint VECTOR_SIZE, doubles DEFAULT_VALUES, bool ENCODER_MESSAGE);
 		virtual void AddAnalogSignal(uint VECTOR_SIZE, doubles DEFAULT_VALUES, bool ANALOG_MESSAGE);
 		virtual void AddDigitalSignal(uint VECTOR_SIZE, doubles DEFAULT_VALUES, bool DIGITAL_MESSAGE);
-		virtual void AddEncoderSignal(double DEFAULT_VALUE);
-				
+
 		//! Analog
 		// Ports
 		OutputPort<doubles> outports_A[MAX_PORTS];
 		OutputPort<soem_beckhoff_drivers::AnalogMsg> outports_A_msg[MAX_PORTS];
 		
 		// General
+		uint n_analog_signal;
 		bool analog_message[MAX_PORTS];
-		uint n_analog_signal;	
 		doubles output_A[MAX_PORTS];
-		doubles output_property_A[MAX_PORTS];
+		doubles output_additive_A[MAX_PORTS];
 		soem_beckhoff_drivers::AnalogMsg output_A_msgs[MAX_PORTS];;
 
 		// Source
-		bool ramp_status[MAX_PORTS];
-		bool sine_status[MAX_PORTS];
-		bool noise_status[MAX_PORTS];
-		bool step_status[MAX_PORTS];
-		doubles ramp_slope[MAX_PORTS];
-		doubles ramp_endvalue[MAX_PORTS];
-		doubles sine_amplitude[MAX_PORTS];
-		doubles sine_frequency[MAX_PORTS];
-		doubles noise_mean[MAX_PORTS];
-		doubles noise_variance[MAX_PORTS];
-		doubles step_time[MAX_PORTS];
-		doubles step_finalvalue[MAX_PORTS];
+		bool ramp_status_A[MAX_PORTS];
+		bool sine_status_A[MAX_PORTS];
+		bool noise_status_A[MAX_PORTS];
+		bool step_status_A[MAX_PORTS];
+		doubles ramp_slope_A[MAX_PORTS];
+		doubles ramp_endvalue_A[MAX_PORTS];
+		doubles sine_amplitude_A[MAX_PORTS];
+		doubles sine_frequency_A[MAX_PORTS];
+		doubles sine_phase_A[MAX_PORTS];
+		doubles noise_mean_A[MAX_PORTS];
+		doubles noise_variance_A[MAX_PORTS];
+		doubles step_time_A[MAX_PORTS];
+		doubles step_value_A[MAX_PORTS];
 			
 		// Functions
-		virtual void AddRamp(int ID, doubles SLOPE, doubles FINALVALUE);
-		virtual void AddNoise(int ID, doubles MEAN, doubles VARIANCE);
-		virtual void AddSine(int ID, doubles AMPLITUDE, doubles FREQUENCY);
-		virtual void AddStep(int ID, doubles STEPTIME, doubles FINALVALUE);
-		virtual void SetAnalogZero();
-		virtual void CalculateRamp();
-		virtual void CalculateNoise();
-		virtual void CalculateSine();
-		virtual void CalculateStep();
-		virtual void SendAnalogSignals();
+		virtual void AddRamp_A(int ID, doubles SLOPE, doubles FINALVALUE);
+		virtual void AddNoise_A(int ID, doubles MEAN, doubles VARIANCE);
+		virtual void AddSine_A(int ID, doubles AMPLITUDE, doubles FREQUENCY, doubles PHASE);
+		virtual void AddStep_A(int ID, doubles STEPTIME, doubles STEPVALUE);
+		virtual void CalculateRamp_A();
+		virtual void CalculateNoise_A();
+		virtual void CalculateSine_A();
+		virtual void CalculateStep_A();
+		
+
 		
 		//! Digital
 		// Ports
@@ -92,31 +119,49 @@ namespace SIGNALGENERATOR
 		OutputPort<soem_beckhoff_drivers::DigitalMsg> outports_D_msg[MAX_PORTS];
 		
 		// General
-		ints output_D[MAX_PORTS];
-		doubles output_property_D[MAX_PORTS];
-		soem_beckhoff_drivers::DigitalMsg output_D_msgs[MAX_PORTS];
-		bool digital_message[MAX_PORTS];
 		uint n_digital_signal;
+		bool digital_message[MAX_PORTS];
+		ints output_D[MAX_PORTS];
+		doubles output_additive_D[MAX_PORTS];
+		soem_beckhoff_drivers::DigitalMsg output_D_msgs[MAX_PORTS];
 		
 		// Source
 		
 		// Function
-		virtual void SetDigitalZero();
-		virtual void SendDigitalSignals();
 		
-		//! Encoder (only possible with encodermsg, otherwise a digital signal can be used)
+		//! Integer
 		// Ports
-		OutputPort<soem_beckhoff_drivers::EncoderMsg> outports_E_msg[MAX_PORTS];
-		soem_beckhoff_drivers::EncoderMsg output_E_msgs[MAX_PORTS];
+		OutputPort<soem_beckhoff_drivers::EncoderMsg> outports_I_msg[MAX_PORTS];
+		soem_beckhoff_drivers::EncoderMsg output_I_msgs[MAX_PORTS];
 		
 		// General
-		int output_E[MAX_PORTS];
-		int output_property_E[MAX_PORTS];
-		uint n_encoder_signal;
+		uint n_integer_signal;
+		bool integer_message[MAX_PORTS];
+		ints output_I[MAX_PORTS];
+		ints output_additive_I[MAX_PORTS];
 		
-		// Function
-		//virtual void SetEncoderZero();
-		//virtual void SendSignals();
+		// Source
+		bool ramp_status_I[MAX_PORTS];
+		bool sine_status_I[MAX_PORTS];
+		bool noise_status_I[MAX_PORTS];
+		bool step_status_I[MAX_PORTS];
+		doubles ramp_slope_I[MAX_PORTS];
+		doubles ramp_endvalue_I[MAX_PORTS];
+		doubles sine_amplitude_I[MAX_PORTS];
+		doubles sine_frequency_I[MAX_PORTS];
+		doubles sine_phase_I[MAX_PORTS];
+		doubles noise_mean_I[MAX_PORTS];
+		doubles noise_variance_I[MAX_PORTS];
+		doubles step_time_I[MAX_PORTS];
+		doubles step_value_I[MAX_PORTS];
+			
+		// Functions
+		virtual void AddRamp_I(int ID, doubles SLOPE, doubles FINALVALUE);
+		virtual void AddSine_I(int ID, doubles AMPLITUDE, doubles FREQUENCY, doubles PHASE);
+		virtual void AddStep_I(int ID, doubles STEPTIME, doubles STEPVALUE);
+		virtual void CalculateRamp_I();
+		virtual void CalculateSine_I();
+		virtual void CalculateStep_I();
 		
 		//! Support functions
 		double randomnumgen(double LOW, double HIGH);

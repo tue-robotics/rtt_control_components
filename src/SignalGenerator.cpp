@@ -16,32 +16,51 @@ SignalGenerator::SignalGenerator(const string& name) : TaskContext(name, PreOper
 		.doc("Add a constant signal port")
 		.arg("vector_size","Number of outputs of the particular port")
 		.arg("default_values","Array containing the output values")
-		.arg("digital_message","Boolean specifying wether the output is published using a soem_beckhoff::DigitalMsg");
-    addOperation("AddEncoderSignal", &SignalGenerator::AddEncoderSignal, this, OwnThread)
+		.arg("digital_message","Boolean specifying wether the output is published using a soem_beckhoff::DigitalMsg");	
+    addOperation("AddIntegerSignal", &SignalGenerator::AddIntegerSignal, this, OwnThread)
 		.doc("Add a constant signal port")
-		.arg("default_value","Array containing the default value");
+		.arg("vector_size","Array containing the default values")
+		.arg("default_values","Array containing the default values")
+		.arg("encoder_message","Boolean specifying wether the output is published using a soem_beckhoff::EncoderMsg");
 		
 	//! Editing outputs
-	addOperation("AddRamp", &SignalGenerator::AddRamp, this, OwnThread)
+	addOperation("AddRamp_A", &SignalGenerator::AddRamp_A, this, OwnThread)
 		.doc("Add a ramp signal")
 		.arg("id","Type of output ['Analog','Digital','Encoder']")
 		.arg("slope","array of doubles specifying the slope of the ramp")
 		.arg("maximum","array of doubles specifying the maximum output");
-	addOperation("AddNoise", &SignalGenerator::AddNoise, this, OwnThread)
+	addOperation("AddNoise_A", &SignalGenerator::AddNoise_A, this, OwnThread)
 		.doc("Add a ramp signal")
-		.arg("id","Type of output ['Analog','Digital','Encoder']")
-		.arg("mean","array of doubles specifying the start value of the ramp")
-		.arg("variance","array of doubles specifying the slope of the ramp");
-	addOperation("AddSine", &SignalGenerator::AddSine, this, OwnThread)
+		.arg("id","Id number of the particular output")
+		.arg("mean","array of doubles specifying the mean value of the noise")
+		.arg("variance","array of doubles specifying the variance of the noise");
+	addOperation("AddSine_A", &SignalGenerator::AddSine_A, this, OwnThread)
 		.doc("Add a ramp signal")
-		.arg("id","Type of output ['Analog','Digital','Encoder']")
-		.arg("amplitude","array of doubles specifying the start value of the ramp")
-		.arg("frequency","array of doubles specifying the slope of the ramp");
-	addOperation("AddStep", &SignalGenerator::AddStep, this, OwnThread)
+		.arg("id","Id number of the particular output")
+		.arg("amplitude","array of doubles specifying the start value of the sine")
+		.arg("frequency","array of doubles specifying the slope of the sine")
+		.arg("phase","array of doubles specifying the phase of the sine");
+	addOperation("AddStep_A", &SignalGenerator::AddStep_A, this, OwnThread)
 		.doc("Add a ramp signal")
-		.arg("id","Type of output ['Analog','Digital','Encoder']")
+		.arg("id","Id number of the particular output")
 		.arg("steptime","array of doubles specifying the time in seconds after the calling of the function when the step is done")
-		.arg("finalvalue","array of doubles specifying the final value of the step");
+		.arg("stepvalue","array of doubles specifying the step increase value");
+	addOperation("AddRamp_I", &SignalGenerator::AddRamp_I, this, OwnThread)
+		.doc("Add a ramp signal")
+		.arg("id","Type of output ['Analog','Digital','Encoder']")
+		.arg("slope","array of doubles specifying the slope of the ramp")
+		.arg("maximum","array of doubles specifying the maximum output");
+	addOperation("AddSine_I", &SignalGenerator::AddSine_I, this, OwnThread)
+		.doc("Add a ramp signal")
+		.arg("id","Id number of the particular output")
+		.arg("amplitude","array of doubles specifying the start value of the sine")
+		.arg("frequency","array of doubles specifying the slope of the sine")
+		.arg("phase","array of doubles specifying the phase of the sine");
+	addOperation("AddStep_I", &SignalGenerator::AddStep_I, this, OwnThread)
+		.doc("Add a ramp signal")
+		.arg("id","Id number of the particular output")
+		.arg("steptime","array of doubles specifying the time in seconds after the calling of the function when the step is done")
+		.arg("stepvalue","array of doubles specifying the step increase value");
 }
 
 SignalGenerator::~SignalGenerator(){}
@@ -51,16 +70,18 @@ bool SignalGenerator::configureHook()
 	//! Init
 	n_analog_signal = 0;
 	n_digital_signal = 0;
-	n_encoder_signal = 0;
+	n_integer_signal = 0;
 	
 	for( uint l = 0; l < MAX_PORTS; l++ ) {
-		ramp_status[l] = false;
-		noise_status[l] = false;
-		sine_status[l] = false;
-		step_status[l] = false;
+		ramp_status_A[l] = false;
+		noise_status_A[l] = false;
+		sine_status_A[l] = false;
+		step_status_A[l] = false;
 	}
 	
 	TS = getPeriod();
+	
+	start_time = os::TimeService::Instance()->getNSecs()*1e-9;
 	
 	return true;
 }
@@ -69,27 +90,24 @@ bool SignalGenerator::startHook(){}
 
 void SignalGenerator::updateHook()
 {    
-	// Analog
-	SetAnalogZero();
-	CalculateRamp();
-	CalculateNoise();
-	CalculateSine();
-	CalculateStep();
-	SendAnalogSignals();
+	// Set output zero
+	SetOutputZero();
+	
+	// Analog	
+	CalculateRamp_A();
+	CalculateNoise_A();
+	CalculateSine_A();
+	CalculateStep_A();
 	
 	// Digital
-	SetDigitalZero();
-	SendDigitalSignals();
 
+	// Integer
+	CalculateRamp_I();
+	CalculateSine_I();
+	CalculateStep_I();
 	
-
-	// Encoder
-	for( uint j = 0; j < n_encoder_signal; j++ ) {
-		output_E_msgs[j].value = output_property_E[j];
-		outports_E_msg[j].write(output_E_msgs[j]);
-	}
-	
-	CalculateRamp();
+	// Write Output	
+	WriteOutput();
 	
 	return;
 }
@@ -112,10 +130,10 @@ void SignalGenerator::AddAnalogSignal(uint VECTOR_SIZE, doubles DEFAULT_VALUES, 
 	analog_message[n_analog_signal-1] = ANALOG_MESSAGE;
 
 	// Resize and add as property then assign DEFAULT_VALUES (This way upon runtime the property can be used to update)
-	output_property_A[n_analog_signal-1].resize(VECTOR_SIZE);
-	addProperty( "A"+to_string(n_analog_signal)+"values", output_property_A[n_analog_signal-1] );		
-	for( uint i = 0; i < output_property_A[n_analog_signal-1].size(); i++ ) {
-		output_property_A[n_analog_signal-1][i] = DEFAULT_VALUES[i];
+	output_additive_A[n_analog_signal-1].resize(VECTOR_SIZE);
+	addProperty( "A"+to_string(n_analog_signal)+"values", output_additive_A[n_analog_signal-1] );		
+	for( uint i = 0; i < output_additive_A[n_analog_signal-1].size(); i++ ) {
+		output_additive_A[n_analog_signal-1][i] = DEFAULT_VALUES[i];
 	}
 	
 	// Init output
@@ -153,11 +171,11 @@ void SignalGenerator::AddDigitalSignal(uint VECTOR_SIZE, doubles DEFAULT_VALUES,
 	n_digital_signal++;
 	digital_message[n_digital_signal-1] = DIGITAL_MESSAGE;
 	
-	// Resize output_property_D and add as property then assign DEFAULT_VALUES (This way upon runtime the property can be used to update)
-	output_property_D[n_digital_signal-1].resize(VECTOR_SIZE);
-	addProperty( "D"+to_string(n_digital_signal)+"values", output_property_D[n_digital_signal-1]);		
-	for( uint i = 0; i < output_property_D[n_digital_signal-1].size(); i++ ) {
-		output_property_D[n_digital_signal-1][i] = DEFAULT_VALUES[i];
+	// Resize output_additive_D and add as property then assign DEFAULT_VALUES (This way upon runtime the property can be used to update)
+	output_additive_D[n_digital_signal-1].resize(VECTOR_SIZE);
+	addProperty( "D"+to_string(n_digital_signal)+"values", output_additive_D[n_digital_signal-1]);		
+	for( uint i = 0; i < output_additive_D[n_digital_signal-1].size(); i++ ) {
+		output_additive_D[n_digital_signal-1][i] = DEFAULT_VALUES[i];
 	}
 
 	// Resize actual outputs	
@@ -179,143 +197,307 @@ void SignalGenerator::AddDigitalSignal(uint VECTOR_SIZE, doubles DEFAULT_VALUES,
 	return;
 }
 
-void SignalGenerator::AddEncoderSignal(double DEFAULT_VALUE)
+void SignalGenerator::AddIntegerSignal(uint VECTOR_SIZE, doubles DEFAULT_VALUES, bool DIGITAL_MESSAGE)
 {
-	// Check
-	if (n_encoder_signal == MAX_PORTS) {
-		log(Error) << "SignalGenerator::AddEncoderSignal: Could not add encoder signal. There are already 10 encoder signals going out!" << endlog();
-		return;
-	}
+	//// Check
+	//if (n_integer_signal == MAX_PORTS) {
+		//log(Error) << "SignalGenerator::AddEncoderSignal: Could not add encoder signal. There are already 10 encoder signals going out!" << endlog();
+		//return;
+	//}
 		
-	// Update global parameters
-	n_encoder_signal++;
+	//// Update global parameters
+	//n_integer_signal++;
 	
-	// Resize and add as property then assign DEFAULT_VALUES (This way upon runtime the property can be used to update)
-	addProperty( "E"+to_string(n_encoder_signal)+"value", output_property_E[n_encoder_signal-1] );		
-	output_property_E[n_encoder_signal-1] = DEFAULT_VALUE;
+	//// Resize and add as property then assign DEFAULT_VALUES (This way upon runtime the property can be used to update)
+	//addProperty( "E"+to_string(n_integer_signal)+"value", output_additive_I[n_integer_signal-1] );		
+	//output_additive_I[n_integer_signal-1] = DEFAULT_VALUE;
 	
-	// Add port
-	addPort( "encoderOut"+to_string(n_encoder_signal), outports_E_msg[n_encoder_signal-1] );
-	log(Warning) << "SignalGenerator::Adding EncoderMsg Signal!" << endlog();
+	//// Add port
+	//addPort( "encoderOut"+to_string(n_integer_signal), outports_I_msg[n_integer_signal-1] );
+	//log(Warning) << "SignalGenerator::Adding EncoderMsg Signal!" << endlog();
 	
 	return;
 }
 
 //! Functions to add signal sources to outputs
-
-void SignalGenerator::AddRamp(int ID, doubles SLOPE, doubles ENDVALUE)
+void SignalGenerator::AddRamp_A(int ID, doubles SLOPE, doubles ENDVALUE)
 {
 	// Check
 	if( ID <= 0 || ID > n_analog_signal) {
-		log(Error) << "SignalGenerator::AddRamp: Could not add ramp. Invalid ID: " << ID << ".  1 <= ID <= " << n_analog_signal << "!" << endlog();
+		log(Error) << "SignalGenerator::AddRamp_A: Could not add ramp. Invalid ID: " << ID << ".  1 <= ID <= " << n_analog_signal << "!" << endlog();
 		return;
 	}
-	if( SLOPE.size() != output_property_A[ID-1].size() || ENDVALUE.size() != output_property_A[ID-1].size() ) {
-		log(Error) << "SignalGenerator::AddRamp: Could not add ramp. Invalid size of SLOPE or ENDVALUE variable. Should all be of size : " << output_property_A[ID-1].size() << "!" << endlog();
+	if( SLOPE.size() != output_additive_A[ID-1].size() || ENDVALUE.size() != output_additive_A[ID-1].size() ) {
+		log(Error) << "SignalGenerator::AddRamp_A: Could not add ramp. Invalid size of SLOPE or ENDVALUE variable. Should all be of size : " << output_additive_A[ID-1].size() << "!" << endlog();
 		return;
 	}
 	
 	// Set status
-	ramp_status[ID-1] = true;
+	ramp_status_A[ID-1] = true;
 	
 	// Resize
-	ramp_endvalue[ID-1].resize(output_property_A[ID-1].size());
-	ramp_slope[ID-1].resize(output_property_A[ID-1].size());
+	ramp_endvalue_A[ID-1].resize(output_additive_A[ID-1].size());
+	ramp_slope_A[ID-1].resize(output_additive_A[ID-1].size());
 	
-	// Set values of ramp_endvalue and ramp_slope and update output_property_A to start value
-	for( uint i = 0; i < output_property_A[ID-1].size(); i++ ) {
-		ramp_endvalue[ID-1][i] = ENDVALUE[i];
-		ramp_slope[ID-1][i] = SLOPE[i];
+	// Set values of ramp_endvalue_A and ramp_slope_A and update output_additive_A to start value
+	for( uint i = 0; i < output_additive_A[ID-1].size(); i++ ) {
+		ramp_endvalue_A[ID-1][i] = ENDVALUE[i];
+		ramp_slope_A[ID-1][i] = SLOPE[i];
 	}
 	
-	log(Warning) << "SignalGenerator::AddRamp: Succesfully added Ramp!" << endlog();
+	log(Warning) << "SignalGenerator::AddRamp_A: Succesfully added Ramp!" << endlog();
 }
 
-void SignalGenerator::AddNoise(int ID, doubles MEAN, doubles VARIANCE)
+void SignalGenerator::AddNoise_A(int ID, doubles MEAN, doubles VARIANCE)
 {
 	// Check
 	if( ID <= 0 || ID > n_analog_signal) {
-		log(Error) << "SignalGenerator::AddNoise: Could not add noise. Invalid ID: " << ID << ".  1 <= ID <= " << n_analog_signal << "!" << endlog();
+		log(Error) << "SignalGenerator::AddNoise_A: Could not add noise. Invalid ID: " << ID << ".  1 <= ID <= " << n_analog_signal << "!" << endlog();
 		return;
 	}
-	if( MEAN.size() != output_property_A[ID-1].size() || VARIANCE.size() != output_property_A[ID-1].size()) {
-		log(Error) << "SignalGenerator::AddNoise: Could not add noise. Invalid size of MEAN or VARIANCE variable. Should all be of size : " << output_property_A[ID-1].size() << "!" << endlog();
+	if( MEAN.size() != output_additive_A[ID-1].size() || VARIANCE.size() != output_additive_A[ID-1].size()) {
+		log(Error) << "SignalGenerator::AddNoise_A: Could not add noise. Invalid size of MEAN or VARIANCE variable. Should all be of size : " << output_additive_A[ID-1].size() << "!" << endlog();
 		return;
 	}
 	
 	// Set status
-	noise_status[ID-1] = true;
+	noise_status_A[ID-1] = true;
 	
 	// Resize
-	noise_mean[ID-1].resize(output_property_A[ID-1].size());
-	noise_variance[ID-1].resize(output_property_A[ID-1].size());
+	noise_mean_A[ID-1].resize(output_additive_A[ID-1].size());
+	noise_variance_A[ID-1].resize(output_additive_A[ID-1].size());
 	
-	// Set values of ramp_endvalue and ramp_slope and update output_property_A to start value
-	for( uint i = 0; i < output_property_A[ID-1].size(); i++ ) {
-		noise_mean[ID-1][i] = MEAN[i];
-		noise_variance[ID-1][i] = VARIANCE[i];
+	// Set values of ramp_endvalue_A and ramp_slope_A and update output_additive_A to start value
+	for( uint i = 0; i < output_additive_A[ID-1].size(); i++ ) {
+		noise_mean_A[ID-1][i] = MEAN[i];
+		noise_variance_A[ID-1][i] = VARIANCE[i];
 	}
 	
-	log(Warning) << "SignalGenerator::AddNoise: Succesfully added Noise!" << endlog();
+	log(Warning) << "SignalGenerator::AddNoise_A: Succesfully added Noise!" << endlog();
 }
 
-void SignalGenerator::AddSine(int ID, doubles AMPLITUDE, doubles FREQUENCY)
+void SignalGenerator::AddSine_A(int ID, doubles AMPLITUDE, doubles FREQUENCY, doubles PHASE)
 {
 	// Check
 	if( ID <= 0 || ID > n_analog_signal) {
-		log(Error) << "SignalGenerator::AddSine: Could not add sine. Invalid ID: " << ID << ".  1 <= ID <= " << n_analog_signal << "!" << endlog();
+		log(Error) << "SignalGenerator::AddSine_A: Could not add sine. Invalid ID: " << ID << ".  1 <= ID <= " << n_analog_signal << "!" << endlog();
 		return;
 	}
-	if( AMPLITUDE.size() != output_property_A[ID-1].size() || FREQUENCY.size() != output_property_A[ID-1].size()) {
-		log(Error) << "SignalGenerator::AddSine: Could not add sine. Invalid size of AMPLITUDE or FREQUENCY variable. Should all be of size : " << output_property_A[ID-1].size() << "!" << endlog();
+	if( AMPLITUDE.size() != output_additive_A[ID-1].size() || FREQUENCY.size() != output_additive_A[ID-1].size()) {
+		log(Error) << "SignalGenerator::AddSine_A: Could not add sine. Invalid size of AMPLITUDE or FREQUENCY variable. Should all be of size : " << output_additive_A[ID-1].size() << "!" << endlog();
 		return;
 	}
 	
 	// Set status
-	sine_status[ID-1] = true;
+	sine_status_A[ID-1] = true;
 	
-	log(Warning) << "SignalGenerator::AddSine: Succesfully added Sine!" << endlog();
+	// Resize
+	sine_amplitude_A[ID-1].resize(output_A[ID-1].size());
+	sine_frequency_A[ID-1].resize(output_A[ID-1].size());
+	sine_phase_A[ID-1].resize(output_A[ID-1].size());
+	
+	// Set values of ramp_endvalue_A and ramp_slope_A and update output_additive_A to start value
+	for( uint i = 0; i < output_additive_A[ID-1].size(); i++ ) {
+		sine_amplitude_A[ID-1][i] = AMPLITUDE[i];
+		sine_frequency_A[ID-1][i] = FREQUENCY[i];
+		sine_phase_A[ID-1][i] = PHASE[i];
+	}
+	
+	log(Warning) << "SignalGenerator::AddSine_A: Succesfully added Sine!" << endlog();
 }
 
-void SignalGenerator::AddStep(int ID, doubles STEPTIME, doubles FINALVALUE)
+void SignalGenerator::AddStep_A(int ID, doubles STEPTIME, doubles STEPVALUE)
 {
 	// Check
 	if( ID <= 0 || ID > n_analog_signal) {
-		log(Error) << "SignalGenerator::AddStep: Could not add step. Invalid ID: " << ID << ".  1 <= ID <= " << n_analog_signal << "!" << endlog();
+		log(Error) << "SignalGenerator::AddStep_A: Could not add step. Invalid ID: " << ID << ".  1 <= ID <= " << n_analog_signal << "!" << endlog();
 		return;
 	}
-	if( STEPTIME.size() != output_property_A[ID-1].size() || FINALVALUE.size() != output_property_A[ID-1].size()) {
-		log(Error) << "SignalGenerator::AddStep: Could not add step. Invalid size of AMPLITUDE or FREQUENCY variable. Should all be of size : " << output_property_A[ID-1].size() << "!" << endlog();
+	if( STEPTIME.size() != output_additive_A[ID-1].size() || STEPVALUE.size() != output_additive_A[ID-1].size()) {
+		log(Error) << "SignalGenerator::AddStep_A: Could not add step. Invalid size of AMPLITUDE or FREQUENCY variable. Should all be of size : " << output_additive_A[ID-1].size() << "!" << endlog();
+		return;
+	}
+	
+		// Resize
+	step_time_A[ID-1].resize(output_A[ID-1].size());
+	step_value_A[ID-1].resize(output_A[ID-1].size());
+	
+	// Set values of ramp_endvalue_A and ramp_slope_A and update output_additive_A to start value
+	for( uint i = 0; i < output_additive_A[ID-1].size(); i++ ) {
+		step_time_A[ID-1][i] = STEPTIME[i];
+		step_value_A[ID-1][i] = STEPVALUE[i];
+	}
+	
+	
+	// Set status
+	step_status_A[ID-1] = true;	
+	
+	log(Warning) << "SignalGenerator::AddStep_A: Succesfully added Step!" << endlog();
+}
+
+void SignalGenerator::AddRamp_I(int ID, doubles SLOPE, doubles ENDVALUE)
+{
+	// Check
+	if( ID <= 0 || ID > n_integer_signal) {
+		log(Error) << "SignalGenerator::AddRamp_I: Could not add ramp. Invalid ID: " << ID << ".  1 <= ID <= " << n_integer_signal << "!" << endlog();
+		return;
+	}
+	if( SLOPE.size() != output_additive_I[ID-1].size() || ENDVALUE.size() != output_additive_I[ID-1].size() ) {
+		log(Error) << "SignalGenerator::AddRamp_I: Could not add ramp. Invalid size of SLOPE or ENDVALUE variable. Should all be of size : " << output_additive_I[ID-1].size() << "!" << endlog();
 		return;
 	}
 	
 	// Set status
-	step_status[ID-1] = true;	
+	ramp_status_I[ID-1] = true;
 	
-	log(Warning) << "SignalGenerator::AddStep: Succesfully added Step!" << endlog();
+	// Resize
+	ramp_endvalue_I[ID-1].resize(output_additive_I[ID-1].size());
+	ramp_slope_I[ID-1].resize(output_additive_I[ID-1].size());
+	
+	// Set values of ramp_endvalue_I and ramp_slope_I and update output_additive_I to start value
+	for( uint i = 0; i < output_additive_I[ID-1].size(); i++ ) {
+		ramp_endvalue_I[ID-1][i] = ENDVALUE[i];
+		ramp_slope_I[ID-1][i] = SLOPE[i];
+	}
+	
+	log(Warning) << "SignalGenerator::AddRamp_I: Succesfully added Ramp!" << endlog();
 }
 
-//! Internal functions Analog
-void SignalGenerator::SetAnalogZero()
+void SignalGenerator::AddSine_I(int ID, doubles AMPLITUDE, doubles FREQUENCY, doubles PHASE)
 {
-	for( uint j = 0; j < n_analog_signal; j++ ) {
-		for( uint i = 0; i < output_property_A[j].size(); i++ ) {
-			output_property_A[j][i] = 0.0;
+	// Check
+	if( ID <= 0 || ID > n_integer_signal) {
+		log(Error) << "SignalGenerator::AddSine_I: Could not add sine. Invalid ID: " << ID << ".  1 <= ID <= " << n_integer_signal << "!" << endlog();
+		return;
+	}
+	if( AMPLITUDE.size() != output_additive_I[ID-1].size() || FREQUENCY.size() != output_additive_I[ID-1].size()) {
+		log(Error) << "SignalGenerator::AddSine_I: Could not add sine. Invalid size of AMPLITUDE or FREQUENCY variable. Should all be of size : " << output_additive_I[ID-1].size() << "!" << endlog();
+		return;
+	}
+	
+	// Set status
+	sine_status_I[ID-1] = true;
+	
+	// Resize
+	sine_amplitude_I[ID-1].resize(output_I[ID-1].size());
+	sine_frequency_I[ID-1].resize(output_I[ID-1].size());
+	sine_phase_I[ID-1].resize(output_I[ID-1].size());
+	
+	// Set values of ramp_endvalue_I and ramp_slope_I and update output_additive_I to start value
+	for( uint i = 0; i < output_additive_I[ID-1].size(); i++ ) {
+		sine_amplitude_I[ID-1][i] = AMPLITUDE[i];
+		sine_frequency_I[ID-1][i] = FREQUENCY[i];
+		sine_phase_I[ID-1][i] = PHASE[i];
+	}
+	
+	log(Warning) << "SignalGenerator::AddSine_I: Succesfully added Sine!" << endlog();
+}
+
+void SignalGenerator::AddStep_I(int ID, doubles STEPTIME, doubles STEPVALUE)
+{
+	// Check
+	if( ID <= 0 || ID > n_integer_signal) {
+		log(Error) << "SignalGenerator::AddStep_I: Could not add step. Invalid ID: " << ID << ".  1 <= ID <= " << n_integer_signal << "!" << endlog();
+		return;
+	}
+	if( STEPTIME.size() != output_additive_I[ID-1].size() || STEPVALUE.size() != output_additive_I[ID-1].size()) {
+		log(Error) << "SignalGenerator::AddStep_I: Could not add step. Invalid size of AMPLITUDE or FREQUENCY variable. Should all be of size : " << output_additive_I[ID-1].size() << "!" << endlog();
+		return;
+	}
+	
+		// Resize
+	step_time_I[ID-1].resize(output_I[ID-1].size());
+	step_value_I[ID-1].resize(output_I[ID-1].size());
+	
+	// Set values of ramp_endvalue_I and ramp_slope_I and update output_additive_I to start value
+	for( uint i = 0; i < output_additive_I[ID-1].size(); i++ ) {
+		step_time_I[ID-1][i] = STEPTIME[i];
+		step_value_I[ID-1][i] = STEPVALUE[i];
+	}
+	
+	
+	// Set status
+	step_status_I[ID-1] = true;	
+	
+	log(Warning) << "SignalGenerator::AddStep_I: Succesfully added Step!" << endlog();
+}
+
+void SignalGenerator::SetOutputZero()
+{
+	// Analog
+	for( uint j = 0; j < n_analog_signal; j++ ) {	
+		for( uint i = 0; i < output_A[j].size(); i++ ) {
+			output_A[j][i] = 0.0;
+		}
+	}
+		
+	// Digital
+	for( uint j = 0; j < n_digital_signal; j++ ) {	
+		for( uint i = 0; i < output_D[j].size(); i++ ) {
+			output_D[j][i] = 0.0;
+		}
+	}
+	
+	// Integer
+	for( uint j = 0; j < n_integer_signal; j++ ) {	
+		for( uint i = 0; i < output_I[j].size(); i++ ) {
+			output_I[j][i] = 0.0;
 		}
 	}
 	
 	return;
 }
 
-void SignalGenerator::CalculateRamp()
+void SignalGenerator::WriteOutput()
+{
+	// Analog
+	for( uint j = 0; j < n_analog_signal; j++ ) {
+		if (analog_message[j]) {
+			for( uint i = 0; i < output_additive_A[j].size(); i++ ) {
+				output_A_msgs[j].values[i] = output_A[j][i]+output_additive_A[j][i];
+			}
+			outports_A_msg[j].write(output_A_msgs[j]);
+		} else {
+			for( uint i = 0; i < output_additive_A[j].size(); i++ ) {
+				output_A[j][i] = output_A[j][i]+output_additive_A[j][i];
+			}
+			outports_A[j].write(output_A[j]);
+		}	
+	}
+	
+	// Digital
+	for( uint j = 0; j < n_digital_signal; j++ ) {
+		if (digital_message[j]) {
+			for( uint i = 0; i < output_additive_D[j].size(); i++ ) {
+				output_D_msgs[j].values[i] = (int) output_additive_D[j][i] + (int) output_additive_D[j][i];
+			}
+			outports_D_msg[j].write(output_D_msgs[j]);
+		} else {
+			for( uint i = 0; i < output_additive_D[j].size(); i++ ) {
+				output_D[j][i] = (int) output_additive_D[j][i];
+			}
+			outports_D[j].write(output_D[j]);
+		}	
+	}
+	
+	// Integer
+	//for( uint j = 0; j < n_integer_signal; j++ ) {
+	//	output_I_msgs[j].value = output_additive_I[j];
+	//	outports_I_msg[j].write(output_I_msgs[j]);
+	//}
+	
+	return;
+}
+
+void SignalGenerator::CalculateRamp_A()
 {
 	for( uint j = 0; j < n_analog_signal; j++ ) {
-		if (ramp_status[j]) {
-			for( uint i = 0; i < output_property_A[j].size(); i++ ) {
-				if (abs(output_property_A[j][i]) <= abs(ramp_endvalue[j][i])) {
-					output_property_A[j][i] += ramp_slope[j][i]*TS;
+		if (ramp_status_A[j]) {
+			for( uint i = 0; i < output_additive_A[j].size(); i++ ) {
+				if (abs(output_additive_A[j][i]) < abs(ramp_endvalue_A[j][i])) {
+					output_additive_A[j][i] += ramp_slope_A[j][i]*TS;
 				} else {
-					output_property_A[j][i] += ramp_endvalue[j][i];
+					output_additive_A[j][i] = ramp_endvalue_A[j][i];
 				}
 			}
 		}
@@ -324,12 +506,12 @@ void SignalGenerator::CalculateRamp()
 	return;
 }
 
-void SignalGenerator::CalculateNoise()
+void SignalGenerator::CalculateNoise_A()
 {
 	for( uint j = 0; j < n_analog_signal; j++ ) {
-		if (noise_status[j]) {
-			for( uint i = 0; i < output_property_A[j].size(); i++ ) {
-				output_property_A[j][i] += box_muller(noise_mean[j][i], noise_variance[j][i]);
+		if (noise_status_A[j]) {
+			for( uint i = 0; i < output_additive_A[j].size(); i++ ) {
+				output_A[j][i] += box_muller(noise_mean_A[j][i], noise_variance_A[j][i]);
 			}
 		}
 	}
@@ -337,74 +519,93 @@ void SignalGenerator::CalculateNoise()
 	return;
 }
 
-void SignalGenerator::CalculateSine()
+void SignalGenerator::CalculateSine_A()
 {
+	long double time;
+	time = (os::TimeService::Instance()->getNSecs()*1e-9)-start_time;
+
 	for( uint j = 0; j < n_analog_signal; j++ ) {
-		if (sine_status[j]) {
-			log(Warning) << "SignalGenerator::CalculateSine: Calculationg Sine!" << endlog();
+		if (sine_status_A[j]) {
+			for( uint i = 0; i < output_A[j].size(); i++ ) {
+				output_A[j][i] = sine_amplitude_A[j][i] * sin(2*PI*sine_frequency_A[j][i]*time+sine_phase_A[j][i]);
+			}	
 		}
 	}
 
+
 	return;
 }
 
-void SignalGenerator::CalculateStep()
+void SignalGenerator::CalculateStep_A()
 {
-	for( uint j = 0; j < n_analog_signal; j++ ) {
-		if (step_status[j]) {	
-			log(Warning) << "SignalGenerator::CalculateStep: Calculationg Step!" << endlog();
-		}
-	}
+	long double time;
+	time = (os::TimeService::Instance()->getNSecs()*1e-9)-start_time;	
 	
-	return;
-}
-
-void SignalGenerator::SendAnalogSignals()
-{
 	for( uint j = 0; j < n_analog_signal; j++ ) {
-		if (analog_message[j]) {
-			for( uint i = 0; i < output_property_A[j].size(); i++ ) {
-				output_A_msgs[j].values[i] = output_property_A[j][i];
+		if (step_status_A[j]) {	
+			for( uint i = 0; i < output_A[j].size(); i++ ) {
+				if (time >= step_time_A[j][i]) {
+					output_additive_A[j][i] += step_value_A[j][i];
+					step_value_A[j][i] = 0.0;
+				}
 			}
-			outports_A_msg[j].write(output_A_msgs[j]);
-		} else {
-			for( uint i = 0; i < output_property_A[j].size(); i++ ) {
-				output_A[j][i] = output_property_A[j][i];
-			}
-			outports_A[j].write(output_A[j]);
-		}	
-	}
-	
-	return;
-}
-
-//! Internal functions Digital
-void SignalGenerator::SetDigitalZero()
-{
-	for( uint j = 0; j < n_digital_signal; j++ ) {
-		for( uint i = 0; i < output_property_D[j].size(); i++ ) {
-			output_property_D[j][i] = 0;
 		}
 	}
 	
 	return;
 }
 
-void SignalGenerator::SendDigitalSignals()
-{ 
-	for( uint j = 0; j < n_digital_signal; j++ ) {
-		if (digital_message[j]) {
-			for( uint i = 0; i < output_property_D[j].size(); i++ ) {
-				output_D_msgs[j].values[i] = (int) output_property_D[j][i];
+void SignalGenerator::CalculateRamp_I()
+{
+	for( uint j = 0; j < n_integer_signal; j++ ) {
+		if (ramp_status_I[j]) {
+			for( uint i = 0; i < output_additive_I[j].size(); i++ ) {
+				if (abs(output_additive_I[j][i]) < abs(ramp_endvalue_I[j][i])) {
+					output_additive_I[j][i] += (int) ramp_slope_I[j][i]*TS;
+				} else {
+					output_additive_I[j][i] = (int) ramp_endvalue_I[j][i];
+				}
 			}
-			outports_D_msg[j].write(output_D_msgs[j]);
-		} else {
-			for( uint i = 0; i < output_property_D[j].size(); i++ ) {
-				output_D[j][i] = (int) output_property_D[j][i];
-			}
-			outports_D[j].write(output_D[j]);
-		}	
+		}
 	}
+
+	return;
+}
+
+void SignalGenerator::CalculateSine_I()
+{
+	long double time;
+	time = (os::TimeService::Instance()->getNSecs()*1e-9)-start_time;
+
+	for( uint j = 0; j < n_integer_signal; j++ ) {
+		if (sine_status_I[j]) {
+			for( uint i = 0; i < output_I[j].size(); i++ ) {
+				output_I[j][i] = (int) sine_amplitude_I[j][i] * sin(2*PI*sine_frequency_I[j][i]*time+sine_phase_I[j][i]);
+			}	
+		}
+	}
+
+
+	return;
+}
+
+void SignalGenerator::CalculateStep_I()
+{
+	long double time;
+	time = (os::TimeService::Instance()->getNSecs()*1e-9)-start_time;	
+	
+	for( uint j = 0; j < n_integer_signal; j++ ) {
+		if (step_status_I[j]) {	
+			for( uint i = 0; i < output_I[j].size(); i++ ) {
+				if (time >= step_time_I[j][i]) {
+					output_additive_I[j][i] += (int) step_value_I[j][i];
+					step_value_I[j][i] = 0.0;
+				}
+			}
+		}
+	}
+	
+	return;
 }
 
 //! Support functions
