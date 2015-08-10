@@ -32,17 +32,16 @@
  *    to them. If none of these are called the output is the constant 
  *    default value.
  * 
- * 		Analog: AddRamp_A, AddNoise_A, AddSine_A, AddStep_A
- * 		Digital:		
- * 		Integer: AddRamp_I, AddSine_I, AddStep_I
+ * Ana: AddRamp_A,AddNoise_A,AddSine_A,AddStep_A,(AddRefGen_A,AddPulse_A,AddSawTooth_A)
+ * Dig: AddStep_D,(AddPulse_D)		
+ * Int: AddRamp_I,AddSine_I,AddStep_I,(AddRefGen_I,AddPulse_I,AddSawTooth_I)
  * 
  * 
  * To Do:
  * 
- * Fix all analog outputs
- * 
- * To do add possibility to internally add two sources to output on one port
- * Add boolean out
+ * Add ReferenceGenerator (For Analog and Integer)
+ * Add Pulse (For Analog, Integer and Digital)
+ * Extensively test the output with tracing component and matlab
 */
 
 using namespace std;
