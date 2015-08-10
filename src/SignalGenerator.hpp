@@ -34,7 +34,7 @@
  * 
  * 		Analog: AddRamp_A, AddNoise_A, AddSine_A, AddStep_A
  * 		Digital:		
- * 		Integer: 
+ * 		Integer: AddRamp_I, AddSine_I, AddStep_I
  * 
  * 
  * To Do:
@@ -70,9 +70,9 @@ namespace SIGNALGENERATOR
 		// functions
 		virtual void SetOutputZero();
 		virtual void WriteOutput();
-		virtual void AddIntegerSignal(uint VECTOR_SIZE, doubles DEFAULT_VALUES, bool ENCODER_MESSAGE);
 		virtual void AddAnalogSignal(uint VECTOR_SIZE, doubles DEFAULT_VALUES, bool ANALOG_MESSAGE);
 		virtual void AddDigitalSignal(uint VECTOR_SIZE, doubles DEFAULT_VALUES, bool DIGITAL_MESSAGE);
+		virtual void AddIntegerSignal(uint VECTOR_SIZE, doubles DEFAULT_VALUES, bool ENCODER_MESSAGE);
 
 		//! Analog
 		// Ports
@@ -82,8 +82,9 @@ namespace SIGNALGENERATOR
 		// General
 		uint n_analog_signal;
 		bool analog_message[MAX_PORTS];
-		doubles output_A[MAX_PORTS];
+		doubles output_nonadditive_A[MAX_PORTS];
 		doubles output_additive_A[MAX_PORTS];
+		doubles output_A[MAX_PORTS];
 		soem_beckhoff_drivers::AnalogMsg output_A_msgs[MAX_PORTS];;
 
 		// Source
@@ -111,34 +112,19 @@ namespace SIGNALGENERATOR
 		virtual void CalculateSine_A();
 		virtual void CalculateStep_A();
 		
-
-		
-		//! Digital
-		// Ports
-		OutputPort<ints> outports_D[MAX_PORTS];
-		OutputPort<soem_beckhoff_drivers::DigitalMsg> outports_D_msg[MAX_PORTS];
-		
-		// General
-		uint n_digital_signal;
-		bool digital_message[MAX_PORTS];
-		ints output_D[MAX_PORTS];
-		doubles output_additive_D[MAX_PORTS];
-		soem_beckhoff_drivers::DigitalMsg output_D_msgs[MAX_PORTS];
-		
-		// Source
-		
-		// Function
 		
 		//! Integer
 		// Ports
+		OutputPort<ints> outports_I[MAX_PORTS];
 		OutputPort<soem_beckhoff_drivers::EncoderMsg> outports_I_msg[MAX_PORTS];
-		soem_beckhoff_drivers::EncoderMsg output_I_msgs[MAX_PORTS];
 		
 		// General
 		uint n_integer_signal;
 		bool integer_message[MAX_PORTS];
+		doubles output_nonadditive_I[MAX_PORTS];
+		doubles output_additive_I[MAX_PORTS];
 		ints output_I[MAX_PORTS];
-		ints output_additive_I[MAX_PORTS];
+		soem_beckhoff_drivers::EncoderMsg output_I_msgs[MAX_PORTS];
 		
 		// Source
 		bool ramp_status_I[MAX_PORTS];
@@ -162,6 +148,28 @@ namespace SIGNALGENERATOR
 		virtual void CalculateRamp_I();
 		virtual void CalculateSine_I();
 		virtual void CalculateStep_I();
+		
+		//! Digital
+		// Ports
+		OutputPort<bool> outports_D[MAX_PORTS];
+		OutputPort<soem_beckhoff_drivers::DigitalMsg> outports_D_msg[MAX_PORTS];
+		
+		// General
+		uint n_digital_signal;
+		bool digital_message[MAX_PORTS];
+		doubles output_additive_D[MAX_PORTS];
+		bool output_D[MAX_PORTS];
+		soem_beckhoff_drivers::DigitalMsg output_D_msgs[MAX_PORTS];
+		
+		// Source
+		bool step_status_D[MAX_PORTS];
+		doubles step_time_D[MAX_PORTS];
+		doubles step_value_D[MAX_PORTS];
+				
+		// Function
+		virtual void AddStep_D(int ID, doubles STEPTIME, doubles STEPVALUE);
+		virtual void CalculateStep_D();
+		
 		
 		//! Support functions
 		double randomnumgen(double LOW, double HIGH);
