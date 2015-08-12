@@ -12,18 +12,19 @@ SignalGenerator::SignalGenerator(const string& name) : TaskContext(name, PreOper
 		.arg("vector_size","Number of outputs of the particular port")
 		.arg("default_values","Array containing the output values")
 		.arg("analog_message","Boolean specifying wether the output is published using a soem_beckhoff::AnalogMsg");
-    addOperation("AddDigitalSignal", &SignalGenerator::AddDigitalSignal, this, OwnThread)
-		.doc("Add a constant signal port")
-		.arg("vector_size","Number of outputs of the particular port")
-		.arg("default_values","Array containing the output values")
-		.arg("digital_message","Boolean specifying wether the output is published using a soem_beckhoff::DigitalMsg");	
     addOperation("AddIntegerSignal", &SignalGenerator::AddIntegerSignal, this, OwnThread)
 		.doc("Add a constant signal port")
 		.arg("vector_size","Array containing the default values")
 		.arg("default_values","Array containing the default values")
 		.arg("encoder_message","Boolean specifying wether the output is published using a soem_beckhoff::EncoderMsg");
+    addOperation("AddDigitalSignal", &SignalGenerator::AddDigitalSignal, this, OwnThread)
+		.doc("Add a constant signal port")
+		.arg("vector_size","Number of outputs of the particular port")
+		.arg("default_values","Array containing the output values")
+		.arg("digital_message","Boolean specifying wether the output is published using a soem_beckhoff::DigitalMsg");	
 		
 	//! Editing outputs
+	// Analog
 	addOperation("AddRamp_A", &SignalGenerator::AddRamp_A, this, OwnThread)
 		.doc("Add a analog ramp signal")
 		.arg("id","Type of output ['Analog','Digital','Encoder']")
@@ -45,13 +46,15 @@ SignalGenerator::SignalGenerator(const string& name) : TaskContext(name, PreOper
 		.arg("id","Id number of the particular output")
 		.arg("steptime","array of doubles specifying the time in seconds after the calling of the function when the step is done")
 		.arg("stepvalue","array of doubles specifying the step increase value");
-		
+	
+	// Digital
 	addOperation("AddStep_D", &SignalGenerator::AddStep_D, this, OwnThread)
 		.doc("Add a digital step signal")
 		.arg("id","Id number of the particular output")
 		.arg("steptime","array of doubles specifying the time in seconds after the calling of the function when the step is done")
 		.arg("stepvalue","array of doubles specifying the step increase value");
-		
+	
+	// Integer
 	addOperation("AddRamp_I", &SignalGenerator::AddRamp_I, this, OwnThread)
 		.doc("Add a integer ramp signal")
 		.arg("id","Type of output ['Analog','Digital','Encoder']")
@@ -131,7 +134,7 @@ void SignalGenerator::AddAnalogSignal(uint VECTOR_SIZE, doubles DEFAULT_VALUES, 
 		return;
 	}
 	if (n_analog_signal == MAX_PORTS) {
-		log(Error) << "SignalGenerator::AddAnalogSignal: Could not add analog signal. There are already 10 analog signals going out!" << endlog();
+		log(Error) << "SignalGenerator::AddAnalogSignal: Could not add analog signal. There are already " << MAX_PORTS << " analog signals going out!" << endlog();
 		return;
 	}
 	
@@ -174,7 +177,7 @@ void SignalGenerator::AddIntegerSignal(uint VECTOR_SIZE, doubles DEFAULT_VALUES,
 		return;
 	}
 	if (n_integer_signal == MAX_PORTS) {
-		log(Error) << "SignalGenerator::AddIntegerSignal: Could not add integer signal. There are already 10 integer signals going out!" << endlog();
+		log(Error) << "SignalGenerator::AddIntegerSignal: Could not add integer signal. There are already " << MAX_PORTS << " integer signals going out!" << endlog();
 		return;
 	}	
 	if (ENCODER_MESSAGE && (VECTOR_SIZE != 1 || DEFAULT_VALUES.size() != 1) ) {
@@ -219,7 +222,7 @@ void SignalGenerator::AddDigitalSignal(uint VECTOR_SIZE, doubles DEFAULT_VALUES,
 		return;
 	}
 	if (n_digital_signal == MAX_PORTS) {
-		log(Error) << "SignalGenerator::AddDigitalSignal: Could not add digital signal. There are already 10 digital signals going out!" << endlog();
+		log(Error) << "SignalGenerator::AddDigitalSignal: Could not add digital signal. There are already " << MAX_PORTS << " digital signals going out!" << endlog();
 		return;
 	}
 	if (!DIGITAL_MESSAGE && (VECTOR_SIZE != 1 || DEFAULT_VALUES.size() != 1) ) {

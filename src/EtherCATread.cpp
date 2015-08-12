@@ -28,6 +28,13 @@ EtherCATread::EtherCATread(const string& name) : TaskContext(name, PreOperationa
 		.arg("FROM_WHICH_INPORT","Array specifying where the input from the inports should go - first specify from which inport")
 		.arg("FROM_WHICH_ENTRY","Array specifying where the input from the inports should go - second specify which entry")
 		.arg("PARTNAME","String specifying the name of the part");
+		
+	//! Modify existing Analog/Digital/Encoder Ins
+	// Digital
+	addOperation("Flip_D", &EtherCATread::Flip_D, this, OwnThread)
+		.doc("This function will flip all digital values i for which the property flip[i] contains a 1")
+		.arg("id","ID number of the digital in")
+		.arg("flip","Vector of bools specifying which input should be flipped");
 }
 EtherCATread::~EtherCATread(){}
 
@@ -55,6 +62,11 @@ bool EtherCATread::configureHook()
 	n_outports_E = 0;
 	n_inport_entries_E = 0;
 	n_outport_entries_E = 0;
+	
+	
+	for( uint l = 0; l < MAX_PORTS; l++ ) {
+		flip_status_D[l] = false;
+	}
 }
 
 bool EtherCATread::startHook(){}
@@ -67,92 +79,18 @@ void EtherCATread::updateHook()
 	}
 	if (!goodToGO && (aquisition_time - start_time > 4.0)) {
 		goodToGO = true;
-
-		// AnalogIns
-		for(uint i = 0; i < n_inports_A; i++) {
-			if ( !inports_A[i].connected() ) {
-				log(Error) << "EtherCATread: Analog inport " << inports_A[i].getName() << " is not connected." << endlog();
-			}
-		}
-		for(uint i = 0; i < n_outports_A; i++) {
-			if ( !outports_A[i].connected() ) {
-				log(Info) << "EtherCATread: Analog outport " << outports_A[i].getName() << " is not connected." << endlog();
-			}
-		}
-		
-		// DigitalIns
-		for(uint i = 0; i < n_inports_D; i++) {
-			if ( !inports_D[i].connected() ) {
-				log(Error) << "EtherCATread: Digital inport " << inports_D[i].getName() << " is not connected." << endlog();
-			}
-		}
-		for(uint i = 0; i < n_outports_D; i++) {
-			if ( !outports_D[i].connected() ) {
-				log(Info) << "EtherCATread: Digital outport " << outports_D[i].getName() << " is not connected." << endlog();
-			}
-		}
-		
-		// EncoderIns
-		for(uint i = 0; i < n_inports_E; i++) {
-			if ( !inports_E[i].connected() ) {
-				log(Error) << "EtherCATread: Encoder inport " << inports_E[i].getName() << " is not connected." << endlog();
-			}
-		}
-		for(uint i = 0; i < n_outports_E; i++) {
-			if ( !outports_E[i].connected() ) {
-				log(Info) << "EtherCATread: Encoder outport " << outports_E[i].getName() << " is not connected." << endlog();
-			}
-		}
+		CheckAllConnections();
 	}
 
-	//! AnalogIns
-    // Read input ports
-    for( uint i = 0; i < n_inports_A; i++ ) {
-		inports_A[i].read(input_msgs_A[i]);
-    }
-
-	// Do mapping of input entries on into output and write to port
-    uint j = 0;
-    for( uint i = 0; i < n_outports_A; i++ ) {
-        for( uint k = 0; k < outport_dimensions_A[i]; ++k) {
-            output_A[i][k] = input_msgs_A[ from_which_inport_A[j]-1 ].values[ from_which_entry_A[j]-1 ];
-            j++;
-        }
-        outports_A[i].write(output_A[i]);
-    }
-    
-    
-    //! DigitalIns
-    // Read input ports
-    for( uint i = 0; i < n_inports_D; i++ ) {
-		inports_D[i].read(input_msgs_D[i]);
-    }
-
-	// Do mapping of input entries on into output and write to port
-    j = 0;
-    for( uint i = 0; i < n_outports_D; i++ ) {
-        for( uint k = 0; k < outport_dimensions_D[i]; ++k) {
-            output_D[i][k] = input_msgs_D[ from_which_inport_D[j]-1 ].values[ from_which_entry_D[j]-1 ];
-            j++;
-        }
-        outports_D[i].write(output_D[i]);
-    }
-    
-    //! EncoderIns
-    // Read input ports
-    for( uint i = 0; i < n_inports_E; i++ ) {
-		inports_E[i].read(input_msgs_E[i]);
-    }
+	ReadInputs();
 	
-	// Do mapping of input entries on into output and write to port
-    j = 0;
-    for( uint i = 0; i < n_outports_E; i++ ) {
-        for( uint k = 0; k < outport_dimensions_E[i]; ++k) {
-            output_E[i][k] = input_msgs_E[from_which_inport_E[j]-1].value;
-            j++;
-        }
-        outports_E[i].write(output_E[i]);
-    }
+	MapInput2Outputs();
+	
+	Calculate_A();
+	Calculate_D();
+	Calculate_E();
+	
+    WriteOutputs();
     
 	return;
 }
@@ -498,4 +436,151 @@ void EtherCATread::AddEncoderIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIME
 	return;
 }
 
+//! Functions to edit inputs
+void EtherCATread::Flip_D(int ID, doubles FLIP)
+{
+	// Check
+	if( ID <= 0 || ID > n_outports_D) {
+		log(Error) << "EtherCATread::Flip_D: Could not add flip. Invalid ID: " << ID << ".  1 <= ID <= " << n_outports_D << "!" << endlog();
+		return;
+	}
+	if( FLIP.size() != output_D[ID-1].size() ) {
+		log(Error) << "EtherCATread::Flip_D: Could not add flip. Invalid size of FLIP. Should have be of size :" << output_D[ID-1].size() << "!" << endlog();
+		return;
+	}
+	
+	// Set status
+	flip_status_D[ID-1] = true;
+	
+	// Resize
+	flip_flip_D[ID-1].resize(output_D[ID-1].size());
+	
+	// Save ramp properties
+	for( uint i = 0; i < output_D[ID-1].size(); i++ ) {
+		flip_flip_D[ID-1][i] = (bool) FLIP[i];
+	}
+	
+	log(Warning) << "EtherCATread::Flip_D: Succesfully added a flip!" << endlog();
+}
+
+//! Functions to edit inputs
+void EtherCATread::CheckAllConnections()
+{
+	// AnalogIns
+	for(uint i = 0; i < n_inports_A; i++) {
+		if ( !inports_A[i].connected() ) {
+			log(Error) << "EtherCATread: Analog inport " << inports_A[i].getName() << " is not connected." << endlog();
+		}
+	}
+	for(uint i = 0; i < n_outports_A; i++) {
+		if ( !outports_A[i].connected() ) {
+			log(Info) << "EtherCATread: Analog outport " << outports_A[i].getName() << " is not connected." << endlog();
+		}
+	}
+	
+	// DigitalIns
+	for(uint i = 0; i < n_inports_D; i++) {
+		if ( !inports_D[i].connected() ) {
+			log(Error) << "EtherCATread: Digital inport " << inports_D[i].getName() << " is not connected." << endlog();
+		}
+	}
+	for(uint i = 0; i < n_outports_D; i++) {
+		if ( !outports_D[i].connected() ) {
+			log(Info) << "EtherCATread: Digital outport " << outports_D[i].getName() << " is not connected." << endlog();
+		}
+	}
+	
+	// EncoderIns
+	for(uint i = 0; i < n_inports_E; i++) {
+		if ( !inports_E[i].connected() ) {
+			log(Error) << "EtherCATread: Encoder inport " << inports_E[i].getName() << " is not connected." << endlog();
+		}
+	}
+	for(uint i = 0; i < n_outports_E; i++) {
+		if ( !outports_E[i].connected() ) {
+			log(Info) << "EtherCATread: Encoder outport " << outports_E[i].getName() << " is not connected." << endlog();
+		}
+	}
+}
+
+void EtherCATread::ReadInputs()
+{
+	for( uint i = 0; i < n_inports_A; i++ ) {
+		inports_A[i].read(input_msgs_A[i]);
+    }    
+    for( uint i = 0; i < n_inports_D; i++ ) {
+		inports_D[i].read(input_msgs_D[i]);
+    }
+    for( uint i = 0; i < n_inports_E; i++ ) {
+		inports_E[i].read(input_msgs_E[i]);
+    }
+
+}
+
+void EtherCATread::WriteOutputs()
+{
+    for( uint i = 0; i < n_outports_A; i++ ) {
+		outports_A[i].write(output_A[i]);
+	}
+        
+    for( uint i = 0; i < n_outports_D; i++ ) {
+		outports_D[i].write(output_D[i]);
+	}
+	    
+    for( uint i = 0; i < n_outports_E; i++ ) {
+		outports_E[i].write(output_E[i]);
+	}	
+}
+
+void EtherCATread::MapInput2Outputs()
+{	
+    uint j = 0;
+    for( uint i = 0; i < n_outports_A; i++ ) {
+        for( uint k = 0; k < outport_dimensions_A[i]; ++k) {
+            output_A[i][k] = input_msgs_A[ from_which_inport_A[j]-1 ].values[ from_which_entry_A[j]-1 ];
+            j++;   
+        }
+    }
+
+    j = 0;
+    for( uint i = 0; i < n_outports_D; i++ ) {
+        for( uint k = 0; k < outport_dimensions_D[i]; ++k) {
+            output_D[i][k] = input_msgs_D[ from_which_inport_D[j]-1 ].values[ from_which_entry_D[j]-1 ];
+            j++;
+        }
+    }
+
+    j = 0;
+    for( uint i = 0; i < n_outports_E; i++ ) {
+        for( uint k = 0; k < outport_dimensions_E[i]; ++k) {
+            output_E[i][k] = input_msgs_E[from_which_inport_E[j]-1].value;
+            j++;
+        }   
+    }
+}
+
+void EtherCATread::Calculate_A()
+{	
+
+}
+
+void EtherCATread::Calculate_D()
+{
+	// Flip
+    for( uint i = 0; i < n_outports_D; i++ ) {
+		if (flip_status_D[i]) {			
+			for( uint k = 0; k < output_D[i].size(); ++k) {		
+				if (flip_flip_D[i][k]) {
+					output_D[i][k] = !output_D[i][k];
+				}
+			}
+		}
+    }
+
+}
+
+void EtherCATread::Calculate_E()
+{	
+	
+}
 ORO_CREATE_COMPONENT(ETHERCATREAD::EtherCATread)

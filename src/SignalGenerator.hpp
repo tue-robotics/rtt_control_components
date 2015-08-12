@@ -36,6 +36,9 @@
  * Dig: AddStep_D,(AddPulse_D)		
  * Int: AddRamp_I,AddSine_I,AddStep_I,(AddRefGen_I,AddPulse_I,AddSawTooth_I)
  * 
+ * Extra Feature:
+ * 
+ * Add a saturation
  * 
  * To Do:
  * 
@@ -84,7 +87,7 @@ namespace SIGNALGENERATOR
 		doubles output_nonadditive_A[MAX_PORTS];
 		doubles output_additive_A[MAX_PORTS];
 		doubles output_A[MAX_PORTS];
-		soem_beckhoff_drivers::AnalogMsg output_A_msgs[MAX_PORTS];;
+		soem_beckhoff_drivers::AnalogMsg output_A_msgs[MAX_PORTS];
 
 		// Source
 		bool ramp_status_A[MAX_PORTS];

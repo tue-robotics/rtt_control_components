@@ -44,6 +44,7 @@ orocos_component(DynamixelController 		src/DynamixelController.cpp 	${HEADER_FIL
 orocos_component(GripperController 			src/GripperController.cpp		${HEADER_FILES})
 orocos_component(RgbController 				src/RgbController.cpp 			${HEADER_FILES})
 orocos_component(SignalGenerator 			src/SignalGenerator.cpp 		${HEADER_FILES})
+orocos_component(SOEMdummy 					src/SOEMdummy.cpp 				${HEADER_FILES})
 orocos_component(ROSinterface 				src/ROSinterface.cpp 			${HEADER_FILES})
 
 target_link_libraries(Supervisor 			${catkin_LIBRARIES} 			${USE_OROCOS_LIBRARIES})
@@ -57,4 +58,5 @@ target_link_libraries(DynamixelController 	${catkin_LIBRARIES} 			${USE_OROCOS_L
 target_link_libraries(GripperController 	${catkin_LIBRARIES} 			${USE_OROCOS_LIBRARIES})
 target_link_libraries(RgbController 		${catkin_LIBRARIES} 			${USE_OROCOS_LIBRARIES})
 target_link_libraries(SignalGenerator 		${catkin_LIBRARIES} 			${USE_OROCOS_LIBRARIES})
+target_link_libraries(SOEMdummy 			${catkin_LIBRARIES} 			${USE_OROCOS_LIBRARIES})
 target_link_libraries(ROSinterface 			${catkin_LIBRARIES} 			${USE_OROCOS_LIBRARIES})

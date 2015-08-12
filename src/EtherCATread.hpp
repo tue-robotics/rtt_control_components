@@ -21,8 +21,11 @@
  *  
  * To Do
  * Test with more complex structures
- * Add standard math operations to inputs (such that directly the measured torque can be outputted, or the motor2jointspace conversion)
- * Add read encoders operation
+ * Add math:
+ * - SensorTorques
+ * - Matrix Transforms
+ * - Multiply
+ * - ReadEncoders
 */
 
 using namespace std;
@@ -47,6 +50,18 @@ namespace ETHERCATREAD
 		bool goodToGO;
 		long double aquisition_time;
 		long double start_time;
+		
+		// Functions
+		virtual void ReadInputs();
+		virtual void CheckAllConnections();
+		virtual void MapInput2Outputs();
+		virtual void Calculate_A();
+		virtual void Calculate_D();
+		virtual void Calculate_E();
+		virtual void WriteOutputs();
+		virtual void AddAnalogIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY, string PARTNAME);
+		virtual void AddDigitalIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY, string PARTNAME);
+		virtual void AddEncoderIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY, string PARTNAME);		
 		
 		//! AnalogIns
 		// Ports
@@ -73,7 +88,7 @@ namespace ETHERCATREAD
 		//! DigitalIns
 		// Ports
 		InputPort<soem_beckhoff_drivers::DigitalMsg> inports_D[MAX_PORTS];
-		OutputPort<ints> outports_D[MAX_PORTS];
+		OutputPort<bools> outports_D[MAX_PORTS];
 	
 		// Scalars
 		uint n_inports_D;
@@ -90,8 +105,15 @@ namespace ETHERCATREAD
 		
 		// In/Output
 		std::vector< soem_beckhoff_drivers::DigitalMsg > input_msgs_D;
-		std::vector< ints > output_D;
+		std::vector< bools > output_D;
 
+		// Math
+		bool flip_status_D[MAX_PORTS];
+		bools flip_flip_D[MAX_PORTS];		
+
+		// Functions
+		virtual void Flip_D(int ID, doubles FLIP);
+		
 		//! EncoderIns
 		// Ports
 		InputPort<soem_beckhoff_drivers::EncoderMsg> inports_E[MAX_PORTS];
@@ -113,11 +135,6 @@ namespace ETHERCATREAD
 		// In/Output
 		std::vector< soem_beckhoff_drivers::EncoderMsg > input_msgs_E;
 		std::vector< ints > output_E;
-
-		//! Functions to add inputs
-		virtual void AddAnalogIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY, string PARTNAME);
-		virtual void AddDigitalIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY, string PARTNAME);
-		virtual void AddEncoderIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY, string PARTNAME);
 
 		//! Component Hooks
 		virtual bool configureHook();
