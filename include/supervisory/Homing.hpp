@@ -56,10 +56,12 @@ namespace SUPERVISORY
         // Properties
         uint N;
         uint N_outports;
-        ints outport_sizes;
+        uint partNr;
+
         string bodypart;
         string prefix;
 
+        ints outport_sizes;
         ints homing_type;
         ints require_homing;
         ints homing_order;
@@ -69,6 +71,7 @@ namespace SUPERVISORY
         doubles desiredAcc;
         doubles homing_stroke;
         doubles reset_stroke;
+
 		double InterpolDt;
 		double InterpolEps;
 		
@@ -87,7 +90,6 @@ namespace SUPERVISORY
         int jointNr;
         int stateA;
         int stateB;
-        int partNr;
         double homing_stroke_goal;
         doubles position;
         doubles desiredPos;
@@ -114,7 +116,7 @@ namespace SUPERVISORY
         Attribute<doubles> Safety_maxJointErrors;
         Attribute<bools> TrajectoryActionlib_allowedBodyparts;
 
-        // Functions in Component Peers that homing component can call
+        // Operations in Component Peers that homing component can call
         OperationCaller<bool(string)> 		StartBodyPart;
         OperationCaller<bool(string)> 		StopBodyPart;
         OperationCaller<void(doubles)> 		ResetEncoders;

@@ -19,7 +19,11 @@ ReadEncoders::ReadEncoders(const string& name) : TaskContext(name, PreOperationa
     addProperty( "offset", offsets ).doc("Offset value in SI units, untested feature");
     addOperation( "ResetEncoders", &ReadEncoders::ResetEncoders, this, OwnThread ).doc("Reset an encoder value to a new value, usefull for homing");
 }
-ReadEncoders::~ReadEncoders(){}
+ReadEncoders::~ReadEncoders()
+{
+	//! Remove Operations
+	remove("ResetEncoders");
+}
 
 bool ReadEncoders::configureHook() 
 {

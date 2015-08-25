@@ -24,7 +24,11 @@ JointStateAggregator::JointStateAggregator(const string& name) :
     
 }
 
-JointStateAggregator::~JointStateAggregator(){}
+JointStateAggregator::~JointStateAggregator()
+{
+	remove("addAggregationPort");
+	remove("addJointNames");
+}
 
 bool JointStateAggregator::configureHook()
 {

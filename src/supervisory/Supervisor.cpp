@@ -19,7 +19,7 @@ using namespace SUPERVISORY;
 Supervisor::Supervisor(const string& name) :
     TaskContext(name, PreOperational)
 {
-	//Operations
+    //! Operations
     addOperation("AddAllwaysOnPeer", &Supervisor::AddAllwaysOnPeer, this, OwnThread)
             .doc("Add a peer to the AllwaysOnList, all these components are always on!")
             .arg("peerName","Name of the peer to add to the list");
@@ -55,23 +55,43 @@ Supervisor::Supervisor(const string& name) :
     addOperation("DisplaySupervisoredPeers", &Supervisor::displaySupervisoredPeers, this, ClientThread)
             .doc("Display the list of peers");
     
-    // Properties
+    //! Properties
 	restart_aftererror = false;
 	addProperty( "ebuttonorder", ebutton_order );
 	addProperty( "restart_aftererror", restart_aftererror );
 	        
-	// Ports
+    //! Ports
 	addPort( "rosshutdown", rosshutdownport );
 	addPort( "rosetherCATenabled", enabled_rosport );
 	addPort( "serialRunning", serialRunningPort ).doc("Serial device running port");
 	addPort( "dashboardCmd", dashboardCmdPort ).doc("To receive dashboard commands ");  
 	addPort( "hardware_status", hardwareStatusPort ).doc("To send hardware status to dashboard "); 
-	addPort( "ebutton_status", ebuttonStatusPort ).doc("To send ebutton status to dashboard "); 
+    addPort( "ebutton_status", ebuttonStatusPort ).doc("To send ebutton status to dashboard ");
+
+    //! Set TaskContext pointers to NULL
+    GlobalReferenceGenerator = NULL;
 }
 
 Supervisor::~Supervisor()
 {
-	// remove operations
+	//! Set TaskContext pointers to NULL
+    GlobalReferenceGenerator = NULL;
+    for( int j = 0; j < AllwaysOnList.size(); j++ ) {
+		AllwaysOnList[j] = NULL;
+	}
+	for( int i = 0; i < 6; i++ ) {
+		for( int j = 0; j < OpOnlyList[i].size(); j++ ) {
+			OpOnlyList[i][j] = NULL;
+		}
+		for( int j = 0; j < HomingOnlyList[i].size(); j++ ) {
+			HomingOnlyList[i][j] = NULL;
+		}
+		for( int j = 0; j < EnabledList[i].size(); j++ ) {
+			EnabledList[i][j] = NULL;
+		}
+	}
+	
+    //! remove operations
 	remove("CreateRobotObject");
 	remove("AddBodyPart");	
 	remove("AddAllwaysOnPeer");
@@ -80,19 +100,18 @@ Supervisor::~Supervisor()
 	remove("AddEnabledPeer");	
 	remove("StartBodyPart");
 	remove("StopBodyPart");
-	remove("DisplaySupervisoredPeers");	
+    remove("DisplaySupervisoredPeers");
 
-    // remove dashboard ros parameters from parameter server
+    //! remove dashboard ros parameters from parameter server
     ros::NodeHandle nh("~");
     nh.deleteParam("dashboard");
     nh.deleteParam("dashboard_list");
 }
 
-//------------------------------------------------------------------------------------------------------------------
-
 bool Supervisor::configureHook()
 {
-	// declaration of scalars
+    //! Init
+    // Scalars
 	emergency = false;
 	goodToGO = false;
 	start_time = 0.0;
@@ -101,8 +120,8 @@ bool Supervisor::configureHook()
 	detected_error = false;
 	old_structure = false;
 
-	// declaration of msgs
-	rosenabledmsg.data = true;
+    // Msgs
+    rosenabledmsg.data = true;
 	rosdisabledmsg.data = false;
 	dashboardCmdmsg.data.assign(2, 0.0);	
 	StatusStalemsg.level = 0;
@@ -111,27 +130,23 @@ bool Supervisor::configureHook()
 	StatusHomingmsg.level = 3;
 	StatusErrormsg.level = 4;
 	hardwareStatusmsg.status.resize(6);
-	allowedBodyparts.resize(5);
 	
-	for( int j = 0; j < 5; j++ ) {
-		allowedBodyparts[j] = false;
-	}
-	
-	// declaration of  vectors
-	for( int partNr = 0; partNr < 6; partNr++ ) {
+    // Vectors
+    allowedBodyparts.resize(5);
+    for( int j = 0; j < 5; j++ ) {
+        allowedBodyparts[j] = false;
+    }
+    for( int partNr = 0; partNr < 6; partNr++ ) {
 		hardwareStatusmsg.status[partNr] = StatusStalemsg; 
 		homeableParts[partNr] = false;
 		idleDueToEmergencyButton[partNr] = false;
 		homedParts[partNr] = false;
 		staleParts[partNr] = true; // all parts are stale by default, in Addbodypart function they will be set to false
 		bodyParts[partNr] = "";
-	}
-	
+	}	
 	staleParts[0] = false; // whole robot is never stale
 
-	enabled_rosport.write( rosenabledmsg );
-	
-	// check ebutton_order property
+    //! check ebutton_order property
 	if (ebutton_order.size() < 2 || ebutton_order.size() > 4 ) {
 		log(Error) << "Supervisor: Could not configure component, size of ebutton_order should be 2, 3 or 4" << endlog();
 		return false;
@@ -146,6 +161,10 @@ bool Supervisor::configureHook()
 			return false;
 		}
 	}
+
+    //! Write rosenabled
+    enabled_rosport.write( rosenabledmsg );
+
 	return true;
 }
 
@@ -183,12 +202,10 @@ bool Supervisor::startHook()
 	aquisition_time = os::TimeService::Instance()->getNSecs()*1e-9;
 
 	// Fetch Property Acces
-	if ( this->hasPeer( "GlobalReferenceGenerator") )
-	{
+    if ( this->hasPeer( "GlobalReferenceGenerator") ) {
 		GlobalReferenceGenerator = this->getPeer( "GlobalReferenceGenerator");
 	}
-	else if ( this->hasPeer( "TrajectoryActionlib") )
-	{
+    else if ( this->hasPeer( "TrajectoryActionlib") ) {
 		GlobalReferenceGenerator = this->getPeer( "TrajectoryActionlib");
 	}
 	else {
@@ -197,6 +214,7 @@ bool Supervisor::startHook()
 	
 	if (!old_structure) {
 
+        // Feth acces to GlobalReferenceGenerator attribute allowedBodyparts
 		AllowReadReferencesRefGen = GlobalReferenceGenerator->attributes()->getAttribute("allowedBodyparts");
 
 		// Check Property Acces
@@ -204,13 +222,13 @@ bool Supervisor::startHook()
 			log(Error) << "Supervisor: Could not gain acces to GlobalReferenceGenerator.AllowReadReferences"<<endlog();
 			return false;
 		}
-		
-		bools disable_all(6);
-		for ( int j = 1; j < 6; j++ ) {
-			disable_all[j] = false;
-		}
-		AllowReadReferencesRefGen.set(disable_all);
+
+        // Set all Allowances to false
+        for ( int j = 1; j < 6; j++ ) {
+            setAllowed(j,false);
+        }
 	}
+
     return true;
 }
 
@@ -287,11 +305,10 @@ void Supervisor::updateHook()
 			if (dashboardCmdmsg.data[0] == 0) { // 0 = all bodyparts
                 if (dashboardCmdmsg.data[1] == HOMING_CMD && emergency == false ) {
 					log(Warning) << "Supervisor: Received Homing request from dashboard for all parts" << endlog();      
-					for ( int partNr = 1; partNr < 6; partNr++ ) {
+                    for ( int partNr = 1; partNr < 6; partNr++ ) {
 						if (homeableParts[partNr]) { 
 							GoHoming(partNr,hardwareStatusmsg);
-							}
-						else { 
+						} else { 
 							GoOperational(partNr,hardwareStatusmsg);
 						}
 					}
@@ -317,6 +334,7 @@ void Supervisor::updateHook()
                 if (dashboardCmdmsg.data[1] == START_CMD && emergency == false) {
 					log(Warning) << "Supervisor: Received Start request from dashboard for partNr: [" << (int) dashboardCmdmsg.data[0] << "]" << endlog(); 
 					GoOperational((int) dashboardCmdmsg.data[0],hardwareStatusmsg);
+				
 				}
                 if (dashboardCmdmsg.data[1] == STOP_CMD && emergency == false) {
 					log(Warning) << "Supervisor: Received Stop request from dashboard for partNr: [" << (int) dashboardCmdmsg.data[0] << "]" << endlog();  
@@ -326,7 +344,7 @@ void Supervisor::updateHook()
 					log(Warning) << "Supervisor: Received Reset Error request from dashboard for partNr: [" << (int) dashboardCmdmsg.data[0] << "]" << endlog();
 					setState(dashboardCmdmsg.data[0], StatusIdlemsg);
 				}
-			}  
+			}
 		}
 	}
 
@@ -524,19 +542,31 @@ bool Supervisor::setState(int partNr, diagnostic_msgs::DiagnosticStatus state)
 	return true;
 }
 
+void Supervisor::setAllowed(int partNr, bool allowed)
+{
+    if (!old_structure) {
+        // Fetch
+        allowedBodyparts = AllowReadReferencesRefGen.get();
+        // Set
+        allowedBodyparts[partNr-1] = allowed;
+        // Set
+        AllowReadReferencesRefGen.set(allowedBodyparts);
+    }
+    return;
+}
+
 bool Supervisor::GoOperational(int partNr, diagnostic_msgs::DiagnosticArray statusArray)
 {
 	if (staleParts[partNr] == false) {
-		if (statusArray.status[partNr].level != StatusErrormsg.level) {				// if in error state, GoOp is blocked
+		if (statusArray.status[partNr].level != StatusErrormsg.level) {				// continue only if not in error state
 			stopList( HomingOnlyList[partNr] );
 			startList( OpOnlyList[partNr] );
 			if (!old_structure) { 
-				allowedBodyparts = AllowReadReferencesRefGen.get();
-				allowedBodyparts[partNr-1] = true;
-				AllowReadReferencesRefGen.set(allowedBodyparts);
+				log(Warning) << "Supervisor::GoOperational: Allowing bodypart:     [" << partNr << "]" <<endlog();
+				setAllowed(partNr, true);
 			}
 			
-			if (statusArray.status[partNr].level != StatusHomingmsg.level) {		// if in homing state, the EnabledList does not need to be restarted
+			if (statusArray.status[partNr].level != StatusHomingmsg.level) {		// if not in homing state, the EnabledList does not need to be restarted
 				startList( EnabledList[partNr] );
 			}
 			setState(partNr, StatusOperationalmsg);
@@ -554,11 +584,12 @@ bool Supervisor::GoIdle(int partNr, diagnostic_msgs::DiagnosticArray statusArray
 		stopList( EnabledList[partNr] );
 		stopList( HomingOnlyList[partNr] );
 		stopList( OpOnlyList[partNr] );
+		
 		if (!old_structure) {
-			allowedBodyparts = AllowReadReferencesRefGen.get();
-			allowedBodyparts[partNr-1] = false;
-			AllowReadReferencesRefGen.set(allowedBodyparts);
+			log(Warning) << "Supervisor::GoIdle: Allowing bodypart:     [" << partNr << "]" <<endlog();
+			setAllowed(partNr, false);
 		}
+		
 		if (statusArray.status[partNr].level != StatusErrormsg.level) {
 			setState(partNr, StatusIdlemsg);
 		}
@@ -573,16 +604,16 @@ bool Supervisor::GoIdle(int partNr, diagnostic_msgs::DiagnosticArray statusArray
 bool Supervisor::GoHoming(int partNr, diagnostic_msgs::DiagnosticArray statusArray)
 {
 	if (staleParts[partNr] == false) {
-		if (statusArray.status[partNr].level != StatusErrormsg.level) {
+		if (statusArray.status[partNr].level != StatusErrormsg.level) { // if not from error
 			stopList( OpOnlyList[partNr] );
-			if (!old_structure) {
-				allowedBodyparts = AllowReadReferencesRefGen.get();
-				allowedBodyparts[partNr-1] = false;
-				AllowReadReferencesRefGen.set(allowedBodyparts);
-			}
 			startList( EnabledList[partNr] );
 			startList( HomingOnlyList[partNr] );
 			setState(partNr, StatusHomingmsg);
+			
+			if (!old_structure) {
+				log(Warning) << "Supervisor::GoHoming: Allowing bodypart:     [" << partNr << "]" <<endlog();
+				setAllowed(partNr, false);
+			}
 		}
 	}
 	else {
@@ -600,9 +631,8 @@ bool Supervisor::GoError(int partNr, diagnostic_msgs::DiagnosticArray statusArra
 		stopList( OpOnlyList[partNr] );
 
 		if (!old_structure) {
-			allowedBodyparts = AllowReadReferencesRefGen.get();
-			allowedBodyparts[partNr-1] = false;
-			AllowReadReferencesRefGen.set(allowedBodyparts);
+			log(Warning) << "Supervisor::GoError: Allowing bodypart:     [" << partNr << "]" <<endlog();
+			setAllowed(partNr, false);
 		}
 		setState(partNr, StatusErrormsg);
 	}
@@ -683,7 +713,6 @@ bool Supervisor::CreateRobotObject(string robotName, vector<string> defaultBodyP
         nh.setParam("dashboard/" + defaultBodyParts[i] + "/resettable", false );
     }
 }
-
 
 bool Supervisor::AddBodyPart( int partNr, string partName, bool homeable , bool homingmandatory, bool resettable)
 {

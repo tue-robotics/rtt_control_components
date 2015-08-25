@@ -38,7 +38,7 @@ namespace FILTERS
 
     /**
     * @brief A Component containing a complete controller
-    * consising of multiple filters and a safety mechanism
+    * consisting of multiple filters
     *
     * Inputs	- Referenceports
     * 			- Jointpositions
@@ -58,10 +58,10 @@ namespace FILTERS
         private:
 
         // Ports
-        InputPort<doubles> references_inport[3];
         InputPort<doubles> positions_inport;
-        InputPort<doubles> ffw_inport[3];
         InputPort<bool> enable_inport;
+        InputPort<doubles> references_inport[3];
+        InputPort<doubles> ffw_inport[3];
         OutputPort<doubles> controleffort_outport;
         OutputPort<doubles> jointerrors_outport;
 
@@ -69,9 +69,9 @@ namespace FILTERS
         uint vector_size;
         uint N_refinports;
         uint N_ffwinports;
+        strings controllers;
         double Ts;
         ints inport_sizes;
-        strings controllers;
 
 
         // Controller Properties

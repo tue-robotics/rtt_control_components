@@ -1,7 +1,7 @@
 #ifndef TrajectoryActionlib_HPP
 #define TrajectoryActionlib_HPP
 
-#define maxN 5 //Maximum bodyparts size
+#define maxN 5 //Maximum number of bodyparts
 
 #include <rtt/Component.hpp>
 #include <rtt/TaskContext.hpp>
@@ -39,41 +39,6 @@ namespace ROS
     typedef vector<bool> bools;
     typedef vector<string> strings;
     typedef pair<int, int> BodyJointPair;
-
-    /**
-     * @brief Global component that receives trajectories for
-     * all bodyparts. This component sorts them, and generates a
-     * reference signal for all joints.
-     *
-     * The component has one input ports which should be connected with
-     * stream to the joint state reference topic of the robot. For each
-     * added bodypart an initial position input port is added and three
-     * outputports for position, velocity and acceleration. If homable,
-     * then also a second input port for homing references is added.
-     *
-     * Start this component in the robot's main ops file and add bodyparts
-     * for each bodypart.
-     *
-     * Every bodypart can be in different states:
-     * 1) Operational - The references from the Jointstate topic from
-     *                  ROS are used.
-     * 2) Homing      - The references from the homing port are used.
-     * 3) Disabled    - The actual measured positions are sent as reference
-     *                  since then the error is zero in the disabled mode
-     *
-     * The supervisor component enables and disables each bodypart.
-     * The homing component switches a bodypart to the homing state
-     *
-     * Example for ops file:
-     * TrajectoryActionlib.AddBodyPart(2, strings("spindle_joint") )
-     * TrajectoryActionlib.minPos4 			= array ( 0.075)
-     * TrajectoryActionlib.maxPos4 			= array ( 0.4)
-     * TrajectoryActionlib.maxVel4 			= array ( 0.07)
-     * TrajectoryActionlib.maxAcc4             = array ( 0.2)
-     * TrajectoryActionlib.interpolatorDt4 	= 0.001
-     * TrajectoryActionlib.interpolatorEps4 	= 1.0
-     *
-     */
 
     class TrajectoryActionlib
 		: public RTT::TaskContext
@@ -116,10 +81,6 @@ namespace ROS
 			typedef vector<bool> bools;
 			typedef vector<string> strings;
 			typedef pair<int, int> BodyJointPair;
-
-            // iterators
-            // j iterates over all connected bodyparts
-            // i iterates over all joints within particular bodypart
 
 			// Declaring input- and output_ports
             InputPort<doubles> currentpos_inport[maxN];

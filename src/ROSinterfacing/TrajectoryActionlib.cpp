@@ -6,20 +6,20 @@ using namespace ROS;
 
 TrajectoryActionlib::TrajectoryActionlib(const string& name) : TaskContext(name, PreOperational)
 {
-    // Operations
+    //! Operations
     addOperation("AddBodyPart", &TrajectoryActionlib::AddBodyPart, this, OwnThread)
-            .doc("Add a body part by specifying its partNr and its jointNames")
-            .arg("partNr","The number of the bodypart")
-            .arg("JointNames","The name of joints");
-    addOperation( "SendToPos", &TrajectoryActionlib::SendToPos, this, OwnThread )
-            .doc("Send the bodypart to position, used when finished homing")
-            .arg("partNr","The number of the bodypart")
-            .arg("pos","Position to go to");
+        .doc("Add a body part by specifying its partNr and its jointNames")
+        .arg("partNr","The number of the bodypart")
+        .arg("JointNames","The name of joints");
+	addOperation( "SendToPos", &TrajectoryActionlib::SendToPos, this, OwnThread )
+		.doc("Send the bodypart to position, used when finished homing")
+		.arg("partNr","The number of the bodypart")     
+		.arg("pos","Position to go to"); 
     addOperation( "ResetReferences", &TrajectoryActionlib::ResetReferences, this, OwnThread )
-            .doc("Reset the reference generator to measured current position (used in homing)")
-            .arg("partNr","The number of the bodypart");
+        .doc("Reset the reference generator to measured current position (used in homing)")
+        .arg("partNr","The number of the bodypart");
     
-    // Actionlib
+    //! Actionlib
     // Add action server ports to this task's root service
     rtt_action_server_.addPorts(this->provides());
 
@@ -27,13 +27,13 @@ TrajectoryActionlib::TrajectoryActionlib(const string& name) : TaskContext(name,
     rtt_action_server_.registerGoalCallback(boost::bind(&TrajectoryActionlib::goalCallback, this, _1));
     rtt_action_server_.registerCancelCallback(boost::bind(&TrajectoryActionlib::cancelCallback, this, _1));
 
-    // AddAttribute
-    addAttribute( "allowedBodyparts", allowedBodyparts );
+    //! AddAttribute
+	addAttribute( "allowedBodyparts", allowedBodyparts );
 }
 
 TrajectoryActionlib::~TrajectoryActionlib()
-{
-    // remove operations
+{    
+    //! remove operations
     remove("AddBodyPart");
     remove("SendToPos");
     remove("ResetReferences");
@@ -41,23 +41,11 @@ TrajectoryActionlib::~TrajectoryActionlib()
 
 bool TrajectoryActionlib::configureHook()
 {
-    // Initialize
+    //! Resize
     minpos.resize(maxN);
     maxpos.resize(maxN);
     maxvel.resize(maxN);
     maxacc.resize(maxN);
-
-    checked = false;
-    totalNumberOfJoints = 0;
-    numberOfBodyparts = 0;
-    start_time = 0.0;
-
-    allowedBodyparts.resize(maxN);
-    allowedBodyparts_prev.resize(maxN);
-    vector_sizes.assign(maxN,0);
-    InterpolDts.assign(maxN,0.0);
-    InterpolEpses.assign(maxN,0.0);
-
     desiredPos.resize(maxN);
     desiredVel.resize(maxN);
     desiredAcc.resize(maxN);
@@ -67,6 +55,17 @@ bool TrajectoryActionlib::configureHook()
     current_position.resize(maxN);
     mRefGenerators.resize(maxN);
     mRefPoints.resize(maxN);
+    allowedBodyparts.resize(maxN);
+    allowedBodyparts_prev.resize(maxN);
+
+    //! Init
+    checked = false;
+    totalNumberOfJoints = 0;
+    numberOfBodyparts = 0;
+    start_time = 0.0;
+    vector_sizes.assign(maxN,0);
+    InterpolDts.assign(maxN,0.0);
+    InterpolEpses.assign(maxN,0.0);
 
     addPort("debug1", debug1port);
     addPort("debug2", debug2port);
@@ -86,11 +85,11 @@ bool TrajectoryActionlib::startHook()
 
 void TrajectoryActionlib::updateHook()
 {
-    if (allowedBodyparts != allowedBodyparts_prev) {
-        log(Warning) << "TrajectoryActionlib:  Allowed:     [" << allowedBodyparts[0] << "," << allowedBodyparts[1] << "," << allowedBodyparts[2] << "," << allowedBodyparts[3] << "," << allowedBodyparts[4] << "]" <<endlog();
-    }
-    allowedBodyparts_prev = allowedBodyparts;
-
+	if (allowedBodyparts != allowedBodyparts_prev) {
+		log(Warning) << "TrajectoryActionlib:  Allowed:     [" << allowedBodyparts[0] << "," << allowedBodyparts[1] << "," << allowedBodyparts[2] << "," << allowedBodyparts[3] << "," << allowedBodyparts[4] << "]" <<endlog();
+	}
+	allowedBodyparts_prev = allowedBodyparts;
+	
     // 6.5s after start, check all properties, ports, etc.
     if (!checked) {
         double aquisition_time = os::TimeService::Instance()->getNSecs()*1e-9;
@@ -109,7 +108,7 @@ void TrajectoryActionlib::updateHook()
     for ( uint j = 0; j < activeBodyparts.size(); j++ ) {
         uint partNr = activeBodyparts[j];
         currentpos_inport[partNr-1].read( current_position[partNr-1] );
-    }
+	}
 
     // If a goal is active
     if (!goal_handles_.empty())
@@ -205,7 +204,7 @@ void TrajectoryActionlib::updateHook()
     for ( uint j = 0; j < activeBodyparts.size(); j++ ) {
         uint partNr = activeBodyparts[j];
         if (allowedBodyparts[partNr-1] == true) {
-
+			
             // Compute the next reference points
             for ( uint i = 0; i < vector_sizes[partNr-1]; i++ ){
                 if ( trajectory_active ) { // Somebody clearly thought about this trajectory
@@ -279,6 +278,7 @@ void TrajectoryActionlib::goalCallback(GoalHandle gh) {
     }
     if (accept) {
         gh.setAccepted();
+        log(Info)<<"TrajectoryActionlib: Accepted goal"<<endlog();
         TrajectoryInfo t_info(gh);
         t_info.dt = t_info.points.back().time_from_start.toSec() / t_info.points.size();
         log(Info)<<"TrajectoryActionlib: Accepted goal. Dt = " << t_info.dt <<endlog();
@@ -373,42 +373,42 @@ void TrajectoryActionlib::AddBodyPart(int partNr, strings JointNames)
 
 void TrajectoryActionlib::SendToPos(int partNr, doubles pos)
 {
-    if (pos.size() != vector_sizes[partNr-1]) {
-        log(Warning) << "TrajectoryActionlib: Invalid size of pos/vector_sizes[partNr-1]" << endlog();
-    }
-    if (allowedBodyparts[partNr-1] == false) {
-        log(Warning) << "TrajectoryActionlib: Received SendToPos for bodypart that is not yet allowed" << endlog();
-    }
-    log(Warning)<< "TrajectoryActionlib: Received SendToPos goal: " << pos[0] << "!"<< endlog();
-
-    for ( uint joint_id = 0; joint_id < pos.size(); joint_id++ ){
-        desiredPos [partNr-1] [joint_id] = min( pos[joint_id]            		, maxpos     [partNr-1][joint_id]);
-        desiredPos [partNr-1] [joint_id] = max( minpos [partNr-1] [joint_id]    , desiredPos [partNr-1][joint_id]);
-        desiredVel [partNr-1] [joint_id] = maxvel [partNr-1] [joint_id];
-        desiredAcc [partNr-1] [joint_id] = maxacc [partNr-1] [joint_id];
-    }
-
-    log(Info)<< "TrajectoryActionlib: Processed SendToPos goal:" << desiredPos[partNr-1][0] << "!"<< endlog();
-    log(Info) << "TrajectoryActionlib:  Allowed:     [" << allowedBodyparts[0] << "," << allowedBodyparts[1] << "," << allowedBodyparts[2] << "," << allowedBodyparts[3] << "," << allowedBodyparts[4] << "]" <<endlog();
+	if (pos.size() != vector_sizes[partNr-1]) {
+		log(Warning) << "TrajectoryActionlib: Invalid size of pos/vector_sizes[partNr-1]" << endlog();
+	}	
+	if (allowedBodyparts[partNr-1] == false) {
+		log(Warning) << "TrajectoryActionlib: Received SendToPos for bodypart that is not yet allowed" << endlog();
+	}	
+	log(Warning)<< "TrajectoryActionlib: Received SendToPos goal: " << pos[0] << "!"<< endlog();
+		
+	for ( uint joint_id = 0; joint_id < pos.size(); joint_id++ ){
+		desiredPos [partNr-1] [joint_id] = min( pos[joint_id]            		, maxpos     [partNr-1][joint_id]);
+		desiredPos [partNr-1] [joint_id] = max( minpos [partNr-1] [joint_id]    , desiredPos [partNr-1][joint_id]);
+		desiredVel [partNr-1] [joint_id] = maxvel [partNr-1] [joint_id];
+		desiredAcc [partNr-1] [joint_id] = maxacc [partNr-1] [joint_id];
+	}
+			
+	//log(Info)<< "TrajectoryActionlib: Processed SendToPos goal:" << desiredPos[partNr-1][0] << "!"<< endlog();
+	//log(Info) << "TrajectoryActionlib:  Allowed:     [" << allowedBodyparts[0] << "," << allowedBodyparts[1] << "," << allowedBodyparts[2] << "," << allowedBodyparts[3] << "," << allowedBodyparts[4] << "]" <<endlog();
 
     return;
 }
 
 void TrajectoryActionlib::ResetReferences(int partNr)
 {
-    if (partNr < 0 || partNr > maxN ) {
-        log(Error) <<"TrajectoryActionlib::ResetReferences: Invalid partNr provided: partNr = " << partNr <<endlog();
-        return;
-    }
-
+	if (partNr < 0 || partNr > maxN ) {
+		log(Error) <<"TrajectoryActionlib::ResetReferences: Invalid partNr provided: partNr = " << partNr <<endlog();
+		return;
+	}
+	
     //Set the starting value to the current actual value
     uint N = minpos[partNr-1].size();
     doubles actualPos(N,0.0);
     currentpos_inport[partNr-1].read( actualPos );
     for ( uint i = 0; i < N; i++ ){
-        mRefGenerators[partNr-1][i].setRefGen(actualPos[i]);
+       mRefGenerators[partNr-1][i].setRefGen(actualPos[i]);
     }
-
+        
     return;
 }
 
@@ -457,7 +457,7 @@ bool TrajectoryActionlib::CheckConnectionsAndProperties()
         //Set the starting value to the current actual value
         currentpos_inport[partNr-1].read( current_position[partNr-1] );
         for ( uint i = 0; i < vector_sizes[partNr-1]; i++ ){
-            mRefGenerators[partNr-1][i].setRefGen(current_position[partNr-1][i]);
+           mRefGenerators[partNr-1][i].setRefGen(current_position[partNr-1][i]);
         }
     }
 

@@ -12,7 +12,7 @@ JointStateDistributor::JointStateDistributor(const string& name) :
 		.doc("Add a body part by specifying its partNr and its jointNames")
 		.arg("partNr","The number of the bodypart")
 		.arg("JointNames","The name of joints");
-	addOperation("AllowReadReference", &JointStateDistributor::AllowReadReference, this)
+	addOperation("AllowReadReference", &JointStateDistributor::AllowReadReference, this, OwnThread)
 		.doc("Allow a bodypart to receive references. For example to block when not yet homed")
 		.arg("partNr","The number of the bodypart")
 		.arg("allowed","wether or not the bodypart is allowed to receieve references");
@@ -21,7 +21,12 @@ JointStateDistributor::JointStateDistributor(const string& name) :
 	addEventPort( "in", inport );
 }
 
-JointStateDistributor::~JointStateDistributor(){}
+JointStateDistributor::~JointStateDistributor()
+{
+	//! Remove operations
+	remove("AddBodyPart");
+	remove("AllowReadReference");
+}
 
 bool JointStateDistributor::configureHook()
 {

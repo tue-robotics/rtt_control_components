@@ -43,29 +43,31 @@ namespace SUPERVISORY
         // ports
         InputPort<doubles> jointErrors_inport;
         InputPort<doubles> controleffort_inport;
-        InputPort<std_msgs::Bool> safe_inports[maxN];
+        InputPort<std_msgs::Bool> addsafety_inports[maxN];
         OutputPort<bool> enable_outport;
         OutputPort<bool> error_outport;
 
         // properties
-        uint NJ;
-        uint NM;
-        doubles MAX_ERRORS;
-        doubles MOTORSAT;
-        double MAXCONSATTIME;
+        uint Nj;
+        uint Nm;
+        uint partNr;
+        double maxConSatTime;
         string prefix;
-        strings add_safeties;
+        doubles maxErrors;
+        doubles motorSat;
+        strings add_safety_portnames;
         ints errorcntrs;
-        int partNr;
 
         // variables
         bool errors;
         doubles jointErrors;
         doubles timeReachedSaturation;
         ints firstSatInstance;
-        uint n_add_safeties;
 
+        // TaskContext pointers to peers
         TaskContext* TrajectoryActionlib;
+
+        // Operations
         OperationCaller<void(int)> ResetReferences;
 
     public:
