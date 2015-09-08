@@ -85,14 +85,10 @@ bool TrajectoryActionlib::startHook()
 
 void TrajectoryActionlib::updateHook()
 {
-	if (allowedBodyparts != allowedBodyparts_prev) {
-		log(Warning) << "TrajectoryActionlib:  Allowed:     [" << allowedBodyparts[0] << "," << allowedBodyparts[1] << "," << allowedBodyparts[2] << "," << allowedBodyparts[3] << "," << allowedBodyparts[4] << "]" <<endlog();
-	}
-	allowedBodyparts_prev = allowedBodyparts;
-	
+    double t_now = os::TimeService::Instance()->getNSecs()*1e-9;
     // 6.5s after start, check all properties, ports, etc.
     if (!checked) {
-        double aquisition_time = os::TimeService::Instance()->getNSecs()*1e-9;
+        double aquisition_time = t_now;
         if ( aquisition_time - start_time > 6.5) {
             if (!CheckConnectionsAndProperties()) {
                 this->stop();
@@ -121,16 +117,20 @@ void TrajectoryActionlib::updateHook()
 
         // If first point, set t_start from trajectory
         if (t_info.t_start == -1) {
-            t_info.t_start = os::TimeService::Instance()->getNSecs()*1e-9;
+            t_info.t_start = t_now;
             log(Info) << "TrajectoryActionlib: Starting new goal!" << endlog();
         }
 
         // Take first point in the queue
-        const trajectory_msgs::JointTrajectoryPoint& point = t_info.points.front();
+        const Point& frompoint = t_info.points[0];
+        const Point& topoint = t_info.points[1];
 
         // Check whether we have to start with the point
-        if (point.time_from_start.toSec() <= os::TimeService::Instance()->getNSecs()*1e-9 - t_info.t_start)
+        if (frompoint.time_from_start.toSec() <= t_now - t_info.t_start)
         {
+            // Interpolate the point
+            const Point& point = Interp_Cubic(frompoint, topoint, t_now - t_info.t_start);
+
             // Send point to 'controller'
             const std::vector<std::string>& joint_names = gh.getGoal()->trajectory.joint_names;
 
@@ -156,8 +156,6 @@ void TrajectoryActionlib::updateHook()
                 k++;
             }
 
-            // Check if we are already there
-            bool already_there = true;
             k = 0;
             while (k < joint_names.size()) {
                 map<string, BodyJointPair>::const_iterator it = joint_map.find(joint_names[k]);
@@ -166,23 +164,17 @@ void TrajectoryActionlib::updateHook()
                 BodyJointPair bjp = it->second;
                 int body_part_id = bjp.first;
                 int joint_id = bjp.second;
-
-                // Remove point if we are within 0.1 error
-                if ( abs( desiredPos[body_part_id][joint_id] - mRefPoints[body_part_id][joint_id].pos) > 0.1 )
-                    already_there = false;
-
-                k++;
             }
 
             // Pop point if we are there :)
-            if (already_there)
+            if (topoint.time_from_start.toSec() <= os::TimeService::Instance()->getNSecs()*1e-9 - t_info.t_start)
             {
-                t_info.points.pop();
+                t_info.points.pop_front();
                 log(Info) << "TrajectoryActionlib: We are there, poppin'!" << endlog();
             }
 
             // Check if this was the last point. If so, remove the goal handle
-            if (t_info.points.empty())
+            if (t_info.points.size() == 1)
             {
                 log(Info) << "TrajectoryActionlib: Succeeded this goal!" << endlog();
                 gh.setSucceeded();
@@ -464,66 +456,29 @@ bool TrajectoryActionlib::CheckConnectionsAndProperties()
     return true;
 }
 
-TrajectoryActionlib::Setpoint TrajectoryActionlib::Interpolate( double x_in, double x_min, double x_max, double v_max, double a_max, double x_prev, double v_prev)
+Point TrajectoryActionlib::Interp_Cubic( Point p0, Point p1, double t_abs)
 {
-    //SETPOINT_LIMITER Created by Tim Clephas
-    //   Based on paper: Trajectory generation and control of four wheeled omni...' of Purwin et al
+    // TODO: Make C++ from python, algorithm checks out
+    return p0;
+    /*
+    T = (p1.time_from_start - p0.time_from_start).to_sec()
+    t = t_abs - p0.time_from_start.to_sec()
+    q = [0] * 6
+    qdot = [0] * 6
+    qddot = [0] * 6
+    for i in range(len(p0.positions)):
+        a = p0.positions[i]
+        b = p0.velocities[i]
+        c = (-3*p0.positions[i] + 3*p1.positions[i] - 2*T*p0.velocities[i] - T*p1.velocities[i]) / T**2
+        d = (2*p0.positions[i] - 2*p1.positions[i] + T*p0.velocities[i] + T*p1.velocities[i]) / T**3
 
-    // Initialise variables
-    double Ts = 0.001;
-
-    x_in = min(x_max,max(x_min,x_in));
-    double x_delta = x_in-x_prev; // x position delta
-    double v_req = x_delta/Ts;
-
-    double time_to_v0 = fabs(v_prev)/a_max;
-    double dist_to_v0 = time_to_v0 * v_prev/2;
-    double stop_dist = dist_to_v0;
-
-    double time_to_v_req = fabs(v_prev-v_req)/a_max;
-    double dist_to_v_req = time_to_v_req * (v_prev+v_req)/2;
-
-    double v_required = x_delta/Ts;
-    double a_required = (v_required-v_prev)/Ts;
-    double a = a_required;
-
-    if (
-            a_required > a_max // We are not close to a feasible trajectory
-            && dist_to_v_req > x_delta //and the distance to reach the required velocity is larger than the error
-            && v_prev > v_req //and we are going too fast
-            )
-        a = -a_max; //Slow down
-    else if (
-             a_required < -a_max // We are not close to a feasible trajectory
-             && dist_to_v_req < x_delta //and the distance to reach the required velocity is larger than the error
-             && v_prev < v_req //and we are going too fast
-             )
-        a = a_max; //Slow down
-
-    if (stop_dist > 0 && x_prev+stop_dist >= x_max)
-    {
-        // Break!
-        a = -v_prev/Ts;
-    }
-    else if (stop_dist < 0 && x_prev+stop_dist <= x_min)
-    {
-        // Break!
-        a = -v_prev/Ts;
-    }
-
-    // Lets put limits on this
-    a = min(a_max,max(-a_max,a));
-    double v = v_prev + a*Ts;
-    v = min(v_max,max(-v_max,v));
-
-    double x = x_prev + v*Ts;
-
-    Setpoint sp;
-    sp.x = x;
-    sp.v = v;
-    sp.a = a;
-
-    return sp;
+        q[i] = a + b*t + c*t**2 + d*t**3
+        qdot[i] = b + 2*c*t + 3*d*t**2
+        qddot[i] = 2*c + 6*d*t
+    return JointTrajectoryPoint(positions=q, velocities=qdot, accelerations=qddot, time_from_start=rospy.Duration(t_abs))
+    */
 }
+
+
 
 ORO_CREATE_COMPONENT(ROS::TrajectoryActionlib)

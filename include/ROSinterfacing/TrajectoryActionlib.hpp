@@ -29,6 +29,7 @@ inline string to_string (const T& t){
   return ss.str();
 }
 
+typedef trajectory_msgs::JointTrajectoryPoint Point;
 
 using namespace RTT;
 
@@ -57,13 +58,13 @@ namespace ROS
                 TrajectoryInfo(const GoalHandle& gh) : goal_handle(gh), t_start(-1), dt(-1)
                 {
                     for (std::vector<trajectory_msgs::JointTrajectoryPoint>::const_iterator it = gh.getGoal()->trajectory.points.begin(); it != gh.getGoal()->trajectory.points.end(); ++it)
-                        points.push(*it);
+                        points.push_back(*it);
                 }
 
                 double t_start;
                 double dt;
                 GoalHandle goal_handle;
-                std::queue<trajectory_msgs::JointTrajectoryPoint> points;
+                std::deque<trajectory_msgs::JointTrajectoryPoint> points;
             };
 
             struct Setpoint
@@ -143,7 +144,7 @@ namespace ROS
             bool CheckConnectionsAndProperties();
             void goalCallback(GoalHandle gh);
             void cancelCallback(GoalHandle gh);
-            Setpoint Interpolate(double x_in, double x_min, double x_max, double v_max, double a_max, double x_prev, double v_prev);
+            Point Interp_Cubic( Point p0, Point p1, double t_abs);
 
 	};
 }
