@@ -34,7 +34,7 @@ orocos_generate_package(
 
 #### Orocos Components ###
 orocos_component(Supervisor 				src/Supervisor.cpp 				${HEADER_FILES})
-orocos_component(EtherCATread 				src/EtherCATread.cpp 			${HEADER_FILES})
+#orocos_component(EtherCATread 				src/EtherCATread.cpp 			${HEADER_FILES})
 orocos_component(EtherCATwrite 				src/EtherCATwrite.cpp 			${HEADER_FILES})
 orocos_component(Controller 				src/Controller.cpp 				${HEADER_FILES})
 orocos_component(Safety 					src/Safety.cpp 					${HEADER_FILES})
@@ -48,7 +48,7 @@ orocos_component(SOEMdummy 					src/SOEMdummy.cpp 				${HEADER_FILES})
 orocos_component(ROSinterface 				src/ROSinterface.cpp 			${HEADER_FILES})
 
 target_link_libraries(Supervisor 			${catkin_LIBRARIES} 			${USE_OROCOS_LIBRARIES})
-target_link_libraries(EtherCATread 			${catkin_LIBRARIES} 			${USE_OROCOS_LIBRARIES})
+#target_link_libraries(EtherCATread 			${catkin_LIBRARIES} 			${USE_OROCOS_LIBRARIES})
 target_link_libraries(EtherCATwrite			${catkin_LIBRARIES} 			${USE_OROCOS_LIBRARIES})
 target_link_libraries(Controller 			${catkin_LIBRARIES} 			${USE_OROCOS_LIBRARIES})
 target_link_libraries(Safety 				${catkin_LIBRARIES} 			${USE_OROCOS_LIBRARIES})
