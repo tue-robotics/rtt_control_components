@@ -14,7 +14,6 @@ EtherCATwrite::EtherCATwrite(const string& name) : TaskContext(name, PreOperatio
 		.arg("FROM_WHICH_INPORT","Array specifying where the input from the inports should go - first specify from which inport")
 		.arg("FROM_WHICH_ENTRY","Array specifying where the input from the inports should go - second specify which entry")
 		.arg("PARTNAME","String specifying the name of the part");
-	//! Operations
     addOperation("AddDigitalOuts", &EtherCATwrite::AddDigitalOuts, this, OwnThread)
 		.doc("Add one or more analog ins")
 		.arg("INPORT_DIMENSIONS","Array containing for each inport an entry with value the size of that input port")
@@ -22,6 +21,17 @@ EtherCATwrite::EtherCATwrite(const string& name) : TaskContext(name, PreOperatio
 		.arg("FROM_WHICH_INPORT","Array specifying where the input from the inports should go - first specify from which inport")
 		.arg("FROM_WHICH_ENTRY","Array specifying where the input from the inports should go - second specify which entry")
 		.arg("PARTNAME","String specifying the name of the part");
+	
+	//! Add math
+	// Analog
+	addOperation("AddAddition_A", &EtherCATwrite::AddAddition_A, this, OwnThread)
+		.doc("This function will add to all analog values of intput i the value as set in values[i]")
+		.arg("id","ID number of the digital in")
+		.arg("values","Doubles specifying with which the input should be added");	
+	addOperation("AddMultiply_A", &EtherCATwrite::AddMultiply_A, this, OwnThread)
+		.doc("This function will multiply all analog values of intput i with the value as set in factor[i]")
+		.arg("id","ID number of the digital in")
+		.arg("factor","Doubles specifying with which the input should be multiplied");		
 }
 EtherCATwrite::~EtherCATwrite(){}
 
@@ -57,64 +67,18 @@ void EtherCATwrite::updateHook()
 	if (!goodToGO && (aquisition_time - start_time > 4.0)) {
 		goodToGO = true;
 
-		// AnalogIns
-		for(uint i = 0; i < n_inports_A; i++) {
-			if ( !inports_A[i].connected() ) {
-				log(Error) << "EtherCATwrite: Analog inport " << inports_A[i].getName() << " is not connected." << endlog();
-			}
-		}
-		for(uint i = 0; i < n_outports_A; i++) {
-			if ( !outports_A[i].connected() ) {
-				log(Info) << "EtherCATwrite: Analog outport " << outports_A[i].getName() << " is not connected." << endlog();
-			}
-		}
-		
-		// DigitalIns
-		for(uint i = 0; i < n_inports_D; i++) {
-			if ( !inports_D[i].connected() ) {
-				log(Error) << "EtherCATwrite: Digital inport " << inports_D[i].getName() << " is not connected." << endlog();
-			}
-		}
-		for(uint i = 0; i < n_outports_D; i++) {
-			if ( !outports_D[i].connected() ) {
-				log(Info) << "EtherCATwrite: Digital outport " << outports_D[i].getName() << " is not connected." << endlog();
-			}
-		}
+		CheckAllConnections();
 	}
+	
+	ReadInputs();
+	
+	MapInput2Outputs();
+	
+	Calculate_A();
+	Calculate_D();
+	
+	WriteOutputs();
 
-	//! AnalogIns
-    // Read input ports
-    for( uint i = 0; i < n_inports_A; i++ ) {
-		inports_A[i].read(input_A[i]);
-    }
-
-	// Do mapping of input entries on into output and write to port
-    uint j = 0;
-    for( uint i = 0; i < n_outports_A; i++ ) {
-        for( uint k = 0; k < outport_dimensions_A[i]; ++k) {
-            output_msgs_A[i].values[k] = input_A[ from_which_inport_A[j]-1 ][ from_which_entry_A[j]-1 ];
-            j++;
-        }
-        outports_A[i].write(output_msgs_A[i]);
-    }
-    
-    
-    //! DigitalIns
-    // Read input ports
-    for( uint i = 0; i < n_inports_D; i++ ) {
-		inports_D[i].read(input_D[i]);
-    }
-
-	// Do mapping of input entries on into output and write to port
-    j = 0;
-    for( uint i = 0; i < n_outports_D; i++ ) {
-        for( uint k = 0; k < outport_dimensions_D[i]; ++k) {
-            output_msgs_D[i].values[k] = input_D[ from_which_inport_D[j]-1 ][ from_which_entry_D[j]-1 ];
-            j++;
-        }
-        outports_D[i].write(output_msgs_D[i]);
-    }
-    
 	return;
 }
 
@@ -344,6 +308,168 @@ void EtherCATwrite::AddDigitalOuts(doubles INPORT_DIMENSIONS, doubles OUTPORT_DI
     log(Warning) << "EtherCATwrite (" << PARTNAME << ")::AddDigitalOuts: Total inports are now " << n_inports_D << " inports and " << n_outports_D << " outports!" << endlog();
 
 	return;
+}
+
+//! Functions to edit inputs
+// Analog
+void EtherCATwrite::AddAddition_A(int ID, doubles VALUES)
+{
+	// Check
+	if( ID <= 0 || ID > n_outports_A) {
+		log(Error) << "EtherCATwrite::AddAddition_A: Could not add addition. Invalid ID: " << ID << ".  1 <= ID <= " << n_outports_A << "!" << endlog();
+		return;
+	}
+	if( VALUES.size() != output_msgs_A[ID-1].values.size() ) {
+		log(Error) << "EtherCATwrite::AddAddition_A: Could not add addition. Invalid size of VALUES. Should have be of size :" << output_msgs_A[ID-1].values.size() << "!" << endlog();
+		return;
+	}
+	if( multiply_status_A[ID-1] ) {
+		log(Error) << "EtherCATwrite::AddAddition_A: Could not add addition. For this output a multiplier is already there" << endlog();
+		log(Error) << "If you want to do both a multiply and an addition, then do the addition first and then the mulitiply" << endlog();
+		return;
+	}
+	
+	// Resize
+	addition_values_A[ID-1].resize(output_msgs_A[ID-1].values.size());
+	
+	// Save ramp properties
+	for( uint i = 0; i < output_msgs_A[ID-1].values.size(); i++ ) {
+		addition_values_A[ID-1][i] = VALUES[i];
+	}
+	
+	if( addition_status_A[ID-1] ) {
+		log(Warning) << "EtherCATwrite::AddAddition_A: Overwritten existing addition!" << endlog();
+	} else {
+		log(Warning) << "EtherCATwrite::AddAddition_A: Succesfully added addition!" << endlog();
+	}
+	
+	// Set status
+	addition_status_A[ID-1] = true;
+}
+
+void EtherCATwrite::AddMultiply_A(int ID, doubles FACTOR)
+{
+	// Check
+	if( ID <= 0 || ID > n_outports_A) {
+		log(Error) << "EtherCATwrite::AddMultiply_A: Could not add multiplier. Invalid ID: " << ID << ".  1 <= ID <= " << n_outports_A << "!" << endlog();
+		return;
+	}
+	if( FACTOR.size() != output_msgs_A[ID-1].values.size() ) {
+		log(Error) << "EtherCATwrite::AddMultiply_A: Could not add multiplier. Invalid size of FACTOR. Should have be of size :" << output_msgs_A[ID-1].values.size() << "!" << endlog();
+		return;
+	}
+	
+	// Resize
+	multiply_factor_A[ID-1].resize(output_msgs_A[ID-1].values.size());
+	
+	// Save ramp properties
+	for( uint i = 0; i < output_msgs_A[ID-1].values.size(); i++ ) {
+		multiply_factor_A[ID-1][i] = FACTOR[i];
+	}
+	
+	if( addition_status_A[ID-1] ) {
+		log(Warning) << "EtherCATwrite::AddMultiply_A: Overwritten existing multiplier!" << endlog();
+	} else {
+		log(Warning) << "EtherCATwrite::AddMultiply_A: Succesfully added multiplier!" << endlog();
+	}
+	
+	// Set status
+	multiply_status_A[ID-1] = true;
+	
+}
+
+void EtherCATwrite::CheckAllConnections()
+{
+	// AnalogIns
+	for(uint i = 0; i < n_inports_A; i++) {
+		if ( !inports_A[i].connected() ) {
+			log(Error) << "EtherCATwrite: Analog inport " << inports_A[i].getName() << " is not connected." << endlog();
+		}
+	}
+	for(uint i = 0; i < n_outports_A; i++) {
+		if ( !outports_A[i].connected() ) {
+			log(Info) << "EtherCATwrite: Analog outport " << outports_A[i].getName() << " is not connected." << endlog();
+		}
+	}
+	
+	// DigitalIns
+	for(uint i = 0; i < n_inports_D; i++) {
+		if ( !inports_D[i].connected() ) {
+			log(Error) << "EtherCATwrite: Digital inport " << inports_D[i].getName() << " is not connected." << endlog();
+		}
+	}
+	for(uint i = 0; i < n_outports_D; i++) {
+		if ( !outports_D[i].connected() ) {
+			log(Info) << "EtherCATwrite: Digital outport " << outports_D[i].getName() << " is not connected." << endlog();
+		}
+	}
+}
+
+void EtherCATwrite::Calculate_A()
+{
+	// Addition
+    for( uint i = 0; i < n_outports_A; i++ ) {
+		if (addition_status_A[i]) {
+			for( uint k = 0; k < output_msgs_A[i].values.size(); ++k) {
+				output_msgs_A[i].values[k] = output_msgs_A[i].values[k]+addition_values_A[i][k];
+			}
+		}
+    }
+    
+	// Multiplier
+    for( uint i = 0; i < n_outports_A; i++ ) {
+		if (multiply_status_A[i]) {
+			for( uint k = 0; k < output_msgs_A[i].values.size(); ++k) {
+				output_msgs_A[i].values[k] = output_msgs_A[i].values[k]*multiply_factor_A[i][k];
+			}
+		}
+    }
+}
+
+void EtherCATwrite::Calculate_D()
+{
+	
+}
+
+void EtherCATwrite::ReadInputs()
+{
+    for( uint i = 0; i < n_inports_A; i++ ) {
+		inports_A[i].read(input_A[i]);
+    }
+    for( uint i = 0; i < n_inports_D; i++ ) {
+		inports_D[i].read(input_D[i]);
+    }
+}
+
+void EtherCATwrite::WriteOutputs()
+{
+    for( uint i = 0; i < n_outports_A; i++ ) {
+		outports_A[i].write(output_msgs_A[i]);
+    }
+    for( uint i = 0; i < n_outports_D; i++ ) {
+		outports_D[i].write(output_msgs_D[i]);
+    }
+}
+
+void EtherCATwrite::MapInput2Outputs()
+{
+	// Do mapping of input entries on into output and write to port
+    uint j = 0;
+    for( uint i = 0; i < n_outports_A; i++ ) {
+        for( uint k = 0; k < outport_dimensions_A[i]; ++k) {
+            output_msgs_A[i].values[k] = input_A[ from_which_inport_A[j]-1 ][ from_which_entry_A[j]-1 ];
+            j++;
+        }
+    }
+
+	// Do mapping of input entries on into output and write to port
+    j = 0;
+    for( uint i = 0; i < n_outports_D; i++ ) {
+        for( uint k = 0; k < outport_dimensions_D[i]; ++k) {
+            output_msgs_D[i].values[k] = input_D[ from_which_inport_D[j]-1 ][ from_which_entry_D[j]-1 ];
+            j++;
+        }
+    }
 }
 
 ORO_CREATE_COMPONENT(ETHERCATWRITE::EtherCATwrite)

@@ -9,7 +9,9 @@
 #include <soem_beckhoff_drivers/DigitalMsg.h>
 #include <soem_beckhoff_drivers/EncoderMsg.h>
 
+#define MAX_BODYPARTS 10 /* maximum number of ports */
 #define MAX_PORTS 20 /* maximum number of ports */
+#define MAX_ENCPORTS 40 /* maximum number of ports */
 
 /*
  * Description:
@@ -26,6 +28,16 @@
  * - Matrix Transforms
  * - Multiply
  * - ReadEncoders
+ * 
+ * 
+ * 
+ * Iterators
+ * 
+ * i  loops over in/outports
+ * j  loops over entries 
+ * k  
+ * l  loops over bodyparts
+ * 
 */
 
 using namespace std;
@@ -85,6 +97,17 @@ namespace ETHERCATREAD
 		std::vector< soem_beckhoff_drivers::AnalogMsg > input_msgs_A;
 		std::vector< doubles > output_A;
 		
+		// Math
+		bool addition_status_A[MAX_BODYPARTS];
+		bool multiply_status_A[MAX_BODYPARTS];
+		doubles addition_values_A[MAX_BODYPARTS];		
+		doubles multiply_factor_A[MAX_BODYPARTS];	
+
+		// Functions
+		virtual void AddAddition_A(int ID, doubles VALUES);
+		virtual void AddMultiply_A(int ID, doubles FACTOR);
+
+		
 		//! DigitalIns
 		// Ports
 		InputPort<soem_beckhoff_drivers::DigitalMsg> inports_D[MAX_PORTS];
@@ -108,15 +131,15 @@ namespace ETHERCATREAD
 		std::vector< bools > output_D;
 
 		// Math
-		bool flip_status_D[MAX_PORTS];
-		bools flip_flip_D[MAX_PORTS];		
+		bool flip_status_D[MAX_BODYPARTS];
+		bools flip_flip_D[MAX_BODYPARTS];		
 
 		// Functions
-		virtual void Flip_D(int ID, doubles FLIP);
+		virtual void AddFlip_D(int ID, doubles FLIP);
 		
 		//! EncoderIns
 		// Ports
-		InputPort<soem_beckhoff_drivers::EncoderMsg> inports_E[MAX_PORTS];
+		InputPort<soem_beckhoff_drivers::EncoderMsg> inports_E[MAX_ENCPORTS];
 		OutputPort<ints> outports_E[MAX_PORTS];
 	
 		// Scalars
@@ -127,10 +150,9 @@ namespace ETHERCATREAD
 		
 		// Vectors
 		strings added_bodyparts_E;
-		ints inport_dimensions_E;
-		ints outport_dimensions_E;
-		ints from_which_inport_E;
-		ints from_which_entry_E;
+		ints encoderbits_E[MAX_BODYPARTS];
+		doubles enc2si[MAX_BODYPARTS];
+		long double old_time;
 		
 		// In/Output
 		std::vector< soem_beckhoff_drivers::EncoderMsg > input_msgs_E;
@@ -143,6 +165,11 @@ namespace ETHERCATREAD
 		
 		EtherCATread(const string& name);
 		~EtherCATread();
+		
+		private:
+		
+		double readEncoder( int j, int i );
+		double determineDt();
 	};
 }
 #endif

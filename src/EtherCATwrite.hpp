@@ -9,6 +9,7 @@
 #include <soem_beckhoff_drivers/DigitalMsg.h>
 #include <soem_beckhoff_drivers/EncoderMsg.h>
 
+#define MAX_BODYPARTS 10 /* maximum number of ports */
 #define MAX_PORTS 20 /* maximum number of ports */
 
 /*
@@ -47,6 +48,15 @@ namespace ETHERCATWRITE
 		long double aquisition_time;
 		long double start_time;
 		
+		virtual void ReadInputs();
+		virtual void CheckAllConnections();
+		virtual void MapInput2Outputs();
+		virtual void Calculate_A();
+		virtual void Calculate_D();
+		virtual void WriteOutputs();
+		virtual void AddAnalogOuts(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY, string PARTNAME);
+		virtual void AddDigitalOuts(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY, string PARTNAME);
+		
 		//! AnalogIns
 		// Ports
 		InputPort<doubles> inports_A[MAX_PORTS];
@@ -69,6 +79,16 @@ namespace ETHERCATWRITE
 		std::vector< doubles > input_A;
 		std::vector< soem_beckhoff_drivers::AnalogMsg > output_msgs_A;
 		
+		// Math
+		bool addition_status_A[MAX_BODYPARTS];
+		bool multiply_status_A[MAX_BODYPARTS];
+		doubles addition_values_A[MAX_BODYPARTS];		
+		doubles multiply_factor_A[MAX_BODYPARTS];	
+
+		// Functions
+		virtual void AddAddition_A(int ID, doubles VALUES);
+		virtual void AddMultiply_A(int ID, doubles FACTOR);
+		
 		//! DigitalIns
 		// Ports
 		InputPort<ints> inports_D[MAX_PORTS];
@@ -90,10 +110,6 @@ namespace ETHERCATWRITE
 		// In/Output
 		std::vector< ints > input_D;
 		std::vector< soem_beckhoff_drivers::DigitalMsg > output_msgs_D;
-
-		//! Functions to add inputs
-		virtual void AddAnalogOuts(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY, string PARTNAME);
-		virtual void AddDigitalOuts(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY, string PARTNAME);
 
 		//! Component Hooks
 		virtual bool configureHook();
