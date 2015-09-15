@@ -67,9 +67,6 @@ bool TrajectoryActionlib::configureHook()
     InterpolDts.assign(maxN,0.0);
     InterpolEpses.assign(maxN,0.0);
 
-    addPort("debug1", debug1port);
-    addPort("debug2", debug2port);
-
     return true;
 }
 
@@ -85,6 +82,7 @@ bool TrajectoryActionlib::startHook()
 
 void TrajectoryActionlib::updateHook()
 {
+    //log(Info) << "Start Updatehook" << endlog();
     double t_now = os::TimeService::Instance()->getNSecs()*1e-9;
     // 6.5s after start, check all properties, ports, etc.
     if (!checked) {
@@ -100,6 +98,7 @@ void TrajectoryActionlib::updateHook()
         }
     }
     
+    //log(Info) << "Read all current positions" << endlog();
     // Read all current positions
     for ( uint j = 0; j < activeBodyparts.size(); j++ ) {
         uint partNr = activeBodyparts[j];
@@ -109,6 +108,7 @@ void TrajectoryActionlib::updateHook()
     // If a goal is active
     if (!goal_handles_.empty())
     {
+        //log(Info) << "Goal is active" << endlog();
         //log(Info) << "Desired: " << desiredPos[2][0] << " Send: " << pos_out[2][0] << "Actual: " << current_position[2][0] << "\n" << endlog();
 
         // Take the first item in the queue
@@ -121,6 +121,7 @@ void TrajectoryActionlib::updateHook()
             log(Info) << "TrajectoryActionlib: Starting new goal!" << endlog();
         }
 
+        log(Info) << "Take first point in the queue" << endlog();
         // Take first point in the queue
         const Point& frompoint = t_info.points[0];
         const Point& topoint = t_info.points[1];
@@ -128,9 +129,12 @@ void TrajectoryActionlib::updateHook()
         // Check whether we have to start with the point
         if (frompoint.time_from_start.toSec() <= t_now - t_info.t_start)
         {
+            log(Info) << "Interpolate the point" << endlog();
             // Interpolate the point
             const Point& point = Interp_Cubic(frompoint, topoint, t_now - t_info.t_start);
+            log(Info) << "Time: " << t_now << " Position0: " << point.positions[0] << endlog();
 
+            log(Info) << "Send point to 'controller'" << endlog();
             // Send point to 'controller'
             const std::vector<std::string>& joint_names = gh.getGoal()->trajectory.joint_names;
 
@@ -143,36 +147,20 @@ void TrajectoryActionlib::updateHook()
                 BodyJointPair bjp = it->second;
                 int body_part_id = bjp.first;
                 int joint_id = bjp.second;
-                if (allowedBodyparts[body_part_id] == true) {
-                    desiredPos [body_part_id] [joint_id] = point.positions[k];
-                    desiredVel [body_part_id] [joint_id] = point.velocities[k];
-                    desiredAcc [body_part_id] [joint_id] = point.accelerations[k];
-                } else { // Message received for bodypart that did not get the AllowReadReference!
-                    log(Warning) << "TrajectoryActionlib: Message received for bodypart that did not get the AllowReadReference!" << endlog();
-                    desiredPos[body_part_id][joint_id] = current_position[body_part_id][joint_id];
-                    gh.setAborted();
-                    goal_handles_.erase(goal_handles_.begin());
-                }
+                desiredPos [body_part_id] [joint_id] = point.positions[k];
+            /*    desiredVel [body_part_id] [joint_id] = point.velocities[k];
+                desiredAcc [body_part_id] [joint_id] = point.accelerations[k];*/
                 k++;
-            }
-
-            k = 0;
-            while (k < joint_names.size()) {
-                map<string, BodyJointPair>::const_iterator it = joint_map.find(joint_names[k]);
-
-                // Update the output and go to the next message.
-                BodyJointPair bjp = it->second;
-                int body_part_id = bjp.first;
-                int joint_id = bjp.second;
             }
 
             // Pop point if we are there :)
             if (topoint.time_from_start.toSec() <= os::TimeService::Instance()->getNSecs()*1e-9 - t_info.t_start)
             {
                 t_info.points.pop_front();
-                log(Info) << "TrajectoryActionlib: We are there, poppin'!" << endlog();
+                log(Info) << "TrajectoryActionlib: We are there, poppin'! " << t_info.points.size() << endlog();
             }
 
+            //log(Info) << "Check if this was the last point. If so, remove the goal handle" << endlog();
             // Check if this was the last point. If so, remove the goal handle
             if (t_info.points.size() == 1)
             {
@@ -192,6 +180,7 @@ void TrajectoryActionlib::updateHook()
         trajectory_active = false;
     }
 
+    //log(Info) << "Send references" << endlog();
     // Send references
     for ( uint j = 0; j < activeBodyparts.size(); j++ ) {
         uint partNr = activeBodyparts[j];
@@ -218,14 +207,9 @@ void TrajectoryActionlib::updateHook()
             veloutport[partNr-1].write( vel_out[partNr-1] );
             accoutport[partNr-1].write( acc_out[partNr-1] );
         }
-
-        // Debug
-        if (partNr==2)
-        {
-            debug1port.write( desiredPos[partNr-1][0] ) ;
-            debug2port.write( pos_out[partNr-1][0] );
-        }
     }
+    //log(Info) << "End Updatehook" << endlog();
+
 }
 
 // Called by rtt_action_server_ when a new goal is received
@@ -458,25 +442,51 @@ bool TrajectoryActionlib::CheckConnectionsAndProperties()
 
 Point TrajectoryActionlib::Interp_Cubic( Point p0, Point p1, double t_abs)
 {
-    // TODO: Make C++ from python, algorithm checks out
-    return p0;
-    /*
-    T = (p1.time_from_start - p0.time_from_start).to_sec()
-    t = t_abs - p0.time_from_start.to_sec()
-    q = [0] * 6
-    qdot = [0] * 6
-    qddot = [0] * 6
-    for i in range(len(p0.positions)):
-        a = p0.positions[i]
-        b = p0.velocities[i]
-        c = (-3*p0.positions[i] + 3*p1.positions[i] - 2*T*p0.velocities[i] - T*p1.velocities[i]) / T**2
-        d = (2*p0.positions[i] - 2*p1.positions[i] + T*p0.velocities[i] + T*p1.velocities[i]) / T**3
+    log(Info) << "Interpolate hook" << endlog();
+    double T = (p1.time_from_start - p0.time_from_start).toSec();
+    double t = t_abs - p0.time_from_start.toSec();
+    uint njoints = p0.positions.size();
 
-        q[i] = a + b*t + c*t**2 + d*t**3
-        qdot[i] = b + 2*c*t + 3*d*t**2
-        qddot[i] = 2*c + 6*d*t
-    return JointTrajectoryPoint(positions=q, velocities=qdot, accelerations=qddot, time_from_start=rospy.Duration(t_abs))
-    */
+    log(Info) << "Initialise vectors" << endlog();
+    std::vector<double> q(njoints, 0.0);
+    std::vector<double> qdot(njoints, 0.0);
+    std::vector<double> qddot(njoints, 0.0);
+
+    log(Info) << "Interpolate for every joint" << njoints << " " << p0.positions.size()  << " " << p1.positions.size() << " " << p0.velocities.size()  << " " << p1.velocities.size() << endlog();
+
+    if (p1.velocities.size() == 0){
+        log(Warning) << "Velocity of point " << p1.time_from_start << " is empty" << endlog();
+        p1.velocities = qdot;
+    }
+    if (p0.velocities.size() == 0){
+        log(Warning) << "Velocity of point " << p0.time_from_start << " is empty" << endlog();
+        p0.velocities = qdot;
+    }
+
+    // Interpolate for every joint
+    uint k = 0;
+    while (k < njoints) {
+        double a = p0.positions[k];
+        double b = p0.velocities[k];
+        double c = (-3*p0.positions[k] + 3*p1.positions[k] - 2*T*p0.velocities[k] - T*p1.velocities[k]) / T*T;
+        double d = (2*p0.positions[k] - 2*p1.positions[k] + T*p0.velocities[k] + T*p1.velocities[k]) / T*T*T;
+        q[k] = a + b*t + c*t*t + d*t*t*t;
+        qdot[k] = b + 2*c*t + 3*d*t*t;
+        qddot[k] = 2*c + 6*d*t;
+        k++;
+    }
+
+    log(Info) << "Write to Interpoint" << endlog();
+    Point InterPoint;
+    InterPoint.positions=q;
+    InterPoint.velocities=qdot;
+    InterPoint.accelerations=qddot;
+    InterPoint.time_from_start=ros::Duration(t_abs);
+
+    log(Info) << "Return Interpoint" << endlog();
+    return InterPoint;
+    //return JointTrajectoryPoint(positions=q, velocities=qdot, accelerations=qddot, time_from_start=rospy.Duration(t_abs))
+
 }
 
 
