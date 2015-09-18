@@ -23,11 +23,9 @@ EtherCATread::EtherCATread(const string& name) : TaskContext(name, PreOperationa
 		.arg("PARTNAME","String specifying the name of the part");
     addOperation("AddEncoderIns", &EtherCATread::AddEncoderIns, this, OwnThread)
 		.doc("Add one or more Encoder ins")
-		.arg("INPORT_DIMENSIONS","Array containing for each inport an entry with value the size of that input port")
-		.arg("OUTPORT_DIMENSIONS","Array containing for each outport an entry with value the size of that output port")
-		.arg("FROM_WHICH_INPORT","Array specifying where the input from the inports should go - first specify from which inport")
-		.arg("FROM_WHICH_ENTRY","Array specifying where the input from the inports should go - second specify which entry")
-		.arg("PARTNAME","String specifying the name of the part");
+		.arg("ENCODER_BITS","Array containing for each inport an entry with value the size of that input port")
+		.arg("ENC2SI","Array containing for each outport an entry with value the size of that output port")
+		.arg("PARTNAME","String specifying the name of the part");		
 		
 	//! Modify existing Analog/Digital/Encoder Ins
 	// Analog
@@ -333,7 +331,7 @@ void EtherCATread::AddDigitalIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIME
 	return;
 }
 
-void EtherCATread::AddEncoderIns(doubles ENCODERBITS, doubles ENC2SI string PARTNAME)
+void EtherCATread::AddEncoderIns(doubles ENCODERBITS, doubles ENC2SI, string PARTNAME)
 {	
 	//! Checks
 	for(uint l = 0; l < added_bodyparts_E.size(); l++) {
