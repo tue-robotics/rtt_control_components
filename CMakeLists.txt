@@ -61,8 +61,10 @@ orocos_generate_package(
 ### Orocos Components - New ###
 orocos_component(EtherCATread src/newcomponents/EtherCATread.cpp ${HEADER_FILES})
 orocos_component(EtherCATwrite src/newcomponents/EtherCATwrite.cpp ${HEADER_FILES})
+orocos_component(SignalGenerator src/newcomponents/SignalGenerator.cpp ${HEADER_FILES})
 target_link_libraries(EtherCATread ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(EtherCATwrite ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
+target_link_libraries(SignalGenerator ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 
 ### Orocos Components - SIGNALROUTING ###
 orocos_component(Demux src/signalrouting/Demux.cpp ${HEADER_FILES})
