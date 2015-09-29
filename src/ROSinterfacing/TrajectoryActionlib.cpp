@@ -121,7 +121,6 @@ void TrajectoryActionlib::updateHook()
             log(Info) << "TrajectoryActionlib: Starting new goal!" << endlog();
         }
 
-        log(Info) << "Take first point in the queue" << endlog();
         // Take first point in the queue
         const Point& frompoint = t_info.points[0];
         const Point& topoint = t_info.points[1];
@@ -129,12 +128,9 @@ void TrajectoryActionlib::updateHook()
         // Check whether we have to start with the point
         if (frompoint.time_from_start.toSec() <= t_now - t_info.t_start)
         {
-            log(Info) << "Interpolate the point" << endlog();
             // Interpolate the point
             const Point& point = Interp_Cubic(frompoint, topoint, t_now - t_info.t_start);
-            log(Info) << "Time: " << t_now << " Position0: " << point.positions[0] << endlog();
 
-            log(Info) << "Send point to 'controller'" << endlog();
             // Send point to 'controller'
             const std::vector<std::string>& joint_names = gh.getGoal()->trajectory.joint_names;
 
@@ -157,7 +153,7 @@ void TrajectoryActionlib::updateHook()
             if (topoint.time_from_start.toSec() <= os::TimeService::Instance()->getNSecs()*1e-9 - t_info.t_start)
             {
                 t_info.points.pop_front();
-                log(Info) << "TrajectoryActionlib: We are there, poppin'! " << t_info.points.size() << endlog();
+                log(Debug) << "TrajectoryActionlib: We are there, poppin'! " << t_info.points.size() << endlog();
             }
 
             //log(Info) << "Check if this was the last point. If so, remove the goal handle" << endlog();
@@ -442,17 +438,13 @@ bool TrajectoryActionlib::CheckConnectionsAndProperties()
 
 Point TrajectoryActionlib::Interp_Cubic( Point p0, Point p1, double t_abs)
 {
-    log(Info) << "Interpolate hook" << endlog();
     double T = (p1.time_from_start - p0.time_from_start).toSec();
     double t = t_abs - p0.time_from_start.toSec();
     uint njoints = p0.positions.size();
 
-    log(Info) << "Initialise vectors" << endlog();
     std::vector<double> q(njoints, 0.0);
     std::vector<double> qdot(njoints, 0.0);
     std::vector<double> qddot(njoints, 0.0);
-
-    log(Info) << "Interpolate for every joint" << njoints << " " << p0.positions.size()  << " " << p1.positions.size() << " " << p0.velocities.size()  << " " << p1.velocities.size() << endlog();
 
     if (p1.velocities.size() == 0){
         log(Warning) << "Velocity of point " << p1.time_from_start << " is empty" << endlog();
@@ -476,17 +468,13 @@ Point TrajectoryActionlib::Interp_Cubic( Point p0, Point p1, double t_abs)
         k++;
     }
 
-    log(Info) << "Write to Interpoint" << endlog();
     Point InterPoint;
     InterPoint.positions=q;
     InterPoint.velocities=qdot;
     InterPoint.accelerations=qddot;
     InterPoint.time_from_start=ros::Duration(t_abs);
 
-    log(Info) << "Return Interpoint" << endlog();
     return InterPoint;
-    //return JointTrajectoryPoint(positions=q, velocities=qdot, accelerations=qddot, time_from_start=rospy.Duration(t_abs))
-
 }
 
 
