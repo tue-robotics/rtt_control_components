@@ -106,7 +106,7 @@ void EtherCATread::updateHook()
 	if (!goodToGO) {
 		aquisition_time = os::TimeService::Instance()->getNSecs()*1e-9;
 	}
-	if (!goodToGO && (aquisition_time - start_time > 4.0)) {
+	if (!goodToGO && (aquisition_time - start_time > 8.0)) {
 		goodToGO = true;
 		CheckAllConnections();
 	}
@@ -407,7 +407,7 @@ void EtherCATread::AddEncoderIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIME
             log(Error) << "EtherCATread (" << PARTNAME << ")::AddEncoderIns: Could not add EncoderIns. From_which_inport array contains port no. " << FROM_WHICH_INPORT[j] << " which does not exist according to inport_dimensions_E!" << endlog();
             return;
         }
-        else if ( FROM_WHICH_ENTRY[j] > INPORT_DIMENSIONS[ FROM_WHICH_INPORT[j]-1-n_inports_E] || FROM_WHICH_ENTRY[j] <= 0 ) {
+        else if ( FROM_WHICH_ENTRY[j] > INPORT_DIMENSIONS[ FROM_WHICH_INPORT[j]-1] || FROM_WHICH_ENTRY[j] <= 0 ) {
             log(Error) << "EtherCATread (" << PARTNAME << ")::AddEncoderIns: Could not add EncoderIns. From_which_entry array contains entry no. " << FROM_WHICH_ENTRY[j] << " which does not exist for inport no. " << FROM_WHICH_INPORT[j] << "!" << endlog();
             return;
         }
@@ -601,6 +601,10 @@ void EtherCATread::AddEnc2Si_E(int ID, doubles ENCODERBITS, doubles ENC2SI)
 	
 	// Set status
 	enc2si_status_E[ID-1] = true;
+	
+	// Reset Encoders
+	doubles zeros(ENCODERBITS.size(),0.0);
+	ResetEncoders(ID-1, zeros);
 }
 
 void EtherCATread::AddMatrixTransform_E(int ID)

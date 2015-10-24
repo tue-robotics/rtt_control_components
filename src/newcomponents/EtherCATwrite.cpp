@@ -149,7 +149,7 @@ void EtherCATwrite::AddAnalogOuts(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIM
             log(Error) << "EtherCATwrite (" << PARTNAME << ")::AddAnalogOuts: Could not add AnalogOut. From_which_inport array contains port no. " << FROM_WHICH_INPORT[j] << " which does not exist according to inport_dimensions_A!" << endlog();
             return;
         }
-        else if ( FROM_WHICH_ENTRY[j] > INPORT_DIMENSIONS[ FROM_WHICH_INPORT[j]-1-n_inports_A] || FROM_WHICH_ENTRY[j] <= 0 ) {
+        else if ( FROM_WHICH_ENTRY[j] > INPORT_DIMENSIONS[ FROM_WHICH_INPORT[j]-1] || FROM_WHICH_ENTRY[j] < 0 ) {
             log(Error) << "EtherCATwrite (" << PARTNAME << ")::AddAnalogOuts: Could not add AnalogOut. From_which_entry array contains entry no. " << FROM_WHICH_ENTRY[j] << " which does not exist for inport no. " << FROM_WHICH_INPORT[j] << "!" << endlog();
             return;
         }
@@ -200,8 +200,8 @@ void EtherCATwrite::AddAnalogOuts(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIM
         output_msgs_A[i].values.resize( outport_dimensions_A[i] );
     }
     
-    log(Warning) << "EtherCATwrite (" << PARTNAME << ")::AddAnalogOuts: Succesfully added AnalogIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports!" << endlog();
-    log(Warning) << "EtherCATwrite (" << PARTNAME << ")::AddAnalogOuts: Total inports are now " << n_inports_A << " inports and " << n_outports_A << " outports!" << endlog();
+    log(Info) << "EtherCATwrite (" << PARTNAME << ")::AddAnalogOuts: Succesfully added AnalogIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports!" << endlog();
+    log(Info) << "EtherCATwrite (" << PARTNAME << ")::AddAnalogOuts: Total inports are now " << n_inports_A << " inports and " << n_outports_A << " outports!" << endlog();
 
 	return;
 }
@@ -263,7 +263,7 @@ void EtherCATwrite::AddDigitalOuts(doubles INPORT_DIMENSIONS, doubles OUTPORT_DI
             log(Error) << "EtherCATwrite (" << PARTNAME << ")::AddDigitalOuts: Could not add DigitalOut. From_which_inport array contains port no. " << FROM_WHICH_INPORT[j] << " which does not exist according to inport_dimensions_D!" << endlog();
             return;
         }
-        else if ( FROM_WHICH_ENTRY[j] > INPORT_DIMENSIONS[ FROM_WHICH_INPORT[j]-1-n_inports_D] || FROM_WHICH_ENTRY[j] <= 0 ) {
+        else if ( FROM_WHICH_ENTRY[j] > INPORT_DIMENSIONS[ FROM_WHICH_INPORT[j]-1-n_inports_D] || FROM_WHICH_ENTRY[j] < 0 ) {
             log(Error) << "EtherCATwrite (" << PARTNAME << ")::AddDigitalOuts: Could not add DigitalOut. From_which_entry array contains entry no. " << FROM_WHICH_ENTRY[j] << " which does not exist for inport no. " << FROM_WHICH_INPORT[j] << "!" << endlog();
             return;
         }
@@ -314,8 +314,8 @@ void EtherCATwrite::AddDigitalOuts(doubles INPORT_DIMENSIONS, doubles OUTPORT_DI
         output_msgs_D[i].values.resize( outport_dimensions_D[i] );
     }
     
-    log(Warning) << "EtherCATwrite (" << PARTNAME << ")::AddDigitalOuts: Succesfully added DigitalIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports!" << endlog();
-    log(Warning) << "EtherCATwrite (" << PARTNAME << ")::AddDigitalOuts: Total inports are now " << n_inports_D << " inports and " << n_outports_D << " outports!" << endlog();
+    log(Info) << "EtherCATwrite (" << PARTNAME << ")::AddDigitalOuts: Succesfully added DigitalIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports!" << endlog();
+    log(Info) << "EtherCATwrite (" << PARTNAME << ")::AddDigitalOuts: Total inports are now " << n_inports_D << " inports and " << n_outports_D << " outports!" << endlog();
 
 	return;
 }
