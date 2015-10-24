@@ -595,16 +595,18 @@ void EtherCATread::AddEnc2Si_E(int ID, doubles ENCODERBITS, doubles ENC2SI)
 
 	if( enc2si_status_E[ID-1] ) {
 		log(Warning) << "EtherCATread::AddEnc2Si_E: Overwritten existing enc2si." << endlog();
-	} else {
-		log(Warning) << "EtherCATread::AddEnc2Si_E: Added a enc2si." << endlog();
 	}
 	
 	// Set status
 	enc2si_status_E[ID-1] = true;
 	
 	// Reset Encoders
-	doubles zeros(ENCODERBITS.size(),0.0);
-	ResetEncoders(ID-1, zeros);
+	//doubles zeros(ENCODERBITS.size(),0.0);
+	//ResetEncoders(ID, zeros);
+
+	if( !enc2si_status_E[ID-1] ) { {
+		log(Warning) << "EtherCATread::AddEnc2Si_E: Added a enc2si." << endlog();
+	}
 }
 
 void EtherCATread::AddMatrixTransform_E(int ID)
@@ -807,8 +809,8 @@ void EtherCATread::Calculate_E()
 				}
 				previous_enc_values[i][k] = output_E[i][k];
 				 
-				// Calculate SI  nr of cycles * enc bits * enc2SI         + output_E      * enc2SI      - Init_SI_value (for homing)
-				output_E[i][k] = ienc[i][k]*(encoderbits[i][k]*enc2SI[i][k]) + output_E[i][k]*enc2SI[i][k] - position_SI_init[i][k];
+				// Calculate SI  nr of cycles * enc bits * enc2SI         + enc_values      * enc2SI      - Init_SI_value (for homing)
+				output_E[i][k] = ienc[i][k]*(encoderbits[i][k]*enc2SI[i][k]) + enc_values[i][k]*enc2SI[i][k] - position_SI_init[i][k];
 				
 				// Calculate velocity
 				output_E_vel[i][k] = ( ( (double) (enc_values[i][k]- previous_enc_values[i][k]) ) * enc2SI[i][k])/dt;
@@ -866,12 +868,14 @@ void EtherCATread::ResetEncoders(int ID, doubles resetvalues )
 		
 		// Reset ienc, p
 		ienc[ID-1][k] = 0;
-		position_SI_init[ID-1][k]  = 0.0;
 		
-		position_SI_init[ID-1][k] = input_MT_E[ID-1][k] - resetvalues[k];
+		// Set position_SI_init and previous_enc_values
+		log(Error)<<"ReadEncoders::ResetEncoders: position_SI_init[ID-1][k]:" << position_SI_init[ID-1][k] <<"."<<endlog();
+		log(Error)<<"ReadEncoders::ResetEncoders: output_E[ID-1][k]:" << output_E[ID-1][k] <<"."<<endlog();
+		log(Error)<<"ReadEncoders::ResetEncoders: resetvalues[k]:" << resetvalues[k] <<"."<<endlog();
+		
+		position_SI_init[ID-1][k] = output_E[ID-1][k] - resetvalues[k];
 		previous_enc_values[ID-1][k] = position_SI_init[ID-1][k];
-		
-		log(Error)<<"ReadEncoders::ResetEncoders: position_SI_init[ " << ID-1 << "][" << k<<"] = " << position_SI_init[ID-1][k] << "."<<endlog();
 	}
 }
 
