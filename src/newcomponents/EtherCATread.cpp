@@ -604,7 +604,7 @@ void EtherCATread::AddEnc2Si_E(int ID, doubles ENCODERBITS, doubles ENC2SI)
 	//doubles zeros(ENCODERBITS.size(),0.0);
 	//ResetEncoders(ID, zeros);
 
-	if( !enc2si_status_E[ID-1] ) { {
+	if( !enc2si_status_E[ID-1] ) {
 		log(Warning) << "EtherCATread::AddEnc2Si_E: Added a enc2si." << endlog();
 	}
 }
@@ -870,9 +870,9 @@ void EtherCATread::ResetEncoders(int ID, doubles resetvalues )
 		ienc[ID-1][k] = 0;
 		
 		// Set position_SI_init and previous_enc_values
-		log(Error)<<"ReadEncoders::ResetEncoders: position_SI_init[ID-1][k]:" << position_SI_init[ID-1][k] <<"."<<endlog();
-		log(Error)<<"ReadEncoders::ResetEncoders: output_E[ID-1][k]:" << output_E[ID-1][k] <<"."<<endlog();
-		log(Error)<<"ReadEncoders::ResetEncoders: resetvalues[k]:" << resetvalues[k] <<"."<<endlog();
+		//log(Error)<<"ReadEncoders::ResetEncoders: position_SI_init[ID-1][k]:" << position_SI_init[ID-1][k] <<"."<<endlog();
+		//log(Error)<<"ReadEncoders::ResetEncoders: output_E[ID-1][k]:" << output_E[ID-1][k] <<"."<<endlog();
+		//log(Error)<<"ReadEncoders::ResetEncoders: resetvalues[k]:" << resetvalues[k] <<"."<<endlog();
 		
 		position_SI_init[ID-1][k] = output_E[ID-1][k] - resetvalues[k];
 		previous_enc_values[ID-1][k] = position_SI_init[ID-1][k];
