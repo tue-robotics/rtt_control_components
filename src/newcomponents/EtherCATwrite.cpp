@@ -31,7 +31,10 @@ EtherCATwrite::EtherCATwrite(const string& name) : TaskContext(name, PreOperatio
 	addOperation("AddMultiply_A", &EtherCATwrite::AddMultiply_A, this, OwnThread)
 		.doc("This function will multiply all analog values of intput i with the value as set in factor[i]")
 		.arg("id","ID number of the digital in")
-		.arg("factor","Doubles specifying with which the input should be multiplied");		
+		.arg("factor","Doubles specifying with which the input should be multiplied");	
+	addOperation("AddMatrixTransform_A", &EtherCATwrite::AddMatrixTransform_A, this, OwnThread)
+		.doc("This function will add a matrix multiplication on the analog output. Only input is ID. Matrix defaults to I, but should be updated using properties")
+		.arg("ID","ID number of the encoder ins");	
 }
 EtherCATwrite::~EtherCATwrite(){}
 
@@ -53,7 +56,14 @@ bool EtherCATwrite::configureHook()
 	n_outports_D = 0;
 	n_inport_entries_D = 0;
 	n_outport_entries_D = 0;
-
+	
+	for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
+		addition_status_A[l] = false;
+		multiply_status_A[l] = false;
+		matrixtransform_status_A[l] = false;
+	}
+	
+	return true;
 }
 
 bool EtherCATwrite::startHook(){}
@@ -378,6 +388,45 @@ void EtherCATwrite::AddMultiply_A(int ID, doubles FACTOR)
 	
 }
 
+void EtherCATwrite::AddMatrixTransform_A(int ID)
+{
+	// Check
+	if( ID <= 0 || ID > n_outports_A) {
+		log(Error) << "EtherCATwrite::AddMatrixMultiplication_A: Could not add matrix transform. Invalid ID: " << ID << ".  1 <= ID <= " << n_outports_A << "!" << endlog();
+		return;
+	}
+		
+	// Resize input structs
+	input_MT_A.resize(n_outports_A);
+    for( uint i = 0; i < n_outports_A; i++ ) {
+        input_MT_A[i].values.resize( outport_dimensions_A[i] );
+    }
+		
+	// Add property to store Matrix
+	matrixtransform_A[ID-1].resize(outport_dimensions_A[ID-1]);
+	for ( uint i = 0; i < outport_dimensions_A[ID-1]; i++ ) {
+		
+		matrixtransform_A[ID-1][i].resize(outport_dimensions_A[ID-1]); 
+		string name = added_bodyparts_A[ID-1]+"_matrixtransform"+to_string(i+1);
+		addProperty( name, matrixtransform_A[ID-1][i]);
+		
+		// Set matrix default to Identity matrix
+		for ( uint l = 0; l < matrixtransform_A[ID-1][i].size(); l++ ) { 
+			matrixtransform_A[ID-1][i][l] = 0.0;
+		}
+		matrixtransform_A[ID-1][i][i] = 1.0;
+	}
+	
+	if( matrixtransform_status_A[ID-1] ) {
+		log(Warning) << "EtherCATwrite::AddMatrixTransform_A: Overwritten existing matrix transform." << endlog();
+	} else {
+		log(Warning) << "EtherCATwrite::AddMatrixTransform_A: Added a matrix transform." << endlog();
+	}
+	
+	// Set status
+	matrixtransform_status_A[ID-1] = true;
+}
+
 void EtherCATwrite::CheckAllConnections()
 {
 	// AnalogIns
@@ -424,6 +473,23 @@ void EtherCATwrite::Calculate_A()
 			}
 		}
     }
+    
+	// Matrix Transform
+    for( uint i = 0; i < n_outports_A; i++ ) {
+		if (matrixtransform_status_A[i]) {
+									
+			input_MT_A = output_msgs_A;
+						
+			for ( uint k = 0; k < output_msgs_A[i].values.size(); k++ ) {
+				output_msgs_A[i].values  [k] = 0.0;
+				
+				for ( uint l = 0; l < output_msgs_A[i].values.size(); l++ ) {
+					output_msgs_A[i].values[k] += matrixtransform_A[i][k][l] * input_MT_A[i].values[l];
+				}
+			}
+		}
+	}
+	
 }
 
 void EtherCATwrite::Calculate_D()

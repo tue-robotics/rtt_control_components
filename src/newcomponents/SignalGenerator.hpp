@@ -151,6 +151,7 @@ namespace SIGNALGENERATOR
 		virtual void CalculateSine_I();
 		virtual void CalculateStep_I();
 		
+		
 		//! Digital
 		// Ports
 		OutputPort<bool> outports_D[MAX_PORTS];

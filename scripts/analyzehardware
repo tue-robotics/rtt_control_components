@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# INIT
+fn1=$1
+fn2=$2
+fn3=$3
+fn4=$4
+fn5=$5
+fn6=$6
+fn7=$7
+fn8=$8
+fn9=$9
+
+# Check amount of arguments provided
+if [ $# == 0 ]
+then
+	echo "Error: no ops file provided as arguement. Provide at least 1 ops file"
+    echo "Syntax: rosrun rtt_control_components analyzehardware <location_of_bodypart_ops_file> (<location_of_soem_ops_file>)"
+    exit 
+elif [ $# == 1 ]
+then	
+    echo "Analyzing:  $fn1"
+    fn_temp="/tmp/analysis_${fn1}"
+    cp $fn1 $fn_temp
+else
+	echo "Analyzing:  $fn1 $fn2 $fn3 $fn4 $fn5 $fn6 $fn7 $fn8 $fn9 $fn10"
+    fn_temp="/tmp/multi_analysis_${fn1}" 
+    cat $fn1 $fn2 $fn3 $fn4 $fn5 $fn6 $fn7 $fn8 $fn9 >> $fn_temp
+fi
+	
+# Run Analysis python code
+fngv="/tmp/multi_analysis_${fn1}".gv
+python `rospack find rtt_control_components`/scripts/analyzehardware.py $fn_temp
+echo "Created $fngv"
+
+# .GV to EPS
+fneps="/tmp/multi_analysis_${fn1}".eps
+dot -Teps $namegv > $fneps
+echo "Created $fneps"
+
+## EPS to PDF
+fnpdf="multi_analysis_${fn1}".pdf
+convert $nameeps $fnpdf
+echo "Created $fnpdf"
+
+## Clear GV and EPS
+rm $namegv $nameeps
+
+## Open PDF
+evince $namepdf &

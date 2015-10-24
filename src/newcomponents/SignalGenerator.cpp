@@ -145,6 +145,7 @@ void SignalGenerator::AddAnalogSignal(uint VECTOR_SIZE, doubles DEFAULT_VALUES, 
 	// Resize both intermediate outputs and add output_additive_A as property then assign DEFAULT_VALUES (This way upon runtime the property can be used to update)
 	output_nonadditive_A[n_analog_signal-1].assign(VECTOR_SIZE, 0.0);
 	output_additive_A[n_analog_signal-1].assign(VECTOR_SIZE, 0.0);
+	output_A[n_analog_signal-1].assign(VECTOR_SIZE, 0.0);
 	addProperty( "A"+to_string(n_analog_signal)+"values", output_additive_A[n_analog_signal-1] );		
 	for( uint i = 0; i < output_additive_A[n_analog_signal-1].size(); i++ ) {
 		output_additive_A[n_analog_signal-1][i] = DEFAULT_VALUES[i];
@@ -160,12 +161,12 @@ void SignalGenerator::AddAnalogSignal(uint VECTOR_SIZE, doubles DEFAULT_VALUES, 
 	// Add port
 	if (ANALOG_MESSAGE) {
 		addPort( "analogOut"+to_string(n_analog_signal), outports_A_msg[n_analog_signal-1] ).doc("Analog outport "+to_string(n_analog_signal)+" <AnalogMsg>");
-		log(Warning) << "SignalGenerator::AddAnalogSignal: Adding AnalogMsg signal " << n_analog_signal << " with size: " << VECTOR_SIZE << "!" << endlog();
+		log(Info) << "SignalGenerator::AddAnalogSignal: Adding AnalogMsg signal " << n_analog_signal << " with size: " << VECTOR_SIZE << "!" << endlog();
 	} else {
 		addPort( "analogOut"+to_string(n_analog_signal), outports_A[n_analog_signal-1] ).doc("Analog outport "+to_string(n_analog_signal)+" <doubles>");
-		log(Warning) << "SignalGenerator::AddAnalogSignal: Adding doubles signal  " << n_analog_signal << "  with size: " << VECTOR_SIZE << "!" << endlog();
+		log(Info) << "SignalGenerator::AddAnalogSignal: Adding doubles signal  " << n_analog_signal << "  with size: " << VECTOR_SIZE << "!" << endlog();
 	}
-
+		
 	return;
 }
 
@@ -192,6 +193,7 @@ void SignalGenerator::AddIntegerSignal(uint VECTOR_SIZE, doubles DEFAULT_VALUES,
 	// Resize both intermediate outputs and add output_additive_A as property then assign DEFAULT_VALUES (This way upon runtime the property can be used to update)
 	output_nonadditive_I[n_integer_signal-1].assign(VECTOR_SIZE, 0.0);
 	output_additive_I[n_integer_signal-1].resize(VECTOR_SIZE);
+	output_I[n_integer_signal-1].resize(VECTOR_SIZE);
 	addProperty( "I"+to_string(n_integer_signal)+"values", output_additive_I[n_integer_signal-1]);		
 	for( uint i = 0; i < output_additive_I[n_integer_signal-1].size(); i++ ) {
 		output_additive_I[n_integer_signal-1][i] = DEFAULT_VALUES[i];
@@ -205,10 +207,10 @@ void SignalGenerator::AddIntegerSignal(uint VECTOR_SIZE, doubles DEFAULT_VALUES,
 	// Add port
 	if (ENCODER_MESSAGE) {
 		addPort( "integerOut"+to_string(n_integer_signal), outports_I_msg[n_integer_signal-1] ).doc("Integer outport "+to_string(n_integer_signal)+" <EncoderMsg>");
-		log(Warning) << "SignalGenerator::AddIntegerSignal: Adding EncoderMsg signal " << n_integer_signal << " with size: " << VECTOR_SIZE << "!" << endlog();
+		log(Info) << "SignalGenerator::AddIntegerSignal: Adding EncoderMsg signal " << n_integer_signal << " with size: " << VECTOR_SIZE << "!" << endlog();
 	} else {
 		addPort( "integerOut"+to_string(n_integer_signal), outports_I[n_integer_signal-1] ).doc("Integer outport "+to_string(n_integer_signal)+" <ints>");
-		log(Warning) << "SignalGenerator::AddIntegerSignal: Adding ints signal " << n_integer_signal << "  with size: " << VECTOR_SIZE << "!" << endlog();
+		log(Info) << "SignalGenerator::AddIntegerSignal: Adding ints signal " << n_integer_signal << "  with size: " << VECTOR_SIZE << "!" << endlog();
 	}
 	
 	return;
@@ -249,10 +251,10 @@ void SignalGenerator::AddDigitalSignal(uint VECTOR_SIZE, doubles DEFAULT_VALUES,
 	// Add port
 	if (DIGITAL_MESSAGE) {
 		addPort( "digitalOut"+to_string(n_digital_signal), outports_D_msg[n_digital_signal-1] ).doc("Digital outport "+to_string(n_digital_signal)+" <DigitalMsg>");
-		log(Warning) << "SignalGenerator::Adding DigitalMsg signal " << n_digital_signal << " with size: " << VECTOR_SIZE << "!" << endlog();
+		log(Info) << "SignalGenerator::Adding DigitalMsg signal " << n_digital_signal << " with size: " << VECTOR_SIZE << "!" << endlog();
 	} else {
 		addPort( "digitalOut"+to_string(n_digital_signal), outports_D[n_digital_signal-1] ).doc("Digital outport "+to_string(n_digital_signal)+" <bools>");
-		log(Warning) << "SignalGenerator::Adding bool signal " << n_digital_signal << "  of size 1!" << endlog();
+		log(Info) << "SignalGenerator::Adding bool signal " << n_digital_signal << "  of size 1!" << endlog();
 	}
 
 	return;
@@ -284,10 +286,10 @@ void SignalGenerator::AddRamp_A(int ID, doubles SLOPE, doubles ENDVALUE)
 		ramp_slope_A[ID-1][i] = SLOPE[i];
 	}
 	
-	log(Warning) << "SignalGenerator::AddRamp_A: Succesfully added ramp of size: " << ramp_endvalue_A[ID-1].size() << "!" << endlog();
+	log(Info) << "SignalGenerator::AddRamp_A: Succesfully added ramp of size: " << ramp_endvalue_A[ID-1].size() << "!" << endlog();
 	
 	for( uint i = 0; i < ramp_endvalue_A[ID-1].size(); i++ ) {
-		if( ramp_endvalue_A[ID-1][i] > output_additive_A[ID-1][i] ) {
+		if( output_additive_A[ID-1][i] > ramp_endvalue_A[ID-1][i] ) {
 			log(Warning) << "SignalGenerator::AddRamp_A: Note that for output: " << i+1 << ", the output already exceeded it's end value and hence this ramp is inactive!" << endlog();
 		}
 	}
@@ -318,7 +320,7 @@ void SignalGenerator::AddRamp_I(int ID, doubles SLOPE, doubles ENDVALUE)
 		ramp_slope_I[ID-1][i] = SLOPE[i];
 	}
 	
-	log(Warning) << "SignalGenerator::AddRamp_I: Succesfully added ramp of size: " << ramp_endvalue_I[ID-1].size() << "!" << endlog();
+	log(Info) << "SignalGenerator::AddRamp_I: Succesfully added ramp of size: " << ramp_endvalue_I[ID-1].size() << "!" << endlog();
 	
 	for( uint i = 0; i < ramp_endvalue_I[ID-1].size(); i++ ) {
 		if( ramp_endvalue_I[ID-1][i] > output_additive_I[ID-1][i] ) {
@@ -352,7 +354,7 @@ void SignalGenerator::AddNoise_A(int ID, doubles MEAN, doubles VARIANCE)
 		noise_variance_A[ID-1][i] = VARIANCE[i];
 	}
 	
-	log(Warning) << "SignalGenerator::AddNoise_A: Succesfully added Noise!" << endlog();
+	log(Info) << "SignalGenerator::AddNoise_A: Succesfully added Noise!" << endlog();
 }
 
 void SignalGenerator::AddSine_A(int ID, doubles AMPLITUDE, doubles FREQUENCY, doubles PHASE)
@@ -382,7 +384,7 @@ void SignalGenerator::AddSine_A(int ID, doubles AMPLITUDE, doubles FREQUENCY, do
 		sine_phase_A[ID-1][i] = PHASE[i];
 	}
 	
-	log(Warning) << "SignalGenerator::AddSine_A: Succesfully added Sine!" << endlog();
+	log(Info) << "SignalGenerator::AddSine_A: Succesfully added Sine!" << endlog();
 }
 
 void SignalGenerator::AddSine_I(int ID, doubles AMPLITUDE, doubles FREQUENCY, doubles PHASE)
@@ -412,7 +414,7 @@ void SignalGenerator::AddSine_I(int ID, doubles AMPLITUDE, doubles FREQUENCY, do
 		sine_phase_I[ID-1][i] = PHASE[i];
 	}
 	
-	log(Warning) << "SignalGenerator::AddSine_I: Succesfully added Sine!" << endlog();
+	log(Info) << "SignalGenerator::AddSine_I: Succesfully added Sine!" << endlog();
 }
 
 void SignalGenerator::AddStep_A(int ID, doubles STEPTIME, doubles STEPVALUE)
@@ -440,7 +442,7 @@ void SignalGenerator::AddStep_A(int ID, doubles STEPTIME, doubles STEPVALUE)
 		step_value_A[ID-1][i] = STEPVALUE[i];
 	}
 	
-	log(Warning) << "SignalGenerator::AddStep_A: Succesfully added Step!" << endlog();
+	log(Info) << "SignalGenerator::AddStep_A: Succesfully added Step!" << endlog();
 }
 
 void SignalGenerator::AddStep_I(int ID, doubles STEPTIME, doubles STEPVALUE)
@@ -468,7 +470,7 @@ void SignalGenerator::AddStep_I(int ID, doubles STEPTIME, doubles STEPVALUE)
 		step_value_I[ID-1][i] = STEPVALUE[i];
 	}
 		
-	log(Warning) << "SignalGenerator::AddStep_I: Succesfully added Step!" << endlog();
+	log(Info) << "SignalGenerator::AddStep_I: Succesfully added Step!" << endlog();
 }
 
 void SignalGenerator::AddStep_D(int ID, doubles STEPTIME, doubles STEPVALUE)
@@ -496,7 +498,7 @@ void SignalGenerator::AddStep_D(int ID, doubles STEPTIME, doubles STEPVALUE)
 		step_value_D[ID-1][i] = STEPVALUE[i];
 	}
 		
-	log(Warning) << "SignalGenerator::AddStep_D: Succesfully added Step!" << endlog();
+	log(Info) << "SignalGenerator::AddStep_D: Succesfully added Step!" << endlog();
 }
 
 //! Calculate functions

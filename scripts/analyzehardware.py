@@ -31,7 +31,7 @@ for line in f_in:
             components.append(s[1])
             #print s[1]
             amountofcomponents = amountofcomponents + 1
-        elif 'connect' in line and not 'connectPeers' in line:
+        elif line.startswith('connect') and not 'connectPeers' in line:
             s = line.split("\"")
             comp_sub1 = s[1]
             comp_sub2 = s[3]
@@ -123,9 +123,9 @@ f_out.write('''\nnode [shape=oval];\n''')
 for comp in Acomponents:
     f_out.write('   \"' + comp + '\"' + '\n')
     
-#f_out.write('''\nnode [shape=oval, color=yellow];\n''')
-#for comp in Bcomponents:
-#    f_out.write('   \"' + comp + '\"' + '\n')
+f_out.write('''\nnode [shape=oval, color=yellow];\n''')
+for comp in Bcomponents:
+    f_out.write('   \"' + comp + '\"' + '\n')
     
 f_out.write('''\nnode [shape=oval, color=green];\n''')
 for comp in Ccomponents:
@@ -140,14 +140,7 @@ i = 0
 
     
 for (n1, n2, n3) in connections:
-	donotprintthisconnection = False
-	
-	for i in range (0,Bamountofcomponents):
-		if (n1 == Bcomponents[i] ) or (n2 == Bcomponents[i]):
-			donotprintthisconnection = True
-			
-	if (donotprintthisconnection == False) :
-		f_out.write('   \"' + n1 + '\" -> \"' + n2 + '\"  [ label = \"' + n3 + '\" ]; \n')
+   f_out.write('   \"' + n1 + '\" -> \"' + n2 + '\"  [ label = \"' + n3 + '\" ]; \n')
 
 f_out.write('}')
 f_out.close()

@@ -82,12 +82,16 @@ namespace ETHERCATWRITE
 		// Math
 		bool addition_status_A[MAX_BODYPARTS];
 		bool multiply_status_A[MAX_BODYPARTS];
+		bool matrixtransform_status_A[MAX_BODYPARTS];
 		doubles addition_values_A[MAX_BODYPARTS];		
-		doubles multiply_factor_A[MAX_BODYPARTS];	
+		doubles multiply_factor_A[MAX_BODYPARTS];		
+		std::vector< soem_beckhoff_drivers::AnalogMsg > input_MT_A;	
+		std::vector< doubles > matrixtransform_A[MAX_BODYPARTS];
 
 		// Functions
 		virtual void AddAddition_A(int ID, doubles VALUES);
 		virtual void AddMultiply_A(int ID, doubles FACTOR);
+		virtual void AddMatrixTransform_A(int ID);
 		
 		//! DigitalIns
 		// Ports
