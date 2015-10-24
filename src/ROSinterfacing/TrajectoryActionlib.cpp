@@ -213,17 +213,33 @@ void TrajectoryActionlib::goalCallback(GoalHandle gh) {
     // Accept/reject goal requests here
 
     log(Info) << "TrajectoryActionlib: Received Message" << endlog();
-    uint number_of_goal_joints_ = gh.getGoal()->trajectory.joint_names.size();
-    // Loop over all joints within the message received
-    uint k = 0;
     bool accept = true;
     int error_code = 0;
-    while (k < number_of_goal_joints_) {
+
+    uint number_of_goal_joints_ = gh.getGoal()->trajectory.joint_names.size();
+    if (number_of_goal_joints_ < 1) {
+        log(Warning) << "TrajectoryActionlib: Trajectory contains too little joints" << endlog();
+        accept = false;
+        error_code = control_msgs::FollowJointTrajectoryResult::INVALID_JOINTS;
+    }
+
+    uint number_of_points_ = gh.getGoal()->trajectory.points.size();
+    if (number_of_points_ < 2) {
+        log(Warning) << "TrajectoryActionlib: Trajectory contains too little points" << endlog();
+        accept = false;
+        error_code = control_msgs::FollowJointTrajectoryResult::INVALID_GOAL;
+    }
+
+    Point destination = gh.getGoal()->trajectory.points[number_of_points_ - 1];
+
+    // Loop over all joints within the message received
+    uint k = 0;
+    while (k < number_of_goal_joints_ && accept == true) {
         map<string, BodyJointPair>::const_iterator it = joint_map.find(gh.getGoal()->trajectory.joint_names[k]);
         if (it == joint_map.end()) {
             log(Warning) << "TrajectoryActionlib: received a message with joint name ["+gh.getGoal()->trajectory.joint_names[k]+"] that is not listed!" << endlog();
             accept = false;
-            error_code = -2;
+            error_code = control_msgs::FollowJointTrajectoryResult::INVALID_JOINTS;
             k++;
         } else {
             // received a message with joint name that is found. Continue checking for operational state of bodypart
@@ -231,19 +247,19 @@ void TrajectoryActionlib::goalCallback(GoalHandle gh) {
             int body_part_id = bjp.first;
             int joint_id = bjp.second;
             if (allowedBodyparts[body_part_id] == true) {
-                if ( gh.getGoal()->trajectory.points[0].positions[k] < minpos[body_part_id][joint_id] ) {
-                    log(Warning) << "TrajectoryActionlib: Received goal " << gh.getGoal()->trajectory.points[0].positions[k] << " for partNr " << body_part_id+1 << ", joint " << joint_id+1 << ". This is outside minimal bound " << minpos [body_part_id][joint_id] << "!" << endlog();
+                if ( destination.positions[k] < minpos[body_part_id][joint_id] ) {
+                    log(Warning) << "TrajectoryActionlib: Received goal " << destination.positions[k] << " for partNr " << body_part_id+1 << ", joint " << joint_id+1 << ". This is outside minimal bound " << minpos [body_part_id][joint_id] << "!" << endlog();
                     accept = false;
-                    error_code = -5;
-                } else if ( gh.getGoal()->trajectory.points[0].positions[k] > maxpos[body_part_id][joint_id] ) {
-                    log(Warning) << "TrajectoryActionlib: Received goal " << gh.getGoal()->trajectory.points[0].positions[k] << " for partNr " << body_part_id+1 << ", joint " << joint_id+1 << ". This is outside maximal bound " << maxpos [body_part_id][joint_id] << "!" << endlog();
+                    error_code = control_msgs::FollowJointTrajectoryResult::GOAL_TOLERANCE_VIOLATED;
+                } else if ( destination.positions[k] > maxpos[body_part_id][joint_id] ) {
+                    log(Warning) << "TrajectoryActionlib: Received goal " << destination.positions[k] << " for partNr " << body_part_id+1 << ", joint " << joint_id+1 << ". This is outside maximal bound " << maxpos [body_part_id][joint_id] << "!" << endlog();
                     accept = false;
-                    error_code = -5;
+                    error_code = control_msgs::FollowJointTrajectoryResult::GOAL_TOLERANCE_VIOLATED;
                 }
             } else { // Message received for bodypart that did not get the AllowReadReference!
                 log(Warning) << "TrajectoryActionlib: Message received for bodypart that did not get the AllowReadReference!" << endlog();
                 accept = false;
-                error_code = -1;
+                error_code = control_msgs::FollowJointTrajectoryResult::INVALID_GOAL;
             }
             k++;
         }
