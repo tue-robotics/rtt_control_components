@@ -114,11 +114,13 @@ void TrajectoryActionlib::updateHook()
         // Take the first item in the queue
         TrajectoryInfo& t_info = goal_handles_.front();
         GoalHandle& gh = t_info.goal_handle;
+        bool firstpoint = false;
 
         // If first point, set t_start from trajectory
         if (t_info.t_start == -1) {
             t_info.t_start = t_now;
             log(Info) << "TrajectoryActionlib: Starting new goal!" << endlog();
+            firstpoint = true;
         }
 
         // Take first point in the queue
@@ -143,8 +145,16 @@ void TrajectoryActionlib::updateHook()
                 BodyJointPair bjp = it->second;
                 int body_part_id = bjp.first;
                 int joint_id = bjp.second;
-                desiredPos [body_part_id] [joint_id] = point.positions[k];
-            /*    desiredVel [body_part_id] [joint_id] = point.velocities[k];
+                if ( firstpoint && ( abs( pos_out[body_part_id] [joint_id] - point.positions[k] ) > 0.01 || ( body_part_id == 2 && abs( pos_out[body_part_id] [joint_id] - point.positions[k] ) > 0.005 ) ) ) {
+                    log(Error) << "You try to start bodypart " << body_part_id << " joint " << joint_id << " at point " << point.positions[k] << " while it is at " << pos_out[body_part_id] [joint_id] << " Ja doei!" << endlog();
+                    gh.setCanceled();
+                    goal_handles_.erase(goal_handles_.begin());
+                    break;
+                }
+                else {
+                    desiredPos [body_part_id] [joint_id] = point.positions[k];
+                }
+                /*    desiredVel [body_part_id] [joint_id] = point.velocities[k];
                 desiredAcc [body_part_id] [joint_id] = point.accelerations[k];*/
                 k++;
             }
@@ -156,8 +166,6 @@ void TrajectoryActionlib::updateHook()
                 log(Debug) << "TrajectoryActionlib: We are there, poppin'! " << t_info.points.size() << endlog();
             }
 
-            //log(Info) << "Check if this was the last point. If so, remove the goal handle" << endlog();
-            // Check if this was the last point. If so, remove the goal handle
             if (t_info.points.size() == 1)
             {
                 log(Info) << "TrajectoryActionlib: Succeeded this goal!" << endlog();
@@ -165,11 +173,12 @@ void TrajectoryActionlib::updateHook()
                 goal_handles_.erase(goal_handles_.begin());
             }
         }
-        if ( t_info.dt < 0.1 ) {
+        if ( t_info.dt < 0.3 ) {
             trajectory_active = true;
         }
         else {
             trajectory_active = false;
+            log(Warning) << "Ugly trajectory detected (dt = " << t_info.dt << ")" << endlog();
         }
     }
     else {
@@ -184,7 +193,7 @@ void TrajectoryActionlib::updateHook()
 			
             // Compute the next reference points
             for ( uint i = 0; i < vector_sizes[partNr-1]; i++ ){
-                if ( trajectory_active ) { // Somebody clearly thought about this trajectory
+                if ( false ) {//trajectory_active ) { // Somebody clearly thought about this trajectory
                     //log(Info) << "TrajectoryActionlib: desiredVel: " << desiredVel[partNr-1][i] << "desiredPos: " << desiredPos[partNr-1][i] << "pos_out: " << pos_out[partNr-1][i] << endlog();
                     pos_out[partNr-1][i]=desiredPos[partNr-1][i];
                     vel_out[partNr-1][i]=desiredVel[partNr-1][i];
@@ -198,7 +207,6 @@ void TrajectoryActionlib::updateHook()
                     acc_out[partNr-1][i]=mRefPoints[partNr-1][i].acc;
                 }
             }
-
             posoutport[partNr-1].write( pos_out[partNr-1] );
             veloutport[partNr-1].write( vel_out[partNr-1] );
             accoutport[partNr-1].write( acc_out[partNr-1] );
