@@ -96,6 +96,7 @@ namespace ETHERCATREAD
 		// In/Output
 		std::vector< soem_beckhoff_drivers::AnalogMsg > input_msgs_A;
 		std::vector< doubles > output_A;
+		std::vector< doubles > intermediate_A;
 		
 		// Math
 		bool addition_status_A[MAX_BODYPARTS];
@@ -129,6 +130,7 @@ namespace ETHERCATREAD
 		// In/Output
 		std::vector< soem_beckhoff_drivers::DigitalMsg > input_msgs_D;
 		std::vector< bools > output_D;
+		std::vector< bools > intermediate_D;
 
 		// Math
 		bool flip_status_D[MAX_BODYPARTS];
@@ -166,6 +168,7 @@ namespace ETHERCATREAD
 		// In/Output
 		std::vector< soem_beckhoff_drivers::EncoderMsg > input_msgs_E;
 		std::vector< doubles > output_E;
+		std::vector< doubles > intermediate_E;
 		std::vector< doubles > output_E_vel;
 
 		// Math

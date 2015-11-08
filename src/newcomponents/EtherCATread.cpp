@@ -102,23 +102,21 @@ bool EtherCATread::startHook(){}
 
 void EtherCATread::updateHook()
 {
-	//! 8 seconds after boot, Check all connections
-	if (!goodToGO) {
-		aquisition_time = os::TimeService::Instance()->getNSecs()*1e-9;
-	}
-	if (!goodToGO && (aquisition_time - start_time > 8.0)) {
-		goodToGO = true;
-		CheckAllConnections();
-	}
-
+	// Functions checks the connections, (It does this once after X seconds)
+	CheckAllConnections();
+	
+	// Reads inputs, this extracts data from ethercat slaves
 	ReadInputs();
 	
-	MapInput2Outputs();
+	// Maps the inputs into intermediate output structure (Input reshuffling, allows for example mapping X inputs on Y outputs)
+	MapInput2Outputs();		
 	
-	Calculate_A();
+	// Functions to do all the calculations on the incoming data, for example converting enc counts to si values, or multiplying inputs with factor X
+	Calculate_A();			
 	Calculate_D();
 	Calculate_E();
 	
+	// Function to write the output calculated onto the output port
     WriteOutputs();
     
 	return;
@@ -226,8 +224,10 @@ void EtherCATread::AddAnalogIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMEN
 	}
 
     output_A.resize(n_outports_A);
+    intermediate_A.resize(n_outports_A);
     for( uint i = 0; i < n_outports_A; i++ ) {
         output_A[i].resize( outport_dimensions_A[i] );
+        intermediate_A[i].resize( outport_dimensions_A[i] );
     }
     
     log(Warning) << "EtherCATread (" << PARTNAME << ")::AddAnalogIns: Added AnalogIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports." << endlog();
@@ -337,8 +337,10 @@ void EtherCATread::AddDigitalIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIME
 	}
 
     output_D.resize(n_outports_D);
+    intermediate_D.resize(n_outports_D);
     for( uint i = 0; i < n_outports_D; i++ ) {
         output_D[i].resize( outport_dimensions_D[i] );
+        intermediate_D[i].resize( outport_dimensions_D[i] );
     }
     
     log(Warning) << "EtherCATread (" << PARTNAME << ")::AddDigitalIns: Added DigitalIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports." << endlog();
@@ -452,13 +454,17 @@ void EtherCATread::AddEncoderIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIME
     input_msgs_E.resize(n_inports_E);
 
     output_E.resize(n_outports_E);
+    intermediate_E.resize(n_outports_E);
     output_E_vel.resize(n_outports_E);
     for( uint i = 0; i < n_outports_E; i++ ) {
         output_E[i].resize( outport_dimensions_E[i] );
+        intermediate_E[i].resize( outport_dimensions_E[i] );
         output_E_vel[i].resize( outport_dimensions_E[i] );
     }
     
     log(Warning) << "EtherCATread (" << PARTNAME << ")::AddEncoderIns: Added EncoderIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports." << endlog();
+
+	// Do a reset encoders
 
 	return;
 }
@@ -574,6 +580,12 @@ void EtherCATread::AddEnc2Si_E(int ID, doubles ENCODERBITS, doubles ENC2SI)
 		log(Error) << "EtherCATread::AddEnc2Si_E: Could not add enc2si. Invalid size of FLIP. Should have be of size :" << output_E[ID-1].size() << "!" << endlog();
 		return;
 	}
+	for(uint k = 0; k < ENCODERBITS.size(); k++) {
+		if(ENC2SI[k] > 1.0 ) {
+			log(Error) << "EtherCATread::AddEnc2Si_E: Could not add enc2si. Currently Enc2SI values > 1 are not supported. Your " << k <<"th enc2si was: " << ENC2SI[k] << "!" << endlog();
+			return;
+		}
+	}
 	
 	// Store Properties
 	encoderbits[ID-1].resize(ENCODERBITS.size());
@@ -600,10 +612,13 @@ void EtherCATread::AddEnc2Si_E(int ID, doubles ENCODERBITS, doubles ENC2SI)
 	// Set status
 	enc2si_status_E[ID-1] = true;
 	
-	// Reset Encoders
-	//doubles zeros(ENCODERBITS.size(),0.0);
-	//ResetEncoders(ID, zeros);
-
+	// Almost done, first convert to si for the first time
+	Calculate_E();
+	
+	// Then reset Encoders
+	doubles zeros(ENCODERBITS.size(),0.0);
+	ResetEncoders(ID, zeros);
+	
 	if( !enc2si_status_E[ID-1] ) {
 		log(Warning) << "EtherCATread::AddEnc2Si_E: Added a enc2si." << endlog();
 	}
@@ -653,43 +668,52 @@ void EtherCATread::AddMatrixTransform_E(int ID)
 //! Functions to edit inputs
 void EtherCATread::CheckAllConnections()
 {
-	// AnalogIns
-	for(uint i = 0; i < n_inports_A; i++) {
-		if ( !inports_A[i].connected() ) {
-			log(Error) << "EtherCATread::CheckAllConnections: Analog inport " << inports_A[i].getName() << " is not connected!" << endlog();
-		}
+	//! 8 seconds after boot, Check all connections
+	if (!goodToGO) {
+		aquisition_time = os::TimeService::Instance()->getNSecs()*1e-9;
 	}
-	for(uint i = 0; i < n_outports_A; i++) {
-		if ( !outports_A[i].connected() ) {
-			log(Info) << "EtherCATread::CheckAllConnections: Analog outport " << outports_A[i].getName() << " is not connected!" << endlog();
+	if (!goodToGO && (aquisition_time - start_time > 8.0)) {
+		goodToGO = true;
+		
+		// AnalogIns
+		for(uint i = 0; i < n_inports_A; i++) {
+			if ( !inports_A[i].connected() ) {
+				log(Error) << "EtherCATread::CheckAllConnections: Analog inport " << inports_A[i].getName() << " is not connected!" << endlog();
+			}
 		}
-	}
-	
-	// DigitalIns
-	for(uint i = 0; i < n_inports_D; i++) {
-		if ( !inports_D[i].connected() ) {
-			log(Error) << "EtherCATread::CheckAllConnections: Digital inport " << inports_D[i].getName() << " is not connected!" << endlog();
+		for(uint i = 0; i < n_outports_A; i++) {
+			if ( !outports_A[i].connected() ) {
+				log(Info) << "EtherCATread::CheckAllConnections: Analog outport " << outports_A[i].getName() << " is not connected!" << endlog();
+			}
 		}
-	}
-	for(uint i = 0; i < n_outports_D; i++) {
-		if ( !outports_D[i].connected() ) {
-			log(Info) << "EtherCATread::CheckAllConnections: Digital outport " << outports_D[i].getName() << " is not connected!" << endlog();
+		
+		// DigitalIns
+		for(uint i = 0; i < n_inports_D; i++) {
+			if ( !inports_D[i].connected() ) {
+				log(Error) << "EtherCATread::CheckAllConnections: Digital inport " << inports_D[i].getName() << " is not connected!" << endlog();
+			}
 		}
-	}
-	
-	// EncoderIns
-	for(uint i = 0; i < n_inports_E; i++) {
-		if ( !inports_E[i].connected() ) {
-			log(Error) << "EtherCATread::CheckAllConnections: Encoder inport " << inports_E[i].getName() << " is not connected!" << endlog();
+		for(uint i = 0; i < n_outports_D; i++) {
+			if ( !outports_D[i].connected() ) {
+				log(Info) << "EtherCATread::CheckAllConnections: Digital outport " << outports_D[i].getName() << " is not connected!" << endlog();
+			}
 		}
-	}
-	for(uint i = 0; i < n_outports_E; i++) {
-		if ( !outports_E[i].connected() ) {
-			log(Info) << "EtherCATread::CheckAllConnections: Encoder outport " << outports_E[i].getName() << " is not connected!" << endlog();
+		
+		// EncoderIns
+		for(uint i = 0; i < n_inports_E; i++) {
+			if ( !inports_E[i].connected() ) {
+				log(Error) << "EtherCATread::CheckAllConnections: Encoder inport " << inports_E[i].getName() << " is not connected!" << endlog();
+			}
 		}
-		if ( !outports_E_vel[i].connected() ) {
-			log(Info) << "EtherCATread::CheckAllConnections: Encoder velocity outport " << outports_E_vel[i].getName() << " is not connected!" << endlog();
+		for(uint i = 0; i < n_outports_E; i++) {
+			if ( !outports_E[i].connected() ) {
+				log(Info) << "EtherCATread::CheckAllConnections: Encoder outport " << outports_E[i].getName() << " is not connected!" << endlog();
+			}
+			if ( !outports_E_vel[i].connected() ) {
+				log(Info) << "EtherCATread::CheckAllConnections: Encoder velocity outport " << outports_E_vel[i].getName() << " is not connected!" << endlog();
+			}
 		}
+			
 	}
 }
 
@@ -728,7 +752,7 @@ void EtherCATread::MapInput2Outputs()
     uint j = 0;
     for( uint i = 0; i < n_outports_A; i++ ) {
         for( uint k = 0; k < outport_dimensions_A[i]; ++k) {
-            output_A[i][k] = input_msgs_A[ from_which_inport_A[j]-1 ].values[ from_which_entry_A[j]-1 ];
+            intermediate_A[i][k] = input_msgs_A[ from_which_inport_A[j]-1 ].values[ from_which_entry_A[j]-1 ];
             j++;   
         }
     }
@@ -737,7 +761,7 @@ void EtherCATread::MapInput2Outputs()
     j = 0;
     for( uint i = 0; i < n_outports_D; i++ ) {
         for( uint k = 0; k < outport_dimensions_D[i]; ++k) {
-            output_D[i][k] = input_msgs_D[ from_which_inport_D[j]-1 ].values[ from_which_entry_D[j]-1 ];
+            intermediate_D[i][k] = input_msgs_D[ from_which_inport_D[j]-1 ].values[ from_which_entry_D[j]-1 ];
             j++;
         }
     }
@@ -746,7 +770,7 @@ void EtherCATread::MapInput2Outputs()
     j = 0;
     for( uint i = 0; i < n_outports_E; i++ ) {
         for( uint k = 0; k < outport_dimensions_E[i]; ++k) {
-            output_E[i][k] = (double) input_msgs_E[ from_which_inport_E[j]-1 ].value;
+            intermediate_E[i][k] = (double) input_msgs_E[ from_which_inport_E[j]-1 ].value;
             j++;
         }
     }    
@@ -755,6 +779,9 @@ void EtherCATread::MapInput2Outputs()
 
 void EtherCATread::Calculate_A()
 {	
+	// Output = intermediate
+	output_A = intermediate_A;
+	
 	// Addition
     for( uint i = 0; i < n_outports_A; i++ ) {
 		if (addition_status_A[i]) {
@@ -776,6 +803,9 @@ void EtherCATread::Calculate_A()
 
 void EtherCATread::Calculate_D()
 {
+	// Output = intermediate
+	output_D = intermediate_D;
+	
 	// Flip
     for( uint i = 0; i < n_outports_D; i++ ) {
 		if (flip_status_D[i]) {			
@@ -791,6 +821,9 @@ void EtherCATread::Calculate_D()
 
 void EtherCATread::Calculate_E()
 {
+	// Output = intermediate
+	output_E = intermediate_E;
+		
 	// Enc2Si
     double dt = determineDt();
 	
@@ -870,12 +903,9 @@ void EtherCATread::ResetEncoders(int ID, doubles resetvalues )
 		ienc[ID-1][k] = 0;
 		
 		// Set position_SI_init and previous_enc_values
-		//log(Error)<<"ReadEncoders::ResetEncoders: position_SI_init[ID-1][k]:" << position_SI_init[ID-1][k] <<"."<<endlog();
-		//log(Error)<<"ReadEncoders::ResetEncoders: output_E[ID-1][k]:" << output_E[ID-1][k] <<"."<<endlog();
-		//log(Error)<<"ReadEncoders::ResetEncoders: resetvalues[k]:" << resetvalues[k] <<"."<<endlog();
-		
 		position_SI_init[ID-1][k] = output_E[ID-1][k] - resetvalues[k];
 		previous_enc_values[ID-1][k] = position_SI_init[ID-1][k];
+		
 	}
 }
 
