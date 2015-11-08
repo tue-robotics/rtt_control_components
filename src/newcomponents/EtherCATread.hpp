@@ -155,6 +155,7 @@ namespace ETHERCATREAD
 		// Vectors
 		strings added_bodyparts_E;
 		ints inport_dimensions_E;
+		ints intermediate_dimensions_E;
 		ints outport_dimensions_E;
 		ints from_which_inport_E;
 		ints from_which_entry_E;
@@ -180,7 +181,7 @@ namespace ETHERCATREAD
 		
 		// Functions
 		virtual void AddEnc2Si_E(int ID, doubles ENCODERBITS, doubles ENC2SI);
-		virtual void AddMatrixTransform_E(int ID);
+		virtual void AddMatrixTransform_E(int ID, double INPUTSIZE, double OUTPUTSIZE);
 		virtual void ResetEncoders(int ID, doubles resetvalues );
 		
 		//! Component Hooks

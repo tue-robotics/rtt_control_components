@@ -100,7 +100,7 @@ void EtherCATwrite::AddAnalogOuts(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIM
 	uint N_INPORT_ENTRIES = 0;
 	uint N_OUTPORT_ENTRIES = 0;
 	
-	log(Warning) << "EtherCATwrite (" << PARTNAME << ")::ADDING: [ " << INPORT_DIMENSIONS.size() << " , " << OUTPORT_DIMENSIONS.size() << " , " << FROM_WHICH_INPORT.size() << " , " << FROM_WHICH_ENTRY.size() << " ]!" << endlog();
+	log(Info) << "EtherCATwrite (" << PARTNAME << ")::ADDING: [ " << INPORT_DIMENSIONS.size() << " , " << OUTPORT_DIMENSIONS.size() << " , " << FROM_WHICH_INPORT.size() << " , " << FROM_WHICH_ENTRY.size() << " ]!" << endlog();
 
 	//! Check configuration
 	// Check if the AnalogIns is already added for this bodypart
@@ -214,7 +214,7 @@ void EtherCATwrite::AddDigitalOuts(doubles INPORT_DIMENSIONS, doubles OUTPORT_DI
 	uint N_INPORT_ENTRIES = 0;
 	uint N_OUTPORT_ENTRIES = 0;
 	
-	log(Warning) << "EtherCATwrite (" << PARTNAME << ")::ADDING: [ " << INPORT_DIMENSIONS.size() << " , " << OUTPORT_DIMENSIONS.size() << " , " << FROM_WHICH_INPORT.size() << " , " << FROM_WHICH_ENTRY.size() << " ]!" << endlog();
+	log(Info) << "EtherCATwrite (" << PARTNAME << ")::ADDING: [ " << INPORT_DIMENSIONS.size() << " , " << OUTPORT_DIMENSIONS.size() << " , " << FROM_WHICH_INPORT.size() << " , " << FROM_WHICH_ENTRY.size() << " ]!" << endlog();
 
 	//! Check configuration	
 	// Check if the DigitalIns is already added for this bodypart

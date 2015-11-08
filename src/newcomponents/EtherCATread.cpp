@@ -52,12 +52,13 @@ EtherCATread::EtherCATread(const string& name) : TaskContext(name, PreOperationa
 		.arg("ENC2SI","Value to convert the encoder value to an SI value. Typically 2pi/(encodersteps_per_rev*gearbox)");
 	addOperation("AddMatrixTransform_E", &EtherCATread::AddMatrixTransform_E, this, OwnThread)
 		.doc("This function will add a matrix multiplication on the si output of the encoders. Only input is ID. Matrix should be added with properties")
-		.arg("ID","ID number of the encoder ins");
+		.arg("ID","ID number of the encoder ins")
+		.arg("INPUTSIZE","Size of the input of the matrix transform")
+		.arg("OUTPUTSIZE","Size of the output of the matrix transform");
 	addOperation( "ResetEncoders", &EtherCATread::ResetEncoders, this, OwnThread )
 		.doc("Reset an encoder value to a new value, usefull for homing")
 		.arg("ID","ID number of the encoder ins")
 		.arg("resetvalues","Values to reset the encoder to");
-
 }
 
 EtherCATread::~EtherCATread(){}
@@ -441,6 +442,7 @@ void EtherCATread::AddEncoderIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIME
 		inport_dimensions_E.push_back((int) INPORT_DIMENSIONS[i]);
 	}
 	for( uint i = 0; i < N_OUTPORTS; i++ ) {
+		intermediate_dimensions_E.push_back((int) OUTPORT_DIMENSIONS[i]); // if a non square matrix transform is added the intermediate dimensions will remain while the outport_dimensions are updated
 		outport_dimensions_E.push_back((int) OUTPORT_DIMENSIONS[i]);
 	}
 	for( uint j = 0; j < N_OUTPORT_ENTRIES; j++ ) {
@@ -607,37 +609,49 @@ void EtherCATread::AddEnc2Si_E(int ID, doubles ENCODERBITS, doubles ENC2SI)
 
 	if( enc2si_status_E[ID-1] ) {
 		log(Warning) << "EtherCATread::AddEnc2Si_E: Overwritten existing enc2si." << endlog();
-	}
+	} else {
+		log(Warning) << "EtherCATread::AddEnc2Si_E: Added a enc2si." << endlog();
+	}	
 	
 	// Set status
 	enc2si_status_E[ID-1] = true;
 	
 	// Almost done, first convert to si for the first time
+	ReadInputs();
+	MapInput2Outputs();
 	Calculate_E();
 	
 	// Then reset Encoders
 	doubles zeros(ENCODERBITS.size(),0.0);
 	ResetEncoders(ID, zeros);
-	
-	if( !enc2si_status_E[ID-1] ) {
-		log(Warning) << "EtherCATread::AddEnc2Si_E: Added a enc2si." << endlog();
-	}
+
 }
 
-void EtherCATread::AddMatrixTransform_E(int ID)
+void EtherCATread::AddMatrixTransform_E(int ID, double INPUTSIZE, double OUTPUTSIZE)
 {
 	// Check
+	if( matrixtransform_status_E[ID-1] ) {
+		log(Warning) << "EtherCATread::AddMatrixTransform_E: Could not add Matrix Transform, since this already excists for this bodypart. Overwriting is not supported at the moment" << endlog();
+		return;
+	}
 	if( ID <= 0 || ID > n_outports_E) {
 		log(Error) << "EtherCATread::AddMatrixMultiplication_E: Could not add matrix transform. Invalid ID: " << ID << ".  1 <= ID <= " << n_outports_E << "!" << endlog();
 		return;
 	}
+	if( INPUTSIZE != outport_dimensions_E[ID-1]) {
+		log(Error) << "EtherCATread::AddMatrixMultiplication_E: Could not add matrix transform. OUTPUTSIZE: " << OUTPUTSIZE << " != outport_dimensions_E[ID-1]" << outport_dimensions_E[ID-1] << "!" << endlog();
+		return;
+	}
+	
+	// Update outport_dimensions_E
+	outport_dimensions_E[ID-1] = OUTPUTSIZE;
 		
 	// Resize input structs
 	input_MT_E.resize(n_outports_E);
     input_MT_E_vel.resize(n_outports_E);
     for( uint i = 0; i < n_outports_E; i++ ) {
-        input_MT_E[i].resize( outport_dimensions_E[i] );
-        input_MT_E_vel[i].resize( outport_dimensions_E[i] );
+        input_MT_E[i].resize( outport_dimensions_E[ID-1] );
+        input_MT_E_vel[i].resize( outport_dimensions_E[ID-1]);
     }
 		
 	// Add property to store Matrix
@@ -655,9 +669,7 @@ void EtherCATread::AddMatrixTransform_E(int ID)
 		matrixtransform_E[ID-1][i][i] = 1.0;
 	}
 	
-	if( matrixtransform_status_E[ID-1] ) {
-		log(Warning) << "EtherCATread::AddMatrixTransform_E: Overwritten existing matrix transform." << endlog();
-	} else {
+	if( !matrixtransform_status_E[ID-1] ) {
 		log(Warning) << "EtherCATread::AddMatrixTransform_E: Added a matrix transform." << endlog();
 	}
 	
