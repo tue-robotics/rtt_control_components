@@ -144,7 +144,7 @@ void EtherCATwrite::AddAnalogOuts(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIM
 
 	// Check validity of each entry in the FROM_WHICH_INPORT and FROM_WHICH_ENTRY 
     for(uint j = 0; j < N_OUTPORT_ENTRIES; j++) {
-        if( FROM_WHICH_INPORT[j] > (n_inports_A+N_INPORTS) || FROM_WHICH_INPORT[j] <= 0 ) {
+        if( FROM_WHICH_INPORT[j] > (n_inports_A+N_INPORTS) || FROM_WHICH_INPORT[j] < 0 ) {
             log(Error) << "EtherCATwrite (" << PARTNAME << ")::AddAnalogOuts: Could not add AnalogOut. From_which_inport array contains port no. " << FROM_WHICH_INPORT[j] << " which does not exist according to inport_dimensions_A!" << endlog();
             return;
         }
@@ -571,8 +571,13 @@ void EtherCATwrite::MapInputs2Outputs()
     uint j = 0;
     for( uint i = 0; i < n_outports_A; i++ ) {
         for( uint k = 0; k < outport_dimensions_A[i]; ++k) {
-            intermediate_A[i][k] = input_A[ from_which_inport_A[j]-1 ][ from_which_entry_A[j]-1 ];
-            j++;
+			if (from_which_inport_A[j] == 0 || from_which_entry_A[j] ==0) {
+				intermediate_A[i][k] = 0.0;
+			} else {			
+				intermediate_A[i][k] = input_A[ from_which_inport_A[j]-1 ][ from_which_entry_A[j]-1 ];
+			}
+			
+			j++;
         }
     }
 
@@ -580,8 +585,13 @@ void EtherCATwrite::MapInputs2Outputs()
     j = 0;
     for( uint i = 0; i < n_outports_D; i++ ) {
         for( uint k = 0; k < outport_dimensions_D[i]; ++k) {
-            intermediate_D[i][k] = input_D[ from_which_inport_D[j]-1 ][ from_which_entry_D[j]-1 ];
-            j++;
+			if (from_which_inport_A[j] == 0 || from_which_entry_A[j] ==0) {
+				intermediate_D[i][k] = 0;
+			} else {			
+				intermediate_D[i][k] = input_D[ from_which_inport_D[j]-1 ][ from_which_entry_D[j]-1 ];
+			}
+			
+			j++;            
         }
     }
 }

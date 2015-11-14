@@ -33,11 +33,11 @@ EtherCATread::EtherCATread(const string& name) : TaskContext(name, PreOperationa
 	// Apply (math) function
 	addOperation("AddAddition_A", &EtherCATread::AddAddition_A, this, OwnThread)
 		.doc("This function will add to all analog values of intput i the value as set in values[i]")
-		.arg("ID","ID number of the digital in")
+		.arg("ID","ID number of the analog in")
 		.arg("VALUES","Doubles specifying with which the input should be added");	
 	addOperation("AddMultiply_A", &EtherCATread::AddMultiply_A, this, OwnThread)
 		.doc("This function will multiply all analog values of intput i with the value as set in factor[i]")
-		.arg("ID","ID number of the digital in")
+		.arg("ID","ID number of the analog in")
 		.arg("FACTOR","Doubles specifying with which the input should be multiplied");	
 		
 	addOperation("AddFlip_D", &EtherCATread::AddFlip_D, this, OwnThread)
@@ -829,7 +829,7 @@ void EtherCATread::Calculate_D()
 void EtherCATread::Calculate_E()
 {
 	// Output = intermediate
-	//output_E = intermediate_E;
+	output_E = intermediate_E;
 		
 	// Enc2Si
     double dt = determineDt();
