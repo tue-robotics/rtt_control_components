@@ -57,6 +57,7 @@ namespace COMPARE
 		int n_comparisons_D;		
 		int k_timer;
 		bool print;
+		string nameofcomp;
 		
 		//! Component Hooks
 		virtual bool configureHook();

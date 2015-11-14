@@ -13,6 +13,7 @@ Compare::Compare(const string& name) : TaskContext(name, PreOperational)
 		.arg("SIZE","Size of the ports that should be compared");
 		
 	addProperty( "warningtime",     	warningtime     ).doc("Time between warnings");    
+	addProperty( "nameofcomp",     		nameofcomp     	).doc("name");    
 
 }
 
@@ -67,7 +68,7 @@ void Compare::AddCompareDoubles(double SIZE, bool MSG)
 	
 	msgsstore[n_comparisons_D-1] = MSG;
 	
-	log(Warning) << "Compare::AddCompareDoubles: Added Doubles compare with size" << SIZE << "." << endlog();
+	log(Warning) << "Compare::AddCompareDoubles: Added Doubles compare for: " << nameofcomp << "with size" << SIZE << "." << endlog();
 
 	return;
 }
@@ -84,9 +85,9 @@ void Compare::CompareDoubles()
 			Binports_D[i].read(input_B[i]);
 
 			for( uint j = 0; j < portsizes_D[i]; j++ ) {
-				print = true;
-				if (input_A[i][j] != input_B[i][j]) {
-					blaat << " [bp=" << i << "],[id=" << j << "]->" << input_A[i][j] << "!=" << input_B[i][j] << ".."<<n_comparisons_D;
+				if (fabs(input_A[i][j]-input_B[i][j]) > 0.01) {
+					print = true;
+					blaat << " [bp=" << i << "],[id=" << j << "]->" << input_A[i][j] << "!=" << input_B[i][j] << "   ";
 				}
 			}
 			
@@ -96,9 +97,9 @@ void Compare::CompareDoubles()
 			Binports_D_msg[i].read(input_B_msg[i]);
 
 			for( uint j = 0; j < portsizes_D[i]; j++ ) {
-				if (input_A_msg[i].values[j] != input_B_msg[i].values[j]) {
+				if (fabs(input_A_msg[i].values[j]-input_B_msg[i].values[j]) > 0.01) {
 					print = true;
-					blaat << " [bp=" << i << "],[id=" << j << "]->" << input_A_msg[i].values[j] << "!=" << input_B_msg[i].values[j] << ".."<<n_comparisons_D;
+					blaat << " [bp=" << i << "],[id=" << j << "]->" << input_A_msg[i].values[j] << "!=" << input_B_msg[i].values[j] << "   ";
 				}
 			}
 		}
@@ -107,8 +108,9 @@ void Compare::CompareDoubles()
 	
 	// Update Timer
 	if ( print && k_timer >(warningtime/(this->getPeriod()))) {
-		log(Warning) << "CP:" << blaat.str() << "!" << endlog();
+		log(Warning) << nameofcomp << ":" << blaat.str() << "!" << endlog();
 		k_timer = 0;
+		print = false;
 	}
 	k_timer++;
 }

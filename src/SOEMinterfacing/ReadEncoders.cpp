@@ -72,7 +72,7 @@ bool ReadEncoders::startHook()
     // Check validity of Ports:
     for ( uint i = 0; i < N; i++ ) {
         if ( !inport_enc[i].connected() ) {
-            log(Error)<<"ReadEncoders::Inputport not connected!"<<endlog();
+            log(Error)<<"ReadEncoders:: Could not start component: Inputport not connected!"<<endlog();
             return false;
         }
     }
