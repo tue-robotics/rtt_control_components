@@ -50,7 +50,7 @@ namespace ETHERCATWRITE
 		
 		virtual void ReadInputs();
 		virtual void CheckAllConnections();
-		virtual void MapInput2Outputs();
+		virtual void MapInputs2Outputs();
 		virtual void Calculate_A();
 		virtual void Calculate_D();
 		virtual void WriteOutputs();
@@ -77,6 +77,7 @@ namespace ETHERCATWRITE
 		
 		// In/Output
 		std::vector< doubles > input_A;
+		std::vector< doubles > intermediate_A;
 		std::vector< soem_beckhoff_drivers::AnalogMsg > output_msgs_A;
 		
 		// Math
@@ -85,13 +86,12 @@ namespace ETHERCATWRITE
 		bool matrixtransform_status_A[MAX_BODYPARTS];
 		doubles addition_values_A[MAX_BODYPARTS];		
 		doubles multiply_factor_A[MAX_BODYPARTS];		
-		std::vector< soem_beckhoff_drivers::AnalogMsg > input_MT_A;	
 		std::vector< doubles > matrixtransform_A[MAX_BODYPARTS];
 
 		// Functions
 		virtual void AddAddition_A(int ID, doubles VALUES);
 		virtual void AddMultiply_A(int ID, doubles FACTOR);
-		virtual void AddMatrixTransform_A(int ID);
+		virtual void AddMatrixTransform_A(int ID, double INPUTSIZE, double OUTPUTSIZE);
 		
 		//! DigitalIns
 		// Ports
@@ -113,7 +113,11 @@ namespace ETHERCATWRITE
 		
 		// In/Output
 		std::vector< ints > input_D;
+		std::vector< doubles > intermediate_D;
 		std::vector< soem_beckhoff_drivers::DigitalMsg > output_msgs_D;
+
+		// Functions
+		// To do add flip
 
 		//! Component Hooks
 		virtual bool configureHook();

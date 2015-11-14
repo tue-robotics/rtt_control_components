@@ -34,7 +34,9 @@ EtherCATwrite::EtherCATwrite(const string& name) : TaskContext(name, PreOperatio
 		.arg("factor","Doubles specifying with which the input should be multiplied");	
 	addOperation("AddMatrixTransform_A", &EtherCATwrite::AddMatrixTransform_A, this, OwnThread)
 		.doc("This function will add a matrix multiplication on the analog output. Only input is ID. Matrix defaults to I, but should be updated using properties")
-		.arg("ID","ID number of the encoder ins");	
+		.arg("ID","ID number of the encoder ins")	
+		.arg("INPUTSIZE","Size of the input of the matrix transform")
+		.arg("OUTPUTSIZE","Size of the output of the matrix transform");
 }
 EtherCATwrite::~EtherCATwrite(){}
 
@@ -70,24 +72,21 @@ bool EtherCATwrite::startHook(){}
 
 void EtherCATwrite::updateHook()
 {
-	//! 8 seconds after boot, Check all connections
-	if (!goodToGO) {
-		aquisition_time = os::TimeService::Instance()->getNSecs()*1e-9;
-	}
-	if (!goodToGO && (aquisition_time - start_time > 4.0)) {
-		goodToGO = true;
-
-		CheckAllConnections();
-	}
+	// Functions checks the connections, (It does this once after X seconds)
+	CheckAllConnections();
 	
+	// Reads inputs, this extracts data from ethercat slaves
 	ReadInputs();
 	
-	MapInput2Outputs();
+	// Maps the inputs into intermediate output structure (Input reshuffling, allows for example mapping X inputs on Y outputs)
+	MapInputs2Outputs();		
 	
-	Calculate_A();
+	// Functions to do all the calculations on the incoming data, for example converting enc counts to si values, or multiplying inputs with factor X
+	Calculate_A();			
 	Calculate_D();
 	
-	WriteOutputs();
+	// Function to write the output calculated onto the output port
+    WriteOutputs();
 
 	return;
 }
@@ -195,14 +194,15 @@ void EtherCATwrite::AddAnalogOuts(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIM
         input_A[i].resize( inport_dimensions_A[i] );
 	}
 
+    intermediate_A.resize(n_outports_A);
     output_msgs_A.resize(n_outports_A);
     for( uint i = 0; i < n_outports_A; i++ ) {
+        intermediate_A[i].resize( outport_dimensions_A[i] );
         output_msgs_A[i].values.resize( outport_dimensions_A[i] );
     }
     
-    log(Info) << "EtherCATwrite (" << PARTNAME << ")::AddAnalogOuts: Succesfully added AnalogIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports!" << endlog();
-    log(Info) << "EtherCATwrite (" << PARTNAME << ")::AddAnalogOuts: Total inports are now " << n_inports_A << " inports and " << n_outports_A << " outports!" << endlog();
-
+    log(Info) << "EtherCATwrite (" << PARTNAME << ")::AddAnalogOuts: Added AnalogIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports!" << endlog();
+    
 	return;
 }
 
@@ -311,11 +311,11 @@ void EtherCATwrite::AddDigitalOuts(doubles INPORT_DIMENSIONS, doubles OUTPORT_DI
 
     output_msgs_D.resize(n_outports_D);
     for( uint i = 0; i < n_outports_D; i++ ) {
-        output_msgs_D[i].values.resize( outport_dimensions_D[i] );
+        intermediate_D[i].resize(outport_dimensions_D[i]);
+        output_msgs_D[i].values.resize(outport_dimensions_D[i]);
     }
     
     log(Info) << "EtherCATwrite (" << PARTNAME << ")::AddDigitalOuts: Succesfully added DigitalIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports!" << endlog();
-    log(Info) << "EtherCATwrite (" << PARTNAME << ")::AddDigitalOuts: Total inports are now " << n_inports_D << " inports and " << n_outports_D << " outports!" << endlog();
 
 	return;
 }
@@ -388,19 +388,36 @@ void EtherCATwrite::AddMultiply_A(int ID, doubles FACTOR)
 	
 }
 
-void EtherCATwrite::AddMatrixTransform_A(int ID)
+void EtherCATwrite::AddMatrixTransform_A(int ID, double INPUTSIZE, double OUTPUTSIZE)
 {
 	// Check
-	if( ID <= 0 || ID > n_outports_A) {
-		log(Error) << "EtherCATwrite::AddMatrixMultiplication_A: Could not add matrix transform. Invalid ID: " << ID << ".  1 <= ID <= " << n_outports_A << "!" << endlog();
+	if( matrixtransform_status_A[ID-1] ) {
+		log(Warning) << "EtherCATwrite::AddMatrixTransform_A: Could not add Matrix Transform, since this already excists for this bodypart. Overwriting is not supported at the moment" << endlog();
 		return;
 	}
-		
-	// Resize input structs
-	input_MT_A.resize(n_outports_A);
-    for( uint i = 0; i < n_outports_A; i++ ) {
-        input_MT_A[i].values.resize( outport_dimensions_A[i] );
-    }
+	if( ID <= 0 || ID > n_outports_A) {
+		log(Error) << "EtherCATwrite::AddMatrixTransform_A: Could not add matrix transform. Invalid ID: " << ID << ".  1 <= ID <= " << n_outports_A << "!" << endlog();
+		return;
+	}
+	if( INPUTSIZE != inport_dimensions_A[ID-1]) { 
+		if( INPUTSIZE < inport_dimensions_A[ID-1]) { 	// smaller matrix then nr of inputs is allowed, not recommended
+			log(Warning) << "EtherCATwrite::AddMatrixTransform_A: INPUTSIZE: " << INPUTSIZE << " is smaller than the size of the inport inport_dimensions_A[ID-1]:" << inport_dimensions_A[ID-1] << "!" << endlog();
+		} else { 										// larger matrix then nr of inputs is not allowed
+			log(Error) << "EtherCATwrite::AddMatrixTransform_A: Could not add matrix transform. INPUTSIZE: " << INPUTSIZE << " is larger than the size of the inport inport_dimensions_A[ID-1]:" << inport_dimensions_A[ID-1] << "!" << endlog();
+			return;
+		}
+	}
+	if( OUTPUTSIZE != outport_dimensions_A[ID-1]) {
+		if( OUTPUTSIZE < outport_dimensions_A[ID-1]) { 	// smaller matrix then nr of inputs is allowed, not recommended
+			log(Warning) << "EtherCATwrite::AddMatrixTransform_A: INPUTSIZE: " << OUTPUTSIZE << " is smaller than the size of the outport outport_dimensions_A[ID-1]:" << outport_dimensions_A[ID-1] << "!" << endlog();
+		} else { 										// larger matrix then nr of inputs is not allowed
+			log(Error) << "EtherCATwrite::AddMatrixTransform_A: Could not add matrix transform. INPUTSIZE: " << OUTPUTSIZE << " is larger than the size of the outport outport_dimensions_A[ID-1]:" << inport_dimensions_A[ID-1] << "!" << endlog();
+			return;
+		}
+	}
+	
+	// Update outport_dimensions_E
+	outport_dimensions_A[ID-1] = OUTPUTSIZE;
 		
 	// Add property to store Matrix
 	matrixtransform_A[ID-1].resize(outport_dimensions_A[ID-1]);
@@ -425,67 +442,92 @@ void EtherCATwrite::AddMatrixTransform_A(int ID)
 	
 	// Set status
 	matrixtransform_status_A[ID-1] = true;
+	
 }
 
 void EtherCATwrite::CheckAllConnections()
 {
-	// AnalogIns
-	for(uint i = 0; i < n_inports_A; i++) {
-		if ( !inports_A[i].connected() ) {
-			log(Error) << "EtherCATwrite: Analog inport " << inports_A[i].getName() << " is not connected." << endlog();
-		}
+	//! 8 seconds after boot, Check all connections
+	if (!goodToGO) {
+		aquisition_time = os::TimeService::Instance()->getNSecs()*1e-9;
 	}
-	for(uint i = 0; i < n_outports_A; i++) {
-		if ( !outports_A[i].connected() ) {
-			log(Info) << "EtherCATwrite: Analog outport " << outports_A[i].getName() << " is not connected." << endlog();
+	if (!goodToGO && (aquisition_time - start_time > 8.0)) {
+		goodToGO = true;
+	
+		// AnalogIns
+		for(uint i = 0; i < n_inports_A; i++) {
+			if ( !inports_A[i].connected() ) {
+				log(Error) << "EtherCATwrite: Analog inport " << inports_A[i].getName() << " is not connected." << endlog();
+			}
+		}
+		for(uint i = 0; i < n_outports_A; i++) {
+			if ( !outports_A[i].connected() ) {
+				log(Info) << "EtherCATwrite: Analog outport " << outports_A[i].getName() << " is not connected." << endlog();
+			}
+		}
+
+		// DigitalIns
+		for(uint i = 0; i < n_inports_D; i++) {
+			if ( !inports_D[i].connected() ) {
+				log(Error) << "EtherCATwrite: Digital inport " << inports_D[i].getName() << " is not connected." << endlog();
+			}
+		}
+		for(uint i = 0; i < n_outports_D; i++) {
+			if ( !outports_D[i].connected() ) {
+				log(Info) << "EtherCATwrite: Digital outport " << outports_D[i].getName() << " is not connected." << endlog();
+			}
 		}
 	}
 	
-	// DigitalIns
-	for(uint i = 0; i < n_inports_D; i++) {
-		if ( !inports_D[i].connected() ) {
-			log(Error) << "EtherCATwrite: Digital inport " << inports_D[i].getName() << " is not connected." << endlog();
-		}
-	}
-	for(uint i = 0; i < n_outports_D; i++) {
-		if ( !outports_D[i].connected() ) {
-			log(Info) << "EtherCATwrite: Digital outport " << outports_D[i].getName() << " is not connected." << endlog();
-		}
-	}
 }
 
 void EtherCATwrite::Calculate_A()
-{
+{	
 	// Addition
     for( uint i = 0; i < n_outports_A; i++ ) {
 		if (addition_status_A[i]) {
 			for( uint k = 0; k < output_msgs_A[i].values.size(); ++k) {
-				output_msgs_A[i].values[k] = output_msgs_A[i].values[k]+addition_values_A[i][k];
+				intermediate_A[i][k] += addition_values_A[i][k];
 			}
 		}
     }
-    
+	
 	// Multiplier
     for( uint i = 0; i < n_outports_A; i++ ) {
 		if (multiply_status_A[i]) {
 			for( uint k = 0; k < output_msgs_A[i].values.size(); ++k) {
-				output_msgs_A[i].values[k] = output_msgs_A[i].values[k]*multiply_factor_A[i][k];
+				intermediate_A[i][k] = intermediate_A[i][k]*multiply_factor_A[i][k];
 			}
 		}
     }
     
-	// Matrix Transform
+	// Matrix Transform	
     for( uint i = 0; i < n_outports_A; i++ ) {
 		if (matrixtransform_status_A[i]) {
-									
-			input_MT_A = output_msgs_A;
+						
+			// Store output of MapInputs2Outputs operation into a temporary input vector
+			doubles input_MT_A = intermediate_A[i];
+			
+			// Resize output vectors in case of a non square Matrix transformation
+			output_msgs_A[i].values.resize(outport_dimensions_A[i]);
 						
 			for ( uint k = 0; k < output_msgs_A[i].values.size(); k++ ) {
-				output_msgs_A[i].values  [k] = 0.0;
+				intermediate_A[i][k] = 0.0;
+				output_msgs_A[i].values[k] = 0.0;
 				
-				for ( uint l = 0; l < output_msgs_A[i].values.size(); l++ ) {
-					output_msgs_A[i].values[k] += matrixtransform_A[i][k][l] * input_MT_A[i].values[l];
+				for ( uint l = 0; l < input_MT_A.size(); l++ ) {
+					output_msgs_A[i].values[k] += matrixtransform_A[i][k][l] * input_MT_A[l];
+					//log(Warning) << "EtherCATwrite: -> [" << output_msgs_A[i].values[k] << " = " << matrixtransform_A[i][k][l] << "*" << input_MT_A[l] << "]" << endlog();
 				}
+			}
+		}
+	}
+		
+	// Convert to msg (only for outputs that do not have a matrix transform operation)
+	for( uint i = 0; i < n_outports_A; i++ ) {								
+		if (!matrixtransform_status_A[i]) {
+			for ( uint k = 0; k < output_msgs_A[i].values.size(); k++ ) {
+				output_msgs_A[i].values[k] = intermediate_A[i][k]; 
 			}
 		}
 	}
@@ -494,6 +536,12 @@ void EtherCATwrite::Calculate_A()
 
 void EtherCATwrite::Calculate_D()
 {
+	// Convert to msg
+	for( uint i = 0; i < n_outports_D; i++ ) {								
+		for ( uint k = 0; k < output_msgs_D[i].values.size(); k++ ) {
+			output_msgs_D[i].values[k] = intermediate_D[i][k]; 
+		}
+	}
 	
 }
 
@@ -508,7 +556,7 @@ void EtherCATwrite::ReadInputs()
 }
 
 void EtherCATwrite::WriteOutputs()
-{
+{	
     for( uint i = 0; i < n_outports_A; i++ ) {
 		outports_A[i].write(output_msgs_A[i]);
     }
@@ -517,22 +565,22 @@ void EtherCATwrite::WriteOutputs()
     }
 }
 
-void EtherCATwrite::MapInput2Outputs()
+void EtherCATwrite::MapInputs2Outputs()
 {
-	// Do mapping of input entries on into output and write to port
+	// Do mapping of input entries on into output
     uint j = 0;
     for( uint i = 0; i < n_outports_A; i++ ) {
         for( uint k = 0; k < outport_dimensions_A[i]; ++k) {
-            output_msgs_A[i].values[k] = input_A[ from_which_inport_A[j]-1 ][ from_which_entry_A[j]-1 ];
+            intermediate_A[i][k] = input_A[ from_which_inport_A[j]-1 ][ from_which_entry_A[j]-1 ];
             j++;
         }
     }
 
-	// Do mapping of input entries on into output and write to port
+	// Do mapping of input entries on into output
     j = 0;
     for( uint i = 0; i < n_outports_D; i++ ) {
         for( uint k = 0; k < outport_dimensions_D[i]; ++k) {
-            output_msgs_D[i].values[k] = input_D[ from_which_inport_D[j]-1 ][ from_which_entry_D[j]-1 ];
+            intermediate_D[i][k] = input_D[ from_which_inport_D[j]-1 ][ from_which_entry_D[j]-1 ];
             j++;
         }
     }

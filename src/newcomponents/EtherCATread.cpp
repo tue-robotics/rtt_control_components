@@ -110,7 +110,7 @@ void EtherCATread::updateHook()
 	ReadInputs();
 	
 	// Maps the inputs into intermediate output structure (Input reshuffling, allows for example mapping X inputs on Y outputs)
-	MapInput2Outputs();		
+	MapInputs2Outputs();		
 	
 	// Functions to do all the calculations on the incoming data, for example converting enc counts to si values, or multiplying inputs with factor X
 	Calculate_A();			
@@ -224,14 +224,14 @@ void EtherCATread::AddAnalogIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMEN
         input_msgs_A[i].values.resize( inport_dimensions_A[i] );
 	}
 
-    output_A.resize(n_outports_A);
     intermediate_A.resize(n_outports_A);
+    output_A.resize(n_outports_A);
     for( uint i = 0; i < n_outports_A; i++ ) {
-        output_A[i].resize( outport_dimensions_A[i] );
-        intermediate_A[i].resize( outport_dimensions_A[i] );
+        intermediate_A[i].resize( outport_dimensions_A[i]);
+        output_A[i].resize(outport_dimensions_A[i]);
     }
     
-    log(Warning) << "EtherCATread (" << PARTNAME << ")::AddAnalogIns: Added AnalogIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports." << endlog();
+    log(Info) << "EtherCATread (" << PARTNAME << ")::AddAnalogIns: Added AnalogIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports." << endlog();
 
 	return;
 }
@@ -334,14 +334,14 @@ void EtherCATread::AddDigitalIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIME
     //! Resizing in- and outport messages
     input_msgs_D.resize(n_inports_D);
     for( uint i = 0; i < n_inports_D; i++ ) {
-        input_msgs_D[i].values.resize( inport_dimensions_D[i] );
+        input_msgs_D[i].values.resize( inport_dimensions_D[i]);
 	}
 
-    output_D.resize(n_outports_D);
     intermediate_D.resize(n_outports_D);
+    output_D.resize(n_outports_D);
     for( uint i = 0; i < n_outports_D; i++ ) {
-        output_D[i].resize( outport_dimensions_D[i] );
-        intermediate_D[i].resize( outport_dimensions_D[i] );
+        intermediate_D[i].resize( outport_dimensions_D[i]);
+        output_D[i].resize(outport_dimensions_D[i]);
     }
     
     log(Warning) << "EtherCATread (" << PARTNAME << ")::AddDigitalIns: Added DigitalIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports." << endlog();
@@ -442,7 +442,6 @@ void EtherCATread::AddEncoderIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIME
 		inport_dimensions_E.push_back((int) INPORT_DIMENSIONS[i]);
 	}
 	for( uint i = 0; i < N_OUTPORTS; i++ ) {
-		intermediate_dimensions_E.push_back((int) OUTPORT_DIMENSIONS[i]); // if a non square matrix transform is added the intermediate dimensions will remain while the outport_dimensions are updated
 		outport_dimensions_E.push_back((int) OUTPORT_DIMENSIONS[i]);
 	}
 	for( uint j = 0; j < N_OUTPORT_ENTRIES; j++ ) {
@@ -454,13 +453,13 @@ void EtherCATread::AddEncoderIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIME
 	
     //! Resizing in- and outport messages
     input_msgs_E.resize(n_inports_E);
-
-    output_E.resize(n_outports_E);
+    
     intermediate_E.resize(n_outports_E);
+    output_E.resize(n_outports_E);
     output_E_vel.resize(n_outports_E);
     for( uint i = 0; i < n_outports_E; i++ ) {
-        output_E[i].resize( outport_dimensions_E[i] );
         intermediate_E[i].resize( outport_dimensions_E[i] );
+        output_E[i].resize( outport_dimensions_E[i] );
         output_E_vel[i].resize( outport_dimensions_E[i] );
     }
     
@@ -618,7 +617,7 @@ void EtherCATread::AddEnc2Si_E(int ID, doubles ENCODERBITS, doubles ENC2SI)
 	
 	// Almost done, first convert to si for the first time
 	ReadInputs();
-	MapInput2Outputs();
+	MapInputs2Outputs();
 	Calculate_E();
 	
 	// Then reset Encoders
@@ -638,21 +637,17 @@ void EtherCATread::AddMatrixTransform_E(int ID, double INPUTSIZE, double OUTPUTS
 		log(Error) << "EtherCATread::AddMatrixMultiplication_E: Could not add matrix transform. Invalid ID: " << ID << ".  1 <= ID <= " << n_outports_E << "!" << endlog();
 		return;
 	}
-	if( INPUTSIZE != outport_dimensions_E[ID-1]) {
-		log(Error) << "EtherCATread::AddMatrixMultiplication_E: Could not add matrix transform. OUTPUTSIZE: " << OUTPUTSIZE << " != outport_dimensions_E[ID-1]" << outport_dimensions_E[ID-1] << "!" << endlog();
-		return;
+	if( OUTPUTSIZE != outport_dimensions_E[ID-1]) {
+		if( OUTPUTSIZE < outport_dimensions_E[ID-1]) { 	// smaller matrix then nr of inputs is allowed, not recommended
+			log(Warning) << "EtherCATread::AddMatrixTransform_E: INPUTSIZE: " << OUTPUTSIZE << " is smaller than the size of the outport outport_dimensions_E[ID-1]:" << outport_dimensions_E[ID-1] << "!" << endlog();
+		} else { 										// larger matrix then nr of inputs is not allowed
+			log(Error) << "EtherCATread::AddMatrixTransform_E: Could not add matrix transform. INPUTSIZE: " << OUTPUTSIZE << " is larger than the size of the outport outport_dimensions_E[ID-1]:" << inport_dimensions_E[ID-1] << "!" << endlog();
+			return;
+		}
 	}
 	
 	// Update outport_dimensions_E
 	outport_dimensions_E[ID-1] = OUTPUTSIZE;
-		
-	// Resize input structs
-	input_MT_E.resize(n_outports_E);
-    input_MT_E_vel.resize(n_outports_E);
-    for( uint i = 0; i < n_outports_E; i++ ) {
-        input_MT_E[i].resize( outport_dimensions_E[ID-1] );
-        input_MT_E_vel[i].resize( outport_dimensions_E[ID-1]);
-    }
 		
 	// Add property to store Matrix
 	matrixtransform_E[ID-1].resize(outport_dimensions_E[ID-1]);
@@ -724,9 +719,9 @@ void EtherCATread::CheckAllConnections()
 			if ( !outports_E_vel[i].connected() ) {
 				log(Info) << "EtherCATread::CheckAllConnections: Encoder velocity outport " << outports_E_vel[i].getName() << " is not connected!" << endlog();
 			}
-		}
-			
+		}		
 	}
+	
 }
 
 void EtherCATread::ReadInputs()
@@ -758,7 +753,7 @@ void EtherCATread::WriteOutputs()
 	}	
 }
 
-void EtherCATread::MapInput2Outputs()
+void EtherCATread::MapInputs2Outputs()
 {	
 	// Analog
     uint j = 0;
@@ -834,7 +829,7 @@ void EtherCATread::Calculate_D()
 void EtherCATread::Calculate_E()
 {
 	// Output = intermediate
-	output_E = intermediate_E;
+	//output_E = intermediate_E;
 		
 	// Enc2Si
     double dt = determineDt();
@@ -867,17 +862,22 @@ void EtherCATread::Calculate_E()
 	// Matrix Transform
     for( uint i = 0; i < n_outports_E; i++ ) {
 		if (matrixtransform_status_E[i]) {
-									
-			input_MT_E = output_E;
-			input_MT_E_vel = output_E_vel;	
+			
+			// Store output of enc2si operation into a temporary input vector
+			doubles input_MT_E = output_E[i];
+			doubles input_MT_E_vel = output_E_vel[i];
+			
+			// Resize output vectors in case of a non square Matrix transformation
+			output_E[i].resize(outport_dimensions_E[i]);
+			output_E_vel[i].resize(outport_dimensions_E[i]);
 						
 			for ( uint k = 0; k < output_E[i].size(); k++ ) {
 				output_E[i][k] = 0.0;
 				output_E_vel[i][k] = 0.0;
 				
-				for ( uint l = 0; l < output_E[i].size(); l++ ) {
-					output_E[i][k] += matrixtransform_E[i][k][l] * input_MT_E[i][l];
-					output_E_vel[i][k] += matrixtransform_E[i][k][l] * input_MT_E_vel[i][l];
+				for ( uint l = 0; l < input_MT_E.size(); l++ ) {
+					output_E[i][k] += matrixtransform_E[i][k][l] * input_MT_E[l];
+					output_E_vel[i][k] += matrixtransform_E[i][k][l] * input_MT_E_vel[l];
 				}
 			}
 		}
@@ -896,15 +896,15 @@ double EtherCATread::determineDt()
 void EtherCATread::ResetEncoders(int ID, doubles resetvalues )
 {
 	if (ID > n_outport_entries_E) {
-		log(Error)<<"ReadEncoders::ResetEncoders: Could not reset encoders. Invalid ID provided. Should lie between [0," << n_outport_entries_E <<"]"<<endlog();
+		log(Error)<<"EtherCATread::ResetEncoders: Could not reset encoders. Invalid ID provided. Should lie between [0," << n_outport_entries_E <<"]"<<endlog();
 		return;
 	}
 	if (!enc2si_status_E[ID-1]) {
-		log(Error)<<"ReadEncoders::ResetEncoders: Could not reset encoders. The function AddEnc2Si has not yet been called for bodypart with ID : " << ID <<"."<<endlog();
+		log(Error)<<"EtherCATread::ResetEncoders: Could not reset encoders. The function AddEnc2Si has not yet been called for bodypart with ID : " << ID <<"."<<endlog();
 		return;		
 	}
 	if (resetvalues.size() != encoderbits[ID-1].size()) {
-		log(Error)<<"ReadEncoders::ResetEncoders: Could not reset encoders. Received incorrect sized initialize signal: " << resetvalues.size() << ". Should be of size" << n_inport_entries_E <<"."<<endlog();
+		log(Error)<<"EtherCATread::ResetEncoders: Could not reset encoders. Received incorrect sized initialize signal: " << resetvalues.size() << ". Should be of size" << n_inport_entries_E <<"."<<endlog();
 		return;
 	}
 

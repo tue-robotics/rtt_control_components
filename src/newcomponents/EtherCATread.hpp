@@ -66,7 +66,7 @@ namespace ETHERCATREAD
 		// Functions
 		virtual void ReadInputs();
 		virtual void CheckAllConnections();
-		virtual void MapInput2Outputs();
+		virtual void MapInputs2Outputs();
 		virtual void Calculate_A();
 		virtual void Calculate_D();
 		virtual void Calculate_E();
@@ -95,8 +95,9 @@ namespace ETHERCATREAD
 		
 		// In/Output
 		std::vector< soem_beckhoff_drivers::AnalogMsg > input_msgs_A;
-		std::vector< doubles > output_A;
 		std::vector< doubles > intermediate_A;
+		std::vector< doubles > output_A;
+		
 		
 		// Math
 		bool addition_status_A[MAX_BODYPARTS];
@@ -129,8 +130,8 @@ namespace ETHERCATREAD
 		
 		// In/Output
 		std::vector< soem_beckhoff_drivers::DigitalMsg > input_msgs_D;
-		std::vector< bools > output_D;
 		std::vector< bools > intermediate_D;
+		std::vector< bools > output_D;
 
 		// Math
 		bool flip_status_D[MAX_BODYPARTS];
@@ -138,6 +139,7 @@ namespace ETHERCATREAD
 
 		// Functions
 		virtual void AddFlip_D(int ID, doubles FLIP);
+		
 		
 		//! EncoderIns
 		// Ports
@@ -168,15 +170,13 @@ namespace ETHERCATREAD
 		
 		// In/Output
 		std::vector< soem_beckhoff_drivers::EncoderMsg > input_msgs_E;
-		std::vector< doubles > output_E;
 		std::vector< doubles > intermediate_E;
+		std::vector< doubles > output_E;
 		std::vector< doubles > output_E_vel;
 
 		// Math
 		bool enc2si_status_E[MAX_BODYPARTS];
 		bool matrixtransform_status_E[MAX_BODYPARTS];
-		std::vector< doubles > input_MT_E;
-		std::vector< doubles > input_MT_E_vel;		
 		std::vector< doubles > matrixtransform_E[MAX_BODYPARTS];
 		
 		// Functions
@@ -191,8 +191,6 @@ namespace ETHERCATREAD
 		
 		EtherCATread(const string& name);
 		~EtherCATread();
-		
-		
 		
 		private:
 		
