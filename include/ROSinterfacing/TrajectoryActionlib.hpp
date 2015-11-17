@@ -14,6 +14,7 @@
 #include <actionlib/action_definition.h>
 #include <rtt/Logger.hpp>
 #include <urdf/model.h>
+#include <tue/manipulation/reference_generator.h>
 
 
 #include <amigo_ref_interpolator/interpolator.h>
@@ -53,29 +54,6 @@ namespace ROS
             Feedback feedback_;
             Result result_;
 
-            struct TrajectoryInfo
-            {
-                TrajectoryInfo(const GoalHandle& gh) : goal_handle(gh), t_start(-1), dt(-1)
-                {
-                    for (std::vector<trajectory_msgs::JointTrajectoryPoint>::const_iterator it = gh.getGoal()->trajectory.points.begin(); it != gh.getGoal()->trajectory.points.end(); ++it)
-                        points.push_back(*it);
-                }
-
-                double t_start;
-                double dt;
-                GoalHandle goal_handle;
-                std::deque<trajectory_msgs::JointTrajectoryPoint> points;
-            };
-
-            struct Setpoint
-            {
-                double x;
-                double v;
-                double a;
-            };
-
-            std::vector < TrajectoryInfo > goal_handles_;
-
 			// Convenience typedefs
 			typedef vector<double> doubles;
 			typedef vector<int> ints;
@@ -91,13 +69,9 @@ namespace ROS
 
 			// Properties
             vector<doubles> minpos;
-            vector<doubles> minpos2;
             vector<doubles> maxpos;
-            vector<doubles> maxpos2;
             vector<doubles> maxvel;
-            vector<doubles> maxvel2; //TODO: Remove maxvel and rename maxvel2 to maxvel
             vector<doubles> maxacc;
-            vector<doubles> maxacc2;
 
             // Global variables - scalar
             bool checked;
@@ -115,18 +89,21 @@ namespace ROS
             doubles InterpolEpses;
 
             // Global variables - vector of vectors
+            vector<doubles> actualPos;
             vector<doubles> desiredPos;
             vector<doubles> desiredVel;
             vector<doubles> desiredAcc;
             vector<doubles> pos_out;
             vector<doubles> vel_out;
             vector<doubles> acc_out;
-            vector<doubles> current_position;
-            vector<vector<refgen::RefGenerator > > mRefGenerators;
-            vector<vector<amigo_msgs::ref_point> > mRefPoints;
 
             // Global variables - map
             map<string, BodyJointPair> joint_map;
+
+            tue::manipulation::ReferenceGenerator reference_generator_;
+            GoalHandle goal_handle_;
+            bool has_goal_;
+            double dt;
 
 		public:
 
@@ -142,7 +119,6 @@ namespace ROS
             bool CheckConnectionsAndProperties();
             void goalCallback(GoalHandle gh);
             void cancelCallback(GoalHandle gh);
-            Point Interp_Cubic( Point p0, Point p1, double t_abs);
 
 	};
 }
