@@ -102,7 +102,7 @@ void TrajectoryActionlib::updateHook()
     // If a goal is active
     if (has_goal_)
     {
-        log(Info) << "TrajectoryActionlib: Goal active!" << endlog();
+        //log(Info) << "TrajectoryActionlib: Goal active!" << endlog();
         const std::vector<std::string>& joint_names = reference_generator_.joint_names();
 
         std::vector<double> current_positions(joint_names.size(), 0);
@@ -115,7 +115,7 @@ void TrajectoryActionlib::updateHook()
         }
 
         std::vector<double> references;
-        if (!reference_generator_.calculatePositionReferences(current_positions, dt, references))
+        if (!reference_generator_.calculatePositionReferences(dt, references))
             return;
 
         for(unsigned int i = 0 ; i < joint_names.size(); ++i) {
@@ -127,10 +127,12 @@ void TrajectoryActionlib::updateHook()
             actualPos[body_part_id] [joint_id] = desiredPos[body_part_id][joint_id];
         }
 
-        if (reference_generator_.is_idle())
+        std::string goalstring = "goalstring";
+        if (!reference_generator_.isActiveGoal(goalstring))
         {
             goal_handle_.setSucceeded();
             has_goal_ = false;
+            log(Info) << "TrajectoryActionlib: has_goal_ = false" << endlog();
         }
 
         for ( uint j = 0; j < activeBodyparts.size(); j++ ) {
@@ -148,7 +150,8 @@ void TrajectoryActionlib::updateHook()
 void TrajectoryActionlib::goalCallback(GoalHandle gh) {
     log(Info) << "TrajectoryActionlib: Received Message" << endlog();
     std::stringstream error;
-    if (!reference_generator_.setGoal(*gh.getGoal(), error))
+    std::string goalstring = "goalstring";
+    if (!reference_generator_.setGoal(*gh.getGoal(), goalstring, error))
     {
         gh.setRejected();
         ROS_ERROR("%s", error.str().c_str());
@@ -159,6 +162,7 @@ void TrajectoryActionlib::goalCallback(GoalHandle gh) {
     gh.setAccepted();
     goal_handle_ = gh;
     has_goal_ = true;
+    log(Info) << "TrajectoryActionlib: has_goal_ = true" << endlog();
     /*// Accept/reject goal requests here
 
     log(Info) << "TrajectoryActionlib: Received Message" << endlog();
@@ -342,8 +346,10 @@ void TrajectoryActionlib::SendToPos(int partNr, doubles pos)
     }
 
     std::stringstream error;
-    reference_generator_.setGoal(initial_goal, error);
+    std::string goalstring = "goalstring";
+    reference_generator_.setGoal(initial_goal, goalstring, error);
     has_goal_ = true;
+    log(Info) << "TrajectoryActionlib::SendToPos: has_goal_ = true" << endlog();
     log(Info) << "Lets go!" << endlog();
 }
 
