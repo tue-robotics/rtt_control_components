@@ -127,8 +127,7 @@ void TrajectoryActionlib::updateHook()
             actualPos[body_part_id] [joint_id] = desiredPos[body_part_id][joint_id];
         }
 
-        std::string goalstring = "goalstring";
-        if (!reference_generator_.isActiveGoal(goalstring))
+        if (!reference_generator_.isActiveGoal(goal_id_))
         {
             goal_handle_.setSucceeded();
             has_goal_ = false;
@@ -149,9 +148,10 @@ void TrajectoryActionlib::updateHook()
 // Called by rtt_action_server_ when a new goal is received
 void TrajectoryActionlib::goalCallback(GoalHandle gh) {
     log(Info) << "TrajectoryActionlib: Received Message" << endlog();
+
     std::stringstream error;
-    std::string goalstring = "goalstring";
-    if (!reference_generator_.setGoal(*gh.getGoal(), goalstring, error))
+    std::string goalid = gh.getGoalID().id;
+    if (!reference_generator_.setGoal(*gh.getGoal(), goalid, error))
     {
         gh.setRejected();
         ROS_ERROR("%s", error.str().c_str());
@@ -161,6 +161,7 @@ void TrajectoryActionlib::goalCallback(GoalHandle gh) {
     // Accept the goal
     gh.setAccepted();
     goal_handle_ = gh;
+    goal_id_ = goalid;
     has_goal_ = true;
     log(Info) << "TrajectoryActionlib: has_goal_ = true" << endlog();
     /*// Accept/reject goal requests here
@@ -306,12 +307,12 @@ void TrajectoryActionlib::AddBodyPart(int partNr, strings JointNames)
         log(Info) << "TrajectoryActionlib: Bodypart " << partNr << ", Joint " << JointNames[i] << " has these limits: "<< endlog();
         log(Info) << "minpos="<<minpos[partNr-1][i]<<" maxpos="<<maxpos[partNr-1][i]<<" maxvel="<<maxvel[partNr-1][i]<<" maxacc="<<maxacc[partNr-1][i]<<endlog();
 
-        reference_generator_.initJoint(JointNames[i], maxvel[partNr-1][i], maxacc[partNr-1][i], 0, 0);
-        reference_generator_.setPositionLimits(i, minpos[partNr-1][i], maxpos[partNr-1][i]);
+        reference_generator_.initJoint(JointNames[i], Joint->limits->velocity, Joint->limits->effort, Joint->limits->lower, Joint->limits->upper);
+        //reference_generator_.setPositionLimits(i, minpos[partNr-1][i], maxpos[partNr-1][i]);
     }
 }
 
-void TrajectoryActionlib::SendToPos(int partNr, doubles pos)
+void TrajectoryActionlib::SendToPos(int partNr, strings jointnames, doubles pos)
 {
 	if (pos.size() != vector_sizes[partNr-1]) {
 		log(Warning) << "TrajectoryActionlib: Invalid size of pos/vector_sizes[partNr-1]" << endlog();
@@ -321,7 +322,7 @@ void TrajectoryActionlib::SendToPos(int partNr, doubles pos)
 	}	
     log(Warning)<< "TrajectoryActionlib: Received SendToPos goal: " << endlog();
 		
-	for ( uint joint_id = 0; joint_id < pos.size(); joint_id++ ){
+    /*for ( uint joint_id = 0; joint_id < pos.size(); joint_id++ ){
 		desiredPos [partNr-1] [joint_id] = min( pos[joint_id]            		, maxpos     [partNr-1][joint_id]);
 		desiredPos [partNr-1] [joint_id] = max( minpos [partNr-1] [joint_id]    , desiredPos [partNr-1][joint_id]);
 		desiredVel [partNr-1] [joint_id] = maxvel [partNr-1] [joint_id];
@@ -347,9 +348,19 @@ void TrajectoryActionlib::SendToPos(int partNr, doubles pos)
 
     std::stringstream error;
     std::string goalstring = "goalstring";
-    reference_generator_.setGoal(initial_goal, goalstring, error);
+    reference_generator_.setGoal(initial_goal, goalstring, error);*/
+    tue::manipulation::JointGoalInfo goal_info;
+    //goal_info.id = "Homing";
+    bool result = reference_generator_.setGoal(jointnames, pos, goal_info);
+    goal_id_ = goal_info.id;
+
+//    if (!result)
+    {
+        log(Error) << goal_info.error() << endlog();
+    }
+
     has_goal_ = true;
-    log(Info) << "TrajectoryActionlib::SendToPos: has_goal_ = true" << endlog();
+    log(Info) << "TrajectoryActionlib::SendToPos: result = " << result << endlog();
     log(Info) << "Lets go!" << endlog();
 }
 

@@ -102,6 +102,7 @@ namespace ROS
 
             tue::manipulation::ReferenceGenerator reference_generator_;
             GoalHandle goal_handle_;
+            std::string goal_id_;
             bool has_goal_;
             double dt;
 
@@ -114,7 +115,7 @@ namespace ROS
 			bool startHook();
 			void updateHook();
             void AddBodyPart(int partNr, strings JointNames);
-            void SendToPos(int partNr, doubles pos);
+            void SendToPos(int partNr, strings jointnames, doubles pos);
             void ResetReferences(int partNr);
             bool CheckConnectionsAndProperties();
             void goalCallback(GoalHandle gh);

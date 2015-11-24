@@ -403,7 +403,7 @@ void Homing::updateHook()
 			TrajectoryActionlib_allowedBodyparts.set(allowedBodyparts);
             
             StartBodyPart(bodypart);
-            SendToPos(partNr, homing_endpos);
+            SendToPos(partNr, jointnames, homing_endpos);
 
 			// Finised :)
 			string printstring = "[";

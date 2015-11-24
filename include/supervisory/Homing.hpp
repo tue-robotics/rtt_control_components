@@ -123,7 +123,7 @@ namespace SUPERVISORY
         OperationCaller<bool(string)>               StopBodyPart;
         OperationCaller<void(doubles)>              ResetEncoders;
         OperationCaller<void(int)>                  ResetReferences;
-        OperationCaller<void(int,doubles)>          SendToPos;
+        OperationCaller<void(int,strings,doubles)>  SendToPos;
 
         public:
 
