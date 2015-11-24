@@ -37,6 +37,7 @@ namespace SUPERVISORY
     typedef vector<double> doubles;
     typedef vector<int> ints;
     typedef vector<bool> bools;
+    typedef vector<string> strings;
 
     class Homing
     : public RTT::TaskContext
@@ -58,8 +59,9 @@ namespace SUPERVISORY
         uint N_outports;
         uint partNr;
 
-        string bodypart;
         string prefix;
+        string bodypart;
+        strings jointnames;
 
         ints outport_sizes;
         ints homing_type;
@@ -117,11 +119,11 @@ namespace SUPERVISORY
         Attribute<bools> TrajectoryActionlib_allowedBodyparts;
 
         // Operations in Component Peers that homing component can call
-        OperationCaller<bool(string)> 		StartBodyPart;
-        OperationCaller<bool(string)> 		StopBodyPart;
-        OperationCaller<void(doubles)> 		ResetEncoders;
-        OperationCaller<void(int)> 			ResetReferences;
-        OperationCaller<void(int,doubles)> 	SendToPos;
+        OperationCaller<bool(string)>               StartBodyPart;
+        OperationCaller<bool(string)>               StopBodyPart;
+        OperationCaller<void(doubles)>              ResetEncoders;
+        OperationCaller<void(int)>                  ResetReferences;
+        OperationCaller<void(int,doubles)>          SendToPos;
 
         public:
 

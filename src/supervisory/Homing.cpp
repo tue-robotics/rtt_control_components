@@ -28,6 +28,7 @@ Homing::Homing(const string& name) : TaskContext(name, PreOperational)
     addProperty( "bodypart",        	bodypart        ).doc("Name of the bodypart, (fill in BODYPARTNAME)");
     addProperty( "prefix",          	prefix          ).doc("Prefix of components (for example: SPINDLE or RPERA)");
     addProperty( "partNr",          	partNr          ).doc("PartNr");
+    addProperty( "jointnames",          jointnames      ).doc("Joint names");
 
     addProperty( "homing_type",     	homing_type     ).doc("Type of homing choose from: ['homeswitch','servoerror', 'absolutesensor', 'forcesensor']");    
     addProperty( "require_homing",  	require_homing  ).doc("Vector of boolean values to specify which joints should be homed");
@@ -92,6 +93,10 @@ bool Homing::configureHook()
     }
     if (partNr <= 0 || partNr > 6 ) {
         log(Error) << prefix <<"_Homing: Could not configure component: Invalid partNr: " << partNr << "!"<<endlog();
+        return false;
+    }
+    if (jointnames.size() <= 0 ) {
+        log(Error) << prefix <<"_Homing: Could not configure component: Invalid number of jointnames: " << jointnames.size() << "!"<<endlog();
         return false;
     }
     if (InterpolDt <= 0.0 || InterpolEps <= 0.0 ) {
@@ -398,8 +403,8 @@ void Homing::updateHook()
 			TrajectoryActionlib_allowedBodyparts.set(allowedBodyparts);
             
             StartBodyPart(bodypart);
-			SendToPos(partNr,homing_endpos);
-			
+            SendToPos(partNr, homing_endpos);
+
 			// Finised :)
 			string printstring = "[";
             for (uint j = 0; j<N; j++) {
