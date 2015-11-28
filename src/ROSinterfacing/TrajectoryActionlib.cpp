@@ -123,8 +123,27 @@ void TrajectoryActionlib::updateHook()
             BodyJointPair bjp = it->second;
             int body_part_id = bjp.first;
             int joint_id = bjp.second;
-            desiredPos[body_part_id][joint_id] = references[i];
+            
+            // Joint positions
+			if (references[i] == references[i]) // Check for NaN
+			{
+				desiredPos[body_part_id][joint_id] = references[i];
+			}
             actualPos[body_part_id] [joint_id] = desiredPos[body_part_id][joint_id];
+            
+            // Joint velocities
+            double vel = reference_generator_.joint_state(i).velocity();
+            if (vel == vel) // Check for NaN
+            {
+				vel_out[body_part_id][joint_id] = vel;
+			}
+            
+            // Joint accelerations
+            double acc = reference_generator_.joint_state(i).acceleration();
+            if (acc == acc) // Check for NaN
+            {
+				acc_out[body_part_id][joint_id] = acc;
+			}
         }
 
         if (!reference_generator_.isActiveGoal(goal_id_))
@@ -137,9 +156,13 @@ void TrajectoryActionlib::updateHook()
         for ( uint j = 0; j < activeBodyparts.size(); j++ ) {
             uint partNr = activeBodyparts[j];
             if (allowedBodyparts[partNr-1] == true) {
+				if (partNr == 2)
+				{
+					log(Info) << "TAL: torso ref: " << desiredPos[partNr-1][0] << ", vel: " << vel_out[partNr-1][0] << ", acc: " << acc_out[partNr-1][0] << endlog();
+				}
                 posoutport[partNr-1].write( desiredPos[partNr-1] );
-                //veloutport[partNr-1].write( vel_out[partNr-1] );
-                //accoutport[partNr-1].write( acc_out[partNr-1] );
+                veloutport[partNr-1].write( vel_out[partNr-1] );
+                accoutport[partNr-1].write( acc_out[partNr-1] );
             }
         }
     }
