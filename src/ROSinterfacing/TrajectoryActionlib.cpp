@@ -64,7 +64,6 @@ bool TrajectoryActionlib::configureHook()
     vector_sizes.assign(maxN,0);
     InterpolDts.assign(maxN,0.0);
     InterpolEpses.assign(maxN,0.0);
-    has_goal_ = false;
 
     return true;
 }
@@ -100,7 +99,7 @@ void TrajectoryActionlib::updateHook()
     }
     
     // If a goal is active
-    if (has_goal_)
+    if (reference_generator_.hasActiveGoals())
     {
         //log(Info) << "TrajectoryActionlib: Goal active!" << endlog();
         const std::vector<std::string>& joint_names = reference_generator_.joint_names();
@@ -115,8 +114,7 @@ void TrajectoryActionlib::updateHook()
         }
 
         std::vector<double> references;
-        if (!reference_generator_.calculatePositionReferences(dt, references))
-            return;
+        reference_generator_.calculatePositionReferences(dt, references);
 
         for(unsigned int i = 0 ; i < joint_names.size(); ++i) {
             map<string, BodyJointPair>::const_iterator it = joint_map.find(joint_names[i]);
@@ -145,21 +143,36 @@ void TrajectoryActionlib::updateHook()
 				acc_out[body_part_id][joint_id] = acc;
 			}
         }
+        
+        // Check for each goal if it succeeded or canceled, and notify the goal handle accordingly
+		for(std::map<std::string, GoalHandle>::iterator it = goal_handles_.begin(); it != goal_handles_.end();)
+		{
+			GoalHandle& gh = it->second;
+			tue::manipulation::JointGoalStatus status = reference_generator_.getGoalStatus(gh.getGoalID().id);
 
-        if (!reference_generator_.isActiveGoal(goal_id_))
-        {
-            goal_handle_.setSucceeded();
-            has_goal_ = false;
-            log(Info) << "TrajectoryActionlib: has_goal_ = false" << endlog();
-        }
+			if (status == tue::manipulation::JOINT_GOAL_SUCCEEDED)
+			{
+				gh.setSucceeded();
+				goal_handles_.erase(it++);
+			}
+			else if (status == tue::manipulation::JOINT_GOAL_CANCELED)
+			{
+				gh.setCanceled();
+				goal_handles_.erase(it++);
+			}
+			else
+			{
+				++it;
+			}
+		}
 
         for ( uint j = 0; j < activeBodyparts.size(); j++ ) {
             uint partNr = activeBodyparts[j];
             if (allowedBodyparts[partNr-1] == true) {
-				if (partNr == 2)
-				{
-					log(Info) << "TAL: torso ref: " << desiredPos[partNr-1][0] << ", vel: " << vel_out[partNr-1][0] << ", acc: " << acc_out[partNr-1][0] << endlog();
-				}
+				// if (partNr == 2)
+				// {
+				// 	log(Info) << "TAL: torso ref: " << desiredPos[partNr-1][0] << ", vel: " << vel_out[partNr-1][0] << ", acc: " << acc_out[partNr-1][0] << endlog();
+				// }
                 posoutport[partNr-1].write( desiredPos[partNr-1] );
                 veloutport[partNr-1].write( vel_out[partNr-1] );
                 accoutport[partNr-1].write( acc_out[partNr-1] );
@@ -183,10 +196,8 @@ void TrajectoryActionlib::goalCallback(GoalHandle gh) {
 
     // Accept the goal
     gh.setAccepted();
-    goal_handle_ = gh;
-    goal_id_ = goalid;
-    has_goal_ = true;
-    log(Info) << "TrajectoryActionlib: has_goal_ = true" << endlog();
+    goal_handles_[goalid] = gh;    
+    
     /*// Accept/reject goal requests here
 
     log(Info) << "TrajectoryActionlib: Received Message" << endlog();
@@ -256,11 +267,10 @@ void TrajectoryActionlib::goalCallback(GoalHandle gh) {
 // Called by rtt_action_server_ when a goal is cancelled / preempted
 void TrajectoryActionlib::cancelCallback(GoalHandle gh)
 {
-    if (!has_goal_)
-        return;
-
-    gh.setCanceled();
-    has_goal_ = false;
+	gh.setCanceled();
+    reference_generator_.cancelGoal(gh.getGoalID().id);
+    goal_handles_.erase(gh.getGoalID().id);
+	
     /*log(Info) << "TrajectoryActionlib: Cancelling this goal!" << endlog();
     // Find the goalhandle in the goal_handles_ vector
     for(std::vector<TrajectoryInfo>::iterator it = goal_handles_.begin(); it != goal_handles_.end(); ++it)
@@ -375,14 +385,12 @@ void TrajectoryActionlib::SendToPos(int partNr, strings jointnames, doubles pos)
     tue::manipulation::JointGoalInfo goal_info;
     //goal_info.id = "Homing";
     bool result = reference_generator_.setGoal(jointnames, pos, goal_info);
-    goal_id_ = goal_info.id;
 
 //    if (!result)
     {
         log(Error) << goal_info.error() << endlog();
     }
 
-    has_goal_ = true;
     log(Info) << "TrajectoryActionlib::SendToPos: result = " << result << endlog();
     log(Info) << "Lets go!" << endlog();
 }

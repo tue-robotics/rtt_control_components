@@ -101,9 +101,12 @@ namespace ROS
             map<string, BodyJointPair> joint_map;
 
             tue::manipulation::ReferenceGenerator reference_generator_;
-            GoalHandle goal_handle_;
-            std::string goal_id_;
-            bool has_goal_;
+            // GoalHandle goal_handle_;
+            // std::string goal_id_;
+            // bool has_goal_;
+            
+            std::map<std::string, GoalHandle> goal_handles_;
+            
             double dt;
 
 		public:
