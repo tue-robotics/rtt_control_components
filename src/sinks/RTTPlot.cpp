@@ -12,19 +12,43 @@
 #include <rtt/Port.hpp>
 #include <rtt/Component.hpp>
 
+#include <QApplication>
+#include <QWidget>
+//#include <QInputDialog>
+//#include <QMessageBox>
+//#include <QPushButton>
+//#include <QDialogButtonBox>
+
 #include "sinks/RTTPlot.hpp"
 
-using namespace std;
 using namespace RTT;
 using namespace SINKS;
 
-RTTPlot::RTTPlot(const string& name) :
+RTTPlot::RTTPlot(const std::string& name) :
 	TaskContext(name, PreOperational)
 {
+    int argc = 0;
+    char** argv;
+    q_app_ = new QApplication(argc, argv);
 
+    QWidget bla;
+    bla.show();
+
+    q_thread_ = new boost::thread(q_app_->exec);
+//    q_app_->exec();
+
+//    QApplication app(argc, argv);
+//    QMessageBox mbox;
+//    mbox.setText(QString::fromStdString("banana"));
+//    mbox.exec();
 }
 
-RTTPlot::~RTTPlot(){}
+RTTPlot::~RTTPlot()
+{
+    delete q_app_;
+    q_thread_->join();
+    delete q_thread_;
+}
 
 bool RTTPlot::configureHook()
 {

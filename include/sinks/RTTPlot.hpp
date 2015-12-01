@@ -13,33 +13,41 @@
 
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
+#include <boost/thread.hpp>
 
-using namespace std;
 using namespace RTT;
+
+class QApplication;
 
 namespace SINKS
 {
-  
-  /**
+
+/**
    * @brief A Component to visualize RTT signals in realtime
    */
-   
-  class RTTPlot
-  : public RTT::TaskContext
-    {
-    private:
 
-		double Ts;
-		
-    public:
+class RTTPlot
+        : public RTT::TaskContext
+{
+public:
 
-        RTTPlot(const string& name);
-        ~RTTPlot();
+    RTTPlot(const std::string& name);
+    ~RTTPlot();
 
-		bool configureHook();
-		bool startHook();
-		void updateHook();
+    bool configureHook();
+    bool startHook();
+    void updateHook();
 
-    };
+private:
+
+    double Ts;
+
+    QApplication* q_app_;
+
+    boost::thread* q_thread_;
+
+
+
+};
 }
 #endif
