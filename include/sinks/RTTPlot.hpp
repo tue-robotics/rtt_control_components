@@ -18,6 +18,7 @@
 using namespace RTT;
 
 class QApplication;
+class RTTPlotWidget;
 
 namespace SINKS
 {
@@ -40,13 +41,16 @@ public:
 
 private:
 
+    /** Instantiates the QApplication and starts the main loop */
+    void initQApp();
+
     double Ts;
 
     QApplication* q_app_;
+    RTTPlotWidget* main_widget_;
+
 
     boost::thread* q_thread_;
-
-
 
 };
 }

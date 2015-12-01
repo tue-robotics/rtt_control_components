@@ -13,13 +13,15 @@
 #include <rtt/Component.hpp>
 
 #include <QApplication>
-#include <QWidget>
+//#include <QWidget>
+//#include <qcustomplot.h>
 //#include <QInputDialog>
 //#include <QMessageBox>
 //#include <QPushButton>
 //#include <QDialogButtonBox>
 
 #include "sinks/RTTPlot.hpp"
+#include "sinks/RTTWidget.hpp"
 
 using namespace RTT;
 using namespace SINKS;
@@ -27,14 +29,12 @@ using namespace SINKS;
 RTTPlot::RTTPlot(const std::string& name) :
 	TaskContext(name, PreOperational)
 {
-    int argc = 0;
-    char** argv;
-    q_app_ = new QApplication(argc, argv);
 
-    QWidget bla;
-    bla.show();
+//    QCustomPlot qcp;
+//    qcp.show();
 
-    q_thread_ = new boost::thread(q_app_->exec);
+//    q_thread_ = new boost::thread(q_app_->exec);
+    q_thread_ = new boost::thread( boost::bind( &RTTPlot::initQApp, this) );
 //    q_app_->exec();
 
 //    QApplication app(argc, argv);
@@ -45,9 +45,28 @@ RTTPlot::RTTPlot(const std::string& name) :
 
 RTTPlot::~RTTPlot()
 {
+    delete main_widget_;
     delete q_app_;
     q_thread_->join();
     delete q_thread_;
+}
+
+void RTTPlot::initQApp(){
+    int argc = 0;
+    char** argv;
+
+    std::cout << "Starting qapp" << std::endl;
+    q_app_ = new QApplication(argc, argv);
+
+    std::cout << "Creating RTTPlotWidget" << std::endl;
+    main_widget_ = new RTTPlotWidget;
+
+    std::cout << "Showing main widget" << std::endl;
+    main_widget_->show();
+
+    std::cout << "Executing qapp" << std::endl;
+    q_app_->exec();
+
 }
 
 bool RTTPlot::configureHook()

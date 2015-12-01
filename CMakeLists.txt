@@ -275,8 +275,9 @@ include(${QT_USE_FILE})
 # Create Moc files
 ADD_DEFINITIONS(-DQT_NO_KEYWORDS)
 
+add_library(rttwidget src/sinks/RTTWidget.cpp ${HEADER_FILES})
 orocos_component(rtt_plot src/sinks/RTTPlot.cpp ${HEADER_FILES} ${Boost_INCLUDE_DIRS})
-target_link_libraries(rtt_plot ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES} ${QT_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(rtt_plot rttwidget ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES} ${QT_LIBRARIES} ${Boost_LIBRARIES})
 
 ### Add dependencies for all components making use of messages inside soem_beckhoff_drivers
 #add_dependencies(Supervisor soem_beckhoff_drivers_generate_messages_cpp)
