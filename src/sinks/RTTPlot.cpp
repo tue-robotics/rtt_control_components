@@ -30,17 +30,8 @@ RTTPlot::RTTPlot(const std::string& name) :
 	TaskContext(name, PreOperational)
 {
 
-//    QCustomPlot qcp;
-//    qcp.show();
-
-//    q_thread_ = new boost::thread(q_app_->exec);
     q_thread_ = new boost::thread( boost::bind( &RTTPlot::initQApp, this) );
-//    q_app_->exec();
 
-//    QApplication app(argc, argv);
-//    QMessageBox mbox;
-//    mbox.setText(QString::fromStdString("banana"));
-//    mbox.exec();
 }
 
 RTTPlot::~RTTPlot()
