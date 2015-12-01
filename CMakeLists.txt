@@ -265,6 +265,10 @@ target_link_libraries(DynamixelController ${catkin_LIBRARIES} ${USE_OROCOS_LIBRA
 orocos_component(rgb_controller src/lighting/rgb_controller.cpp ${HEADER_FILES})
 target_link_libraries(rgb_controller ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 
+### Orocos Components - Sinks ###
+orocos_component(rtt_plot src/sinks/RTTPlot.cpp ${HEADER_FILES})
+target_link_libraries(rtt_plot ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
+
 ### Add dependencies for all components making use of messages inside soem_beckhoff_drivers
 add_dependencies(Supervisor soem_beckhoff_drivers_generate_messages_cpp)
 add_dependencies(DynamixelController soem_beckhoff_drivers_generate_messages_cpp)

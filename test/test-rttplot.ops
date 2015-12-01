@@ -1,0 +1,53 @@
+#### IMPORT PACKAGE ####
+import("rtt_ros")
+ros.import("rtt_control_components")
+
+#### DECLARATION OF PARAMETERS ####
+var double Ts = 0.001                            # Sample time
+
+# Source1
+var int S1VS = 3;                               # Source 1 vector size
+var array S1V = array(2.0, 4.0, 6.0);                # Source 1 values
+
+# Source2
+var int S2VS = 2;                               # Source 2 vector size
+var array S2V = array(8.0, 10.0);                # Source 2 values
+
+# Position source
+var int PSVS = 5;                               # Position source vector size
+var array PSV = array(1.0, 2.0, 3.0, 4.0, 5.0);      # Position source values
+
+# Controller    
+var int NC = 5;                                 # Number of controllers
+var int NI = 2;                                 # Number of input ports
+var ints IS = ints(S1VS, S2VS);                       # Array with input sizes
+var array GAINS = array(1.0, 2.0, 3.0, 4.0, 5.0);    # Gains
+
+# Outputs
+var strings OUTPUT_NAMES 		= strings("u1", "u2", "u3", "u4", "u5");
+
+##### SOURCES #####
+# Source1 (reference)
+loadComponent("Source1", "SOURCES::ConstantSignal")
+Source1.vector_size = S1VS
+Source1.value = S1V
+setActivity("Source1",Ts,HighestPriority,ORO_SCHED_RT)
+Source1.configure
+
+# Source2 (reference)
+loadComponent("Source2", "SOURCES::ConstantSignal")
+Source2.vector_size = S2VS
+Source2.value = S2V
+setActivity("Source2",Ts,HighestPriority,ORO_SCHED_RT)
+Source2.configure
+
+# RTTPlot
+loadComponent("RTTPlot", "SINKS::RTTPlot")
+setActivity("RTTPlot", Ts, LowestPriority, ORO_SCHED_RT)
+RTTPlot.configure
+
+# Start components
+Source1.start
+Source2.start
+RTTPlot.start
+
