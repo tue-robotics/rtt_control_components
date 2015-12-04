@@ -15,14 +15,18 @@
 /*
  * Description:
  * 
- * Iterators
- * i Loops over ports
- * j Loops over total number of entries
- * k Loops over the number of entries with a givven port
- *  
- * To Do
- * Test with more complex structures
- * (Maybe add math, first do read math)
+ * Component that can handle all etherCAT outputs for multiple bodyparts.
+ * Also this component can perform mathemathical operations on the inputs.
+ * 
+ * Contains:	For example:
+ * AnalogOuts	Sensor inputs
+ * DigitalOuts	Ebuttons
+ * 
+ * Math operations currently supported 
+ * (Encouraged to add yourself/request if you need others)
+ * 
+ * AnalogOuts:		Addition, Multiply, MatrixTransform
+ * DigitalOuts: 	-
 */
 
 using namespace std;
@@ -44,6 +48,7 @@ namespace ETHERCATWRITE
 		public:
 	
 		//!Generic
+		strings bodypart_names;
 		bool goodToGO;
 		long double aquisition_time;
 		long double start_time;
@@ -54,70 +59,67 @@ namespace ETHERCATWRITE
 		virtual void Calculate_A();
 		virtual void Calculate_D();
 		virtual void WriteOutputs();
-		virtual void AddAnalogOuts(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY, string PARTNAME);
-		virtual void AddDigitalOuts(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY, string PARTNAME);
+		virtual void AddAnalogOuts(string PARTNAME, doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY);
+		virtual void AddDigitalOuts(string PARTNAME, doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY);
 		
 		//! AnalogIns
 		// Ports
-		InputPort<doubles> inports_A[MAX_PORTS];
-		OutputPort<soem_beckhoff_drivers::AnalogMsg> outports_A[MAX_PORTS];
+		InputPort<doubles> inports_A[MAX_BODYPARTS][MAX_PORTS];
+		OutputPort<soem_beckhoff_drivers::AnalogMsg> outports_A[MAX_BODYPARTS][MAX_PORTS];
 	
+		// In/Output
+		std::vector< doubles > input_A[MAX_PORTS];
+		std::vector< soem_beckhoff_drivers::AnalogMsg > output_msgs_A[MAX_PORTS];
+		
 		// Scalars
-		uint n_inports_A;
-		uint n_outports_A;
-		uint n_inport_entries_A;
-		uint n_outport_entries_A;
+		uint n_addedbodyparts_A;
 		
 		// Vectors
-		strings added_bodyparts_A;
-		ints inport_dimensions_A;
-		ints outport_dimensions_A;
-		ints from_which_inport_A;
-		ints from_which_entry_A;
+		string added_bodyparts_A[MAX_BODYPARTS];
+		uint n_inports_A[MAX_BODYPARTS];
+		uint n_outports_A[MAX_BODYPARTS];
 		
-		// In/Output
-		std::vector< doubles > input_A;
-		std::vector< doubles > intermediate_A;
-		std::vector< soem_beckhoff_drivers::AnalogMsg > output_msgs_A;
+		// Matrices
+		bools addition_status_A[MAX_BODYPARTS];
+		bools multiply_status_A[MAX_BODYPARTS];
+		bools matrixtransform_status_A[MAX_BODYPARTS];
+		ints inport_dimensions_A[MAX_BODYPARTS];
+		ints outport_dimensions_A[MAX_BODYPARTS];
+		ints from_which_inport_A[MAX_BODYPARTS];
+		ints from_which_entry_A[MAX_BODYPARTS];
 		
-		// Math
-		bool addition_status_A[MAX_BODYPARTS];
-		bool multiply_status_A[MAX_BODYPARTS];
-		bool matrixtransform_status_A[MAX_BODYPARTS];
-		doubles addition_values_A[MAX_BODYPARTS];		
-		doubles multiply_factor_A[MAX_BODYPARTS];		
-		std::vector< doubles > matrixtransform_A[MAX_BODYPARTS];
+		// 3D	
+		vector< doubles > addition_values_A[MAX_BODYPARTS];	
+		vector< doubles > multiply_values_A[MAX_BODYPARTS];	
+		vector< vector< doubles > > matrixtransform_entries_A[MAX_BODYPARTS];
 
 		// Functions
-		virtual void AddAddition_A(int ID, doubles VALUES);
-		virtual void AddMultiply_A(int ID, doubles FACTOR);
-		virtual void AddMatrixTransform_A(int ID, double INPUTSIZE, double OUTPUTSIZE);
+		virtual void AddAddition_A(string PARTNAME, int PORTNR, doubles VALUES);
+		virtual void AddMultiply_A(string PARTNAME, int PORTNR, doubles FACTOR);
+		virtual void AddMatrixTransform_A(string PARTNAME, int PORTNR, double INPUTSIZE, double OUTPUTSIZE);
 		
 		//! DigitalIns
 		// Ports
-		InputPort<ints> inports_D[MAX_PORTS];
-		OutputPort<soem_beckhoff_drivers::DigitalMsg> outports_D[MAX_PORTS];
+		InputPort<ints> inports_D[MAX_BODYPARTS][MAX_PORTS];
+		OutputPort<soem_beckhoff_drivers::DigitalMsg> outports_D[MAX_BODYPARTS][MAX_PORTS];
+
+		// In/Output
+		std::vector< ints > input_D[MAX_PORTS];
+		std::vector< soem_beckhoff_drivers::DigitalMsg > output_msgs_D[MAX_PORTS];
 	
 		// Scalars
-		uint n_inports_D;
-		uint n_outports_D;
-		uint n_inport_entries_D;
-		uint n_outport_entries_D;
+		uint n_addedbodyparts_D;
 		
 		// Vectors
-		strings added_bodyparts_D;
-		ints inport_dimensions_D;
-		ints outport_dimensions_D;
-		ints from_which_inport_D;
-		ints from_which_entry_D;
+		string added_bodyparts_D[MAX_BODYPARTS];
+		uint n_inports_D[MAX_BODYPARTS];
+		uint n_outports_D[MAX_BODYPARTS];
 		
-		// In/Output
-		std::vector< ints > input_D;
-		std::vector< doubles > intermediate_D;
-		std::vector< soem_beckhoff_drivers::DigitalMsg > output_msgs_D;
-
-		// Functions
-		// To do add flip
+		// Matrices
+		ints inport_dimensions_D[MAX_BODYPARTS];
+		ints outport_dimensions_D[MAX_BODYPARTS];
+		ints from_which_inport_D[MAX_BODYPARTS];
+		ints from_which_entry_D[MAX_BODYPARTS];		
 
 		//! Component Hooks
 		virtual bool configureHook();

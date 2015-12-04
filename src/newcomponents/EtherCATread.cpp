@@ -6,6 +6,9 @@ using namespace ETHERCATREAD;
 
 EtherCATread::EtherCATread(const string& name) : TaskContext(name, PreOperational)
 {
+	//! Properties
+	addProperty( "bodypart_names",     	bodypart_names     ).doc("Names of bodyparts");
+	
 	//! Operations
 	// Add Ins
     addOperation("AddAnalogIns", &EtherCATread::AddAnalogIns, this, OwnThread)
@@ -33,31 +36,37 @@ EtherCATread::EtherCATread(const string& name) : TaskContext(name, PreOperationa
 	// Apply (math) function
 	addOperation("AddAddition_A", &EtherCATread::AddAddition_A, this, OwnThread)
 		.doc("This function will add to all analog values of intput i the value as set in values[i]")
-		.arg("ID","ID number of the analog in")
+		.arg("BPID","Bodypart number of the analog in")
+		.arg("PORTNR","Output port number of the analog in")
 		.arg("VALUES","Doubles specifying with which the input should be added");	
 	addOperation("AddMultiply_A", &EtherCATread::AddMultiply_A, this, OwnThread)
 		.doc("This function will multiply all analog values of intput i with the value as set in factor[i]")
-		.arg("ID","ID number of the analog in")
-		.arg("FACTOR","Doubles specifying with which the input should be multiplied");	
+		.arg("BPID","Bodypart number of the analog in")
+		.arg("PORTNR","Output port number of the analog in")
+		.arg("VALUES","Doubles specifying with which the input should be multiplied");	
 		
 	addOperation("AddFlip_D", &EtherCATread::AddFlip_D, this, OwnThread)
 		.doc("This function will flip all digital values i for which the property flip[i] contains a 1")
-		.arg("ID","ID number of the digital in")
-		.arg("FLIP","Vector of bools specifying which input should be flipped");
+		.arg("BPID","Bodypart number of the digital in")
+		.arg("PORTNR","Output port number of the digital in")
+		.arg("VALUES","Vector of bools specifying which input should be flipped");
 		
 	addOperation("AddEnc2Si_E", &EtherCATread::AddEnc2Si_E, this, OwnThread)
 		.doc("This function will convert raw encoder input into si values. Note that this function unlike other also adds a renull and reset port")
-		.arg("ID","ID number of the encoder ins")
+		.arg("BPID","Bodypart number of the encoder ins")
+		.arg("PORTNR","Output port number of the encoder ins")
 		.arg("ENCODER_BITS","Saturation value of the encoder. For example: 65536 for a 16 bit encoder")
 		.arg("ENC2SI","Value to convert the encoder value to an SI value. Typically 2pi/(encodersteps_per_rev*gearbox)");
 	addOperation("AddMatrixTransform_E", &EtherCATread::AddMatrixTransform_E, this, OwnThread)
-		.doc("This function will add a matrix multiplication on the si output of the encoders. Only input is ID. Matrix should be added with properties")
-		.arg("ID","ID number of the encoder ins")
+		.doc("This function will add a matrix multiplication on the si output of the encoders. Matrix elements have to be added with properties")
+		.arg("BPID","Bodypart number of the encoder ins")
+		.arg("PORTNR","Output port number of the encoder ins")
 		.arg("INPUTSIZE","Size of the input of the matrix transform")
 		.arg("OUTPUTSIZE","Size of the output of the matrix transform");
 	addOperation( "ResetEncoders", &EtherCATread::ResetEncoders, this, OwnThread )
 		.doc("Reset an encoder value to a new value, usefull for homing")
-		.arg("ID","ID number of the encoder ins")
+		.arg("BPID","Bodypart number of the encoder ins")
+		.arg("PORTNR","Output port number of the encoder ins")
 		.arg("resetvalues","Values to reset the encoder to");
 }
 
@@ -66,40 +75,34 @@ EtherCATread::~EtherCATread(){}
 bool EtherCATread::configureHook()
 {
 	//! init	
-	// Global
 	start_time = os::TimeService::Instance()->getNSecs()*1e-9;
 	goodToGO = false;
 	
-	// Analog
-	n_inports_A = 0;
-	n_outports_A = 0;
-	n_inport_entries_A = 0;
-	n_outport_entries_A = 0;
-
-	// Digital
-	n_inports_D = 0;
-	n_outports_D = 0;
-	n_inport_entries_D = 0;
-	n_outport_entries_D = 0;
-	
-	// Encoder
-	n_inports_E = 0;
-	n_outports_E = 0;
-	n_inport_entries_E = 0;
-	n_outport_entries_E = 0;
+	n_addedbodyparts_A = 0;
+	n_addedbodyparts_D = 0;
+	n_addedbodyparts_E = 0;
 	
 	for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
-		addition_status_A[l] = false;
-		multiply_status_A[l] = false;
-		flip_status_D[l] = false;
-		enc2si_status_E[l] = false;
-		matrixtransform_status_E[l] = false;
+		n_inports_A[l] = 0;
+		n_outports_A[l] = 0;		
+		n_inports_D[l] = 0;
+		n_outports_D[l] = 0;
+		n_inports_E[l] = 0;
+		n_outports_E[l] = 0;		
+	}
+		
+	return true;
+}
+
+bool EtherCATread::startHook()
+{
+	if (bodypart_names.size() <= 0) {
+		log(Error) << "EtherCATread::startHook: Could not start EtherCATread. First add a list of the bodyparts that will be added. (at least one) " << bodypart_names.size() << "!" << endlog();
+		return false;
 	}
 	
 	return true;
 }
-
-bool EtherCATread::startHook(){}
 
 void EtherCATread::updateHook()
 {
@@ -118,49 +121,65 @@ void EtherCATread::updateHook()
 	Calculate_E();
 	
 	// Function to write the output calculated onto the output port
-    WriteOutputs();
+    WriteOutputs();   
     
 	return;
 }
 
-void EtherCATread::AddAnalogIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY, string PARTNAME)
+void EtherCATread::AddAnalogIns(string PARTNAME, doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY)
 {
 	// Init 
 	uint N_INPORTS = INPORT_DIMENSIONS.size();
 	uint N_OUTPORTS = OUTPORT_DIMENSIONS.size();
 	uint N_INPORT_ENTRIES = 0;
 	uint N_OUTPORT_ENTRIES = 0;
-	
+	uint BPID;
+		
 	//! Check configuration
+	if (!this->isRunning()) {
+		log(Error) << "EtherCATread::AddAnalogIns(" << PARTNAME << "): Could not add AnalogIns. Since EtherCATread component has not yet been started!" << endlog();
+		return;
+	}
 	// Check if the AnalogIns is already added for this bodypart
-	for(uint l = 0; l < added_bodyparts_A.size(); l++) {
+	for (uint l = 0; l < MAX_BODYPARTS; l++) {
 		if (PARTNAME == added_bodyparts_A[l]) {
-			log(Error) << "EtherCATread (" << PARTNAME << ")::AddAnalogIns: Could not add AnalogIns. There is already an AnalogIns for bodypart " << PARTNAME << "!" << endlog();
+			log(Error) << "EtherCATread::AddAnalogIns(" << PARTNAME << "): Could not add AnalogIns. There is already an AnalogIns for bodypart " << PARTNAME << "!" << endlog();
 			return;
 		}
 	}
-    
+	// Check if the bodypart name is in the bodypart_name list and set the BPID accordingly
+	for (uint l = 0; l < bodypart_names.size(); l++) {
+		if (bodypart_names[l] == PARTNAME) {
+			BPID = l + 1;
+			log(Info) << "EtherCATread::AddAnalogIns(" << PARTNAME << "): BPID IS: " << BPID << "." << endlog();
+		}
+	}
+	if (BPID <= 0 || BPID > bodypart_names.size()) {
+		log(Error) << "EtherCATread::AddAnalogIns(" << PARTNAME << "): Could not add AnalogIns. Could not find " << PARTNAME << " in the list of bodypartnames of EtherCATread!" << endlog();
+		return;
+	}
+
 	// Check for invalid number of ports
-    if(N_INPORTS < 1 || N_INPORTS > MAX_PORTS) {
-        log(Error) << "EtherCATread (" << PARTNAME << ")::AddAnalogIns: Could not add AnalogIns. Invalid number of inports: " << N_INPORTS << "!" << endlog();
+    if (N_INPORTS < 1 || N_INPORTS > MAX_PORTS) {
+        log(Error) << "EtherCATread::AddAnalogIns(" << PARTNAME << "): Could not add AnalogIns. Invalid number of inports: " << N_INPORTS << "!" << endlog();
         return;
-    }
-    if(N_OUTPORTS < 1 || N_OUTPORTS > MAX_PORTS) {
-        log(Error) << "EtherCATread (" << PARTNAME << ")::AddAnalogIns: Could not add AnalogIns. Invalid number of outports: " << N_OUTPORTS << "!" << endlog();
+    }    
+    if (N_OUTPORTS < 1 || N_OUTPORTS > MAX_PORTS) {
+        log(Error) << "EtherCATread::AddAnalogIns(" << PARTNAME << "): Could not add AnalogIns. Invalid number of outports: " << N_OUTPORTS << "!" << endlog();
         return;
     }
 
 	// Count the number of entries respectively for N_INPORT_ENTRIES and N_OUTPORT_ENTRIES
     for(uint i = 0; i < N_INPORTS; i++) {
         if(INPORT_DIMENSIONS[i] < 1 || INPORT_DIMENSIONS[i] > 100) {
-            log(Error) << "EtherCATread (" << PARTNAME << ")::AddAnalogIns: Could not add AnalogIns. Invalid inport dimension: " << INPORT_DIMENSIONS[i] << "!" << endlog();
+            log(Error) << "EtherCATread::AddAnalogIns(" << PARTNAME << "): Could not add AnalogIns. Invalid inport dimension: " << INPORT_DIMENSIONS[i] << "!" << endlog();
             return;
         }
         N_INPORT_ENTRIES += INPORT_DIMENSIONS[i];
     }
     for(uint i = 0; i < N_OUTPORTS; i++) {
         if(OUTPORT_DIMENSIONS[i] < 1 || OUTPORT_DIMENSIONS[i] > 100) {
-            log(Error) << "EtherCATread (" << PARTNAME << ")::AddAnalogIns: Could not add AnalogIns. Invalid outport dimension: " << OUTPORT_DIMENSIONS[i] << "!" << endlog();
+            log(Error) << "EtherCATread::AddAnalogIns(" << PARTNAME << "): Could not add AnalogIns. Invalid outport dimension: " << OUTPORT_DIMENSIONS[i] << "!" << endlog();
             return;
         }
         N_OUTPORT_ENTRIES += OUTPORT_DIMENSIONS[i];
@@ -168,231 +187,131 @@ void EtherCATread::AddAnalogIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMEN
 
 	// Check if the total number of entries matches the size of FROM_WHICH_INPORT and FROM_WHICH_ENTRY
     if ((FROM_WHICH_INPORT.size() != N_OUTPORT_ENTRIES) || (FROM_WHICH_ENTRY.size() != N_OUTPORT_ENTRIES)) {
-        log(Error) << "EtherCATread (" << PARTNAME << ")::AddAnalogIns: Could not add AnalogIns. The number of entries in from_which_inport_A and from_which_entry_A should equal the total number of output values." << endlog();
+        log(Error) << "EtherCATread::AddAnalogIns(" << PARTNAME << "): Could not add AnalogIns. The number of entries in from_which_inport_A and from_which_entry_A should equal the total number of output values!" << endlog();
         return;
     }
-
+	
 	// Check validity of each entry in the FROM_WHICH_INPORT and FROM_WHICH_ENTRY 
-    for(uint j = 0; j < N_OUTPORT_ENTRIES; j++) {
-        if( FROM_WHICH_INPORT[j] > (n_inports_A+N_INPORTS) || FROM_WHICH_INPORT[j] <= 0 ) {
-            log(Error) << "EtherCATread (" << PARTNAME << ")::AddAnalogIns: Could not add AnalogIns. From_which_inport array contains port no. " << FROM_WHICH_INPORT[j] << " which does not exist according to inport_dimensions_A!" << endlog();
+    for(uint k = 0; k < N_OUTPORT_ENTRIES; k++) {
+        if( FROM_WHICH_INPORT[k] <= 0 || FROM_WHICH_INPORT[k] > N_INPORTS ) {
+            log(Error) << "EtherCATread::AddAnalogIns(" << PARTNAME << "): Could not add AnalogIns. 0 < From_which_inport <= N_INPORTS. -> 0 < " << FROM_WHICH_INPORT[k] << " <= "<< N_INPORTS <<"!" << endlog();
             return;
         }
-        else if ( FROM_WHICH_ENTRY[j] > INPORT_DIMENSIONS[ FROM_WHICH_INPORT[j]-1-n_inports_A] || FROM_WHICH_ENTRY[j] <= 0 ) {
-            log(Error) << "EtherCATread (" << PARTNAME << ")::AddAnalogIns: Could not add AnalogIns. From_which_entry array contains entry no. " << FROM_WHICH_ENTRY[j] << " which does not exist for inport no. " << FROM_WHICH_INPORT[j] << "!" << endlog();
+        else if ( FROM_WHICH_ENTRY[k] <= 0 || FROM_WHICH_ENTRY[k] > INPORT_DIMENSIONS[FROM_WHICH_INPORT[k]-1] ) {
+            log(Error) << "EtherCATread::AddAnalogIns(" << PARTNAME << "): Could not add AnalogIns. From_which_entry array contains entry no. " << FROM_WHICH_ENTRY[k] << " which does not exist for inport no. " << FROM_WHICH_INPORT[k] << "!" << endlog();
             return;
         }
     }
     
     //! Now that all inputs have been properly examined. The in- and outports can be created
-    for( uint i = n_inports_A; i < (n_inports_A+N_INPORTS); i++ ) {
-		addEventPort( PARTNAME+"_Ain"+to_string(i+1-n_inports_A), inports_A[i] );
+	for( uint i = 0; i < N_INPORTS; i++ ) {
+		addPort( PARTNAME+"_Ain"+to_string(i+1), inports_A[BPID-1][i] );
 	}
-    for( uint i = n_outports_A; i < (n_outports_A+N_OUTPORTS); i++ ) {
-        addPort( PARTNAME+"_Aout"+to_string(i+1-n_outports_A), outports_A[i] );
+    for( uint i = 0; i < N_OUTPORTS; i++ ) {
+        addPort( PARTNAME+"_Aout"+to_string(i+1), outports_A[BPID-1][i] );
     }
-    
-    //! Update from_which_inport property (Necessary since when in the ops file the first inport is selected this means the first inport for this bodypart)
-    for( uint j = 0; j < N_OUTPORT_ENTRIES; j++ ) {
-		if (n_inports_A != 0) {
-			FROM_WHICH_INPORT[j] += (double) n_inports_A;
-		}
-	}
-    
-    //! And the temperary properties can be added to the global properties
-    added_bodyparts_A.push_back(PARTNAME);
-    n_inports_A += N_INPORTS;
-    n_outports_A += N_OUTPORTS;
-    n_inport_entries_A += N_INPORT_ENTRIES;
-    n_outport_entries_A += N_OUTPORT_ENTRIES;
-    for( uint i = 0; i < N_INPORTS; i++ ) {
-		inport_dimensions_A.push_back((int) INPORT_DIMENSIONS[i]);
-	}
-	for( uint i = 0; i < N_OUTPORTS; i++ ) {
-		outport_dimensions_A.push_back((int) OUTPORT_DIMENSIONS[i]);
-	}
-	for( uint j = 0; j < N_OUTPORT_ENTRIES; j++ ) {
-		from_which_inport_A.push_back((int) FROM_WHICH_INPORT[j]);
-	}
-	for( uint j = 0; j < N_OUTPORT_ENTRIES; j++ ) {
-		from_which_entry_A.push_back((int) FROM_WHICH_ENTRY[j]);
-	}
-    
-    //! Resizing in- and outport messages
-    input_msgs_A.resize(n_inports_A);
-    for( uint i = 0; i < n_inports_A; i++ ) {
-        input_msgs_A[i].values.resize( inport_dimensions_A[i] );
-	}
 
-    intermediate_A.resize(n_outports_A);
-    output_A.resize(n_outports_A);
-    for( uint i = 0; i < n_outports_A; i++ ) {
-        intermediate_A[i].resize( outport_dimensions_A[i]);
-        output_A[i].resize(outport_dimensions_A[i]);
+    //! And the temperary properties can be added to the global properties
+    n_addedbodyparts_A++;
+    n_inports_A[BPID-1] = N_INPORTS;
+    n_outports_A[BPID-1] = N_OUTPORTS;
+    
+    added_bodyparts_A[BPID-1] = PARTNAME;
+    inport_dimensions_A[BPID-1].resize(N_INPORTS);
+    outport_dimensions_A[BPID-1].resize(N_OUTPORTS);
+    from_which_inport_A[BPID-1].resize(N_OUTPORT_ENTRIES);
+    from_which_entry_A[BPID-1].resize(N_OUTPORT_ENTRIES);
+
+    for( uint i = 0; i < N_INPORTS; i++ ) {
+		inport_dimensions_A[BPID-1][i] = INPORT_DIMENSIONS[i];
+	}
+	
+    for( uint i = 0; i < N_OUTPORTS; i++ ) {
+		outport_dimensions_A[BPID-1][i] = OUTPORT_DIMENSIONS[i];
+	}
+	
+	for( uint k = 0; k < N_OUTPORT_ENTRIES; k++ ) {
+		from_which_inport_A[BPID-1][k] = FROM_WHICH_INPORT[k];
+		from_which_entry_A[BPID-1][k] = FROM_WHICH_ENTRY[k];
+	}
+	
+	// math statuses
+	addition_status_A[BPID-1].resize(N_OUTPORTS);
+	multiply_status_A[BPID-1].resize(N_OUTPORTS);
+	for( uint i = 0; i < N_OUTPORTS; i++ ) {
+		addition_status_A[BPID-1][i] = false;
+		multiply_status_A[BPID-1][i] = false;
+	}
+	
+	// Resizing math properties 
+	addition_values_A[BPID-1].resize(n_outports_A[BPID-1]);
+	multiply_values_A[BPID-1].resize(n_outports_A[BPID-1]);
+
+    //! Resizing in- and outport messages
+    input_msgs_A[BPID-1].resize(n_inports_A[BPID-1]);
+    for( uint i = 0; i < n_inports_A[BPID-1]; i++ ) {
+        input_msgs_A[BPID-1][i].values.resize( inport_dimensions_A[BPID-1][i] );
+	}
+		
+    intermediate_A[BPID-1].resize(n_outports_A[BPID-1]);
+    output_A[BPID-1].resize(n_outports_A[BPID-1]);
+    for( uint i = 0; i < n_outports_A[BPID-1]; i++ ) {
+        intermediate_A[BPID-1][i].resize( outport_dimensions_A[BPID-1][i]);
+        output_A[BPID-1][i].resize(outport_dimensions_A[BPID-1][i]);
     }
     
-    log(Info) << "EtherCATread (" << PARTNAME << ")::AddAnalogIns: Added AnalogIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports." << endlog();
+    log(Warning) << "EtherCATread::AddAnalogIns(" << PARTNAME << "): Added AnalogIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports." << endlog();
 
 	return;
 }
 
-void EtherCATread::AddDigitalIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY, string PARTNAME)
-{
-	// Init 
-	uint N_INPORTS = INPORT_DIMENSIONS.size();
-	uint N_OUTPORTS = OUTPORT_DIMENSIONS.size();
-	uint N_INPORT_ENTRIES = 0;
-	uint N_OUTPORT_ENTRIES = 0;
-	
-	//! Check configuration	
-	// Check if the DigitalIns is already added for this bodypart
-	for(uint l = 0; l < added_bodyparts_D.size(); l++) {
-		if (PARTNAME == added_bodyparts_D[l]) {
-			log(Error) << "EtherCATread (" << PARTNAME << ")::AddDigitalIns: Could not add DigitalIns. There is already an DigitalIns for bodypart " << PARTNAME << "!" << endlog();
-			return;
-		}
-	}
-    
-	// Check for invalid number of ports
-    if(N_INPORTS < 1 || N_INPORTS > MAX_PORTS) {
-        log(Error) << "EtherCATread (" << PARTNAME << ")::AddDigitalIns: Could not add DigitalIns. Invalid number of inports: " << N_INPORTS << "!" << endlog();
-        return;
-    }
-    if(N_OUTPORTS < 1 || N_OUTPORTS > MAX_PORTS) {
-        log(Error) << "EtherCATread (" << PARTNAME << ")::AddDigitalIns: Could not add DigitalIns. Invalid number of outports: " << N_OUTPORTS << "!" << endlog();
-        return;
-    }
-
-	// Count the number of entries respectively for N_INPORT_ENTRIES and N_OUTPORT_ENTRIES
-	for(uint i = 0; i < N_INPORTS; i++) {
-        if(INPORT_DIMENSIONS[i] < 1 || INPORT_DIMENSIONS[i] > 100) {
-            log(Error) << "EtherCATread (" << PARTNAME << ")::AddDigitalIns: Could not add DigitalIns. Invalid inport dimension: " << INPORT_DIMENSIONS[i] << "!" << endlog();
-            return;
-        }
-        N_INPORT_ENTRIES += INPORT_DIMENSIONS[i];
-    }
-    for(uint i = 0; i < N_OUTPORTS; i++) {
-        if(OUTPORT_DIMENSIONS[i] < 1 || OUTPORT_DIMENSIONS[i] > 100) {
-            log(Error) << "EtherCATread (" << PARTNAME << ")::AddDigitalIns: Could not add DigitalIns. Invalid outport dimension: " << OUTPORT_DIMENSIONS[i] << "!" << endlog();
-            return;
-        }
-        N_OUTPORT_ENTRIES += OUTPORT_DIMENSIONS[i];
-    }
-
-	// Check if the total number of entries matches the size of FROM_WHICH_INPORT and FROM_WHICH_ENTRY
-    if ((FROM_WHICH_INPORT.size() != N_OUTPORT_ENTRIES) || (FROM_WHICH_ENTRY.size() != N_OUTPORT_ENTRIES)) {
-        log(Error) << "EtherCATread (" << PARTNAME << ")::AddDigitalIns: Could not add DigitalIns. The number of entries in from_which_inport_D and from_which_entry_D should equal the total number of output values!" << endlog();
-        return;
-    }
-
-	// Check validity of each entry in the FROM_WHICH_INPORT and FROM_WHICH_ENTRY 
-    for(uint j = 0; j < N_OUTPORT_ENTRIES; j++) {
-        if( FROM_WHICH_INPORT[j] > (n_inports_D+N_INPORTS) || FROM_WHICH_INPORT[j] <= 0 ) {
-            log(Error) << "EtherCATread (" << PARTNAME << ")::AddDigitalIns: Could not add DigitalIns. From_which_inport array contains port no. " << FROM_WHICH_INPORT[j] << " which does not exist according to inport_dimensions_D!" << endlog();
-            return;
-        }
-        else if ( FROM_WHICH_ENTRY[j] > INPORT_DIMENSIONS[ FROM_WHICH_INPORT[j]-1-n_inports_D] || FROM_WHICH_ENTRY[j] <= 0 ) {
-            log(Error) << "EtherCATread (" << PARTNAME << ")::AddDigitalIns: Could not add DigitalIns. From_which_entry array contains entry no. " << FROM_WHICH_ENTRY[j] << " which does not exist for inport no. " << FROM_WHICH_INPORT[j] << "!" << endlog();
-            return;
-        }
-    }
-    
-    //! Now that all inputs have been properly examined. The in- and outports can be created
-    for( uint i = n_inports_D; i < (n_inports_D+N_INPORTS); i++ ) {
-		addEventPort( PARTNAME+"_Din"+to_string(i+1-n_inports_D), inports_D[i] );
-	}
-    for( uint i = n_outports_D; i < (n_outports_D+N_OUTPORTS); i++ ) {
-        addPort( PARTNAME+"_Dout"+to_string(i+1-n_outports_D), outports_D[i] );
-    }
-    
-    //! Update from_which_inport property (Necessary since when in the ops file the first inport is selected this means the first inport for this bodypart)
-    for( uint j = 0; j < N_OUTPORT_ENTRIES; j++ ) {
-		if (n_inports_D != 0) {
-			FROM_WHICH_INPORT[j] += (double) n_inports_D;
-		}
-	}
-    
-    //! And the temperary properties can be added to the global properties
-    added_bodyparts_D.push_back(PARTNAME);
-    n_inports_D += N_INPORTS;
-    n_outports_D += N_OUTPORTS;
-    n_inport_entries_D += N_INPORT_ENTRIES;
-    n_outport_entries_D += N_OUTPORT_ENTRIES;
-    for( uint i = 0; i < N_INPORTS; i++ ) {
-		inport_dimensions_D.push_back((int) INPORT_DIMENSIONS[i]);
-	}
-	for( uint i = 0; i < N_OUTPORTS; i++ ) {
-		outport_dimensions_D.push_back((int) OUTPORT_DIMENSIONS[i]);
-	}
-	for( uint j = 0; j < N_OUTPORT_ENTRIES; j++ ) {
-		from_which_inport_D.push_back((int) FROM_WHICH_INPORT[j]);
-	}
-	for( uint j = 0; j < N_OUTPORT_ENTRIES; j++ ) {
-		from_which_entry_D.push_back((int) FROM_WHICH_ENTRY[j]);
-	}
-	
-    //! Resizing in- and outport messages
-    input_msgs_D.resize(n_inports_D);
-    for( uint i = 0; i < n_inports_D; i++ ) {
-        input_msgs_D[i].values.resize( inport_dimensions_D[i]);
-	}
-
-    intermediate_D.resize(n_outports_D);
-    output_D.resize(n_outports_D);
-    for( uint i = 0; i < n_outports_D; i++ ) {
-        intermediate_D[i].resize( outport_dimensions_D[i]);
-        output_D[i].resize(outport_dimensions_D[i]);
-    }
-    
-    log(Warning) << "EtherCATread (" << PARTNAME << ")::AddDigitalIns: Added DigitalIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports." << endlog();
-
-	return;
-}
-
-void EtherCATread::AddEncoderIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY, string PARTNAME)
+void EtherCATread::AddDigitalIns(string PARTNAME, doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY)
 {	
 	// Init 
 	uint N_INPORTS = INPORT_DIMENSIONS.size();
 	uint N_OUTPORTS = OUTPORT_DIMENSIONS.size();
 	uint N_INPORT_ENTRIES = 0;
 	uint N_OUTPORT_ENTRIES = 0;
-	
+	uint BPID;	
+
 	//! Check configuration	
-	// Check if the EncoderIns is already added for this bodypart
-	for(uint l = 0; l < added_bodyparts_E.size(); l++) {
-		if (PARTNAME == added_bodyparts_E[l]) {
-			log(Error) << "EtherCATread (" << PARTNAME << ")::AddEncoderIns: Could not add EncoderIns. There is already an EncoderIns for bodypart " << PARTNAME << "!" << endlog();
-			return;
+	if (!this->isRunning()) {
+		log(Error) << "EtherCATread::AddDigitalIns(" << PARTNAME << "): Could not add DigitalIns. Since EtherCATread component has not yet been started!" << endlog();
+		return;
+	}
+	// Check if the bodypart name is in the bodypart_name list and set the BPID accordingly
+	for (uint l = 0; l < bodypart_names.size(); l++) {
+		if (bodypart_names[l] == PARTNAME) {
+			BPID = l + 1;
+			log(Info) << "EtherCATread::AddDigitalIns(" << PARTNAME << "): BPID IS: " << BPID << "." << endlog();
 		}
 	}
-    
+	if (BPID <= 0 || BPID > bodypart_names.size()) {
+		log(Error) << "EtherCATread::AddDigitalIns(" << PARTNAME << "): Could not add DigitalIn. Could not find " << PARTNAME << " in the list of bodypartnames of EtherCATread!" << endlog();
+		return;
+	}
+	    
 	// Check for invalid number of ports
     if(N_INPORTS < 1 || N_INPORTS > MAX_PORTS) {
-        log(Error) << "EtherCATread (" << PARTNAME << ")::AddEncoderIns: Could not add EncoderIns. Invalid number of inports: " << N_INPORTS << "!" << endlog();
+        log(Error) << "EtherCATread::AddDigitalIns(" << PARTNAME << "): Could not add DigitalIns. Invalid number of inports: " << N_INPORTS << "!" << endlog();
         return;
     }
     if(N_OUTPORTS < 1 || N_OUTPORTS > MAX_PORTS) {
-        log(Error) << "EtherCATread (" << PARTNAME << ")::AddEncoderIns: Could not add EncoderIns. Invalid number of outports: " << N_OUTPORTS << "!" << endlog();
+        log(Error) << "EtherCATread::AddDigitalIns(" << PARTNAME << "): Could not add DigitalIns. Invalid number of outports: " << N_OUTPORTS << "!" << endlog();
         return;
-    }
+    }    
 
 	// Count the number of entries respectively for N_INPORT_ENTRIES and N_OUTPORT_ENTRIES
-	// Special case for Encoders are that all inport_dimensions should be one and there can only be one outport for each bodypart
-    for(uint i = 0; i < N_INPORTS; i++) {
-        if(INPORT_DIMENSIONS[i] != 1) {
-            log(Error) << "EtherCATread (" << PARTNAME << ")::AddEncoderIns: Could not add EncoderIns. Inport_dimensions cannot contain value other than one!" << endlog();
+	for(uint i = 0; i < N_INPORTS; i++) {
+        if(INPORT_DIMENSIONS[i] < 1 || INPORT_DIMENSIONS[i] > 100) {
+            log(Error) << "EtherCATread::AddDigitalIns(" << PARTNAME << "): Could not add DigitalIns. Invalid inport dimension: " << INPORT_DIMENSIONS[i] << "!" << endlog();
             return;
         }
         N_INPORT_ENTRIES += INPORT_DIMENSIONS[i];
     }
-    
-    if(OUTPORT_DIMENSIONS.size() != 1) {
-		log(Error) << "EtherCATread (" << PARTNAME << ")::AddEncoderIns: Could not add EncoderIns. Outport_dimensions should be of size 1. There can only be one outputport per bodypart!" << endlog();
-		return;
-	}
     for(uint i = 0; i < N_OUTPORTS; i++) {
-        if(OUTPORT_DIMENSIONS[i] < 1) {
-            log(Error) << "EtherCATread (" << PARTNAME << ")::AddEncoderIns: Could not add EncoderIns. Outport_dimensions cannot contain value smaller than one!" << endlog();
+        if(OUTPORT_DIMENSIONS[i] < 1 || OUTPORT_DIMENSIONS[i] > 100) {
+            log(Error) << "EtherCATread::AddDigitalIns(" << PARTNAME << "): Could not add DigitalIns. Invalid outport dimension: " << OUTPORT_DIMENSIONS[i] << "!" << endlog();
             return;
         }
         N_OUTPORT_ENTRIES += OUTPORT_DIMENSIONS[i];
@@ -400,220 +319,446 @@ void EtherCATread::AddEncoderIns(doubles INPORT_DIMENSIONS, doubles OUTPORT_DIME
 
 	// Check if the total number of entries matches the size of FROM_WHICH_INPORT and FROM_WHICH_ENTRY
     if ((FROM_WHICH_INPORT.size() != N_OUTPORT_ENTRIES) || (FROM_WHICH_ENTRY.size() != N_OUTPORT_ENTRIES)) {
-        log(Error) << "EtherCATread (" << PARTNAME << ")::AddEncoderIns: Could not add EncoderIns. The number of entries in from_which_inport_E and from_which_entry_E should equal the total number of output values." << endlog();
+        log(Error) << "EtherCATread::AddDigitalIns(" << PARTNAME << "): Could not add DigitalIns. The number of entries in from_which_inport_D and from_which_entry_D should equal the total number of output values!" << endlog();
         return;
     }
 
 	// Check validity of each entry in the FROM_WHICH_INPORT and FROM_WHICH_ENTRY 
-    for(uint j = 0; j < N_OUTPORT_ENTRIES; j++) {
-        if( FROM_WHICH_INPORT[j] > (n_inports_E+N_INPORTS) || FROM_WHICH_INPORT[j] <= 0 ) {
-            log(Error) << "EtherCATread (" << PARTNAME << ")::AddEncoderIns: Could not add EncoderIns. From_which_inport array contains port no. " << FROM_WHICH_INPORT[j] << " which does not exist according to inport_dimensions_E!" << endlog();
+    for(uint k = 0; k < N_OUTPORT_ENTRIES; k++) {
+        if( FROM_WHICH_INPORT[k] <= 0 || FROM_WHICH_INPORT[k] > N_INPORTS ) {
+            log(Error) << "EtherCATread::AddDigitalIns(" << PARTNAME << "): Could not add DigitalIns. 0 < From_which_inport <= N_INPORTS. -> 0 < " << FROM_WHICH_INPORT[k] << " <= "<< N_INPORTS <<"!" << endlog();
             return;
         }
-        else if ( FROM_WHICH_ENTRY[j] > INPORT_DIMENSIONS[ FROM_WHICH_INPORT[j]-1] || FROM_WHICH_ENTRY[j] <= 0 ) {
-            log(Error) << "EtherCATread (" << PARTNAME << ")::AddEncoderIns: Could not add EncoderIns. From_which_entry array contains entry no. " << FROM_WHICH_ENTRY[j] << " which does not exist for inport no. " << FROM_WHICH_INPORT[j] << "!" << endlog();
+        else if ( FROM_WHICH_ENTRY[k] <= 0 || FROM_WHICH_ENTRY[k] > INPORT_DIMENSIONS[FROM_WHICH_INPORT[k]-1] ) {
+            log(Error) << "EtherCATread::AddDigitalIns(" << PARTNAME << "): Could not add DigitalIns. From_which_entry array contains entry no. " << FROM_WHICH_ENTRY[k] << " which does not exist for inport no. " << FROM_WHICH_INPORT[k] << "!" << endlog();
             return;
         }
     }
     
     //! Now that all inputs have been properly examined. The in- and outports can be created
-    for( uint i = n_inports_E; i < (n_inports_E+N_INPORTS); i++ ) {
-		addEventPort( PARTNAME+"_Ein"+to_string(i+1-n_inports_E), inports_E[i] );
+	for( uint i = 0; i < N_INPORTS; i++ ) {
+		addPort( PARTNAME+"_Din"+to_string(i+1), inports_D[BPID-1][i] );
 	}
-    for( uint i = n_outports_E; i < (n_outports_E+N_OUTPORTS); i++ ) {
-        addPort( PARTNAME+"_Eout"+to_string(i+1-n_outports_E), outports_E[i] );
-        addPort( PARTNAME+"_Eout_vel"+to_string(i+1-n_outports_E), outports_E_vel[i] );
+    for( uint i = 0; i < N_OUTPORTS; i++ ) {
+        addPort( PARTNAME+"_Dout"+to_string(i+1), outports_D[BPID-1][i] );
     }
-    
-    //! Update from_which_inport property (Necessary since when in the ops file the first inport is selected this means the first inport for this bodypart)
-    for( uint j = 0; j < N_OUTPORT_ENTRIES; j++ ) {
-		if (n_inports_E != 0) {
-			FROM_WHICH_INPORT[j] += (double) n_inports_E;
-		}
-	}
     
     //! And the temperary properties can be added to the global properties
-    added_bodyparts_E.push_back(PARTNAME);
-    n_inports_E += N_INPORTS;
-    n_outports_E += N_OUTPORTS;
-    n_inport_entries_E += N_INPORT_ENTRIES;
-    n_outport_entries_E += N_OUTPORT_ENTRIES;
+    n_addedbodyparts_D++;
+    n_inports_D[BPID-1] = N_INPORTS;
+    n_outports_D[BPID-1] = N_OUTPORTS;
+        
+    added_bodyparts_D[BPID-1] = PARTNAME;
+    inport_dimensions_D[BPID-1].resize(N_INPORTS);
+    outport_dimensions_D[BPID-1].resize(N_OUTPORTS);
+    from_which_inport_D[BPID-1].resize(N_OUTPORT_ENTRIES);
+    from_which_entry_D[BPID-1].resize(N_OUTPORT_ENTRIES);
+    
     for( uint i = 0; i < N_INPORTS; i++ ) {
-		inport_dimensions_E.push_back((int) INPORT_DIMENSIONS[i]);
-	}
-	for( uint i = 0; i < N_OUTPORTS; i++ ) {
-		outport_dimensions_E.push_back((int) OUTPORT_DIMENSIONS[i]);
-	}
-	for( uint j = 0; j < N_OUTPORT_ENTRIES; j++ ) {
-		from_which_inport_E.push_back((int) FROM_WHICH_INPORT[j]);
-	}
-	for( uint j = 0; j < N_OUTPORT_ENTRIES; j++ ) {
-		from_which_entry_E.push_back((int) FROM_WHICH_ENTRY[j]);
+		inport_dimensions_D[BPID-1][i] = INPORT_DIMENSIONS[i];
 	}
 	
-    //! Resizing in- and outport messages
-    input_msgs_E.resize(n_inports_E);
+    for( uint i = 0; i < N_OUTPORTS; i++ ) {
+		outport_dimensions_D[BPID-1][i] = OUTPORT_DIMENSIONS[i];
+	}
+	
+	for( uint k = 0; k < N_OUTPORT_ENTRIES; k++ ) {
+		from_which_inport_D[BPID-1][k] = FROM_WHICH_INPORT[k];
+		from_which_entry_D[BPID-1][k] = FROM_WHICH_ENTRY[k];
+	}
+	
+	// math statuses
+	flip_status_D[BPID-1].resize(N_OUTPORTS);
+	for( uint i = 0; i < N_OUTPORTS; i++ ) {
+		flip_status_D[BPID-1][i] = false;
+	}
+	
+	// Resizing math properties
+	flip_values_D[BPID-1].resize(n_outports_D[BPID-1]);
+
     
-    intermediate_E.resize(n_outports_E);
-    output_E.resize(n_outports_E);
-    output_E_vel.resize(n_outports_E);
-    for( uint i = 0; i < n_outports_E; i++ ) {
-        intermediate_E[i].resize( outport_dimensions_E[i] );
-        output_E[i].resize( outport_dimensions_E[i] );
-        output_E_vel[i].resize( outport_dimensions_E[i] );
+	//! Resizing in- and outport messages
+    input_msgs_D[BPID-1].resize(n_inports_D[BPID-1]);
+    for( uint i = 0; i < n_inports_D[BPID-1]; i++ ) {
+        input_msgs_D[BPID-1][i].values.resize( inport_dimensions_D[BPID-1][i] );
+	}
+		
+    intermediate_D[BPID-1].resize(n_outports_D[BPID-1]);
+    output_D[BPID-1].resize(n_outports_D[BPID-1]);
+    for( uint i = 0; i < n_outports_D[BPID-1]; i++ ) {
+        intermediate_D[BPID-1][i].resize( outport_dimensions_D[BPID-1][i]);
+        output_D[BPID-1][i].resize(outport_dimensions_D[BPID-1][i]);
     }
     
-    log(Warning) << "EtherCATread (" << PARTNAME << ")::AddEncoderIns: Added EncoderIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports." << endlog();
+    log(Warning) << "EtherCATread::AddDigitalIns(" << PARTNAME << "): Added DigitalIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports." << endlog();
 
-	// Do a reset encoders
+	return;
+}
+
+void EtherCATread::AddEncoderIns(string PARTNAME, doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY)
+{	
+	// Init 
+	uint N_INPORTS = INPORT_DIMENSIONS.size();
+	uint N_OUTPORTS = OUTPORT_DIMENSIONS.size();
+	uint N_INPORT_ENTRIES = 0;
+	uint N_OUTPORT_ENTRIES = 0;
+	uint BPID;
+	
+	//! Check configuration	
+	if (!this->isRunning()) {
+		log(Error) << "EtherCATread::AddEncoderIns(" << PARTNAME << "): Could not add EncoderIns. Since EtherCATread component has not yet been started." << endlog();
+		return;
+	}
+	// Check if the EncoderIns is already added for this bodypart
+	for(uint l = 0; l < MAX_BODYPARTS; l++) {
+		if (PARTNAME == added_bodyparts_E[l]) {
+			log(Error) << "EtherCATread::AddEncoderIns(" << PARTNAME << "): Could not add EncoderIns. There is already an EncoderIns for bodypart " << PARTNAME << "!" << endlog();
+			return;
+		}
+	}
+	// Check if the bodypart name is in the bodypart_name list and set the BPID accordingly
+	for (uint l = 0; l < bodypart_names.size(); l++) {
+		if (bodypart_names[l] == PARTNAME) {
+			BPID = l + 1;
+			log(Info) << "EtherCATread::AddEncoderIns(" << PARTNAME << "): BPID IS: " << BPID << "." << endlog();
+		}
+	}
+	if (BPID <= 0 || BPID > bodypart_names.size()) {
+		log(Error) << "EtherCATread::AddEncoderIns(" << PARTNAME << "): Could not add Endoder in. Could not find " << PARTNAME << " in the list of bodypartnames of EtherCATread!" << endlog();
+		return;
+	}
+	
+    
+	// Check for invalid number of ports
+    if(N_INPORTS < 1 || N_INPORTS > MAX_PORTS) {
+        log(Error) << "EtherCATread::AddEncoderIns(" << PARTNAME << "): Could not add EncoderIns. Invalid number of inports: " << N_INPORTS << "!" << endlog();
+        return;
+    }
+    if(N_OUTPORTS < 1 || N_OUTPORTS > MAX_PORTS) {
+        log(Error) << "EtherCATread::AddEncoderIns(" << PARTNAME << "): Could not add EncoderIns. Invalid number of outports: " << N_OUTPORTS << "!" << endlog();
+        return;
+    }
+    
+	// Count the number of entries respectively for N_INPORT_ENTRIES and N_OUTPORT_ENTRIES
+	// Special case for Encoders are that all inport_dimensions should be one and there can only be one outport for each bodypart
+    for(uint i = 0; i < N_INPORTS; i++) {
+        if(INPORT_DIMENSIONS[i] != 1) {
+            log(Error) << "EtherCATread::AddEncoderIns(" << PARTNAME << "): Could not add EncoderIns. Inport_dimensions cannot contain value other than one!" << endlog();
+            return;
+        }
+        N_INPORT_ENTRIES += INPORT_DIMENSIONS[i];
+    }
+    
+    if(OUTPORT_DIMENSIONS.size() != 1) {
+		log(Error) << "EtherCATread::AddEncoderIns(" << PARTNAME << "): Could not add EncoderIns. Outport_dimensions should be of size 1. There can only be one outputport per bodypart!" << endlog();
+		return;
+	}
+    for(uint i = 0; i < N_OUTPORTS; i++) {
+        if(OUTPORT_DIMENSIONS[i] < 1) {
+            log(Error) << "EtherCATread::AddEncoderIns(" << PARTNAME << "): Could not add EncoderIns. Outport_dimensions cannot contain value smaller than one!" << endlog();
+            return;
+        }
+        N_OUTPORT_ENTRIES += OUTPORT_DIMENSIONS[i];
+    }
+
+	// Check if the total number of entries matches the size of FROM_WHICH_INPORT and FROM_WHICH_ENTRY
+    if ((FROM_WHICH_INPORT.size() != N_OUTPORT_ENTRIES) || (FROM_WHICH_ENTRY.size() != N_OUTPORT_ENTRIES)) {
+        log(Error) << "EtherCATread::AddEncoderIns(" << PARTNAME << "): Could not add EncoderIns. The number of entries in from_which_inport_E and from_which_entry_E should equal the total number of output values." << endlog();
+        return;
+    }
+
+	// Check validity of each entry in the FROM_WHICH_INPORT and FROM_WHICH_ENTRY 
+    for(uint k = 0; k < N_OUTPORT_ENTRIES; k++) {
+        if( FROM_WHICH_INPORT[k] <= 0 || FROM_WHICH_INPORT[k] > N_INPORTS ) {
+            log(Error) << "EtherCATread::AddEncoderIns(" << PARTNAME << "): Could not add EncoderIns. 0 < From_which_inport <= N_INPORTS. -> 0 < " << FROM_WHICH_INPORT[k] << " <= "<< N_INPORTS <<"!" << endlog();
+            return;
+        }
+        else if ( FROM_WHICH_ENTRY[k] != 1 ) {
+            log(Error) << "EtherCATread::AddEncoderIns(" << PARTNAME << "): Could not add EncoderIns. From_which_entry array contains entry no. " << FROM_WHICH_ENTRY[k] << " which should be 1 for a encoder in.!" << endlog();
+            return;
+        }
+    }
+    
+    //! Now that all inputs have been properly examined. The in- and outports can be created
+	for( uint i = 0; i < N_INPORTS; i++ ) {
+		addPort( PARTNAME+"_Ein"+to_string(i+1), inports_E[BPID-1][i] );
+	}
+    for( uint i = 0; i < N_OUTPORTS; i++ ) {
+        addPort( PARTNAME+"_Eout"+to_string(i+1), outports_E[BPID-1][i] );
+        addPort( PARTNAME+"_Eout_vel"+to_string(i+1), outports_E_vel[BPID-1][i] );
+    }
+    
+    //! And the temperary properties can be added to the global properties
+    n_addedbodyparts_E++;
+    n_inports_E[BPID-1] = N_INPORTS;
+    n_outports_E[BPID-1] = N_OUTPORTS;
+    
+    added_bodyparts_E[BPID-1] = PARTNAME;
+    inport_dimensions_E[BPID-1].resize(N_INPORTS);
+    outport_dimensions_E[BPID-1].resize(N_OUTPORTS);
+    from_which_inport_E[BPID-1].resize(N_OUTPORT_ENTRIES);
+    from_which_entry_E[BPID-1].resize(N_OUTPORT_ENTRIES);
+    
+    for( uint i = 0; i < N_INPORTS; i++ ) {
+		inport_dimensions_E[BPID-1][i] = (int) INPORT_DIMENSIONS[i];
+	}
+	for( uint i = 0; i < N_OUTPORTS; i++ ) {
+		outport_dimensions_E[BPID-1][i] = OUTPORT_DIMENSIONS[i];
+	}
+	for( uint k = 0; k < N_OUTPORT_ENTRIES; k++ ) {
+		from_which_inport_E[BPID-1][k] = ((int) FROM_WHICH_INPORT[k]);
+		from_which_entry_E[BPID-1][k] = ((int) FROM_WHICH_ENTRY[k]);
+	}
+	
+	// math statuses
+	enc2si_status_E[BPID-1].resize(N_OUTPORTS);
+	matrixtransform_status_E[BPID-1].resize(N_OUTPORTS);	
+	for( uint i = 0; i < N_OUTPORTS; i++ ) {
+		enc2si_status_E[BPID-1][i] = false;
+		matrixtransform_status_E[BPID-1][i] = false;
+	}
+	
+	// Resizing math properties 
+	enc2si_values_E[BPID-1].resize(n_outports_E[BPID-1]);
+	encoderbits_E[BPID-1].resize(n_outports_E[BPID-1]);
+	matrixtransform_entries_E[BPID-1].resize(n_outports_E[BPID-1]);
+
+	initpos_E[BPID-1].resize(n_outports_E[BPID-1]);
+	enc_values[BPID-1].resize(n_outports_E[BPID-1]);
+	previous_enc_values[BPID-1].resize(n_outports_E[BPID-1]);
+	encodercntr_E[BPID-1].resize(n_outports_E[BPID-1]);
+    
+    //! Resizing in- and outport messages
+    input_msgs_E[BPID-1].resize(n_inports_E[BPID-1]);    
+    intermediate_E[BPID-1].resize(n_outports_E[BPID-1]);
+    output_E[BPID-1].resize(n_outports_E[BPID-1]);
+    output_E_vel[BPID-1].resize(n_outports_E[BPID-1]);
+    
+    for( uint i = 0; i < n_outports_E[BPID-1]; i++ ) {
+        intermediate_E[BPID-1][i].resize( outport_dimensions_E[BPID-1][i] );
+        output_E[BPID-1][i].resize( outport_dimensions_E[BPID-1][i] );
+        output_E_vel[BPID-1][i].resize( outport_dimensions_E[BPID-1][i] );
+    }
+    
+    log(Warning) << "EtherCATread::AddEncoderIns(" << PARTNAME << "): Added EncoderIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports." << endlog();
 
 	return;
 }
 
 //! Functions to edit inputs
 // Analog
-void EtherCATread::AddAddition_A(int ID, doubles VALUES)
+void EtherCATread::AddAddition_A(string PARTNAME, int PORTNR, doubles ADDVALUES)
 {
-	// Check
-	if( ID <= 0 || ID > n_outports_A) {
-		log(Error) << "EtherCATread::AddAddition_A: Could not add addition. Invalid ID: " << ID << ".  1 <= ID <= " << n_outports_A << "!" << endlog();
-		return;
-	}
-	if( VALUES.size() != output_A[ID-1].size() ) {
-		log(Error) << "EtherCATread::AddAddition_A: Could not add addition. Invalid size of VALUES. Should have be of size :" << output_A[ID-1].size() << "!" << endlog();
-		return;
-	}
-	if( multiply_status_A[ID-1] ) {
-		log(Error) << "EtherCATread::AddAddition_A: Could not add addition. For this output a multiplier is already there" << endlog();
-		log(Error) << "If you want to do both a multiply and an addition, then do the addition first and then the mulitiply" << endlog();
+	// init
+	uint BPID;
+	
+	//! Check configuration	
+	if (!this->isRunning()) {
+		log(Error) << "EtherCATread::AddAddition_A(" << PARTNAME << "): Could not add Addition_A. Since EtherCATread component has not yet been started." << endlog();
 		return;
 	}
 	
-	// Resize
-	addition_values_A[ID-1].resize(output_A[ID-1].size());
-	
-	// Save ramp properties
-	for( uint i = 0; i < output_A[ID-1].size(); i++ ) {
-		addition_values_A[ID-1][i] = VALUES[i];
+	// Check if the bodypart name is in the bodypart_name list and set the BPID accordingly
+	for (uint l = 0; l < bodypart_names.size(); l++) {
+		if (bodypart_names[l] == PARTNAME) {
+			BPID = l + 1;
+			log(Info) << "EtherCATread(" << PARTNAME << ")::AddAddition_A: BPID IS: " << BPID << "." << endlog();
+		}
 	}
-	
-	if( addition_status_A[ID-1] ) {
-		log(Warning) << "EtherCATread::AddAddition_A: Overwritten existing addition." << endlog();
+	if (BPID <= 0 || BPID > bodypart_names.size()) {
+		log(Error) << "EtherCATread(" << PARTNAME << ")::AddAddition_A: Could not add addition. Could not find " << PARTNAME << " in the list of bodypartnames of EtherCATread!" << endlog();
+		return;
+	}
+	if( PORTNR <= 0 || PORTNR > n_outports_A[BPID-1]) {
+		log(Error) << "EtherCATread::AddAddition_A(" << PARTNAME << "): Could not add addition. Invalid PORTNR: " << PORTNR << ".  1 <= PORTNR <= " << n_outports_A[BPID-1] << "!" << endlog();
+		return;
+	}
+	if( ADDVALUES.size() != outport_dimensions_A[BPID-1][PORTNR-1] ) {
+		log(Error) << "EtherCATread::AddAddition_A(" << PARTNAME << "): Could not add addition. Invalid size of ADDVALUES " << ADDVALUES.size() << ". Should have been of size :" << outport_dimensions_A[BPID-1][PORTNR-1] << "!" << endlog();
+		return;
+	}
+	if( multiply_status_A[BPID-1][PORTNR-1] ) {
+		log(Error) << "EtherCATread::AddAddition_A(" << PARTNAME << "): Could not add addition. For this output a multiplier is already there" << endlog();
+		log(Error) << "If you want to do both a multiply and an addition, then do the addition first and then the multiply" << endlog();
+		return;
+	}
+
+	// Resize and save math properties
+	addition_values_A[BPID-1][PORTNR-1].resize(outport_dimensions_A[BPID-1][PORTNR-1]);
+	for( uint k = 0; k < outport_dimensions_A[BPID-1][PORTNR-1]; k++ ) {
+		addition_values_A[BPID-1][PORTNR-1][k] = ADDVALUES[k];
+	}		
+		
+	if( addition_status_A[BPID-1][PORTNR-1] ) {
+		log(Warning) << "EtherCATread::AddAddition_A(" << PARTNAME << "): Overwritten existing addition." << endlog();
 	} else {
-		log(Warning) << "EtherCATread::AddAddition_A: Added addition." << endlog();
+		log(Warning) << "EtherCATread::AddAddition_A(" << PARTNAME << "): Added addition." << endlog();
 	}
 	
 	// Set status
-	addition_status_A[ID-1] = true;
+	addition_status_A[BPID-1][PORTNR-1] = true;
 }
 
-void EtherCATread::AddMultiply_A(int ID, doubles FACTOR)
+void EtherCATread::AddMultiply_A(string PARTNAME, int PORTNR, doubles MULTIPLYFACTOR)
 {
-	// Check
-	if( ID <= 0 || ID > n_outports_A) {
-		log(Error) << "EtherCATread::AddMultiply_A: Could not add multiplier. Invalid ID: " << ID << ".  1 <= ID <= " << n_outports_A << "!" << endlog();
+	// init
+	uint BPID;	
+	
+	//! Check configuration	
+	if (!this->isRunning()) {
+		log(Error) << "EtherCATread::AddMultiply_A(" << PARTNAME << "): Could not add Multiply_A. Since EtherCATread component has not yet been started." << endlog();
 		return;
 	}
-	if( FACTOR.size() != output_A[ID-1].size() ) {
-		log(Error) << "EtherCATread::AddMultiply_A: Could not add multiplier. Invalid size of FACTOR. Should have be of size :" << output_A[ID-1].size() << "!" << endlog();
+	// Check if the bodypart name is in the bodypart_name list and set the BPID accordingly
+	for (uint l = 0; l < bodypart_names.size(); l++) {
+		if (bodypart_names[l] == PARTNAME) {
+			BPID = l + 1;
+			log(Info) << "EtherCATread(" << PARTNAME << ")::AddMultiply_A: BPID IS: " << BPID << "." << endlog();
+		}
+	}
+	if (BPID <= 0 || BPID > bodypart_names.size()) {
+		log(Error) << "EtherCATread(" << PARTNAME << ")::AddMultiply_A: Could not add Multiply. Could not find " << PARTNAME << " in the list of bodypartnames of EtherCATread!" << endlog();
 		return;
 	}
 	
-	// Resize
-	multiply_factor_A[ID-1].resize(output_A[ID-1].size());
+	if( PORTNR <= 0 || PORTNR > n_outports_A[BPID-1]) {
+		log(Error) << "EtherCATread::AddMultiply_A(" << PARTNAME << "): Could not add multiply. Invalid PORTNR: " << PORTNR << ".  1 <= PORTNR <= " << n_outports_A[BPID-1] << "!" << endlog();
+		return;
+	}
+	if( MULTIPLYFACTOR.size() != outport_dimensions_A[BPID-1][PORTNR-1] ) {
+		log(Error) << "EtherCATread::AddMultiply_A(" << PARTNAME << "): Could not add multiplier. Invalid size of MULTIPLYFACTOR " << MULTIPLYFACTOR.size() << ". Should have be of size :" << outport_dimensions_A[BPID-1][PORTNR-1] << "!" << endlog();
+		return;
+	}	
 	
-	// Save ramp properties
-	for( uint i = 0; i < output_A[ID-1].size(); i++ ) {
-		multiply_factor_A[ID-1][i] = FACTOR[i];
+	// Resize and save math properties
+	multiply_values_A[BPID-1][PORTNR-1].resize(outport_dimensions_A[BPID-1][PORTNR-1]);
+	for( uint k = 0; k < outport_dimensions_A[BPID-1][PORTNR-1]; k++ ) {
+		multiply_values_A[BPID-1][PORTNR-1][k] = MULTIPLYFACTOR[k];
 	}
 	
-	if( addition_status_A[ID-1] ) {
-		log(Warning) << "EtherCATread::AddMultiply_A: Overwritten existing multiplier." << endlog();
+	if( multiply_status_A[BPID-1][PORTNR-1] ) {
+		log(Warning) << "EtherCATread::AddMultiply_A(" << PARTNAME << "): Overwritten existing multiplier." << endlog();
 	} else {
-		log(Warning) << "EtherCATread::AddMultiply_A: Added multiplier." << endlog();
+		log(Warning) << "EtherCATread::AddMultiply_A(" << PARTNAME << "): Added multiplier." << endlog();
 	}
 	
 	// Set status
-	multiply_status_A[ID-1] = true;
+	multiply_status_A[BPID-1][PORTNR-1] = true;
 	
 }
 
 // Digital
-void EtherCATread::AddFlip_D(int ID, doubles FLIP)
+void EtherCATread::AddFlip_D(string PARTNAME, int PORTNR, doubles FLIPVALUES)
 {
-	// Check
-	if( ID <= 0 || ID > n_outports_D) {
-		log(Error) << "EtherCATread::AddFlip_D: Could not add flip. Invalid ID: " << ID << ".  1 <= ID <= " << n_outports_D << "!" << endlog();
+	// init
+	uint BPID;	
+	
+	//! Check configuration	
+	if (!this->isRunning()) {
+		log(Error) << "EtherCATread::AddFlip_D(" << PARTNAME << "): Could not add Flip_D. Since EtherCATread component has not yet been started." << endlog();
 		return;
 	}
-	if( FLIP.size() != output_D[ID-1].size() ) {
-		log(Error) << "EtherCATread::AddFlip_D: Could not add flip. Invalid size of FLIP. Should have be of size :" << output_D[ID-1].size() << "!" << endlog();
+	// Check if the bodypart name is in the bodypart_name list and set the BPID accordingly
+	for (uint l = 0; l < bodypart_names.size(); l++) {
+		if (bodypart_names[l] == PARTNAME) {
+			BPID = l + 1;
+			log(Info) << "EtherCATread(" << PARTNAME << ")::AddFlip_D: BPID IS: " << BPID << "." << endlog();
+		}
+	}
+	if (BPID <= 0 || BPID > bodypart_names.size()) {
+		log(Error) << "EtherCATread(" << PARTNAME << ")::AddFlip_D: Could not add Flip. Could not find " << PARTNAME << " in the list of bodypartnames of EtherCATread!" << endlog();
 		return;
 	}
 	
-	// Resize
-	flip_flip_D[ID-1].resize(output_D[ID-1].size());
-	
-	// Save ramp properties
-	for( uint i = 0; i < output_D[ID-1].size(); i++ ) {
-		flip_flip_D[ID-1][i] = (bool) FLIP[i];
+	if( PORTNR <= 0 || PORTNR > n_outports_D[BPID-1]) {
+		log(Error) << "EtherCATread::AddFlip_D(" << PARTNAME << "): Could not add flip. Invalid PORTNR: " << PORTNR << ".  1 <= PORTNR <= " << n_outports_D[BPID-1] << "!" << endlog();
+		return;
+	}
+	if( FLIPVALUES.size() != outport_dimensions_D[BPID-1][PORTNR-1] ) {
+		log(Error) << "EtherCATread::AddFlip_D(" << PARTNAME << "): Could not add flip. Invalid size of FLIPVALUES. Should have be of size :" << outport_dimensions_D[BPID-1][PORTNR-1] << "!" << endlog();
+		return;
 	}
 	
-	if( flip_status_D[ID-1] ) {
-		log(Warning) << "EtherCATread::AddFlip_D: Overwritten existing flip." << endlog();
+	// Resize and save math properties
+	flip_values_D[BPID-1][PORTNR-1].resize(outport_dimensions_D[BPID-1][PORTNR-1]);
+	for( uint k = 0; k < outport_dimensions_D[BPID-1][PORTNR-1]; k++ ) {
+		flip_values_D[BPID-1][PORTNR-1][k] = FLIPVALUES[k];
+	}
+	
+	if( flip_status_D[BPID-1][PORTNR-1] ) {
+		log(Warning) << "EtherCATread::AddFlip_D(" << PARTNAME << "): Overwritten existing flip." << endlog();
 	} else {
-		log(Warning) << "EtherCATread::AddFlip_D: Added a flip." << endlog();
+		log(Warning) << "EtherCATread::AddFlip_D(" << PARTNAME << "): Added a flip." << endlog();
 	}
 	
 	// Set status
-	flip_status_D[ID-1] = true;
+	flip_status_D[BPID-1][PORTNR-1] = true;
 }
 
 // Encoder
-void EtherCATread::AddEnc2Si_E(int ID, doubles ENCODERBITS, doubles ENC2SI)
+void EtherCATread::AddEnc2Si_E(string PARTNAME, int PORTNR, doubles ENCODERBITS, doubles ENC2SI)
 {
-	// Check
-	if( ID <= 0 || ID > n_outports_E) {
-		log(Error) << "EtherCATread::AddEnc2Si_E: Could not add enc2si. Invalid ID: " << ID << ".  1 <= ID <= " << n_outports_E << "!" << endlog();
+	// init
+	uint BPID;	
+	
+	//! Check configuration	
+	if (!this->isRunning()) {
+		log(Error) << "EtherCATread::AddEnc2Si_E(" << PARTNAME << "): Could not add Enc2Si_E. Since EtherCATread component has not yet been started." << endlog();
 		return;
 	}
-	if( ENCODERBITS.size() != output_E[ID-1].size() || ENC2SI.size() != output_E[ID-1].size() ) {
-		log(Error) << "EtherCATread::AddEnc2Si_E: Could not add enc2si. Invalid size of FLIP. Should have be of size :" << output_E[ID-1].size() << "!" << endlog();
+	// Check if the bodypart name is in the bodypart_name list and set the BPID accordingly
+	for (uint l = 0; l < bodypart_names.size(); l++) {
+		if (bodypart_names[l] == PARTNAME) {
+			BPID = l + 1;
+			log(Info) << "EtherCATread(" << PARTNAME << ")::AddEnc2Si_E: BPID IS: " << BPID << "." << endlog();
+		}
+	}
+	if (BPID <= 0 || BPID > bodypart_names.size()) {
+		log(Error) << "EtherCATread(" << PARTNAME << ")::AddEnc2Si_E: Could not add Enc2SI. Could not find " << PARTNAME << " in the list of bodypartnames of EtherCATread!" << endlog();
+		return;
+	}
+	
+	if( PORTNR <= 0 || PORTNR > n_outports_E[BPID-1]) {
+		log(Error) << "EtherCATread::AddEnc2Si_E(" << PARTNAME << "): Could not add enc2si. Invalid PORTNR: " << PORTNR << ".  1 <= PORTNR <= " << n_outports_E[BPID-1] << "!" << endlog();
+		return;
+	}
+	if( ENCODERBITS.size() != outport_dimensions_E[BPID-1][PORTNR-1] || ENC2SI.size() != outport_dimensions_E[BPID-1][PORTNR-1] ) {
+		log(Error) << "EtherCATread::AddEnc2Si_E(" << PARTNAME << "): Could not add enc2si. Invalid size of ENC2SI. Should have be of size :" << outport_dimensions_E[BPID-1][PORTNR-1] << "!" << endlog();
 		return;
 	}
 	for(uint k = 0; k < ENCODERBITS.size(); k++) {
 		if(ENC2SI[k] > 1.0 ) {
-			log(Error) << "EtherCATread::AddEnc2Si_E: Could not add enc2si. Currently Enc2SI values > 1 are not supported. Your " << k <<"th enc2si was: " << ENC2SI[k] << "!" << endlog();
+			log(Error) << "EtherCATread::AddEnc2Si_E(" << PARTNAME << "): Could not add enc2si. Currently Enc2SI values > 1 are not supported. Your " << k <<"th enc2si was: " << ENC2SI[k] << "!" << endlog();
 			return;
 		}
 	}
 	
-	// Store Properties
-	encoderbits[ID-1].resize(ENCODERBITS.size());
-	enc2SI[ID-1].resize(ENCODERBITS.size());
-	position_SI_init[ID-1].resize(ENCODERBITS.size());
-	enc_values[ID-1].resize(ENCODERBITS.size());
-	previous_enc_values[ID-1].resize(ENCODERBITS.size());
-	ienc[ID-1].resize(ENCODERBITS.size());
+	// Resize and save math properties
+	encoderbits_E[BPID-1][PORTNR-1].resize(ENCODERBITS.size());
+	enc2si_values_E[BPID-1][PORTNR-1].resize(ENCODERBITS.size());
+	initpos_E[BPID-1][PORTNR-1].resize(ENCODERBITS.size());
+	enc_values[BPID-1][PORTNR-1].resize(ENCODERBITS.size());
+	previous_enc_values[BPID-1][PORTNR-1].resize(ENCODERBITS.size());
+	encodercntr_E[BPID-1][PORTNR-1].resize(ENCODERBITS.size());
 	
 	for(uint k = 0; k < ENCODERBITS.size(); k++) {
-		encoderbits[ID-1][k] = ENCODERBITS[k]; 
-		enc2SI[ID-1][k] = ENC2SI[k];
+		encoderbits_E[BPID-1][PORTNR-1][k] = ENCODERBITS[k]; 
+		enc2si_values_E[BPID-1][PORTNR-1][k] = ENC2SI[k];
 		
-		position_SI_init[ID-1][k] = 0.0;
-		enc_values[ID-1][k] = 0.0;
-		previous_enc_values[ID-1][k] = 0.0;
-		ienc[ID-1][k] = 0;
+		initpos_E[BPID-1][PORTNR-1][k] = 0.0;
+		enc_values[BPID-1][PORTNR-1][k] = 0.0;
+		previous_enc_values[BPID-1][PORTNR-1][k] = 0.0;
+		encodercntr_E[BPID-1][PORTNR-1][k] = 0;
 	}
 
-	if( enc2si_status_E[ID-1] ) {
-		log(Warning) << "EtherCATread::AddEnc2Si_E: Overwritten existing enc2si." << endlog();
+	if( enc2si_status_E[BPID-1][PORTNR-1] ) {
+		log(Warning) << "EtherCATread::AddEnc2Si_E(" << PARTNAME << "): Overwritten existing enc2si." << endlog();
 	} else {
-		log(Warning) << "EtherCATread::AddEnc2Si_E: Added a enc2si." << endlog();
+		log(Warning) << "EtherCATread::AddEnc2Si_E(" << PARTNAME << "): Added a enc2si." << endlog();
 	}	
 	
 	// Set status
-	enc2si_status_E[ID-1] = true;
+	enc2si_status_E[BPID-1][PORTNR-1] = true;
 	
 	// Almost done, first convert to si for the first time
 	ReadInputs();
@@ -621,55 +766,80 @@ void EtherCATread::AddEnc2Si_E(int ID, doubles ENCODERBITS, doubles ENC2SI)
 	Calculate_E();
 	
 	// Then reset Encoders
-	doubles zeros(ENCODERBITS.size(),0.0);
-	ResetEncoders(ID, zeros);
+	doubles zerovec(ENCODERBITS.size(),0.0);
+	ResetEncoders(BPID, PORTNR, zerovec);
 
 }
 
-void EtherCATread::AddMatrixTransform_E(int ID, double INPUTSIZE, double OUTPUTSIZE)
+void EtherCATread::AddMatrixTransform_E(string PARTNAME, int PORTNR, double INPUTSIZE, double OUTPUTSIZE)
 {
-	// Check
-	if( matrixtransform_status_E[ID-1] ) {
-		log(Warning) << "EtherCATread::AddMatrixTransform_E: Could not add Matrix Transform, since this already excists for this bodypart. Overwriting is not supported at the moment" << endlog();
+	// Matrix transform is only supported over 1 output port.
+	
+	// init
+	uint BPID;
+		
+	//! Check configuration	
+	if (!this->isRunning()) {
+		log(Error) << "EtherCATread::AddMatrixTransform_E(" << PARTNAME << "): Could not add MatrixTransform_E. Since EtherCATread component has not yet been started." << endlog();
 		return;
 	}
-	if( ID <= 0 || ID > n_outports_E) {
-		log(Error) << "EtherCATread::AddMatrixMultiplication_E: Could not add matrix transform. Invalid ID: " << ID << ".  1 <= ID <= " << n_outports_E << "!" << endlog();
+	// Check if the bodypart name is in the bodypart_name list and set the BPID accordingly
+	for (uint l = 0; l < bodypart_names.size(); l++) {
+		if (bodypart_names[l] == PARTNAME) {
+			BPID = l + 1;
+			log(Info) << "EtherCATread(" << PARTNAME << ")::AddMatrixTransform_E: BPID IS: " << BPID << "." << endlog();
+		}
+	}
+	if (BPID <= 0 || BPID > bodypart_names.size()) {
+		log(Error) << "EtherCATread(" << PARTNAME << ")::AddMatrixTransform_E: Could not add MatrixTransform. Could not find " << PARTNAME << " in the list of bodypartnames of EtherCATread!" << endlog();
 		return;
 	}
-	if( OUTPUTSIZE != outport_dimensions_E[ID-1]) {
-		if( OUTPUTSIZE < outport_dimensions_E[ID-1]) { 	// smaller matrix then nr of inputs is allowed, not recommended
-			log(Warning) << "EtherCATread::AddMatrixTransform_E: INPUTSIZE: " << OUTPUTSIZE << " is smaller than the size of the outport outport_dimensions_E[ID-1]:" << outport_dimensions_E[ID-1] << "!" << endlog();
+	 
+	if( PORTNR <= 0 || PORTNR > n_outports_E[BPID-1]) {
+		log(Error) << "EtherCATread::AddMatrixMultiplication_E(" << PARTNAME << "): Could not add matrix transform. Invalid PORTNR: " << PORTNR << ".  1 <= PORTNR <= " << n_outports_E[BPID-1] << "!" << endlog();
+		return;
+	}
+	if( matrixtransform_status_E[BPID-1][PORTNR-1] ) {
+		log(Warning) << "EtherCATread::AddMatrixTransform_E(" << PARTNAME << "): Could not add Matrix Transform, since this already excists for this bodypart. Overwriting is not supported at the moment" << endlog();
+		return;
+	}
+	if (n_outports_E[BPID-1] > 1) {
+		log(Error) << "EtherCATread::AddMatrixMultiplication_E(" << PARTNAME << "): Could not add matrix transform. Number of output ports for " << bodypart_names[BPID-1] << " is " << n_outports_E[BPID-1] << "  Matrix transform is only supported for one output port per bodypart!" << endlog();
+		return;
+	}
+	if( OUTPUTSIZE != outport_dimensions_E[BPID-1][PORTNR-1]) {
+		if( OUTPUTSIZE < outport_dimensions_E[BPID-1][PORTNR-1]) { 	// smaller matrix then nr of inputs is allowed, not recommended
+			log(Warning) << "EtherCATread::AddMatrixTransform_E(" << PARTNAME << "): INPUTSIZE: " << OUTPUTSIZE << " is smafller than the size of the outport outport_dimensions_E[BPID-1][PORTNR-1]:" << outport_dimensions_E[BPID-1][PORTNR-1] << "!" << endlog();
 		} else { 										// larger matrix then nr of inputs is not allowed
-			log(Error) << "EtherCATread::AddMatrixTransform_E: Could not add matrix transform. INPUTSIZE: " << OUTPUTSIZE << " is larger than the size of the outport outport_dimensions_E[ID-1]:" << inport_dimensions_E[ID-1] << "!" << endlog();
+			log(Error) << "EtherCATread::AddMatrixTransform_E(" << PARTNAME << "): Could not add matrix transform. INPUTSIZE: " << OUTPUTSIZE << " is larger than the size of the outport outport_dimensions_E[BPID-1][PORTNR-1]:" << inport_dimensions_E[BPID-1][PORTNR-1] << "!" << endlog();
 			return;
 		}
 	}
 	
 	// Update outport_dimensions_E
-	outport_dimensions_E[ID-1] = OUTPUTSIZE;
+	outport_dimensions_E[BPID-1][PORTNR-1] = OUTPUTSIZE;
 		
 	// Add property to store Matrix
-	matrixtransform_E[ID-1].resize(outport_dimensions_E[ID-1]);
-	for ( uint i = 0; i < outport_dimensions_E[ID-1]; i++ ) {
+	matrixtransform_entries_E[BPID-1][PORTNR-1].resize(outport_dimensions_E[BPID-1][PORTNR-1]);
+	for ( uint k = 0; k < outport_dimensions_E[BPID-1][PORTNR-1]; k++ ) {
 		
-		matrixtransform_E[ID-1][i].resize(outport_dimensions_E[ID-1]); 
-		string name = added_bodyparts_E[ID-1]+"_matrixtransform"+to_string(i+1);
-		addProperty( name, matrixtransform_E[ID-1][i]);
-		
+		matrixtransform_entries_E[BPID-1][PORTNR-1][k].resize(outport_dimensions_E[BPID-1][PORTNR-1]); 
+		string name = added_bodyparts_E[BPID-1]+to_string(PORTNR)+"_matrixtransform"+to_string(k+1);
+		addProperty( name, matrixtransform_entries_E[BPID-1][PORTNR-1][k]);
+
 		// Set matrix default to Identity matrix
-		for ( uint l = 0; l < matrixtransform_E[ID-1][i].size(); l++ ) { 
-			matrixtransform_E[ID-1][i][l] = 0.0;
+		for ( uint j = 0; j < matrixtransform_entries_E[BPID-1][PORTNR-1][k].size(); j++ ) { 
+			matrixtransform_entries_E[BPID-1][PORTNR-1][k][j] = 0.0;
 		}
-		matrixtransform_E[ID-1][i][i] = 1.0;
+		matrixtransform_entries_E[BPID-1][PORTNR-1][k][k] = 1.0;
 	}
 	
-	if( !matrixtransform_status_E[ID-1] ) {
-		log(Warning) << "EtherCATread::AddMatrixTransform_E: Added a matrix transform." << endlog();
+	if( !matrixtransform_status_E[BPID-1][PORTNR-1] ) {
+		log(Warning) << "EtherCATread::AddMatrixTransform_E(" << PARTNAME << "): Added a matrix transform." << endlog();
 	}
 	
 	// Set status
-	matrixtransform_status_E[ID-1] = true;
+	matrixtransform_status_E[BPID-1][PORTNR-1] = true;
 }
 
 //! Functions to edit inputs
@@ -683,204 +853,244 @@ void EtherCATread::CheckAllConnections()
 		goodToGO = true;
 		
 		// AnalogIns
-		for(uint i = 0; i < n_inports_A; i++) {
-			if ( !inports_A[i].connected() ) {
-				log(Error) << "EtherCATread::CheckAllConnections: Analog inport " << inports_A[i].getName() << " is not connected!" << endlog();
+		for(uint l = 0; l < MAX_BODYPARTS; l++) {		
+			for(uint i = 0; i < n_inports_A[l]; i++) {
+				if ( !inports_A[l][i].connected() ) {
+					log(Error) << "EtherCATread::CheckAllConnections: Analog inport " << inports_A[l][i].getName() << " is not connected!" << endlog();
+				}
 			}
-		}
-		for(uint i = 0; i < n_outports_A; i++) {
-			if ( !outports_A[i].connected() ) {
-				log(Info) << "EtherCATread::CheckAllConnections: Analog outport " << outports_A[i].getName() << " is not connected!" << endlog();
+			for(uint i = 0; i < n_outports_A[l]; i++) {
+				if ( !outports_A[l][i].connected() ) {
+					log(Info) << "EtherCATread::CheckAllConnections: Analog outport " << outports_A[l][i].getName() << " is not connected!" << endlog();
+				}
 			}
 		}
 		
 		// DigitalIns
-		for(uint i = 0; i < n_inports_D; i++) {
-			if ( !inports_D[i].connected() ) {
-				log(Error) << "EtherCATread::CheckAllConnections: Digital inport " << inports_D[i].getName() << " is not connected!" << endlog();
+		for(uint l = 0; l < MAX_BODYPARTS; l++) {		
+			for(uint i = 0; i < n_inports_D[l]; i++) {
+				if ( !inports_D[l][i].connected() ) {
+					log(Error) << "EtherCATread::CheckAllConnections: Digital inport " << inports_D[l][i].getName() << " is not connected!" << endlog();
+				}
 			}
-		}
-		for(uint i = 0; i < n_outports_D; i++) {
-			if ( !outports_D[i].connected() ) {
-				log(Info) << "EtherCATread::CheckAllConnections: Digital outport " << outports_D[i].getName() << " is not connected!" << endlog();
+			for(uint i = 0; i < n_outports_D[l]; i++) {
+				if ( !outports_D[l][i].connected() ) {
+					log(Info) << "EtherCATread::CheckAllConnections: Digital outport " << outports_D[l][i].getName() << " is not connected!" << endlog();
+				}
 			}
 		}
 		
 		// EncoderIns
-		for(uint i = 0; i < n_inports_E; i++) {
-			if ( !inports_E[i].connected() ) {
-				log(Error) << "EtherCATread::CheckAllConnections: Encoder inport " << inports_E[i].getName() << " is not connected!" << endlog();
+		for(uint l = 0; l < MAX_BODYPARTS; l++) {	
+			for(uint i = 0; i < n_inports_E[l]; i++) {
+				if ( !inports_E[l][i].connected() ) {
+					log(Error) << "EtherCATread::CheckAllConnections: Encoder inport " << inports_E[l][i].getName() << " is not connected!" << endlog();
+				}
 			}
+			for(uint i = 0; i < n_outports_E[l]; i++) {
+				if ( !outports_E[l][i].connected() ) {
+					log(Info) << "EtherCATread::CheckAllConnections: Encoder outport " << outports_E[l][i].getName() << " is not connected!" << endlog();
+				}
+				if ( !outports_E_vel[l][i].connected() ) {
+					log(Info) << "EtherCATread::CheckAllConnections: Encoder velocity outport " << outports_E_vel[l][i].getName() << " is not connected!" << endlog();
+				}
+			}		
 		}
-		for(uint i = 0; i < n_outports_E; i++) {
-			if ( !outports_E[i].connected() ) {
-				log(Info) << "EtherCATread::CheckAllConnections: Encoder outport " << outports_E[i].getName() << " is not connected!" << endlog();
-			}
-			if ( !outports_E_vel[i].connected() ) {
-				log(Info) << "EtherCATread::CheckAllConnections: Encoder velocity outport " << outports_E_vel[i].getName() << " is not connected!" << endlog();
-			}
-		}		
 	}
 	
 }
 
 void EtherCATread::ReadInputs()
 {
-	for( uint i = 0; i < n_inports_A; i++ ) {
-		inports_A[i].read(input_msgs_A[i]);
-    }    
-    for( uint i = 0; i < n_inports_D; i++ ) {
-		inports_D[i].read(input_msgs_D[i]);
-    }    
-    for( uint i = 0; i < n_inports_E; i++ ) {
-		inports_E[i].read(input_msgs_E[i]);
-    }
+	for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
+		for( uint i = 0; i < n_inports_A[l]; i++ ) {
+			inports_A[l][i].read(input_msgs_A[l][i]);
+		}    
+	}
+	for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
+		for( uint i = 0; i < n_inports_D[l]; i++ ) {
+			inports_D[l][i].read(input_msgs_D[l][i]);
+		}    
+	}
+	
+	for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
+		for( uint i = 0; i < n_inports_E[l]; i++ ) {
+			inports_E[l][i].read(input_msgs_E[l][i]);
+		}
+	}
 }
 
 void EtherCATread::WriteOutputs()
 {
-    for( uint i = 0; i < n_outports_A; i++ ) {
-		outports_A[i].write(output_A[i]);
+	// Analog
+	for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
+		for( uint i = 0; i < n_outports_A[l]; i++ ) {
+			outports_A[l][i].write(output_A[l][i]);
+		}
 	}
-        
-    for( uint i = 0; i < n_outports_D; i++ ) {
-		outports_D[i].write(output_D[i]);
+	
+	// Digital
+	for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
+		for( uint i = 0; i < n_outports_D[l]; i++ ) {
+			outports_D[l][i].write(output_D[l][i]);
+		}
 	}
-	    
-    for( uint i = 0; i < n_outports_E; i++ ) {
-		outports_E[i].write(output_E[i]);
-		outports_E_vel[i].write(output_E_vel[i]);
-	}	
+	
+	// Encoder
+    for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
+		for( uint i = 0; i < n_outports_E[l]; i++ ) {
+			outports_E[l][i].write(output_E[l][i]);
+			outports_E_vel[l][i].write(output_E_vel[l][i]);
+		}
+	}
+	
+		
 }
 
 void EtherCATread::MapInputs2Outputs()
 {	
 	// Analog
-    uint j = 0;
-    for( uint i = 0; i < n_outports_A; i++ ) {
-        for( uint k = 0; k < outport_dimensions_A[i]; ++k) {
-            intermediate_A[i][k] = input_msgs_A[ from_which_inport_A[j]-1 ].values[ from_which_entry_A[j]-1 ];
-            j++;   
-        }
-    }
+	for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
+		for( uint i = 0; i < n_outports_A[l]; i++ ) {
+			for( uint k = 0; k < outport_dimensions_A[l][i]; ++k) {	
+				intermediate_A[l][i][k] = input_msgs_A[l][from_which_inport_A[l][k]-1 ].values[from_which_entry_A[l][k]-1];   
+			}
+		}
+	}
 
 	// Digital
-    j = 0;
-    for( uint i = 0; i < n_outports_D; i++ ) {
-        for( uint k = 0; k < outport_dimensions_D[i]; ++k) {
-            intermediate_D[i][k] = input_msgs_D[ from_which_inport_D[j]-1 ].values[ from_which_entry_D[j]-1 ];
-            j++;
-        }
-    }
-    
-    // Encoders
-    j = 0;
-    for( uint i = 0; i < n_outports_E; i++ ) {
-        for( uint k = 0; k < outport_dimensions_E[i]; ++k) {
-            intermediate_E[i][k] = (double) input_msgs_E[ from_which_inport_E[j]-1 ].value;
-            j++;
-        }
-    }    
-    
+	for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
+		for( uint i = 0; i < n_outports_D[l]; i++ ) {
+			for( uint k = 0; k < outport_dimensions_D[l][i]; ++k) {	
+				intermediate_D[l][i][k] = input_msgs_D[l][from_which_inport_D[l][k]-1 ].values[from_which_entry_D[l][k]-1];   
+			}
+		}
+	}
+	
+    // Encoder
+    for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
+		for( uint i = 0; i < n_outports_E[l]; i++ ) {
+			for( uint k = 0; k < outport_dimensions_E[l][i]; ++k) {
+				intermediate_E[l][i][k] = (double) input_msgs_E[l][ from_which_inport_E[l][k]-1 ].value;
+			}
+		}
+	}	
 }
 
 void EtherCATread::Calculate_A()
 {	
 	// Output = intermediate
-	output_A = intermediate_A;
+	for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
+		output_A[l] = intermediate_A[l];
+	}
 	
 	// Addition
-    for( uint i = 0; i < n_outports_A; i++ ) {
-		if (addition_status_A[i]) {
-			for( uint k = 0; k < output_A[i].size(); ++k) {
-				output_A[i][k] = output_A[i][k]+addition_values_A[i][k];
+	for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
+		for( uint i = 0; i < n_outports_A[l]; i++ ) {
+			if (addition_status_A[l][i]) {	
+				for( uint k = 0; k < outport_dimensions_A[l][i]; ++k) {
+					output_A[l][i][k] = output_A[l][i][k]+addition_values_A[l][i][k];
+					//log(Warning)<<"EtherCATread::Calculate_A: " << n_addedbodyparts_E <<"]"<<endlog();
+				}
 			}
 		}
-    }
-    
+	}
+	
 	// Multiplier
-    for( uint i = 0; i < n_outports_A; i++ ) {
-		if (multiply_status_A[i]) {
-			for( uint k = 0; k < output_A[i].size(); ++k) {
-				output_A[i][k] = output_A[i][k]*multiply_factor_A[i][k];
+	for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
+		for( uint i = 0; i < n_outports_A[l]; i++ ) {
+			if (multiply_status_A[l][i]) {
+				for( uint k = 0; k < outport_dimensions_A[l][i]; ++k) {
+					output_A[l][i][k] = output_A[l][i][k]*multiply_values_A[l][i][k];
+				}
 			}
 		}
-    }
+	}
+
 }
 
 void EtherCATread::Calculate_D()
 {
 	// Output = intermediate
-	output_D = intermediate_D;
+	for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
+		output_D[l] = intermediate_D[l];
+	}
 	
 	// Flip
-    for( uint i = 0; i < n_outports_D; i++ ) {
-		if (flip_status_D[i]) {			
-			for( uint k = 0; k < output_D[i].size(); ++k) {		
-				if (flip_flip_D[i][k]) {
-					output_D[i][k] = !output_D[i][k];
+    for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
+		for( uint i = 0; i < n_outports_D[l]; i++ ) {
+			if (flip_status_D[l][i]) {			
+				for( uint k = 0; k < outport_dimensions_D[l][i]; ++k) {		
+					if (flip_values_D[l][i][k]) {
+						output_D[l][i][k] = !output_D[l][i][k];
+					}
 				}
 			}
 		}
-    }
-
+	}
 }
 
 void EtherCATread::Calculate_E()
-{
+{	
 	// Output = intermediate
-	output_E = intermediate_E;
+	for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
+		output_E[l] = intermediate_E[l];
+	}
 		
 	// Enc2Si
-    double dt = determineDt();
+    double dt = determineDt();	
 	
-    for( uint i = 0; i < n_outports_E; i++ ) {
-		if (enc2si_status_E[i]) {
-			for( uint k = 0; k < output_E[i].size(); ++k) {
+    for( uint l = 0; l < MAX_BODYPARTS; l++ ) {	
+		for( uint i = 0; i < n_outports_E[l]; i++ ) {
+			if (enc2si_status_E[l][i]) {
+				for( uint k = 0; k < outport_dimensions_E[l][i]; ++k) {
+													
+					// Recent encoder value
+					enc_values[l][i][k] = output_E[l][i][k];				
 				
-				// Recent encoder value
-				enc_values[i][k] = output_E[i][k];				
-			
-				// Detect if and count the amount of times going through the maximum encoder bits
-				if( (previous_enc_values[i][k] - enc_values[i][k]) > encoderbits[i][k]/2) {
-					ienc[i][k]++;
-				} else if( (previous_enc_values[i][k]  - enc_values[i][k]) < (-1 * encoderbits[i][k]/2) ) {
-					ienc[i][k]--;
+					// Detect if and count the amount of times going through the maximum encoder bits
+					if( (previous_enc_values[l][i][k] - enc_values[l][i][k]) > encoderbits_E[l][i][k]/2) {
+						encodercntr_E[l][i][k]++;
+					} else if( (previous_enc_values[l][i][k]  - enc_values[l][i][k]) < (-1 * encoderbits_E[l][i][k]/2) ) {
+						encodercntr_E[l][i][k]--;
+					}
+					previous_enc_values[l][i][k] = output_E[l][i][k];
+					 
+					// Calculate SI  nr of cycles * enc bits * enc2si_values_E         + enc_values      * enc2si_values_E      - Init_SI_value (for homing)
+					output_E[l][i][k] = encodercntr_E[l][i][k]*(encoderbits_E[l][i][k]*enc2si_values_E[l][i][k]) + enc_values[l][i][k]*enc2si_values_E[l][i][k] - initpos_E[l][i][k];
+					
+					// Calculate velocity
+					output_E_vel[l][i][k] = ( ( (double) (enc_values[l][i][k]- previous_enc_values[l][i][k]) ) * enc2si_values_E[l][i][k])/dt;
+					
 				}
-				previous_enc_values[i][k] = output_E[i][k];
-				 
-				// Calculate SI  nr of cycles * enc bits * enc2SI         + enc_values      * enc2SI      - Init_SI_value (for homing)
-				output_E[i][k] = ienc[i][k]*(encoderbits[i][k]*enc2SI[i][k]) + enc_values[i][k]*enc2SI[i][k] - position_SI_init[i][k];
-				
-				// Calculate velocity
-				output_E_vel[i][k] = ( ( (double) (enc_values[i][k]- previous_enc_values[i][k]) ) * enc2SI[i][k])/dt;
-				
 			}
 		}
 	}
 	
 	// Matrix Transform
-    for( uint i = 0; i < n_outports_E; i++ ) {
-		if (matrixtransform_status_E[i]) {
-			
-			// Store output of enc2si operation into a temporary input vector
-			doubles input_MT_E = output_E[i];
-			doubles input_MT_E_vel = output_E_vel[i];
-			
-			// Resize output vectors in case of a non square Matrix transformation
-			output_E[i].resize(outport_dimensions_E[i]);
-			output_E_vel[i].resize(outport_dimensions_E[i]);
-						
-			for ( uint k = 0; k < output_E[i].size(); k++ ) {
-				output_E[i][k] = 0.0;
-				output_E_vel[i][k] = 0.0;
+	for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
+		for( uint i = 0; i < n_outports_E[l]; i++ ) {
+			if (matrixtransform_status_E[l][i]) {
 				
-				for ( uint l = 0; l < input_MT_E.size(); l++ ) {
-					output_E[i][k] += matrixtransform_E[i][k][l] * input_MT_E[l];
-					output_E_vel[i][k] += matrixtransform_E[i][k][l] * input_MT_E_vel[l];
+				// Store output of enc2si operation into a temporary input vector
+				doubles input_MT_E = output_E[l][i];
+				doubles input_MT_E_vel = output_E_vel[l][i];
+				
+				// Resize output vectors in case of a non square Matrix transformation
+				output_E[l][i].resize(outport_dimensions_E[l][i]);
+				output_E_vel[l][i].resize(outport_dimensions_E[l][i]);
+							
+				for ( uint k = 0; k < outport_dimensions_E[l][i]; k++ ) {
+					output_E[l][i][k] = 0.0;
+					output_E_vel[l][i][k] = 0.0;
+					
+					for ( uint j = 0; j < input_MT_E.size(); j++ ) {
+						output_E[l][i][k] += matrixtransform_entries_E[l][i][k][j] * input_MT_E[j];
+						output_E_vel[l][i][k] += matrixtransform_entries_E[l][i][k][j] * input_MT_E_vel[j];
+					}
 				}
 			}
-		}
+		}	
 	}
 	
 }
@@ -893,30 +1103,33 @@ double EtherCATread::determineDt()
     return dt;
 }
 
-void EtherCATread::ResetEncoders(int ID, doubles resetvalues )
+void EtherCATread::ResetEncoders(int BPID, int PORTNR, doubles RESETVALUES )
 {
-	if (ID > n_outport_entries_E) {
-		log(Error)<<"EtherCATread::ResetEncoders: Could not reset encoders. Invalid ID provided. Should lie between [0," << n_outport_entries_E <<"]"<<endlog();
+	if( BPID <= 0 || BPID > bodypart_names.size()) {
+		log(Error) << "EtherCATread::ResetEncoders(" << BPID << bodypart_names[BPID-1] << ", port " << PORTNR << "): Could not reset encoders. Invalid BPID: " << BPID << ".  1 <= BPID <= " << bodypart_names.size() << "!" << endlog();
 		return;
 	}
-	if (!enc2si_status_E[ID-1]) {
-		log(Error)<<"EtherCATread::ResetEncoders: Could not reset encoders. The function AddEnc2Si has not yet been called for bodypart with ID : " << ID <<"."<<endlog();
+	if( PORTNR <= 0 || PORTNR > n_outports_E[BPID-1]) {
+		log(Error) << "EtherCATread::ResetEncoders(" << BPID << bodypart_names[BPID-1] << ", port " << PORTNR << "): Could not reset encoders. Invalid PORTNR: " << PORTNR << ".  1 <= PORTNR <= " << n_outports_E[BPID-1] << "!" << endlog();
+		return;
+	}
+	if (!enc2si_status_E[BPID-1][PORTNR-1]) {
+		log(Error)<<"EtherCATread::ResetEncoders(" << BPID << bodypart_names[BPID-1] << ", port " << PORTNR << "): Could not reset encoders. The function AddEnc2Si has not yet been called for bodypart with BPID : " << BPID <<"."<<endlog();
 		return;		
 	}
-	if (resetvalues.size() != encoderbits[ID-1].size()) {
-		log(Error)<<"EtherCATread::ResetEncoders: Could not reset encoders. Received incorrect sized initialize signal: " << resetvalues.size() << ". Should be of size" << n_inport_entries_E <<"."<<endlog();
+	if (RESETVALUES.size() != outport_dimensions_E[BPID-1][PORTNR-1]) {
+		log(Error)<<"EtherCATread::ResetEncoders(" << BPID << bodypart_names[BPID-1] << ", port " << PORTNR << "): Could not reset encoders. Received incorrect sized initialize signal: " << RESETVALUES.size() << ". Should be of size" << outport_dimensions_E[BPID-1][PORTNR-1] <<"."<<endlog();
 		return;
 	}
 
-	
-	for ( uint k = 0; k < resetvalues.size(); k++ ) {
+	for ( uint k = 0; k < RESETVALUES.size(); k++ ) {
 		
-		// Reset ienc, p
-		ienc[ID-1][k] = 0;
+		// Reset encodercntr_E, p
+		encodercntr_E[BPID-1][PORTNR-1][k] = 0;
 		
-		// Set position_SI_init and previous_enc_values
-		position_SI_init[ID-1][k] = output_E[ID-1][k] - resetvalues[k];
-		previous_enc_values[ID-1][k] = position_SI_init[ID-1][k];
+		// Set initpos_E and previous_enc_values
+		initpos_E[BPID-1][PORTNR-1][k] = output_E[BPID-1][PORTNR-1][k] - RESETVALUES[k];
+		previous_enc_values[BPID-1][PORTNR-1][k] = initpos_E[BPID-1][PORTNR-1][k];
 		
 	}
 }
