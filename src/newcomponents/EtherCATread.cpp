@@ -113,10 +113,10 @@ void EtherCATread::updateHook()
 	ReadInputs();
 	
 	// Maps the inputs into intermediate output structure (Input reshuffling, allows for example mapping X inputs on Y outputs)
-	MapInputs2Outputs();		
+	MapInputs2Outputs();
 	
 	// Functions to do all the calculations on the incoming data, for example converting enc counts to si values, or multiplying inputs with factor X
-	Calculate_A();			
+	Calculate_A();
 	Calculate_D();
 	Calculate_E();
 	
@@ -193,11 +193,11 @@ void EtherCATread::AddAnalogIns(string PARTNAME, doubles INPORT_DIMENSIONS, doub
 	
 	// Check validity of each entry in the FROM_WHICH_INPORT and FROM_WHICH_ENTRY 
     for(uint k = 0; k < N_OUTPORT_ENTRIES; k++) {
-        if( FROM_WHICH_INPORT[k] <= 0 || FROM_WHICH_INPORT[k] > N_INPORTS ) {
+        if( FROM_WHICH_INPORT[k] < 0 || FROM_WHICH_INPORT[k] > N_INPORTS ) {
             log(Error) << "EtherCATread::AddAnalogIns(" << PARTNAME << "): Could not add AnalogIns. 0 < From_which_inport <= N_INPORTS. -> 0 < " << FROM_WHICH_INPORT[k] << " <= "<< N_INPORTS <<"!" << endlog();
             return;
         }
-        else if ( FROM_WHICH_ENTRY[k] <= 0 || FROM_WHICH_ENTRY[k] > INPORT_DIMENSIONS[FROM_WHICH_INPORT[k]-1] ) {
+        else if ( FROM_WHICH_ENTRY[k] < 0 || FROM_WHICH_ENTRY[k] > INPORT_DIMENSIONS[FROM_WHICH_INPORT[k]-1] ) {
             log(Error) << "EtherCATread::AddAnalogIns(" << PARTNAME << "): Could not add AnalogIns. From_which_entry array contains entry no. " << FROM_WHICH_ENTRY[k] << " which does not exist for inport no. " << FROM_WHICH_INPORT[k] << "!" << endlog();
             return;
         }
@@ -430,7 +430,7 @@ void EtherCATread::AddEncoderIns(string PARTNAME, doubles INPORT_DIMENSIONS, dou
 	
     
 	// Check for invalid number of ports
-    if(N_INPORTS < 1 || N_INPORTS > MAX_PORTS) {
+    if(N_INPORTS < 1 || N_INPORTS > MAX_ENCPORTS) {
         log(Error) << "EtherCATread::AddEncoderIns(" << PARTNAME << "): Could not add EncoderIns. Invalid number of inports: " << N_INPORTS << "!" << endlog();
         return;
     }
@@ -440,7 +440,7 @@ void EtherCATread::AddEncoderIns(string PARTNAME, doubles INPORT_DIMENSIONS, dou
     }
     
 	// Count the number of entries respectively for N_INPORT_ENTRIES and N_OUTPORT_ENTRIES
-	// Special case for Encoders are that all inport_dimensions should be one and there can only be one outport for each bodypart
+	// Special case for Encoders are that all inport_dimensions should be one
     for(uint i = 0; i < N_INPORTS; i++) {
         if(INPORT_DIMENSIONS[i] != 1) {
             log(Error) << "EtherCATread::AddEncoderIns(" << PARTNAME << "): Could not add EncoderIns. Inport_dimensions cannot contain value other than one!" << endlog();
@@ -450,8 +450,7 @@ void EtherCATread::AddEncoderIns(string PARTNAME, doubles INPORT_DIMENSIONS, dou
     }
     
     if(OUTPORT_DIMENSIONS.size() != 1) {
-		log(Error) << "EtherCATread::AddEncoderIns(" << PARTNAME << "): Could not add EncoderIns. Outport_dimensions should be of size 1. There can only be one outputport per bodypart!" << endlog();
-		return;
+		log(Warning) << "EtherCATread::AddEncoderIns(" << PARTNAME << "): Outport_dimensions is advised to be of size 1!" << endlog();
 	}
     for(uint i = 0; i < N_OUTPORTS; i++) {
         if(OUTPORT_DIMENSIONS[i] < 1) {
@@ -803,10 +802,6 @@ void EtherCATread::AddMatrixTransform_E(string PARTNAME, int PORTNR, double INPU
 		log(Warning) << "EtherCATread::AddMatrixTransform_E(" << PARTNAME << "): Could not add Matrix Transform, since this already excists for this bodypart. Overwriting is not supported at the moment" << endlog();
 		return;
 	}
-	if (n_outports_E[BPID-1] > 1) {
-		log(Error) << "EtherCATread::AddMatrixMultiplication_E(" << PARTNAME << "): Could not add matrix transform. Number of output ports for " << bodypart_names[BPID-1] << " is " << n_outports_E[BPID-1] << "  Matrix transform is only supported for one output port per bodypart!" << endlog();
-		return;
-	}
 	if( OUTPUTSIZE != outport_dimensions_E[BPID-1][PORTNR-1]) {
 		if( OUTPUTSIZE < outport_dimensions_E[BPID-1][PORTNR-1]) { 	// smaller matrix then nr of inputs is allowed, not recommended
 			log(Warning) << "EtherCATread::AddMatrixTransform_E(" << PARTNAME << "): INPUTSIZE: " << OUTPUTSIZE << " is smafller than the size of the outport outport_dimensions_E[BPID-1][PORTNR-1]:" << outport_dimensions_E[BPID-1][PORTNR-1] << "!" << endlog();
@@ -948,37 +943,44 @@ void EtherCATread::WriteOutputs()
 }
 
 void EtherCATread::MapInputs2Outputs()
-{	
+{
 	// Analog
 	for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
+		uint j = 0;
 		for( uint i = 0; i < n_outports_A[l]; i++ ) {
-			for( uint k = 0; k < outport_dimensions_A[l][i]; ++k) {	
-				intermediate_A[l][i][k] = input_msgs_A[l][from_which_inport_A[l][k]-1 ].values[from_which_entry_A[l][k]-1];   
+			for( uint k = 0; k < outport_dimensions_A[l][i]; ++k) {
+				intermediate_A[l][i][k] = input_msgs_A[l][from_which_inport_A[l][j+k]-1 ].values[from_which_entry_A[l][j+k]-1];
 			}
+			j += outport_dimensions_A[l][i];
 		}
 	}
 
 	// Digital
 	for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
+		uint j = 0;
 		for( uint i = 0; i < n_outports_D[l]; i++ ) {
-			for( uint k = 0; k < outport_dimensions_D[l][i]; ++k) {	
-				intermediate_D[l][i][k] = input_msgs_D[l][from_which_inport_D[l][k]-1 ].values[from_which_entry_D[l][k]-1];   
+			for( uint k = 0; k < outport_dimensions_D[l][i]; ++k) {
+				intermediate_D[l][i][k] = input_msgs_D[l][from_which_inport_D[l][j+k]-1 ].values[from_which_entry_D[l][j+k]-1];
 			}
+			j += outport_dimensions_D[l][i];
 		}
 	}
 	
-    // Encoder
-    for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
+	// Encoder
+	for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
+		uint j = 0;
 		for( uint i = 0; i < n_outports_E[l]; i++ ) {
 			for( uint k = 0; k < outport_dimensions_E[l][i]; ++k) {
-				intermediate_E[l][i][k] = (double) input_msgs_E[l][ from_which_inport_E[l][k]-1 ].value;
+				//log(Warning) << "EtherCATread::MapInputs2Outputs: intermediate_E[l"<< l << "][i"<< i << "][k"<< k << "][j+k"<< j+k << "] = (double) input_msgs_E[l"<< l << "][ " << from_which_inport_E[l][j+k]-1 << "], " << input_msgs_E[l][from_which_inport_E[l][j+k]-1].value << "!" << endlog();
+				intermediate_E[l][i][k] = (double) input_msgs_E[l][ from_which_inport_E[l][j+k]-1 ].value;
 			}
+			j += outport_dimensions_E[l][i];
 		}
-	}	
+	}
 }
 
 void EtherCATread::Calculate_A()
-{	
+{
 	// Output = intermediate
 	for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
 		output_A[l] = intermediate_A[l];
@@ -987,10 +989,9 @@ void EtherCATread::Calculate_A()
 	// Addition
 	for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
 		for( uint i = 0; i < n_outports_A[l]; i++ ) {
-			if (addition_status_A[l][i]) {	
-				for( uint k = 0; k < outport_dimensions_A[l][i]; ++k) {
+			if (addition_status_A[l][i]) {
+				for ( uint k = 0; k < outport_dimensions_A[l][i]; k++ ) {
 					output_A[l][i][k] = output_A[l][i][k]+addition_values_A[l][i][k];
-					//log(Warning)<<"EtherCATread::Calculate_A: " << n_addedbodyparts_E <<"]"<<endlog();
 				}
 			}
 		}
@@ -1000,13 +1001,12 @@ void EtherCATread::Calculate_A()
 	for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
 		for( uint i = 0; i < n_outports_A[l]; i++ ) {
 			if (multiply_status_A[l][i]) {
-				for( uint k = 0; k < outport_dimensions_A[l][i]; ++k) {
+				for ( uint k = 0; k < outport_dimensions_A[l][i]; k++ ) {
 					output_A[l][i][k] = output_A[l][i][k]*multiply_values_A[l][i][k];
 				}
 			}
 		}
 	}
-
 }
 
 void EtherCATread::Calculate_D()
@@ -1019,8 +1019,8 @@ void EtherCATread::Calculate_D()
 	// Flip
     for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
 		for( uint i = 0; i < n_outports_D[l]; i++ ) {
-			if (flip_status_D[l][i]) {			
-				for( uint k = 0; k < outport_dimensions_D[l][i]; ++k) {		
+			if (flip_status_D[l][i]) {
+				for ( uint k = 0; k < outport_dimensions_D[l][i]; k++ ) {
 					if (flip_values_D[l][i][k]) {
 						output_D[l][i][k] = !output_D[l][i][k];
 					}
@@ -1031,22 +1031,24 @@ void EtherCATread::Calculate_D()
 }
 
 void EtherCATread::Calculate_E()
-{	
+{
 	// Output = intermediate
 	for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
-		output_E[l] = intermediate_E[l];
+		for( uint i = 0; i < n_outports_E[l]; i++ ) {
+			output_E[l][i] = intermediate_E[l][i];
+		}
 	}
-		
-	// Enc2Si
-    double dt = determineDt();	
 	
-    for( uint l = 0; l < MAX_BODYPARTS; l++ ) {	
+	// Enc2Si
+	double dt = determineDt();
+	
+	for( uint l = 0; l < MAX_BODYPARTS; l++ ) {	
 		for( uint i = 0; i < n_outports_E[l]; i++ ) {
 			if (enc2si_status_E[l][i]) {
 				for( uint k = 0; k < outport_dimensions_E[l][i]; ++k) {
-													
+					
 					// Recent encoder value
-					enc_values[l][i][k] = output_E[l][i][k];				
+					enc_values[l][i][k] = output_E[l][i][k];
 				
 					// Detect if and count the amount of times going through the maximum encoder bits
 					if( (previous_enc_values[l][i][k] - enc_values[l][i][k]) > encoderbits_E[l][i][k]/2) {
@@ -1079,20 +1081,21 @@ void EtherCATread::Calculate_E()
 				// Resize output vectors in case of a non square Matrix transformation
 				output_E[l][i].resize(outport_dimensions_E[l][i]);
 				output_E_vel[l][i].resize(outport_dimensions_E[l][i]);
-							
+				
 				for ( uint k = 0; k < outport_dimensions_E[l][i]; k++ ) {
 					output_E[l][i][k] = 0.0;
 					output_E_vel[l][i][k] = 0.0;
 					
-					for ( uint j = 0; j < input_MT_E.size(); j++ ) {
-						output_E[l][i][k] += matrixtransform_entries_E[l][i][k][j] * input_MT_E[j];
-						output_E_vel[l][i][k] += matrixtransform_entries_E[l][i][k][j] * input_MT_E_vel[j];
+					for ( uint m = 0; m < input_MT_E.size(); m++ ) {
+						
+						output_E[l][i][k] += matrixtransform_entries_E[l][i][k][m] * input_MT_E[m];
+						output_E_vel[l][i][k] += matrixtransform_entries_E[l][i][k][m] * input_MT_E_vel[m];
+					
 					}
 				}
 			}
-		}	
+		}
 	}
-	
 }
 
 double EtherCATread::determineDt()

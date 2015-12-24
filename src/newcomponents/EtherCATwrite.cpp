@@ -84,11 +84,11 @@ void EtherCATwrite::updateHook()
 	ReadInputs();
 		
 	// Functions to do all the calculations on the incoming data, for example converting enc counts to si values, or multiplying inputs with factor X
-	Calculate_A();			
+	Calculate_A();
 	Calculate_D();
 
 	// Maps the inputs into output structure (Input reshuffling, allows for example mapping X inputs on Y outputs)
-	MapInputs2Outputs();		
+	MapInputs2Outputs();
 	
 	// Function to write the output calculated onto the output port
     WriteOutputs();
@@ -109,7 +109,7 @@ void EtherCATwrite::AddAnalogOuts(string PARTNAME, doubles INPORT_DIMENSIONS, do
 	if (!this->isRunning()) {
 		log(Error) << "EtherCATwrite::AddAnalogOuts(" << PARTNAME << "): Could not add AnalogOuts. Since EtherCATwrite component has not yet been started!" << endlog();
 		return;
-	}		
+	}
 	
 	// Check if the AnalogIns is already added for this bodypart
 	for(uint l = 0; l < MAX_BODYPARTS; l++) {
@@ -129,7 +129,7 @@ void EtherCATwrite::AddAnalogOuts(string PARTNAME, doubles INPORT_DIMENSIONS, do
 	if (BPID <= 0 || BPID > bodypart_names.size()) {
 		log(Error) << "EtherCATwrite::AddAnalogOuts(" << PARTNAME << "): Could not add AnalogOuts. Could not find " << PARTNAME << " in the list of bodypartnames of EtherCATwrite!" << endlog();
 		return;
-	}	    
+	}
     
 	// Check for invalid number of ports
     if(N_INPORTS < 1 || N_INPORTS > MAX_PORTS) {
@@ -165,11 +165,11 @@ void EtherCATwrite::AddAnalogOuts(string PARTNAME, doubles INPORT_DIMENSIONS, do
 
 	// Check validity of each entry in the FROM_WHICH_INPORT and FROM_WHICH_ENTRY 
     for(uint k = 0; k < N_OUTPORT_ENTRIES; k++) {
-        if( FROM_WHICH_INPORT[k] <= 0 || FROM_WHICH_INPORT[k] > N_INPORTS ) {
+        if( FROM_WHICH_INPORT[k] < 0 || FROM_WHICH_INPORT[k] > N_INPORTS ) {
             log(Error) << "EtherCATwrite::AddAnalogOuts(" << PARTNAME << "): Could not add AnalogOuts. 0 < From_which_inport <= N_INPORTS. -> 0 < " << FROM_WHICH_INPORT[k] << " <= "<< N_INPORTS <<"!" << endlog();
             return;
         }
-        else if ( FROM_WHICH_ENTRY[k] <= 0 || FROM_WHICH_ENTRY[k] > INPORT_DIMENSIONS[FROM_WHICH_INPORT[k]-1] ) {
+        else if ( FROM_WHICH_ENTRY[k] < 0 || FROM_WHICH_ENTRY[k] > INPORT_DIMENSIONS[FROM_WHICH_INPORT[k]-1] ) {
             log(Error) << "EtherCATwrite::AddAnalogOuts(" << PARTNAME << "): Could not add AnalogOuts. From_which_entry array contains entry no. " << FROM_WHICH_ENTRY[k] << " which does not exist for inport no. " << FROM_WHICH_INPORT[k] << "!" << endlog();
             return;
         }
@@ -676,27 +676,31 @@ void EtherCATwrite::MapInputs2Outputs()
 {
 	// Do mapping of input entries on into output
 	for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
+		uint j = 0;
 		for( uint i = 0; i < n_outports_A[l]; i++ ) {
-			for( uint k = 0; k < outport_dimensions_A[l][i]; ++k) {
+			for( uint k = j; k < (j + outport_dimensions_A[l][i]); ++k) {
 				if (from_which_inport_A[l][k] == 0 || from_which_entry_A[l][k] == 0) {
 					output_msgs_A[l][i].values[k] = 0.0;
-				} else {			
+				} else {
 					output_msgs_A[l][i].values[k] = input_A[l][ from_which_inport_A[l][k]-1 ][ from_which_entry_A[l][k]-1 ];
 				}
 			}
+			j += outport_dimensions_A[l][i];
 		}
 	}
 
 	// Do mapping of input entries on into output
 	for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
+		uint j = 0;
 		for( uint i = 0; i < n_outports_D[l]; i++ ) {
-			for( uint k = 0; k < outport_dimensions_D[l][i]; ++k) {
+			for( uint k = j; k < (j + outport_dimensions_D[l][i]); ++k) {
 				if (from_which_inport_D[l][k] == 0 || from_which_entry_D[l][k] ==0) {
 					output_msgs_D[l][i].values[k] = 0;
-				} else {			
+				} else {
 					output_msgs_D[l][i].values[k] = input_D[l][ from_which_inport_D[l][k]-1 ][ from_which_entry_D[l][k]-1 ];
 				}
 			}
+			j += outport_dimensions_D[l][i];
 		}
 	}
 }

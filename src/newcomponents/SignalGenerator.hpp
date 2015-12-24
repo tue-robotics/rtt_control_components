@@ -9,7 +9,7 @@
 #include <soem_beckhoff_drivers/DigitalMsg.h>
 #include <soem_beckhoff_drivers/EncoderMsg.h>
 
-#define MAX_PORTS 10 /* maximum number of ports */
+#define MAX_PORTS 20 /* maximum number of ports */
 #define PI 3.14159265358979
 
 /*
