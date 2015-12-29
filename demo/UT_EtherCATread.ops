@@ -1,0 +1,134 @@
+########################################################################
+#                                                                      #
+# 							TEST						       		   #
+#             														   #
+#	Example ops file for the use of EtherCATread component             #
+#                                                                      #
+########################################################################
+
+#### IMPORT PACKAGE ####
+import("rtt_ros")
+ros.import("amigo_hardware")
+
+#### DECLARATION OF PARAMETERS ####
+var double TS 					= 0.01
+
+#### SIGNAL GENERATOR ###
+loadComponent("SG","SIGNALGENERATOR::SignalGenerator")
+setActivity("SG",TS,HighestPriority,ORO_SCHED_RT)
+SG.configure
+SG.start
+# Analog
+SG.AddAnalogSignal(3, array (1.0, 2.0, 568.0), true);
+SG.AddAnalogSignal(3, array (4.0, 5.0, 6.0), true);
+SG.AddAnalogSignal(3, array (7.0, 8.0, 9.0), true);
+SG.AddAnalogSignal(3, array (-1.0, -2.0, -568.0), true);
+SG.AddAnalogSignal(3, array (-4.0, -5.0, -6.0), true);
+SG.AddAnalogSignal(3, array (-7.0, -8.0, -9.0), true);
+# Digital
+SG.AddDigitalSignal(8, array (1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0), true);
+# Encoder
+SG.AddIntegerSignal(1, array (1000.0), true);
+SG.AddIntegerSignal(1, array (2000.0), true);
+SG.AddIntegerSignal(1, array (3000.0), true);
+SG.AddIntegerSignal(1, array (4000.0), true);
+SG.AddIntegerSignal(1, array (5000.0), true);
+SG.AddIntegerSignal(1, array (6000.0), true);
+SG.AddIntegerSignal(1, array (7000.0), true);
+SG.AddIntegerSignal(1, array (8000.0), true);
+SG.AddIntegerSignal(1, array (1000.0), true);
+SG.AddIntegerSignal(1, array (1000.0), true);
+SG.AddIntegerSignal(1, array (3000.0), true);
+SG.AddIntegerSignal(1, array (4000.0), true);
+SG.AddIntegerSignal(1, array (4000.0), true);
+SG.AddIntegerSignal(1, array (6000.0), true);
+SG.AddIntegerSignal(1, array (6000.0), true);
+SG.AddIntegerSignal(1, array (8000.0), true);
+
+#### ETHERCAT READ ####
+loadComponent("EtherCATread","ETHERCATREAD::EtherCATread")
+setActivity("EtherCATread",TS,HighestPriority,ORO_SCHED_RT)
+EtherCATread.bodypart_names = strings("base","spindle","left_arm","right_arm","head","generic" )
+EtherCATread.configure
+EtherCATread.start
+# Analog Ins
+EtherCATread.AddAnalogIns("left_arm", array (3.0, 3.0, 3.0), array (8.0), array (1.0, 1.0, 2.0, 2.0, 2.0, 3.0, 3.0, 3.0), array (1.0, 2.0, 1.0, 2.0, 3.0, 1.0, 2.0, 3.0))
+EtherCATread.AddAnalogIns("right_arm", array (3.0, 3.0, 3.0), array (2.0, 1.0, 2.0, 2.0, 1.0), array (1.0, 1.0, 2.0, 2.0, 2.0, 3.0, 3.0, 3.0), array (1.0, 2.0, 1.0, 2.0, 3.0, 1.0, 2.0, 3.0))
+# Digital Ins
+EtherCATread.AddDigitalIns("generic", array (8.0), array (4.0, 1.0, 1.0), array (1.0, 1.0, 1.0, 1.0, 1.0, 1.0), array (1.0, 2.0, 3.0, 4.0, 5.0, 6.0))
+# Encoder Ins
+EtherCATread.AddEncoderIns("base", array (1.0, 1.0, 1.0, 1.0), array (4.0), array (1.0, 2.0, 3.0, 4.0), array (1.0, 1.0, 1.0, 1.0))
+EtherCATread.AddEncoderIns("spindle", array (1.0), array (1.0), array (1.0), array (1.0))
+EtherCATread.AddEncoderIns("left_arm", array (1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0), array (8.0), array (1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0), array (1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0))
+EtherCATread.AddEncoderIns("right_arm",array (1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0), array (2.0, 1.0, 2.0, 2.0, 1.0), array (1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0), array (1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0))
+
+#### MATH ####
+# Analog Ins
+EtherCATread.AddAddition_A("right_arm", 3, array(2.0, -2.0))
+EtherCATread.AddMultiply_A("right_arm", 4, array(2.0, -2.0))
+# Digital Ins
+EtherCATread.AddFlip_D("generic", 1, array(1.0, 0.0, 1.0, 0.0))
+# Encoder Ins
+EtherCATread.AddEnc2Si_E("base", 1, array(65536.0, 65536.0, 65536.0, 65536.0), array(0.0001, 0.0001, 0.0001, 0.0001))
+EtherCATread.AddEnc2Si_E("spindle", 1, array(65536.0), array(0.0001))
+EtherCATread.AddEnc2Si_E("left_arm", 1, array(65536.0, 65536.0, 65536.0, 65536.0, 65536.0, 65536.0, 65536.0, 65536.0), array(0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001))
+EtherCATread.AddEnc2Si_E("right_arm", 1, array(65536.0, 65536.0), array(0.0001, 0.0001))
+EtherCATread.AddEnc2Si_E("right_arm", 2, array(65536.0), array(0.0001))
+EtherCATread.AddEnc2Si_E("right_arm", 3, array(65536.0, 65536.0), array(0.0001, 0.0001))
+EtherCATread.AddEnc2Si_E("right_arm", 4, array(65536.0, 65536.0), array(0.0001, 0.0001))
+EtherCATread.AddEnc2Si_E("right_arm", 5, array(65536.0), array(0.0001))
+EtherCATread.AddMatrixTransform_E("left_arm", 1, 8, 8)
+EtherCATread.left_arm1_matrixtransform1 = array( 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+EtherCATread.left_arm1_matrixtransform2 = array( 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+EtherCATread.left_arm1_matrixtransform3 = array( 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+EtherCATread.left_arm1_matrixtransform4 = array( 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0)
+EtherCATread.left_arm1_matrixtransform5 = array( 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0)
+EtherCATread.left_arm1_matrixtransform6 = array( 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0)
+EtherCATread.left_arm1_matrixtransform7 = array( 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0)
+EtherCATread.left_arm1_matrixtransform8 = array( 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0)
+EtherCATread.AddMatrixTransform_E("right_arm", 1, 2, 2)
+EtherCATread.AddMatrixTransform_E("right_arm", 2, 1, 1)
+EtherCATread.AddMatrixTransform_E("right_arm", 3, 2, 2)
+EtherCATread.AddMatrixTransform_E("right_arm", 4, 2, 2)
+EtherCATread.AddMatrixTransform_E("right_arm", 5, 1, 1)
+EtherCATread.right_arm1_matrixtransform1 = array( 0.5,-0.5)
+EtherCATread.right_arm1_matrixtransform2 = array( 0.5, 0.5)
+EtherCATread.right_arm2_matrixtransform1 = array( 1.0)
+EtherCATread.right_arm3_matrixtransform1 = array( 0.5,-0.5)
+EtherCATread.right_arm3_matrixtransform2 = array( 0.5, 0.5)
+EtherCATread.right_arm4_matrixtransform1 = array( 0.5,-0.5)
+EtherCATread.right_arm4_matrixtransform2 = array( 0.5, 0.5)
+EtherCATread.right_arm5_matrixtransform1 = array( 1.0)
+
+#### CONNECT ####
+# Analog
+connect ("SG.analogOut1","EtherCATread.left_arm_Ain1", ConnPolicy() )
+connect ("SG.analogOut2","EtherCATread.left_arm_Ain2", ConnPolicy() )
+connect ("SG.analogOut3","EtherCATread.left_arm_Ain3", ConnPolicy() )
+connect ("SG.analogOut4","EtherCATread.right_arm_Ain1", ConnPolicy() )
+connect ("SG.analogOut5","EtherCATread.right_arm_Ain2", ConnPolicy() )
+connect ("SG.analogOut6","EtherCATread.right_arm_Ain3", ConnPolicy() )
+# Digital
+connect ("SG.digitalOut1", "EtherCATread.generic_Din1", ConnPolicy() )
+# Encoder
+connect ("SG.integerOut1", "EtherCATread.base_Ein1", ConnPolicy() )
+connect ("SG.integerOut2", "EtherCATread.base_Ein2", ConnPolicy() )
+connect ("SG.integerOut3", "EtherCATread.base_Ein3", ConnPolicy() )
+connect ("SG.integerOut4", "EtherCATread.base_Ein4", ConnPolicy() )
+connect ("SG.integerOut1", "EtherCATread.spindle_Ein1", ConnPolicy() )
+connect ("SG.integerOut1", "EtherCATread.left_arm_Ein1", ConnPolicy() )
+connect ("SG.integerOut2", "EtherCATread.left_arm_Ein2", ConnPolicy() )
+connect ("SG.integerOut3", "EtherCATread.left_arm_Ein3", ConnPolicy() )
+connect ("SG.integerOut4", "EtherCATread.left_arm_Ein4", ConnPolicy() )
+connect ("SG.integerOut5", "EtherCATread.left_arm_Ein5", ConnPolicy() )
+connect ("SG.integerOut6", "EtherCATread.left_arm_Ein6", ConnPolicy() )
+connect ("SG.integerOut7", "EtherCATread.left_arm_Ein7", ConnPolicy() )
+connect ("SG.integerOut8", "EtherCATread.left_arm_Ein8", ConnPolicy() )
+connect ("SG.integerOut9", "EtherCATread.right_arm_Ein1", ConnPolicy() )
+connect ("SG.integerOut10", "EtherCATread.right_arm_Ein2", ConnPolicy() )
+connect ("SG.integerOut11", "EtherCATread.right_arm_Ein3", ConnPolicy() )
+connect ("SG.integerOut12", "EtherCATread.right_arm_Ein4", ConnPolicy() )
+connect ("SG.integerOut13", "EtherCATread.right_arm_Ein5", ConnPolicy() )
+connect ("SG.integerOut14", "EtherCATread.right_arm_Ein6", ConnPolicy() )
+connect ("SG.integerOut15", "EtherCATread.right_arm_Ein7", ConnPolicy() )
+connect ("SG.integerOut16", "EtherCATread.right_arm_Ein8", ConnPolicy() )
