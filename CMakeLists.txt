@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   kdl_parser
   rtt_std_msgs
+  tue_manipulation
   )
 
 include_directories(

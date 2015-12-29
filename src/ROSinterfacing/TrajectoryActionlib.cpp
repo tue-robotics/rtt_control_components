@@ -46,15 +46,13 @@ bool TrajectoryActionlib::configureHook()
     maxpos.resize(maxN);
     maxvel.resize(maxN);
     maxacc.resize(maxN);
+    actualPos.resize(maxN);
     desiredPos.resize(maxN);
     desiredVel.resize(maxN);
     desiredAcc.resize(maxN);
     pos_out.resize(maxN);
     vel_out.resize(maxN);
     acc_out.resize(maxN);
-    current_position.resize(maxN);
-    mRefGenerators.resize(maxN);
-    mRefPoints.resize(maxN);
     allowedBodyparts.resize(maxN);
     allowedBodyparts_prev.resize(maxN);
 
@@ -77,19 +75,18 @@ bool TrajectoryActionlib::startHook()
 
     // Start the actionlib server
     rtt_action_server_.start();
+    dt = this->getPeriod();
+    dt = 0.001;
     return true;
 }
 
 void TrajectoryActionlib::updateHook()
 {
-	if (allowedBodyparts != allowedBodyparts_prev) {
-		log(Warning) << "TrajectoryActionlib:  Allowed:     [" << allowedBodyparts[0] << "," << allowedBodyparts[1] << "," << allowedBodyparts[2] << "," << allowedBodyparts[3] << "," << allowedBodyparts[4] << "]" <<endlog();
-	}
-	allowedBodyparts_prev = allowedBodyparts;
-	
+    //log(Info) << "Start Updatehook" << endlog();
+    double t_now = os::TimeService::Instance()->getNSecs()*1e-9;
     // 6.5s after start, check all properties, ports, etc.
     if (!checked) {
-        double aquisition_time = os::TimeService::Instance()->getNSecs()*1e-9;
+        double aquisition_time = t_now;
         if ( aquisition_time - start_time > 6.5) {
             if (!CheckConnectionsAndProperties()) {
                 this->stop();
@@ -101,128 +98,129 @@ void TrajectoryActionlib::updateHook()
         }
     }
     
-    // Read all current positions
-    for ( uint j = 0; j < activeBodyparts.size(); j++ ) {
-        uint partNr = activeBodyparts[j];
-        currentpos_inport[partNr-1].read( current_position[partNr-1] );
-	}
-
     // If a goal is active
-    if (!goal_handles_.empty())
+    if (reference_generator_.hasActiveGoals())
     {
-        // Take the first item in the queue
-        TrajectoryInfo& t_info = goal_handles_.front();
-        GoalHandle& gh = t_info.goal_handle;
+        //log(Info) << "TrajectoryActionlib: Goal active!" << endlog();
+        const std::vector<std::string>& joint_names = reference_generator_.joint_names();
 
-        // If first point, set t_start from trajectory
-        if (t_info.t_start == -1)
-            t_info.t_start = os::TimeService::Instance()->getNSecs()*1e-9;
-
-        // Take first point in the queue
-        const trajectory_msgs::JointTrajectoryPoint& point = t_info.points.front();
-
-        // Check whether we have to start with the point
-        if (point.time_from_start.toSec() <= os::TimeService::Instance()->getNSecs()*1e-9 - t_info.t_start)
-        {
-            // Send point to 'controller'
-            const std::vector<std::string>& joint_names = gh.getGoal()->trajectory.joint_names;
-
-            // then loop over all joints within the message received
-            uint k = 0;
-            while (k < joint_names.size()) {
-                map<string, BodyJointPair>::const_iterator it = joint_map.find(joint_names[k]);
-
-                // Update the output and go to the next message.
-                BodyJointPair bjp = it->second;
-                int body_part_id = bjp.first;
-                int joint_id = bjp.second;
-                if (allowedBodyparts[body_part_id] == true) {
-                    desiredPos [body_part_id] [joint_id] = point.positions[k];
-                    desiredVel [body_part_id] [joint_id] = maxvel [body_part_id] [joint_id];
-                    desiredAcc [body_part_id] [joint_id] = maxacc [body_part_id] [joint_id];
-                } else { // Message received for bodypart that did not get the AllowReadReference!
-                    log(Warning) << "TrajectoryActionlib: Message received for bodypart that did not get the AllowReadReference!" << endlog();
-                    desiredPos[body_part_id][joint_id] = current_position[body_part_id][joint_id];
-                    gh.setAborted();
-                    goal_handles_.erase(goal_handles_.begin());
-                }
-                k++;
-            }
-
-            // Check if we are already there
-            bool already_there = true;
-            k = 0;
-            while (k < joint_names.size()) {
-                map<string, BodyJointPair>::const_iterator it = joint_map.find(joint_names[k]);
-
-                // Update the output and go to the next message.
-                BodyJointPair bjp = it->second;
-                int body_part_id = bjp.first;
-                int joint_id = bjp.second;
-
-                // Remove point if we are within 0.1 error
-                if ( abs( desiredPos[body_part_id][joint_id] - mRefPoints[body_part_id][joint_id].pos) > 0.02 )
-                {
-                    //log(Info) << "TrajectoryActionlib: Joint name: " << joint_names[k] << " error is too large: " << abs( desiredPos[body_part_id][joint_id] - mRefPoints[body_part_id][joint_id].pos) << endlog();
-                    already_there = false;
-                }
-
-                k++;
-            }
-
-            // Pop point if we are there :)
-            if (already_there)
-            {
-                t_info.points.pop();
-                log(Info) << "TrajectoryActionlib: We are there, poppin'!" << endlog();
-            }
-
-            // Check if this was the last point. If so, remove the goal handle
-            if (t_info.points.empty())
-            {
-                log(Info) << "TrajectoryActionlib: Succeeded this goal!" << endlog();
-                gh.setSucceeded();
-                goal_handles_.erase(goal_handles_.begin());
-            }
+        std::vector<double> current_positions(joint_names.size(), 0);
+        for(unsigned int i = 0 ; i < joint_names.size(); ++i) {
+            map<string, BodyJointPair>::const_iterator it = joint_map.find(joint_names[i]);
+            BodyJointPair bjp = it->second;
+            int body_part_id = bjp.first;
+            int joint_id = bjp.second;
+            current_positions[i] = desiredPos [body_part_id] [joint_id];
         }
-    }
 
-    // Send references
-    for ( uint j = 0; j < activeBodyparts.size(); j++ ) {
-        uint partNr = activeBodyparts[j];
-        if (allowedBodyparts[partNr-1] == true) {
-			
-            // Compute the next reference points
-            for ( uint i = 0; i < vector_sizes[partNr-1]; i++ ){
-                mRefPoints[partNr-1][i] = mRefGenerators[partNr-1][i].generateReference(desiredPos[partNr-1][i], desiredVel[partNr-1][i], desiredAcc[partNr-1][i], InterpolDts[partNr-1], false, InterpolEpses[partNr-1]);
-                pos_out[partNr-1][i]=mRefPoints[partNr-1][i].pos;
-                vel_out[partNr-1][i]=mRefPoints[partNr-1][i].vel;
-                acc_out[partNr-1][i]=mRefPoints[partNr-1][i].acc;
+        std::vector<double> references;
+        reference_generator_.calculatePositionReferences(dt, references);
+
+        for(unsigned int i = 0 ; i < joint_names.size(); ++i) {
+            map<string, BodyJointPair>::const_iterator it = joint_map.find(joint_names[i]);
+            BodyJointPair bjp = it->second;
+            int body_part_id = bjp.first;
+            int joint_id = bjp.second;
+            
+            // Joint positions
+			if (references[i] == references[i]) // Check for NaN
+			{
+				desiredPos[body_part_id][joint_id] = references[i];
+			}
+            actualPos[body_part_id] [joint_id] = desiredPos[body_part_id][joint_id];
+            
+            // Joint velocities
+            double vel = reference_generator_.joint_state(i).velocity();
+            if (vel == vel) // Check for NaN
+            {
+				vel_out[body_part_id][joint_id] = vel;
+			}
+            
+            // Joint accelerations
+            double acc = reference_generator_.joint_state(i).acceleration();
+            if (acc == acc) // Check for NaN
+            {
+				acc_out[body_part_id][joint_id] = acc;
+			}
+        }
+        
+        // Check for each goal if it succeeded or canceled, and notify the goal handle accordingly
+		for(std::map<std::string, GoalHandle>::iterator it = goal_handles_.begin(); it != goal_handles_.end();)
+		{
+			GoalHandle& gh = it->second;
+			tue::manipulation::JointGoalStatus status = reference_generator_.getGoalStatus(gh.getGoalID().id);
+
+			if (status == tue::manipulation::JOINT_GOAL_SUCCEEDED)
+			{
+				gh.setSucceeded();
+				goal_handles_.erase(it++);
+			}
+			else if (status == tue::manipulation::JOINT_GOAL_CANCELED)
+			{
+				gh.setCanceled();
+				goal_handles_.erase(it++);
+			}
+			else
+			{
+				++it;
+			}
+		}
+
+        for ( uint j = 0; j < activeBodyparts.size(); j++ ) {
+            uint partNr = activeBodyparts[j];
+            if (allowedBodyparts[partNr-1] == true) {
+				// if (partNr == 2)
+				// {
+				// 	log(Info) << "TAL: torso ref: " << desiredPos[partNr-1][0] << ", vel: " << vel_out[partNr-1][0] << ", acc: " << acc_out[partNr-1][0] << endlog();
+				// }
+                posoutport[partNr-1].write( desiredPos[partNr-1] );
+                veloutport[partNr-1].write( vel_out[partNr-1] );
+                accoutport[partNr-1].write( acc_out[partNr-1] );
             }
-
-            posoutport[partNr-1].write( pos_out[partNr-1] );
-            veloutport[partNr-1].write( vel_out[partNr-1] );
-            accoutport[partNr-1].write( acc_out[partNr-1] );
         }
     }
 }
 
 // Called by rtt_action_server_ when a new goal is received
 void TrajectoryActionlib::goalCallback(GoalHandle gh) {
-    // Accept/reject goal requests here
+    log(Info) << "TrajectoryActionlib: Received Message" << endlog();
+
+    std::stringstream error;
+    std::string goalid = gh.getGoalID().id;
+    if (!reference_generator_.setGoal(*gh.getGoal(), goalid, error))
+    {
+        gh.setRejected();
+        ROS_ERROR("%s", error.str().c_str());
+        return;
+    }
+
+    // Accept the goal
+    gh.setAccepted();
+    goal_handles_[goalid] = gh;    
+    
+    /*// Accept/reject goal requests here
 
     log(Info) << "TrajectoryActionlib: Received Message" << endlog();
-    uint number_of_goal_joints_ = gh.getGoal()->trajectory.joint_names.size();
-    // Loop over all joints within the message received
-    uint k = 0;
     bool accept = true;
     int error_code = 0;
-    while (k < number_of_goal_joints_) {
+
+    uint number_of_goal_joints_ = gh.getGoal()->trajectory.joint_names.size();
+    if (number_of_goal_joints_ < 1) {
+        log(Warning) << "TrajectoryActionlib: Trajectory contains too little joints" << endlog();
+        accept = false;
+        error_code = control_msgs::FollowJointTrajectoryResult::INVALID_JOINTS;
+    }
+
+    Point destination = gh.getGoal()->trajectory.points[number_of_points_ - 1];
+
+    // Loop over all joints within the message received
+    uint k = 0;
+    while (k < number_of_goal_joints_ && accept == true) {
         map<string, BodyJointPair>::const_iterator it = joint_map.find(gh.getGoal()->trajectory.joint_names[k]);
         if (it == joint_map.end()) {
             log(Warning) << "TrajectoryActionlib: received a message with joint name ["+gh.getGoal()->trajectory.joint_names[k]+"] that is not listed!" << endlog();
             accept = false;
-            error_code = -2;
+            error_code = control_msgs::FollowJointTrajectoryResult::INVALID_JOINTS;
             k++;
         } else {
             // received a message with joint name that is found. Continue checking for operational state of bodypart
@@ -230,19 +228,19 @@ void TrajectoryActionlib::goalCallback(GoalHandle gh) {
             int body_part_id = bjp.first;
             int joint_id = bjp.second;
             if (allowedBodyparts[body_part_id] == true) {
-                if ( gh.getGoal()->trajectory.points[0].positions[k] < minpos[body_part_id][joint_id] ) {
-                    log(Warning) << "TrajectoryActionlib: Received goal " << gh.getGoal()->trajectory.points[0].positions[k] << " for partNr " << body_part_id+1 << ", joint " << joint_id+1 << ". This is outside minimal bound " << minpos [body_part_id][joint_id] << "!" << endlog();
+                if ( destination.positions[k] < minpos[body_part_id][joint_id] ) {
+                    log(Warning) << "TrajectoryActionlib: Received goal " << destination.positions[k] << " for partNr " << body_part_id+1 << ", joint " << joint_id+1 << ". This is outside minimal bound " << minpos [body_part_id][joint_id] << "!" << endlog();
                     accept = false;
-                    error_code = -5;
-                } else if ( gh.getGoal()->trajectory.points[0].positions[k] > maxpos[body_part_id][joint_id] ) {
-                    log(Warning) << "TrajectoryActionlib: Received goal " << gh.getGoal()->trajectory.points[0].positions[k] << " for partNr " << body_part_id+1 << ", joint " << joint_id+1 << ". This is outside maximal bound " << maxpos [body_part_id][joint_id] << "!" << endlog();
+                    error_code = control_msgs::FollowJointTrajectoryResult::GOAL_TOLERANCE_VIOLATED;
+                } else if ( destination.positions[k] > maxpos[body_part_id][joint_id] ) {
+                    log(Warning) << "TrajectoryActionlib: Received goal " << destination.positions[k] << " for partNr " << body_part_id+1 << ", joint " << joint_id+1 << ". This is outside maximal bound " << maxpos [body_part_id][joint_id] << "!" << endlog();
                     accept = false;
-                    error_code = -5;
+                    error_code = control_msgs::FollowJointTrajectoryResult::GOAL_TOLERANCE_VIOLATED;
                 }
             } else { // Message received for bodypart that did not get the AllowReadReference!
                 log(Warning) << "TrajectoryActionlib: Message received for bodypart that did not get the AllowReadReference!" << endlog();
                 accept = false;
-                error_code = -1;
+                error_code = control_msgs::FollowJointTrajectoryResult::INVALID_GOAL;
             }
             k++;
         }
@@ -251,6 +249,9 @@ void TrajectoryActionlib::goalCallback(GoalHandle gh) {
         gh.setAccepted();
         log(Info)<<"TrajectoryActionlib: Accepted goal"<<endlog();
         TrajectoryInfo t_info(gh);
+        t_info.dt = t_info.points.back().time_from_start.toSec() / t_info.points.size();
+        log(Info)<<"TrajectoryActionlib: Accepted goal. Dt = " << t_info.dt <<endlog();
+
 
         // Push back goal handle
         goal_handles_.push_back(t_info);
@@ -260,13 +261,17 @@ void TrajectoryActionlib::goalCallback(GoalHandle gh) {
         result.error_code = error_code;
         gh.setRejected(result, "blaat");
         log(Info)<<"TrajectoryActionlib: Rejected goal"<<endlog();
-    }
+    }*/
 }
 
 // Called by rtt_action_server_ when a goal is cancelled / preempted
 void TrajectoryActionlib::cancelCallback(GoalHandle gh)
 {
-    log(Info) << "TrajectoryActionlib: Cancelling this goal!" << endlog();
+	gh.setCanceled();
+    reference_generator_.cancelGoal(gh.getGoalID().id);
+    goal_handles_.erase(gh.getGoalID().id);
+	
+    /*log(Info) << "TrajectoryActionlib: Cancelling this goal!" << endlog();
     // Find the goalhandle in the goal_handles_ vector
     for(std::vector<TrajectoryInfo>::iterator it = goal_handles_.begin(); it != goal_handles_.end(); ++it)
     {
@@ -276,7 +281,7 @@ void TrajectoryActionlib::cancelCallback(GoalHandle gh)
             it = goal_handles_.erase(it);
             return;
         }
-    }
+    }*/
 }
 
 void TrajectoryActionlib::AddBodyPart(int partNr, strings JointNames)
@@ -291,16 +296,14 @@ void TrajectoryActionlib::AddBodyPart(int partNr, strings JointNames)
     pos_out[partNr-1].assign(JointNames.size(),0.0);
     vel_out[partNr-1].assign(JointNames.size(),0.0);
     acc_out[partNr-1].assign(JointNames.size(),0.0);
+    actualPos[partNr-1].assign(JointNames.size(),0.0);
     desiredPos[partNr-1].assign(JointNames.size(),0.0);
     desiredVel[partNr-1].assign(JointNames.size(),0.0);
     desiredAcc[partNr-1].assign(JointNames.size(),0.0);
-    current_position[partNr-1].assign(JointNames.size(),0.0);
     minpos[partNr-1].assign(JointNames.size(),0.0);
     maxpos[partNr-1].assign(JointNames.size(),0.0);
     maxvel[partNr-1].assign(JointNames.size(),0.0);
     maxacc[partNr-1].assign(JointNames.size(),0.0);
-    mRefGenerators[partNr-1].resize(JointNames.size());
-    mRefPoints[partNr-1].resize(JointNames.size());
 
     // Add ports
     addPort(        ("pos_out"+to_string(partNr)),          posoutport[partNr-1] )      .doc("Position Reference");
@@ -329,17 +332,20 @@ void TrajectoryActionlib::AddBodyPart(int partNr, strings JointNames)
     for (size_t i = 0; i < JointNames.size(); ++i)
     {
         boost::shared_ptr<const urdf::Joint> Joint = Model.getJoint(JointNames[i]);
-        minpos[partNr-1][i] = Joint->limits->lower;
+        minpos[partNr-1][i] = Joint->limits->lower; ///TODO/// Maybe not store in a matrix, are they used anywhere outside this loop?
         maxpos[partNr-1][i] = Joint->limits->upper;
         maxvel[partNr-1][i] = Joint->limits->velocity;
         maxacc[partNr-1][i] = Joint->limits->effort;
 
         log(Info) << "TrajectoryActionlib: Bodypart " << partNr << ", Joint " << JointNames[i] << " has these limits: "<< endlog();
         log(Info) << "minpos="<<minpos[partNr-1][i]<<" maxpos="<<maxpos[partNr-1][i]<<" maxvel="<<maxvel[partNr-1][i]<<" maxacc="<<maxacc[partNr-1][i]<<endlog();
+
+        reference_generator_.initJoint(JointNames[i], Joint->limits->velocity, Joint->limits->effort, Joint->limits->lower, Joint->limits->upper);
+        //reference_generator_.setPositionLimits(i, minpos[partNr-1][i], maxpos[partNr-1][i]);
     }
 }
 
-void TrajectoryActionlib::SendToPos(int partNr, doubles pos)
+void TrajectoryActionlib::SendToPos(int partNr, strings jointnames, doubles pos)
 {
 	if (pos.size() != vector_sizes[partNr-1]) {
 		log(Warning) << "TrajectoryActionlib: Invalid size of pos/vector_sizes[partNr-1]" << endlog();
@@ -347,18 +353,46 @@ void TrajectoryActionlib::SendToPos(int partNr, doubles pos)
 	if (allowedBodyparts[partNr-1] == false) {
 		log(Warning) << "TrajectoryActionlib: Received SendToPos for bodypart that is not yet allowed" << endlog();
 	}	
+    log(Warning)<< "TrajectoryActionlib: Received SendToPos goal: " << endlog();
 		
-	for ( uint joint_id = 0; joint_id < pos.size(); joint_id++ ){
+    /*for ( uint joint_id = 0; joint_id < pos.size(); joint_id++ ){
 		desiredPos [partNr-1] [joint_id] = min( pos[joint_id]            		, maxpos     [partNr-1][joint_id]);
 		desiredPos [partNr-1] [joint_id] = max( minpos [partNr-1] [joint_id]    , desiredPos [partNr-1][joint_id]);
 		desiredVel [partNr-1] [joint_id] = maxvel [partNr-1] [joint_id];
 		desiredAcc [partNr-1] [joint_id] = maxacc [partNr-1] [joint_id];
 	}
-			
-	//log(Info)<< "TrajectoryActionlib: Processed SendToPos goal:" << desiredPos[partNr-1][0] << "!"<< endlog();
-	//log(Info) << "TrajectoryActionlib:  Allowed:     [" << allowedBodyparts[0] << "," << allowedBodyparts[1] << "," << allowedBodyparts[2] << "," << allowedBodyparts[3] << "," << allowedBodyparts[4] << "]" <<endlog();
 
-    return;
+    // Construct the initial goal
+    control_msgs::FollowJointTrajectoryGoal initial_goal;
+    for ( map<string, BodyJointPair>::const_iterator it = joint_map.begin(); it != joint_map.end(); ++it )
+    {
+        const BodyJointPair& body_joint_pair = it->second;
+        if (body_joint_pair.first == partNr-1)
+            initial_goal.trajectory.joint_names.push_back(it->first);
+    }
+    trajectory_msgs::JointTrajectoryPoint initial_point;
+    initial_point.positions = pos;
+    initial_goal.trajectory.points.push_back(initial_point);
+
+    for (uint i = 0; i < initial_goal.trajectory.joint_names.size(); ++i)
+    {
+        log(Info) << "TrajectoryActionlib::SendToPos: " << initial_goal.trajectory.joint_names[i] << " = " << initial_point.positions[i] << endlog();
+    }
+
+    std::stringstream error;
+    std::string goalstring = "goalstring";
+    reference_generator_.setGoal(initial_goal, goalstring, error);*/
+    tue::manipulation::JointGoalInfo goal_info;
+    //goal_info.id = "Homing";
+    bool result = reference_generator_.setGoal(jointnames, pos, goal_info);
+
+//    if (!result)
+    {
+        log(Error) << goal_info.error() << endlog();
+    }
+
+    log(Info) << "TrajectoryActionlib::SendToPos: result = " << result << endlog();
+    log(Info) << "Lets go!" << endlog();
 }
 
 void TrajectoryActionlib::ResetReferences(int partNr)
@@ -368,18 +402,27 @@ void TrajectoryActionlib::ResetReferences(int partNr)
 		return;
 	}
 	
-    // Reset the reference generator
-    uint N = minpos[partNr-1].size();
-    doubles actualPos(N,0.0);
-    currentpos_inport[partNr-1].read( actualPos );
-    for ( uint i = 0; i < N; i++ ){
-       mRefGenerators[partNr-1][i].setRefGen(actualPos[i]);
+    doubles resetpos;
+    strings jointnames;
+    //Set the starting value to the current actual value
+    currentpos_inport[partNr-1].read( resetpos );
+    log(Info) << "TrajectoryActionlib::ResetReferences: Size resetpos: " << resetpos.size() << endlog();
+
+
+    for ( map<string, BodyJointPair>::const_iterator it = joint_map.begin(); it != joint_map.end(); ++it )
+    {
+        const BodyJointPair& body_joint_pair = it->second;
+        if (body_joint_pair.first == partNr-1)
+            jointnames.push_back(it->first);
     }
-    
-    //if (actualPos.size() > 2) {
-	//	log(Info) <<"TrajectoryActionlib::ResetReferences with actualPos[ " << actualPos[0] << "," << actualPos[1] << "," << actualPos[2] << "," << actualPos[3] << "," << actualPos[4] << "," << actualPos[5] << "," << actualPos[6] << "]" <<endlog();
-	//}	
-	
+    log(Info) << "TrajectoryActionlib::ResetReferences: Size jointnames: " << jointnames.size() << endlog();
+
+    for (uint i = 0; i < jointnames.size(); ++i)
+    {
+        log(Info) << "TrajectoryActionlib::ResetReferences: " << jointnames[i] << " = " << resetpos[i] << endlog();
+        reference_generator_.setJointState(jointnames[i], resetpos[i], 0.0);
+    }
+
     return;
 }
 
@@ -425,14 +468,15 @@ bool TrajectoryActionlib::CheckConnectionsAndProperties()
             return false;
         }
 
-        //Set the starting value to the current actual value
+        /*//Set the starting value to the current actual value
         currentpos_inport[partNr-1].read( current_position[partNr-1] );
         for ( uint i = 0; i < vector_sizes[partNr-1]; i++ ){
            mRefGenerators[partNr-1][i].setRefGen(current_position[partNr-1][i]);
-        }
+        }*/
     }
 
     return true;
 }
+
 
 ORO_CREATE_COMPONENT(ROS::TrajectoryActionlib)
