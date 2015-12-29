@@ -24,7 +24,7 @@ SG.AddAnalogSignal(1, array (5.0), false);
 SG.AddAnalogSignal(8, array (1.1, 2.1, 3.1, 4.1, 5.1, 6.1, 7.1, 8.1), false);
 SG.AddAnalogSignal(8, array (1.2, 2.2, 3.2, 4.2, 5.2, 6.2, 7.2, 8.2), false);
 # Digital
-#SG.AddDigitalSignal(8, array (1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0), false);
+SG.AddDigitalSignal(8, array (1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0), true);
 
 #### ETHERCAT READ ####
 loadComponent("EtherCATwrite","ETHERCATWRITE::EtherCATwrite")
@@ -32,16 +32,16 @@ setActivity("EtherCATwrite",TS,HighestPriority,ORO_SCHED_RT)
 EtherCATwrite.bodypart_names = strings("base","spindle","left_arm","right_arm","head","generic" )
 EtherCATwrite.configure
 EtherCATwrite.start
-# Analog Ins
+# Analog Outs
 EtherCATwrite.AddAnalogOuts("base",      array (4.0), array (4.0), array (1.0, 1.0, 1.0, 1.0), array (1.0, 2.0, 3.0, 4.0))
 EtherCATwrite.AddAnalogOuts("spindle",   array (1.0), array (1.0), array (1.0), array (1.0))
-EtherCATwrite.AddAnalogOuts("left_arm",  array (8.0), array (3.0, 3.0, 3.0), array (1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0), array (1.0, 2.0, 0.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0))
+EtherCATwrite.AddAnalogOuts("left_arm",  array (8.0), array (9.0), array (1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0), array (1.0, 2.0, 0.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0))
 EtherCATwrite.AddAnalogOuts("right_arm", array (8.0), array (3.0, 3.0, 3.0), array (1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0), array (1.0, 2.0, 0.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0))
-# Digital Ins
-#EtherCATwrite.AddDigitalIns("generic",   array (8.0), array (4.0, 1.0, 1.0), array (1.0, 1.0, 1.0, 1.0, 1.0, 1.0), array (1.0, 2.0, 3.0, 4.0, 5.0, 6.0))
+# Digital Outs
+EtherCATwrite.AddDigitalOuts("generic",   array (8.0), array (4.0, 1.0, 1.0), array (1.0, 1.0, 1.0, 1.0, 1.0, 1.0), array (1.0, 2.0, 3.0, 4.0, 5.0, 6.0))
 
 #### MATH ####
-# Analog Ins
+# Analog Outs
 EtherCATwrite.AddMatrixTransform_A("left_arm", 1, 8, 8)
 EtherCATwrite.left_arm1_matrixtransform1 = array( 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
 EtherCATwrite.left_arm1_matrixtransform2 = array( 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
@@ -56,16 +56,16 @@ EtherCATwrite.left_arm1_matrixtransform8 = array( 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
 #EtherCATwrite.AddMatrixTransform_A("right_arm", 3, 2, 2)
 #EtherCATwrite.AddMatrixTransform_A("right_arm", 4, 2, 2)
 #EtherCATwrite.AddMatrixTransform_A("right_arm", 5, 1, 1)
-EtherCATwrite.right_arm1_matrixtransform1 = array( 0.5,-0.5)
-EtherCATwrite.right_arm1_matrixtransform2 = array( 0.5, 0.5)
-EtherCATwrite.right_arm2_matrixtransform1 = array( 1.0)
-EtherCATwrite.right_arm3_matrixtransform1 = array( 0.5,-0.5)
-EtherCATwrite.right_arm3_matrixtransform2 = array( 0.5, 0.5)
-EtherCATwrite.right_arm4_matrixtransform1 = array( 0.5,-0.5)
-EtherCATwrite.right_arm4_matrixtransform2 = array( 0.5, 0.5)
-EtherCATwrite.right_arm5_matrixtransform1 = array( 1.0)
+#EtherCATwrite.right_arm1_matrixtransform1 = array( 0.5,-0.5)
+#EtherCATwrite.right_arm1_matrixtransform2 = array( 0.5, 0.5)
+#EtherCATwrite.right_arm2_matrixtransform1 = array( 1.0)
+#EtherCATwrite.right_arm3_matrixtransform1 = array( 0.5,-0.5)
+#EtherCATwrite.right_arm3_matrixtransform2 = array( 0.5, 0.5)
+#EtherCATwrite.right_arm4_matrixtransform1 = array( 0.5,-0.5)
+#EtherCATwrite.right_arm4_matrixtransform2 = array( 0.5, 0.5)
+#EtherCATwrite.right_arm5_matrixtransform1 = array( 1.0)
 
-# Digital Ins
+# Digital Outs
 
 #### CONNECT ####
 # Analog

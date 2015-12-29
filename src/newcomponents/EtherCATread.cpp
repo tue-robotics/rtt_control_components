@@ -84,11 +84,11 @@ bool EtherCATread::configureHook()
 	
 	for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
 		n_inports_A[l] = 0;
-		n_outports_A[l] = 0;		
+		n_outports_A[l] = 0;
 		n_inports_D[l] = 0;
 		n_outports_D[l] = 0;
 		n_inports_E[l] = 0;
-		n_outports_E[l] = 0;		
+		n_outports_E[l] = 0;
 	}
 		
 	return true;
@@ -938,8 +938,6 @@ void EtherCATread::WriteOutputs()
 			outports_E_vel[l][i].write(output_E_vel[l][i]);
 		}
 	}
-	
-		
 }
 
 void EtherCATread::MapInputs2Outputs()

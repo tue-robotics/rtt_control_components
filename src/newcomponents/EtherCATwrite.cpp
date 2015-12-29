@@ -97,7 +97,7 @@ void EtherCATwrite::updateHook()
 }
 
 void EtherCATwrite::AddAnalogOuts(string PARTNAME, doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY)
-{	
+{
 	// Init 
 	uint N_INPORTS = INPORT_DIMENSIONS.size();
 	uint N_OUTPORTS = OUTPORT_DIMENSIONS.size();
@@ -111,7 +111,7 @@ void EtherCATwrite::AddAnalogOuts(string PARTNAME, doubles INPORT_DIMENSIONS, do
 		return;
 	}
 	
-	// Check if the AnalogIns is already added for this bodypart
+	// Check if the AnalogOuts is already added for this bodypart
 	for(uint l = 0; l < MAX_BODYPARTS; l++) {
 		if (PARTNAME == added_bodyparts_A[l]) {
 			log(Error) << "EtherCATwrite::AddAnalogOuts(" << PARTNAME << "): Could not add AnalogOuts. There is already an AnalogIn for bodypart " << PARTNAME << "!" << endlog();
@@ -233,7 +233,7 @@ void EtherCATwrite::AddAnalogOuts(string PARTNAME, doubles INPORT_DIMENSIONS, do
         output_msgs_A[BPID-1][i].values.resize( outport_dimensions_A[BPID-1][i] );
     }
     
-    log(Info) << "EtherCATwrite::AddAnalogOuts(" << PARTNAME << "): Added AnalogIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports!" << endlog();
+    log(Warning) << "EtherCATwrite::AddAnalogOuts(" << PARTNAME << "): Added AnalogOuts with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports!" << endlog();
     
 	return;
 }
@@ -252,7 +252,7 @@ void EtherCATwrite::AddDigitalOuts(string PARTNAME, doubles INPORT_DIMENSIONS, d
 		log(Error) << "EtherCATwrite::AddDigitalOuts(" << PARTNAME << "): Could not add DigitalOuts. Since EtherCATwrite component has not yet been started!" << endlog();
 		return;
 	}
-	// Check if the DigitalIns is already added for this bodypart
+	// Check if the DigitalOuts is already added for this bodypart
 	for(uint l = 0; l < MAX_BODYPARTS; l++) {
 		if (PARTNAME == added_bodyparts_D[l]) {
 			log(Error) << "EtherCATwrite::AddDigitalOuts(" << PARTNAME << "): Could not add DigitalOuts. There is already an DigitalOuts for bodypart " << PARTNAME << "!" << endlog();
@@ -357,7 +357,7 @@ void EtherCATwrite::AddDigitalOuts(string PARTNAME, doubles INPORT_DIMENSIONS, d
         output_msgs_D[BPID-1][i].values.resize(outport_dimensions_D[BPID-1][i]);
     }
     
-    log(Info) << "EtherCATwrite::AddDigitalOuts(" << PARTNAME << "): Succesfully added DigitalIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports!" << endlog();
+    log(Warning) << "EtherCATwrite::AddDigitalOuts(" << PARTNAME << "): Succesfully added DigitalOuts with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports!" << endlog();
 
 	return;
 }
@@ -467,17 +467,14 @@ void EtherCATwrite::AddMultiply_A(string PARTNAME, int PORTNR, doubles MULTIPLYF
 void EtherCATwrite::AddMatrixTransform_A(string PARTNAME, int PORTNR, double INPUTSIZE, double OUTPUTSIZE)
 {
 	// init
-	uint BPID;	
+	uint BPID;
 	
 	//! Check configuration	
 	if (!this->isRunning()) {
 		log(Error) << "EtherCATwrite::AddMatrixTransform_A(" << PARTNAME << "): Could not add MatrixTransform_A. Since EtherCATwrite component has not yet been started." << endlog();
 		return;
 	}
-	if( matrixtransform_status_A[BPID-1][PORTNR-1] ) {
-		log(Warning) << "EtherCATwrite::AddMatrixTransform_A: Could not add Matrix Transform, since this already excists for this bodypart. Overwriting is not supported at the moment" << endlog();
-		return;
-	}
+	
 	// Check if the bodypart name is in the bodypart_name list and set the BPID accordingly
 	for (uint l = 0; l < bodypart_names.size(); l++) {
 		if (bodypart_names[l] == PARTNAME) {
@@ -487,6 +484,10 @@ void EtherCATwrite::AddMatrixTransform_A(string PARTNAME, int PORTNR, double INP
 	}
 	if (BPID <= 0 || BPID > bodypart_names.size()) {
 		log(Error) << "EtherCATwrite::AddMatrixTransform_A(" << PORTNR << "): Could not add DigitalOuts. Could not find " << PARTNAME << " in the list of bodypartnames of EtherCATwrite!" << endlog();
+		return;
+	}
+	if( matrixtransform_status_A[BPID-1][PORTNR-1] ) {
+		log(Warning) << "EtherCATwrite::AddMatrixTransform_A: Could not add Matrix Transform, since this already excists for this bodypart. Overwriting is not supported at the moment" << endlog();
 		return;
 	}
 	
@@ -503,18 +504,19 @@ void EtherCATwrite::AddMatrixTransform_A(string PARTNAME, int PORTNR, double INP
 			return;
 		}
 	}
+	
 	if( OUTPUTSIZE != outport_dimensions_A[BPID-1][PORTNR-1]) {
 		if( OUTPUTSIZE < outport_dimensions_A[BPID-1][PORTNR-1]) { 	// smaller matrix then nr of inputs is allowed, not recommended
 			log(Warning) << "EtherCATwrite::AddMatrixTransform_A: INPUTSIZE: " << OUTPUTSIZE << " is smaller than the size of the outport outport_dimensions_A[BPID-1]:" << outport_dimensions_A[BPID-1][PORTNR-1] << "!" << endlog();
 		} else { 										// larger matrix then nr of inputs is not allowed
-			log(Error) << "EtherCATwrite::AddMatrixTransform_A: Could not add matrix transform. INPUTSIZE: " << OUTPUTSIZE << " is larger than the size of the outport outport_dimensions_A[BPID-1]:" << inport_dimensions_A[BPID-1][PORTNR-1] << "!" << endlog();
+			log(Error) << "EtherCATwrite::AddMatrixTransform_A: Could not add matrix transform. OUTPUTSIZE: " << OUTPUTSIZE << " is larger than the size of the outport outport_dimensions_A[BPID-1]:" << outport_dimensions_A[BPID-1][PORTNR-1] << "!" << endlog();
 			return;
 		}
 	}
 	
 	// Update outport_dimensions_A
 	outport_dimensions_A[BPID-1][PORTNR-1] = OUTPUTSIZE;
-		
+	
 	// Add property to store Matrix
 	matrixtransform_entries_A[BPID-1][PORTNR-1].resize(outport_dimensions_A[BPID-1][PORTNR-1]);
 	for ( uint k = 0; k < outport_dimensions_A[BPID-1][PORTNR-1]; k++ ) {
@@ -548,8 +550,8 @@ void EtherCATwrite::CheckAllConnections()
 	if (!goodToGO && (aquisition_time - start_time > 8.0)) {
 		goodToGO = true;
 	
-		// AnalogIns
-		for(uint l = 0; l < MAX_BODYPARTS; l++) {		
+		// AnalogOuts
+		for(uint l = 0; l < MAX_BODYPARTS; l++) {
 			for(uint i = 0; i < n_inports_A[l]; i++) {
 				if ( !inports_A[l][i].connected() ) {
 					log(Error) << "EtherCATwrite::CheckAllConnections: Analog inport " << inports_A[l][i].getName() << " is not connected!" << endlog();
@@ -562,8 +564,8 @@ void EtherCATwrite::CheckAllConnections()
 			}
 		}
 		
-		// DigitalIns
-		for(uint l = 0; l < MAX_BODYPARTS; l++) {		
+		// DigitalOuts
+		for(uint l = 0; l < MAX_BODYPARTS; l++) {
 			for(uint i = 0; i < n_inports_D[l]; i++) {
 				if ( !inports_D[l][i].connected() ) {
 					log(Error) << "EtherCATwrite::CheckAllConnections: Digital inport " << inports_D[l][i].getName() << " is not connected!" << endlog();
@@ -581,7 +583,7 @@ void EtherCATwrite::CheckAllConnections()
 void EtherCATwrite::Calculate_A()
 {	
 	// Addition
-    for( uint l = 0; l < MAX_BODYPARTS; l++ ) {	
+    for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
 		for( uint i = 0; i < n_outports_A[l]; i++ ) {
 			if (addition_status_A[l][i]) {
 				for( uint k = 0; k < outport_dimensions_A[l][i]; ++k) {
@@ -592,7 +594,7 @@ void EtherCATwrite::Calculate_A()
 	}
 	
 	// Multiplier
-    for( uint l = 0; l < MAX_BODYPARTS; l++ ) {	
+    for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
 		for( uint i = 0; i < n_outports_A[l]; i++ ) {
 			if (multiply_status_A[l][i]) {
 				for( uint k = 0; k < outport_dimensions_A[l][i]; ++k) {
@@ -606,13 +608,13 @@ void EtherCATwrite::Calculate_A()
 	for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
 		for( uint i = 0; i < n_outports_A[l]; i++ ) {
 			if (matrixtransform_status_A[l][i]) {
-							
+				
 				// Store output of MapInputs2Outputs operation into a temporary input vector
 				doubles input_MT_A = input_A[l][i];
 				
 				// Resize output vectors in case of a non square Matrix transformation
 				input_A[l][i].resize(outport_dimensions_A[l][i]);
-							
+				
 				for ( uint k = 0; k < outport_dimensions_A[l][i]; k++ ) {
 					input_A[l][i][k] = 0.0;
 					
@@ -627,15 +629,7 @@ void EtherCATwrite::Calculate_A()
 
 void EtherCATwrite::Calculate_D()
 {
-	// Convert to msg
-	for( uint l = 0; l < MAX_BODYPARTS; l++ ) {									
-		for( uint i = 0; i < n_outports_D[l]; i++ ) {								
-			for ( uint k = 0; k < outport_dimensions_D[l][i]; k++ ) {
-				output_msgs_D[l][i].values[k] = input_D[l][i][k]; 
-			}
-		}
-	}
-	
+	// No D calculations are supported at the moment
 }
 
 void EtherCATwrite::ReadInputs()
@@ -678,11 +672,11 @@ void EtherCATwrite::MapInputs2Outputs()
 	for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
 		uint j = 0;
 		for( uint i = 0; i < n_outports_A[l]; i++ ) {
-			for( uint k = j; k < (j + outport_dimensions_A[l][i]); ++k) {
-				if (from_which_inport_A[l][k] == 0 || from_which_entry_A[l][k] == 0) {
+			for( uint k = 0; k < outport_dimensions_A[l][i]; ++k) {
+				if (from_which_inport_A[l][j+k] == 0 || from_which_entry_A[l][j+k] == 0) {
 					output_msgs_A[l][i].values[k] = 0.0;
 				} else {
-					output_msgs_A[l][i].values[k] = input_A[l][ from_which_inport_A[l][k]-1 ][ from_which_entry_A[l][k]-1 ];
+					output_msgs_A[l][i].values[k] = input_A[l][ from_which_inport_A[l][j+k]-1 ][ from_which_entry_A[l][j+k]-1 ];
 				}
 			}
 			j += outport_dimensions_A[l][i];
@@ -693,11 +687,11 @@ void EtherCATwrite::MapInputs2Outputs()
 	for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
 		uint j = 0;
 		for( uint i = 0; i < n_outports_D[l]; i++ ) {
-			for( uint k = j; k < (j + outport_dimensions_D[l][i]); ++k) {
-				if (from_which_inport_D[l][k] == 0 || from_which_entry_D[l][k] ==0) {
+			for( uint k = 0; k < outport_dimensions_D[l][i]; ++k) {
+				if (from_which_inport_D[l][j+k] == 0 || from_which_entry_D[l][j+k] ==0) {
 					output_msgs_D[l][i].values[k] = 0;
 				} else {
-					output_msgs_D[l][i].values[k] = input_D[l][ from_which_inport_D[l][k]-1 ][ from_which_entry_D[l][k]-1 ];
+					output_msgs_D[l][i].values[k] = input_D[l][ from_which_inport_D[l][j+k]-1 ][ from_which_entry_D[l][j+k]-1 ];
 				}
 			}
 			j += outport_dimensions_D[l][i];
