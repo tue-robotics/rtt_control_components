@@ -208,19 +208,19 @@ void EtherCATwrite::AddAnalogOuts(string PARTNAME, doubles INPORT_DIMENSIONS, do
 	}		
 	
 	// math statuses
-	addition_status_A[BPID-1].resize(N_OUTPORTS);
-	multiply_status_A[BPID-1].resize(N_OUTPORTS);
-	matrixtransform_status_A[BPID-1].resize(N_OUTPORTS);
-    for( uint i = 0; i < N_OUTPORTS; i++ ) {
+	addition_status_A[BPID-1].resize(N_INPORTS);
+	multiply_status_A[BPID-1].resize(N_INPORTS);
+	matrixtransform_status_A[BPID-1].resize(N_INPORTS);
+    for( uint i = 0; i < N_INPORTS; i++ ) {
 		addition_status_A[BPID-1][i] = false;
 		multiply_status_A[BPID-1][i] = false;
 		matrixtransform_status_A[BPID-1][i] = false;
 	}
 	
 	// Resizing math properties 
-	addition_values_A[BPID-1].resize(n_outports_A[BPID-1]);
-	multiply_values_A[BPID-1].resize(n_outports_A[BPID-1]);
-	matrixtransform_entries_A[BPID-1].resize(n_outports_A[BPID-1]);		    
+	addition_values_A[BPID-1].resize(n_inports_A[BPID-1]);
+	multiply_values_A[BPID-1].resize(n_inports_A[BPID-1]);
+	matrixtransform_entries_A[BPID-1].resize(n_inports_A[BPID-1]);		    
 	    
     //! Resizing in- and outport messages
     input_A[BPID-1].resize(n_inports_A[BPID-1]);
@@ -386,23 +386,23 @@ void EtherCATwrite::AddAddition_A(string PARTNAME, int PORTNR, doubles ADDVALUES
 		return;
 	}
 	
-	if( PORTNR <= 0 || PORTNR > n_outports_A[BPID-1]) {
-		log(Error) << "EtherCATwrite::AddAddition_A(" << PORTNR << "): Could not add addition. Invalid PORTNR: " << PORTNR << ".  1 <= PORTNR <= " << n_outports_A[BPID-1] << "!" << endlog();
+	if( PORTNR <= 0 || PORTNR > n_inports_A[BPID-1]) {
+		log(Error) << "EtherCATwrite::AddAddition_A(" << PORTNR << "): Could not add addition. Invalid PORTNR: " << PORTNR << ".  1 <= PORTNR <= " << n_inports_A[BPID-1] << "!" << endlog();
 		return;
 	}
-	if( ADDVALUES.size() != outport_dimensions_A[BPID-1][PORTNR-1] ) {
-		log(Error) << "EtherCATwrite::AddAddition_A(" << PARTNAME << "): Could not add addition. Invalid size of ADDVALUES " << ADDVALUES.size() << ". Should have been of size :" << outport_dimensions_A[BPID-1][PORTNR-1] << "!" << endlog();
+	if( ADDVALUES.size() != inport_dimensions_A[BPID-1][PORTNR-1] ) {
+		log(Error) << "EtherCATwrite::AddAddition_A(" << PARTNAME << "): Could not add addition. Invalid size of ADDVALUES " << ADDVALUES.size() << ". Should have been of size :" << inport_dimensions_A[BPID-1][PORTNR-1] << "!" << endlog();
 		return;
 	}
 	if( addition_status_A[BPID-1][PORTNR-1] ) {
-		log(Error) << "EtherCATwrite::AddAddition_A: Could not add addition. For this output a multiplier is already there" << endlog();
+		log(Error) << "EtherCATwrite::AddAddition_A: Could not add addition. For this input a multiplier is already there" << endlog();
 		log(Error) << "If you want to do both a multiply and an addition, then do the addition first and then the mulitiply" << endlog();
 		return;
 	}
 	
 	// Save math properties
-	addition_values_A[BPID-1][PORTNR-1].resize(outport_dimensions_A[BPID-1][PORTNR-1]);
-	for( uint k = 0; k < outport_dimensions_A[BPID-1][PORTNR-1]; k++ ) {
+	addition_values_A[BPID-1][PORTNR-1].resize(inport_dimensions_A[BPID-1][PORTNR-1]);
+	for( uint k = 0; k < inport_dimensions_A[BPID-1][PORTNR-1]; k++ ) {
 		addition_values_A[BPID-1][PORTNR-1][k] = ADDVALUES[k];
 	}
 	
@@ -438,18 +438,18 @@ void EtherCATwrite::AddMultiply_A(string PARTNAME, int PORTNR, doubles MULTIPLYF
 		return;
 	}
 	
-	if( PORTNR <= 0 || PORTNR > n_outports_A[BPID-1]) {
-		log(Error) << "EtherCATwrite::AddMultiply_A(" << PORTNR << "): Could not add multiply. Invalid PORTNR: " << PORTNR << ".  1 <= PORTNR <= " << n_outports_A[BPID-1] << "!" << endlog();
+	if( PORTNR <= 0 || PORTNR > n_inports_A[BPID-1]) {
+		log(Error) << "EtherCATwrite::AddMultiply_A(" << PORTNR << "): Could not add multiply. Invalid PORTNR: " << PORTNR << ".  1 <= PORTNR <= " << n_inports_A[BPID-1] << "!" << endlog();
 		return;
 	}
-	if( MULTIPLYFACTOR.size() != outport_dimensions_A[BPID-1][PORTNR-1] ) {
+	if( MULTIPLYFACTOR.size() != inport_dimensions_A[BPID-1][PORTNR-1] ) {
 		log(Error) << "EtherCATwrite::AddMultiply_A: Could not add multiplier. Invalid size of MULTIPLYFACTOR. Should have be of size :" << MULTIPLYFACTOR.size() << "!" << endlog();
 		return;
 	}
 	
 	// Save math properties
-	multiply_values_A[BPID-1][PORTNR-1].resize(outport_dimensions_A[BPID-1][PORTNR-1]);
-	for( uint k = 0; k < outport_dimensions_A[BPID-1][PORTNR-1]; k++ ) {
+	multiply_values_A[BPID-1][PORTNR-1].resize(inport_dimensions_A[BPID-1][PORTNR-1]);
+	for( uint k = 0; k < inport_dimensions_A[BPID-1][PORTNR-1]; k++ ) {
 		multiply_values_A[BPID-1][PORTNR-1][k] = MULTIPLYFACTOR[k];
 	}
 	
@@ -491,8 +491,8 @@ void EtherCATwrite::AddMatrixTransform_A(string PARTNAME, int PORTNR, double INP
 		return;
 	}
 	
-	if( PORTNR <= 0 || PORTNR > n_outports_A[BPID-1]) {
-		log(Error) << "EtherCATwrite::AddMatrixTransform_A(" << PORTNR << "): Could not add matrix transform. Invalid PORTNR: " << PORTNR << ".  1 <= PORTNR <= " << n_outports_A[BPID-1] << "!" << endlog();
+	if( PORTNR <= 0 || PORTNR > n_inports_A[BPID-1]) {
+		log(Error) << "EtherCATwrite::AddMatrixTransform_A(" << PORTNR << "): Could not add matrix transform. Invalid PORTNR: " << PORTNR << ".  1 <= PORTNR <= " << n_inports_A[BPID-1] << "!" << endlog();
 		return;
 	}
 	
@@ -505,23 +505,11 @@ void EtherCATwrite::AddMatrixTransform_A(string PARTNAME, int PORTNR, double INP
 		}
 	}
 	
-	if( OUTPUTSIZE != outport_dimensions_A[BPID-1][PORTNR-1]) {
-		if( OUTPUTSIZE < outport_dimensions_A[BPID-1][PORTNR-1]) { 	// smaller matrix then nr of inputs is allowed, not recommended
-			log(Warning) << "EtherCATwrite::AddMatrixTransform_A: INPUTSIZE: " << OUTPUTSIZE << " is smaller than the size of the outport outport_dimensions_A[BPID-1]:" << outport_dimensions_A[BPID-1][PORTNR-1] << "!" << endlog();
-		} else { 										// larger matrix then nr of inputs is not allowed
-			log(Error) << "EtherCATwrite::AddMatrixTransform_A: Could not add matrix transform. OUTPUTSIZE: " << OUTPUTSIZE << " is larger than the size of the outport outport_dimensions_A[BPID-1]:" << outport_dimensions_A[BPID-1][PORTNR-1] << "!" << endlog();
-			return;
-		}
-	}
-	
-	// Update outport_dimensions_A
-	outport_dimensions_A[BPID-1][PORTNR-1] = OUTPUTSIZE;
-	
 	// Add property to store Matrix
-	matrixtransform_entries_A[BPID-1][PORTNR-1].resize(outport_dimensions_A[BPID-1][PORTNR-1]);
-	for ( uint k = 0; k < outport_dimensions_A[BPID-1][PORTNR-1]; k++ ) {
+	matrixtransform_entries_A[BPID-1][PORTNR-1].resize(inport_dimensions_A[BPID-1][PORTNR-1]);
+	for ( uint k = 0; k < inport_dimensions_A[BPID-1][PORTNR-1]; k++ ) {
 		
-		matrixtransform_entries_A[BPID-1][PORTNR-1][k].resize(outport_dimensions_A[BPID-1][PORTNR-1]); 
+		matrixtransform_entries_A[BPID-1][PORTNR-1][k].resize(inport_dimensions_A[BPID-1][PORTNR-1]); 
 		string name = added_bodyparts_A[BPID-1]+to_string(PORTNR)+"_matrixtransform"+to_string(k+1);
 		addProperty( name, matrixtransform_entries_A[BPID-1][PORTNR-1][k]);
 		
@@ -584,9 +572,9 @@ void EtherCATwrite::Calculate_A()
 {	
 	// Addition
     for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
-		for( uint i = 0; i < n_outports_A[l]; i++ ) {
+		for( uint i = 0; i < n_inports_A[l]; i++ ) {
 			if (addition_status_A[l][i]) {
-				for( uint k = 0; k < outport_dimensions_A[l][i]; ++k) {
+				for( uint k = 0; k < inport_dimensions_A[l][i]; ++k) {
 					input_A[l][i][k] += addition_values_A[l][i][k];
 				}
 			}
@@ -595,9 +583,9 @@ void EtherCATwrite::Calculate_A()
 	
 	// Multiplier
     for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
-		for( uint i = 0; i < n_outports_A[l]; i++ ) {
+		for( uint i = 0; i < n_inports_A[l]; i++ ) {
 			if (multiply_status_A[l][i]) {
-				for( uint k = 0; k < outport_dimensions_A[l][i]; ++k) {
+				for( uint k = 0; k < inport_dimensions_A[l][i]; ++k) {
 					input_A[l][i][k] = input_A[l][i][k]*multiply_values_A[l][i][k];
 				}
 			}
@@ -606,16 +594,16 @@ void EtherCATwrite::Calculate_A()
 	
 	// Matrix Transform	
 	for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
-		for( uint i = 0; i < n_outports_A[l]; i++ ) {
+		for( uint i = 0; i < n_inports_A[l]; i++ ) {
 			if (matrixtransform_status_A[l][i]) {
 				
-				// Store output of MapInputs2Outputs operation into a temporary input vector
+				// Store input_A into a temporary input vector
 				doubles input_MT_A = input_A[l][i];
 				
 				// Resize output vectors in case of a non square Matrix transformation
-				input_A[l][i].resize(outport_dimensions_A[l][i]);
+				input_A[l][i].resize(inport_dimensions_A[l][i]);
 				
-				for ( uint k = 0; k < outport_dimensions_A[l][i]; k++ ) {
+				for ( uint k = 0; k < inport_dimensions_A[l][i]; k++ ) {
 					input_A[l][i][k] = 0.0;
 					
 					for ( uint j = 0; j < input_MT_A.size(); j++ ) {
@@ -629,7 +617,7 @@ void EtherCATwrite::Calculate_A()
 
 void EtherCATwrite::Calculate_D()
 {
-	// No D calculations are supported at the moment
+	// No D math operations are supported at the moment
 }
 
 void EtherCATwrite::ReadInputs()
