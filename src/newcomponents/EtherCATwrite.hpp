@@ -62,7 +62,7 @@ namespace ETHERCATWRITE
 		virtual void AddAnalogOuts(string PARTNAME, doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY);
 		virtual void AddDigitalOuts(string PARTNAME, doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY);
 		
-		//! AnalogIns
+		//! AnalogOuts
 		// Ports
 		InputPort<doubles> inports_A[MAX_BODYPARTS][MAX_PORTS];
 		OutputPort<soem_beckhoff_drivers::AnalogMsg> outports_A[MAX_BODYPARTS][MAX_PORTS];
@@ -98,13 +98,13 @@ namespace ETHERCATWRITE
 		virtual void AddMultiply_A(string PARTNAME, int PORTNR, doubles FACTOR);
 		virtual void AddMatrixTransform_A(string PARTNAME, int PORTNR, double INPUTSIZE, double OUTPUTSIZE);
 		
-		//! DigitalIns
+		//! DigitalOuts
 		// Ports
-		InputPort<ints> inports_D[MAX_BODYPARTS][MAX_PORTS];
+		InputPort<bool> inports_D[MAX_BODYPARTS][MAX_PORTS];
 		OutputPort<soem_beckhoff_drivers::DigitalMsg> outports_D[MAX_BODYPARTS][MAX_PORTS];
 
 		// In/Output
-		std::vector< ints > input_D[MAX_PORTS];
+		bool input_D[MAX_PORTS][MAX_PORTS];
 		std::vector< soem_beckhoff_drivers::DigitalMsg > output_msgs_D[MAX_PORTS];
 	
 		// Scalars
@@ -116,10 +116,14 @@ namespace ETHERCATWRITE
 		uint n_outports_D[MAX_BODYPARTS];
 		
 		// Matrices
+		bools forcedhigh_status_D[MAX_BODYPARTS];
 		ints inport_dimensions_D[MAX_BODYPARTS];
 		ints outport_dimensions_D[MAX_BODYPARTS];
 		ints from_which_inport_D[MAX_BODYPARTS];
-		ints from_which_entry_D[MAX_BODYPARTS];		
+		ints from_which_entry_D[MAX_BODYPARTS];
+		
+		// Functions
+		virtual void AddForcedHigh_D(string PARTNAME, int PORTNR);
 
 		//! Component Hooks
 		virtual bool configureHook();

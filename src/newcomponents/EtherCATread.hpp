@@ -8,9 +8,11 @@
 #include <soem_beckhoff_drivers/AnalogMsg.h>
 #include <soem_beckhoff_drivers/DigitalMsg.h>
 #include <soem_beckhoff_drivers/EncoderMsg.h>
+#include <std_msgs/Float32MultiArray.h>
+#include <std_msgs/Bool.h>
 
 #define MAX_BODYPARTS 6 /* maximum number of ports */
-#define MAX_PORTS 5 	/* maximum number of ports */
+#define MAX_PORTS 10 	/* maximum number of ports */
 #define MAX_ENCPORTS 10 /* maximum number of ports */
 
 /*
@@ -57,7 +59,8 @@ namespace ETHERCATREAD
 		long double start_time;
 		strings bodypart_names;
 		
-		// Functions
+		//! Functions
+		// Internal
 		virtual void ReadInputs();
 		virtual void CheckAllConnections();
 		virtual void MapInputs2Outputs();
@@ -65,14 +68,31 @@ namespace ETHERCATREAD
 		virtual void Calculate_D();
 		virtual void Calculate_E();
 		virtual void WriteOutputs();
+		
+		// Internal and External - ResetEncoders
+		virtual void ResetEncoders(int BPID, int PORTNR, doubles RESETVALUES );		
+		
+		// External - Add Ins
 		virtual void AddAnalogIns(string PARTNAME, doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY);
 		virtual void AddDigitalIns(string PARTNAME, doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY);
 		virtual void AddEncoderIns(string PARTNAME, doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY);
+		
+		// External - Add Math
+		virtual void AddAddition_A(string PARTNAME, int PORTNR, doubles ADDVALUES);
+		virtual void AddMultiply_A(string PARTNAME, int PORTNR, doubles MULTIPLYFACTOR);
+		virtual void AddFlip_D(string PARTNAME, int PORTNR);
+		virtual void AddEnc2Si_E(string PARTNAME, int PORTNR, doubles ENCODERBITS, doubles ENC2SI);
+		virtual void AddMatrixTransform_E(string PARTNAME, int PORTNR, double INPUTSIZE, double OUTPUTSIZE);
+		
+		// External - Add MsgOut
+		virtual void AddMsgOut_A(string PARTNAME, int PORTNR);
+		virtual void AddMsgOut_D(string PARTNAME, int PORTNR);
 		
 		//! AnalogIns
 		// Ports
 		InputPort<soem_beckhoff_drivers::AnalogMsg> inports_A[MAX_BODYPARTS][MAX_PORTS];
 		OutputPort<doubles> outports_A[MAX_BODYPARTS][MAX_PORTS];
+		OutputPort<std_msgs::Float32MultiArray> outports_A_msg[MAX_BODYPARTS][MAX_PORTS];
 		
 		// In/Output
 		vector< soem_beckhoff_drivers::AnalogMsg > input_msgs_A[MAX_BODYPARTS];
@@ -90,6 +110,7 @@ namespace ETHERCATREAD
 		// Matrices
 		bools addition_status_A[MAX_BODYPARTS];
 		bools multiply_status_A[MAX_BODYPARTS];
+		bools msgout_status_A[MAX_BODYPARTS];
 		ints inport_dimensions_A[MAX_BODYPARTS];
 		ints outport_dimensions_A[MAX_BODYPARTS];
 		ints from_which_inport_A[MAX_BODYPARTS];
@@ -98,20 +119,16 @@ namespace ETHERCATREAD
 		vector< doubles > addition_values_A[MAX_BODYPARTS];	
 		vector< doubles > multiply_values_A[MAX_BODYPARTS];	
 
-		// Functions
-		virtual void AddAddition_A(string PARTNAME, int PORTNR, doubles ADDVALUES);
-		virtual void AddMultiply_A(string PARTNAME, int PORTNR, doubles MULTIPLYFACTOR);
-
-		
 		//! DigitalIns
 		// Ports
 		InputPort<soem_beckhoff_drivers::DigitalMsg> inports_D[MAX_BODYPARTS][MAX_PORTS];
-		OutputPort<bools> outports_D[MAX_BODYPARTS][MAX_PORTS];
+		OutputPort<bool> outports_D[MAX_BODYPARTS][MAX_PORTS];
+		OutputPort<std_msgs::Bool> outports_D_msg[MAX_BODYPARTS][MAX_PORTS];
 
 		// In/Output
 		vector< soem_beckhoff_drivers::DigitalMsg > input_msgs_D[MAX_BODYPARTS];
-		vector< bools > intermediate_D[MAX_BODYPARTS];
-		vector< bools > output_D[MAX_BODYPARTS];
+		vector< bool > intermediate_D[MAX_BODYPARTS];
+		vector< bool > output_D[MAX_BODYPARTS];
 	
 		// Scalars
 		uint n_addedbodyparts_D;
@@ -123,15 +140,11 @@ namespace ETHERCATREAD
 		
 		// Matrices
 		bools flip_status_D[MAX_BODYPARTS];
+		bools msgout_status_D[MAX_BODYPARTS];
 		ints inport_dimensions_D[MAX_BODYPARTS];
 		ints outport_dimensions_D[MAX_BODYPARTS];
 		ints from_which_inport_D[MAX_BODYPARTS];
 		ints from_which_entry_D[MAX_BODYPARTS];
-		// 3D
-		vector< bools > flip_values_D[MAX_BODYPARTS];		
-		
-		// Functions
-		virtual void AddFlip_D(string PARTNAME, int PORTNR, doubles FLIPVALUES);
 		
 		//! EncoderIns
 		// Ports
@@ -166,17 +179,10 @@ namespace ETHERCATREAD
 		
 		vector< longints > encodercntr_E[MAX_BODYPARTS];
 		vector< doubles > initpos_E[MAX_BODYPARTS];
-		
 		vector< doubles > encoderbits_E[MAX_BODYPARTS];
 		vector< doubles > enc2si_values_E[MAX_BODYPARTS];		
 		vector< vector< doubles > > matrixtransform_entries_E[MAX_BODYPARTS];
-		
-		// Functions
-		virtual void AddEnc2Si_E(string PARTNAME, int PORTNR, doubles ENCODERBITS, doubles ENC2SI);
-		virtual void AddMatrixTransform_E(string PARTNAME, int PORTNR, double INPUTSIZE, double OUTPUTSIZE);
-		
-		virtual void ResetEncoders(int BPID, int PORTNR, doubles RESETVALUES );
-		
+				
 		//! Component Hooks
 		virtual bool configureHook();
 		virtual bool startHook();

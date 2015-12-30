@@ -6,6 +6,12 @@
 #                                                                      #
 ########################################################################
 
+# Note the difference between Eread and Ewrite: 
+# EtherCATread  ->  Readinputs, MapInputs2Outputs, Calculate, Writeoutputs
+# Therefore the math operations are done on the already mapped outputs
+# EtherCATwrite  ->  Readinputs, Calculate,MapInputs2Outputs, Writeoutputs
+# Therefore the math operations are done first on the inputs then the mapping is done
+
 #### IMPORT PACKAGE ####
 import("rtt_ros")
 ros.import("amigo_hardware")
@@ -28,7 +34,11 @@ SG.AddAnalogSignal(2, array (4.123+5.123-2.0, 1.0+2.0), false);
 SG.AddAnalogSignal(2, array ((6.123+7.123)*0.5, 1.0*-0.5), false);
 SG.AddAnalogSignal(1, array (8.123), false);
 # Digital
-SG.AddDigitalSignal(8, array (1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0), true);
+SG.AddDigitalSignal(1, array (1.0), false);
+SG.AddDigitalSignal(1, array (0.0), false);
+SG.AddDigitalSignal(1, array (1.0), false);
+SG.AddDigitalSignal(1, array (0.0), false);
+SG.AddDigitalSignal(1, array (1.0), false);
 
 #### ETHERCAT READ ####
 loadComponent("EtherCATwrite","ETHERCATWRITE::EtherCATwrite")
@@ -42,7 +52,7 @@ EtherCATwrite.AddAnalogOuts("spindle",   array (1.0), array (1.0), array (1.0), 
 EtherCATwrite.AddAnalogOuts("left_arm",  array (8.0), array (9.0), array (1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0), array (1.0, 2.0, 0.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0))
 EtherCATwrite.AddAnalogOuts("right_arm", array (2.0, 1.0, 2.0, 2.0, 1.0), array (3.0, 3.0, 3.0), array (1.0, 1.0, 0.0, 2.0, 3.0, 3.0, 4.0, 4.0, 5.0), array (1.0, 2.0, 0.0, 1.0, 1.0, 2.0, 1.0, 2.0, 1.0))
 # Digital Outs
-EtherCATwrite.AddDigitalOuts("generic",   array (8.0), array (4.0, 1.0, 1.0), array (1.0, 1.0, 1.0, 1.0, 1.0, 1.0), array (1.0, 2.0, 3.0, 4.0, 5.0, 6.0))
+EtherCATwrite.AddDigitalOuts("generic",   array (1.0,1.0,1.0,1.0,1.0), array (4.0, 1.0, 1.0), array (1.0, 2.0, 3.0, 0.0, 4.0, 5.0), array (1.0, 1.0, 1.0, 0.0, 1.0, 1.0))
 
 #### MATH ####
 # Analog Outs
@@ -83,5 +93,10 @@ connect ("SG.analogOut5","EtherCATwrite.right_arm_Ain2", ConnPolicy() )
 connect ("SG.analogOut6","EtherCATwrite.right_arm_Ain3", ConnPolicy() )
 connect ("SG.analogOut7","EtherCATwrite.right_arm_Ain4", ConnPolicy() )
 connect ("SG.analogOut8","EtherCATwrite.right_arm_Ain5", ConnPolicy() )
+connect ("SG.digitalOut1","EtherCATwrite.generic_Din1", ConnPolicy() )
+connect ("SG.digitalOut2","EtherCATwrite.generic_Din2", ConnPolicy() )
+connect ("SG.digitalOut3","EtherCATwrite.generic_Din3", ConnPolicy() )
+connect ("SG.digitalOut4","EtherCATwrite.generic_Din4", ConnPolicy() )
+connect ("SG.digitalOut5","EtherCATwrite.generic_Din5", ConnPolicy() )
 
 

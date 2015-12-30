@@ -157,7 +157,7 @@ double ReadEncoders::determineDt()
 void ReadEncoders::ResetEncoders( doubles resetvalues )
 {
 	if (resetvalues.size() != N) {
-		log(Error)<<"ReadEncoders: initialize signal received with incorrect size: " << resetvalues.size() << ". Size should be " << N <<"."<<endlog();
+		log(Error)<<"ReadEncoders::ResetEncoders: initialize signal received with incorrect size: " << resetvalues.size() << ". Size should be " << N <<"."<<endlog();
 	}
 	
 	for ( uint i = 0; i < resetvalues.size(); i++ ) {
@@ -166,6 +166,8 @@ void ReadEncoders::ResetEncoders( doubles resetvalues )
 		init_SI_values[i] = 0.0;
 		init_SI_values[i] = readEncoder(i) - resetvalues[i];
 		enc_position_prev[i] = enc_position[i];
+		
+		//if (i == 0) { log(Warning)<<"ReadEncoders::ResetEncoders: Resetting Encoders. init_SI_values[i] = readEncRes - resetvalues[i]; -> : " << init_SI_values[0] << " = " << readEncRes  << " - " << resetvalues[0]  << "!"<<endlog(); }
 	}
 }
 

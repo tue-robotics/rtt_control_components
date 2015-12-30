@@ -9,6 +9,11 @@
 # To test Reset Encoders:
 ## EtherCATread.ResetEncoders(3,1,array(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
 
+# Note the difference between Eread and Ewrite: 
+# EtherCATread  ->  Readinputs, MapInputs2Outputs, Calculate, Writeoutputs
+# Therefore the math operations are done on the already mapped outputs
+# EtherCATwrite  ->  Readinputs, Calculate,MapInputs2Outputs, Writeoutputs
+# Therefore the math operations are done first on the inputs then the mapping is done
 
 #### IMPORT PACKAGE ####
 import("rtt_ros")
@@ -59,7 +64,7 @@ EtherCATread.start
 EtherCATread.AddAnalogIns("left_arm", array (3.0, 3.0, 3.0), array (8.0), array (1.0, 1.0, 2.0, 2.0, 2.0, 3.0, 3.0, 3.0), array (1.0, 2.0, 1.0, 2.0, 3.0, 1.0, 2.0, 3.0))
 EtherCATread.AddAnalogIns("right_arm", array (3.0, 3.0, 3.0), array (2.0, 1.0, 2.0, 2.0, 1.0), array (1.0, 1.0, 2.0, 2.0, 2.0, 3.0, 3.0, 3.0), array (1.0, 2.0, 1.0, 2.0, 3.0, 1.0, 2.0, 3.0))
 # Digital Ins
-EtherCATread.AddDigitalIns("generic", array (8.0), array (4.0, 1.0, 1.0), array (1.0, 1.0, 1.0, 1.0, 1.0, 1.0), array (1.0, 2.0, 3.0, 4.0, 5.0, 6.0))
+EtherCATread.AddDigitalIns("generic", array (8.0), array (1.0, 1.0, 1.0, 1.0, 1.0, 1.0), array (1.0, 1.0, 1.0, 1.0, 1.0, 1.0), array (1.0, 2.0, 3.0, 4.0, 5.0, 6.0))
 # Encoder Ins
 EtherCATread.AddEncoderIns("base", array (1.0, 1.0, 1.0, 1.0), array (4.0), array (1.0, 2.0, 3.0, 4.0), array (1.0, 1.0, 1.0, 1.0))
 EtherCATread.AddEncoderIns("spindle", array (1.0), array (1.0), array (1.0), array (1.0))
@@ -71,7 +76,9 @@ EtherCATread.AddEncoderIns("right_arm",array (1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
 EtherCATread.AddAddition_A("right_arm", 3, array(2.0, -2.0))
 EtherCATread.AddMultiply_A("right_arm", 4, array(2.0, -2.0))
 # Digital Ins
-EtherCATread.AddFlip_D("generic", 1, array(1.0, 0.0, 1.0, 0.0))
+EtherCATread.AddFlip_D("generic", 1)
+EtherCATread.AddFlip_D("generic", 2)
+
 # Encoder Ins
 EtherCATread.AddEnc2Si_E("base", 1, array(65536.0, 65536.0, 65536.0, 65536.0), array(0.0001, 0.0001, 0.0001, 0.0001))
 EtherCATread.AddEnc2Si_E("spindle", 1, array(65536.0), array(0.0001))
