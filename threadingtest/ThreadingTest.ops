@@ -40,3 +40,10 @@ SOEM.start
 READ.start
 CONTR.start
 WRITE.start
+
+
+# 1 Copy the ThreadingTestBase 3 times: Write, Read, Cont
+# 2 Add reset function to Read
+# 3 Add the if > X do reset to CONT
+# 4 Correctly connect the reset function request of CONT to READ
+# 5 Write out how this demo works and email Sjoerd + Rein
