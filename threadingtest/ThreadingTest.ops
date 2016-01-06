@@ -1,0 +1,42 @@
+#### IMPORT PACKAGE ####
+import("rtt_ros")
+ros.import("amigo_hardware")
+
+#### DECLARATION OF PARAMETERS ####
+var double TS 					= 1.0
+
+#### SOEM ####
+loadComponent("SOEM","SIGNALGENERATOR::SignalGenerator")
+setActivity("SOEM",TS,HighestPriority,ORO_SCHED_RT)
+SOEM.configure
+SOEM.AddAnalogSignal(1, array (1.0), false);
+SOEM.AddRamp_A(1,  array(1.0), array(9999.0));
+
+#### READ ####
+loadComponent("READ","THREADINGTESTBASE::ThreadingTestBase")
+setActivity("READ",0.0,HighestPriority,ORO_SCHED_RT)
+READ.compname = "READ"
+READ.configure
+
+#### CONTR ####
+loadComponent("CONTR","THREADINGTESTBASE::ThreadingTestBase")
+setActivity("CONTR",0.0,HighestPriority,ORO_SCHED_RT)
+CONTR.compname = "CONTR"
+CONTR.configure
+
+#### WRITE ####
+loadComponent("WRITE","THREADINGTESTBASE::ThreadingTestBase")
+setActivity("WRITE",0.0,HighestPriority,ORO_SCHED_RT)
+WRITE.compname = "WRITE"
+WRITE.configure
+
+#### CONNECT COMPONENTS ####
+connect ("SOEM.analogOut1",		"READ.in", ConnPolicy() );
+connect ("READ.out",			"CONTR.in", ConnPolicy() );
+connect ("CONTR.out",			"WRITE.in", ConnPolicy() );
+
+#### START COMPONENTS ####
+SOEM.start
+READ.start
+CONTR.start
+WRITE.start

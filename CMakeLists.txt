@@ -18,6 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 include_directories(
 	include
+	threadingtest
 	include/math
 	include/arm 
 	include/discontinuities  
@@ -38,6 +39,7 @@ include_directories(
 
 orocos_install_headers( DIRECTORY
 	include
+	threadingtest
 	include/math
 	include/arm 
 	include/discontinuities  
@@ -55,9 +57,13 @@ file(GLOB_RECURSE HEADER_FILES include/*.hpp)
 
 # Export package information (replaces catkin_package() macro) 
 orocos_generate_package(
-  INCLUDE_DIRS include
+  INCLUDE_DIRS include threadingtest
   DEPENDS rtt_ros
 )   
+
+### Threading Test ###
+orocos_component(ThreadingTestBase threadingtest/ThreadingTestBase.cpp ${HEADER_FILES})
+target_link_libraries(ThreadingTestBase ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 
 ### Orocos Components - New ###
 orocos_component(EtherCATread src/newcomponents/EtherCATread.cpp ${HEADER_FILES})
