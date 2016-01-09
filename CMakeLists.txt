@@ -62,12 +62,12 @@ orocos_generate_package(
 )   
 
 ### Threading Test ###
-#orocos_component(ThreadingTestRead threadingtest/ThreadingTestRead.cpp ${HEADER_FILES})
-#target_link_libraries(ThreadingTestRead ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
-#orocos_component(ThreadingTestContr threadingtest/ThreadingTestContr.cpp ${HEADER_FILES})
-#target_link_libraries(ThreadingTestContr ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
-#orocos_component(ThreadingTestWrite threadingtest/ThreadingTestWrite.cpp ${HEADER_FILES})
-#target_link_libraries(ThreadingTestWrite ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
+orocos_component(ThreadingTestRead threadingtest/ThreadingTestRead.cpp ${HEADER_FILES})
+target_link_libraries(ThreadingTestRead ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
+orocos_component(ThreadingTestContr threadingtest/ThreadingTestContr.cpp ${HEADER_FILES})
+target_link_libraries(ThreadingTestContr ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
+orocos_component(ThreadingTestWrite threadingtest/ThreadingTestWrite.cpp ${HEADER_FILES})
+target_link_libraries(ThreadingTestWrite ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 
 ### Orocos Components - New ###
 orocos_component(EtherCATread src/newcomponents/EtherCATread.cpp ${HEADER_FILES})
