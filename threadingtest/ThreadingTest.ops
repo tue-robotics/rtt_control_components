@@ -13,21 +13,19 @@ SOEM.AddAnalogSignal(1, array (1.0), false);
 SOEM.AddRamp_A(1,  array(1.0), array(9999.0));
 
 #### READ ####
-loadComponent("READ","THREADINGTESTBASE::ThreadingTestBase")
+loadComponent("READ","THREADINGTESTREAD::ThreadingTestRead")
 setActivity("READ",0.0,HighestPriority,ORO_SCHED_RT)
-READ.compname = "READ"
 READ.configure
 
 #### CONTR ####
-loadComponent("CONTR","THREADINGTESTBASE::ThreadingTestBase")
+loadComponent("CONTR","THREADINGTESTCONTR::ThreadingTestContr")
 setActivity("CONTR",0.0,HighestPriority,ORO_SCHED_RT)
-CONTR.compname = "CONTR"
+addPeer("CONTR","READ")
 CONTR.configure
 
 #### WRITE ####
-loadComponent("WRITE","THREADINGTESTBASE::ThreadingTestBase")
+loadComponent("WRITE","THREADINGTESTWRITE::ThreadingTestWrite")
 setActivity("WRITE",0.0,HighestPriority,ORO_SCHED_RT)
-WRITE.compname = "WRITE"
 WRITE.configure
 
 #### CONNECT COMPONENTS ####
@@ -40,10 +38,3 @@ SOEM.start
 READ.start
 CONTR.start
 WRITE.start
-
-
-# 1 Copy the ThreadingTestBase 3 times: Write, Read, Cont
-# 2 Add reset function to Read
-# 3 Add the if > X do reset to CONT
-# 4 Correctly connect the reset function request of CONT to READ
-# 5 Write out how this demo works and email Sjoerd + Rein
