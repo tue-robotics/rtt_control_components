@@ -43,7 +43,7 @@ bool ThreadingTestContr::startHook()
 	// Fetch Operation
 	ResetEnc 	= ThreadingTestRead->getOperation(		"ResetEnc");
 	
-	// Set execution engine
+	// Set execution engine (this->engine():
 	ResetEnc.setCaller(	ThreadingTestRead->engine());
 	
 	// Check if ResetEnc is ready
@@ -65,7 +65,7 @@ void ThreadingTestContr::updateHook()
 	inport.read(input);
 	
 	// write warning
-	log(Warning)<< "ThreadingTestContr::updateHook: Received: " << input[0] << " !"<<endlog();
+	log(Warning)<< "ThreadingTestContr::updateHook: CONTR: " << input[0] << "!"<<endlog();
 	
 	// add 0.01 to output
 	output[0] = input[0] + 0.01;
@@ -73,12 +73,11 @@ void ThreadingTestContr::updateHook()
 	// write output
 	outport.write(output);
 	
-	if (output[0]>20.0) {
+	if (output[0]>10.0) {
 		ResetEnc();
 		log(Warning)<< "ThreadingTestContr::updatehook: requested reset!"<<endlog();
 	}
-	
-	
+
 }
 
 ORO_CREATE_COMPONENT(THREADINGTESTCONTR::ThreadingTestContr)

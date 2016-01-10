@@ -48,7 +48,7 @@ void ThreadingTestRead::updateHook()
 	inport.read(input);
 	
 	// write warning
-	log(Warning)<< "ThreadingTestRead::updateHook: Received: " << input[0] << " !"<<endlog();
+	log(Warning)<< "ThreadingTestRead::updateHook: READ : " << input[0] << "!"<<endlog();
 
 	// add 0.01 to output
 	output[0] = input[0] + 0.01 - reset_value;
