@@ -55,6 +55,7 @@ namespace SUPERVISORY
         OutputPort<bool> homingfinished_outport;
 
         // Properties
+        bool new_structure;
         uint N;
         uint N_outports;
         uint partNr;
@@ -76,12 +77,12 @@ namespace SUPERVISORY
 
 		double InterpolDt;
 		double InterpolEps;
-		
         doubles homing_forces;
         doubles homing_errors;
         doubles homing_absPos;
 
         // Variables
+        
         bool homeswitchhoming;
         bool absolutehoming;
         bool forcehoming;
@@ -110,8 +111,9 @@ namespace SUPERVISORY
         // Component Peers
         TaskContext* Supervisor;
         TaskContext* ReadEncoders;
+		TaskContext* EtherCATread;
         TaskContext* Safety;
-        TaskContext* GripperControl;
+		TaskContext* GripperControl;
         TaskContext* TrajectoryActionlib;
         
         // Properties in Component Peers that homing component can modify
@@ -121,7 +123,8 @@ namespace SUPERVISORY
         // Operations in Component Peers that homing component can call
         OperationCaller<bool(string)>               StartBodyPart;
         OperationCaller<bool(string)>               StopBodyPart;
-        OperationCaller<void(doubles)>              ResetEncoders;
+        OperationCaller<void(doubles)> 				Readenc_ResetEncoders;
+        OperationCaller<void(int,int,doubles)>      Eread_ResetEncoders;
         OperationCaller<void(int)>                  ResetReferences;
         OperationCaller<void(int,strings,doubles)>  SendToPos;
 

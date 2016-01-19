@@ -22,6 +22,8 @@ Homing::Homing(const string& name) : TaskContext(name, PreOperational)
     addPort(    "homing_finished",      homingfinished_outport );
 
 	// Properties
+	new_structure = false;
+	addProperty( "new_structure",     	new_structure   ).doc("True -> EtherCATread is used to reset encoders. False BODYPARTNAME_ReadEncoders is used to reset encoders");
     addProperty( "vector_size",     	N               ).doc("Number of joints");
     addProperty( "number_of_outports",  N_outports      ).doc("Number of out ports");
     addProperty( "outport_sizes",  		outport_sizes   ).doc("Outport vector sizes");    
@@ -67,7 +69,8 @@ Homing::~Homing()
     remove("StartBodyPart");
     remove("StopBodyPart");
     remove("ResetEncoders");
-    remove("ResetReferences");
+    remove("Eread_ResetEncoders");
+    remove("Readenc_ResetEncoders");
     remove("SendToPos");
 }
 
@@ -203,14 +206,24 @@ bool Homing::startHook()
 	}
 
     // ReadEncoders
-	if ( hasPeer( prefix + "_ReadEncoders" ) ) {
-		ReadEncoders 		= getPeer( prefix + "_ReadEncoders" );
+    if (new_structure) {
+		if ( hasPeer( "EtherCATread" ) ) {
+			EtherCATread 		= getPeer( "EtherCATread" );
+		}
+		else {
+			log(Error) << "Homing: Could not start component: Could not access peer EtherCATread" << endlog();
+			return false;
+		}		
+	} else {
+		if ( hasPeer( prefix + "_ReadEncoders" ) ) {
+			ReadEncoders 		= getPeer( prefix + "_ReadEncoders" );
+		}
+		else {
+			log(Error) << "Homing: Could not start component: Could not access peer " + prefix + "_ReadEncoders" << endlog();
+			return false;
+		}	
 	}
-	else {
-        log(Error) << "Homing: Could not start component: Could not access peer " + prefix + "_ReadEncoders" << endlog();
-		return false;
-	}
-
+	
     // Safety
 	if ( hasPeer( prefix + "_Safety" ) ) {
 		Safety 		= getPeer( prefix + "_Safety" );
@@ -267,14 +280,22 @@ bool Homing::startHook()
     // Fetch
     StartBodyPart 	= Supervisor->getOperation(			"StartBodyPart");
     StopBodyPart 	= Supervisor->getOperation(			"StopBodyPart");
-    ResetEncoders 	= ReadEncoders->getOperation(		"ResetEncoders");
+    if (new_structure) {
+		Eread_ResetEncoders 	= EtherCATread->getOperation(		"ResetEncoders");
+	} else {
+		Readenc_ResetEncoders 	= ReadEncoders->getOperation(		"ResetEncoders");
+	}
 	ResetReferences	= TrajectoryActionlib->getOperation("ResetReferences");
 	SendToPos 		= TrajectoryActionlib->getOperation("SendToPos");
-	
+		
 	// Set Execution engines
 	StartBodyPart.setCaller(	Supervisor->engine());
     StopBodyPart.setCaller(		Supervisor->engine());
-    ResetEncoders.setCaller(	ReadEncoders->engine());
+	if (new_structure) {
+		Eread_ResetEncoders.setCaller(	EtherCATread->engine());
+	} else {
+		Readenc_ResetEncoders.setCaller(	ReadEncoders->engine());
+	}
 	ResetReferences.setCaller(	TrajectoryActionlib->engine());
 	SendToPos.setCaller(		TrajectoryActionlib->engine());
 	
@@ -287,8 +308,8 @@ bool Homing::startHook()
         log(Error) << prefix <<"_Homing: Could not start component: Could not find Supervisor.StopBodyPart Operation!"<<endlog();
         return false;
     }
-    if ( !ResetEncoders.ready() ) {
-        log(Error) << prefix <<"_Homing: Could not start component: Could not find :" << prefix << "_ReadEncoder.ResetEncoders Operation!"<<endlog();
+    if ( !Eread_ResetEncoders.ready() && !Readenc_ResetEncoders.ready() ) {
+        log(Error) << prefix <<"_Homing: Could not start component: Could not find :(" << prefix << "_ReadEncoder/EtherCATread).ResetEncoders Operation!"<<endlog();
         return false;
     }
     if ( !ResetReferences.ready() ) {
@@ -380,8 +401,12 @@ void Homing::updateHook()
 			pos_inport.read( position );
 
 			// Stop and Reset Encoders
-			StopBodyPart(bodypart); 
-			ResetEncoders(reset_stroke);
+			StopBodyPart(bodypart); 			
+			if (new_structure) {
+				Eread_ResetEncoders(2,1,reset_stroke); // Hack that only works with spindle
+			} else {
+				Readenc_ResetEncoders(reset_stroke);
+			}			
             
 		} else if (stateB < 5) { // Wait a bit
 			stateB++;
