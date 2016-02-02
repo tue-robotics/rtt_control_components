@@ -403,7 +403,7 @@ void Homing::updateHook()
 			// Stop and Reset Encoders
 			StopBodyPart(bodypart); 			
 			if (new_structure) {
-				Eread_ResetEncoders(2,1,reset_stroke); // Hack that only works with spindle
+				Eread_ResetEncoders(partNr,1,reset_stroke);
 			} else {
 				Readenc_ResetEncoders(reset_stroke);
 			}			
