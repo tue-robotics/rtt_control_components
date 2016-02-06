@@ -174,6 +174,8 @@ bool Homing::configureHook()
 
 bool Homing::startHook()
 {
+	log(Warning) << prefix <<"_Homing: Starting component!"<<endlog();
+	
     //! Init
     joint_finished = false;
     finishing = false;
@@ -288,6 +290,8 @@ bool Homing::startHook()
 	ResetReferences	= TrajectoryActionlib->getOperation("ResetReferences");
 	SendToPos 		= TrajectoryActionlib->getOperation("SendToPos");
 		
+	log(Warning) << prefix <<"_Homing: Setting execution engines!"<<endlog();
+
 	// Set Execution engines
 	StartBodyPart.setCaller(	Supervisor->engine());
     StopBodyPart.setCaller(		Supervisor->engine());
@@ -384,6 +388,8 @@ bool Homing::startHook()
     for ( uint i = 0; i < N; i++ ){
        mRefGenerators[i].setRefGen(position[i]);
     }
+        
+	log(Warning) << prefix <<"_Homing: Started component!"<<endlog();        
         
 	return true;
 }
