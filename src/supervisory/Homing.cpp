@@ -420,6 +420,8 @@ void Homing::updateHook()
 		} else if (stateB == 5) { // Starting bodypart, This loop should be entered only once
 			stateB++;
 						
+			log(Warning) << prefix <<"_Homing: Started finishing homing joints of " << bodypart << "!"<<endlog();						
+						
 			// If the component is LPERA or RPERA then the gripperControl component needs to be started
 			if (prefix == "LPERA" || prefix == "RPERA") {
 				if (!GripperControl->isRunning() )
@@ -475,6 +477,8 @@ void Homing::updateHook()
         joint_finished = evaluateHomingCriterion(homing_order[jointNr]-1);
         if (joint_finished) {
 			
+			log(Warning) << prefix <<"_Homing: START joint_finished "<< homing_order[jointNr] << "!" <<endlog();
+			
 			// Reset Reference generator
 			for ( uint i = 0; i < N; i++ ){
 				mRefGenerators[i].setRefGen(position[i]);
@@ -489,8 +493,13 @@ void Homing::updateHook()
                        
             // Reset parameters            
             updated_maxerr[homing_order[jointNr]-1] = initial_maxerr[homing_order[jointNr]-1];
+			
             Safety_maxJointErrors.set(updated_maxerr);
+            
             stateA++;
+            
+			log(Warning) << prefix <<"_Homing: END joint_finished "<< homing_order[jointNr] << "!" <<endlog();
+
             
         }
     } else if (stateA == 1) {	// Move to zero position relative to homing position (homing_stroke_goal)
