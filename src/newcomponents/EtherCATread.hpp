@@ -70,7 +70,7 @@ namespace ETHERCATREAD
 		virtual void WriteOutputs();
 		
 		// Internal and External - ResetEncoders
-		virtual void ResetEncoders(int BPID, int PORTNR, doubles RESETVALUES );		
+		virtual void ResetEncoders(int BPID, int PORTNR, doubles RESETVALUES );
 		
 		// External - Add Ins
 		virtual void AddAnalogIns(string PARTNAME, doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY);
@@ -80,9 +80,12 @@ namespace ETHERCATREAD
 		// External - Add Math
 		virtual void AddAddition_A(string PARTNAME, int PORTNR, doubles ADDVALUES);
 		virtual void AddMultiply_A(string PARTNAME, int PORTNR, doubles MULTIPLYFACTOR);
+		virtual void AddCompare_A(string PARTNAME, int PORTNR, string COMPARISON, doubles VALUES);
+		virtual void AddTorqueSensor_A(string PARTNAME, int PORTNR, doubles COEFFICIENT1, doubles COEFFICIENT2, doubles COEFFICIENT3);
 		virtual void AddFlip_D(string PARTNAME, int PORTNR);
 		virtual void AddEnc2Si_E(string PARTNAME, int PORTNR, doubles ENCODERBITS, doubles ENC2SI);
 		virtual void AddMatrixTransform_E(string PARTNAME, int PORTNR, double INPUTSIZE, double OUTPUTSIZE);
+		virtual void AddSaturation_E(string PARTNAME, int PORTNR, doubles SATURATIONMIN, doubles SATURATIONMAX);
 		
 		// External - Add MsgOut
 		virtual void AddMsgOut_A(string PARTNAME, int PORTNR);
@@ -92,12 +95,14 @@ namespace ETHERCATREAD
 		// Ports
 		InputPort<soem_beckhoff_drivers::AnalogMsg> inports_A[MAX_BODYPARTS][MAX_PORTS];
 		OutputPort<doubles> outports_A[MAX_BODYPARTS][MAX_PORTS];
+		OutputPort<bools> outports_A_bool[MAX_BODYPARTS][MAX_PORTS];
 		OutputPort<std_msgs::Float32MultiArray> outports_A_msg[MAX_BODYPARTS][MAX_PORTS];
 		
 		// In/Output
 		vector< soem_beckhoff_drivers::AnalogMsg > input_msgs_A[MAX_BODYPARTS];
 		vector< doubles > intermediate_A[MAX_BODYPARTS];
-		vector< doubles > output_A[MAX_BODYPARTS];	
+		vector< doubles > output_A[MAX_BODYPARTS];
+		vector< bools > output_A_bool[MAX_BODYPARTS];
 	
 		// Scalars
 		uint n_addedbodyparts_A;
@@ -105,20 +110,28 @@ namespace ETHERCATREAD
 		// Vectors
 		string added_bodyparts_A[MAX_BODYPARTS];
 		uint n_inports_A[MAX_BODYPARTS];
-		uint n_outports_A[MAX_BODYPARTS];;
+		uint n_outports_A[MAX_BODYPARTS];
+		uint n_outports_A_bool[MAX_BODYPARTS];
 		
 		// Matrices
 		bools addition_status_A[MAX_BODYPARTS];
 		bools multiply_status_A[MAX_BODYPARTS];
+		bools comparison_status_A[MAX_BODYPARTS];
+		bools torquesensor_status_A[MAX_BODYPARTS];
 		bools msgout_status_A[MAX_BODYPARTS];
 		ints inport_dimensions_A[MAX_BODYPARTS];
 		ints outport_dimensions_A[MAX_BODYPARTS];
 		ints from_which_inport_A[MAX_BODYPARTS];
 		ints from_which_entry_A[MAX_BODYPARTS];
 		// 3D
-		vector< doubles > addition_values_A[MAX_BODYPARTS];	
-		vector< doubles > multiply_values_A[MAX_BODYPARTS];	
-
+		vector< doubles > addition_values_A[MAX_BODYPARTS];
+		vector< doubles > multiply_values_A[MAX_BODYPARTS];
+		vector< doubles > comparison_values_A[MAX_BODYPARTS];
+		vector< string > comparison_types_A[MAX_BODYPARTS];
+		vector< doubles > torquesensor_c1_A[MAX_BODYPARTS];
+		vector< doubles > torquesensor_c2_A[MAX_BODYPARTS];
+		vector< doubles > torquesensor_c3_A[MAX_BODYPARTS];
+		
 		//! DigitalIns
 		// Ports
 		InputPort<soem_beckhoff_drivers::DigitalMsg> inports_D[MAX_BODYPARTS][MAX_PORTS];
@@ -151,12 +164,14 @@ namespace ETHERCATREAD
 		InputPort<soem_beckhoff_drivers::EncoderMsg> inports_E[MAX_BODYPARTS][MAX_ENCPORTS];
 		OutputPort<doubles> outports_E[MAX_BODYPARTS][MAX_PORTS];
 		OutputPort<doubles> outports_E_vel[MAX_BODYPARTS][MAX_PORTS];
-		
+		OutputPort<doubles> outports_E_sat[MAX_BODYPARTS][MAX_PORTS];
+
 		// In/Output
 		vector< soem_beckhoff_drivers::EncoderMsg > input_msgs_E[MAX_BODYPARTS];
 		vector< doubles > intermediate_E[MAX_BODYPARTS];
 		vector< doubles > output_E[MAX_BODYPARTS];
 		vector< doubles > output_E_vel[MAX_BODYPARTS];
+		vector< doubles > output_E_sat[MAX_BODYPARTS];
 		vector< doubles > enc_values[MAX_BODYPARTS];
 		vector< doubles > previous_enc_values[MAX_BODYPARTS];
 		
@@ -172,6 +187,7 @@ namespace ETHERCATREAD
 		// Matrices		
 		bools enc2si_status_E[MAX_BODYPARTS];
 		bools matrixtransform_status_E[MAX_BODYPARTS];
+		bools saturation_status_E[MAX_BODYPARTS];
 		ints inport_dimensions_E[MAX_BODYPARTS];
 		ints outport_dimensions_E[MAX_BODYPARTS];
 		ints from_which_inport_E[MAX_BODYPARTS];
@@ -180,9 +196,11 @@ namespace ETHERCATREAD
 		vector< longints > encodercntr_E[MAX_BODYPARTS];
 		vector< doubles > initpos_E[MAX_BODYPARTS];
 		vector< doubles > encoderbits_E[MAX_BODYPARTS];
-		vector< doubles > enc2si_values_E[MAX_BODYPARTS];		
+		vector< doubles > enc2si_values_E[MAX_BODYPARTS];
 		vector< vector< doubles > > matrixtransform_entries_E[MAX_BODYPARTS];
-				
+		vector< doubles > saturation_minvalues_E[MAX_BODYPARTS];
+		vector< doubles > saturation_maxvalues_E[MAX_BODYPARTS];
+		
 		//! Component Hooks
 		virtual bool configureHook();
 		virtual bool startHook();
