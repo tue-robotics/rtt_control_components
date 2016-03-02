@@ -95,14 +95,14 @@ namespace ETHERCATREAD
 		// Ports
 		InputPort<soem_beckhoff_drivers::AnalogMsg> inports_A[MAX_BODYPARTS][MAX_PORTS];
 		OutputPort<doubles> outports_A[MAX_BODYPARTS][MAX_PORTS];
-		OutputPort<bools> outports_A_bool[MAX_BODYPARTS][MAX_PORTS];
+		OutputPort< vector<bool> > outports_A_comp[MAX_BODYPARTS][MAX_PORTS];
 		OutputPort<std_msgs::Float32MultiArray> outports_A_msg[MAX_BODYPARTS][MAX_PORTS];
 		
 		// In/Output
 		vector< soem_beckhoff_drivers::AnalogMsg > input_msgs_A[MAX_BODYPARTS];
 		vector< doubles > intermediate_A[MAX_BODYPARTS];
 		vector< doubles > output_A[MAX_BODYPARTS];
-		vector< bools > output_A_bool[MAX_BODYPARTS];
+		vector< bools > output_A_comp[MAX_BODYPARTS];
 	
 		// Scalars
 		uint n_addedbodyparts_A;
@@ -111,7 +111,7 @@ namespace ETHERCATREAD
 		string added_bodyparts_A[MAX_BODYPARTS];
 		uint n_inports_A[MAX_BODYPARTS];
 		uint n_outports_A[MAX_BODYPARTS];
-		uint n_outports_A_bool[MAX_BODYPARTS];
+		uint n_outports_A_comp[MAX_BODYPARTS];
 		
 		// Matrices
 		bools addition_status_A[MAX_BODYPARTS];
@@ -184,7 +184,7 @@ namespace ETHERCATREAD
 		uint n_inports_E[MAX_BODYPARTS];
 		uint n_outports_E[MAX_BODYPARTS];
 		
-		// Matrices		
+		// Matrices
 		bools enc2si_status_E[MAX_BODYPARTS];
 		bools matrixtransform_status_E[MAX_BODYPARTS];
 		bools saturation_status_E[MAX_BODYPARTS];

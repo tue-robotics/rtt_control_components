@@ -113,7 +113,7 @@ bool EtherCATread::configureHook()
 	for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
 		n_inports_A[l] = 0;
 		n_outports_A[l] = 0;
-		n_outports_A_bool[l] = 0;
+		n_outports_A_comp[l] = 0;
 		n_inports_D[l] = 0;
 		n_outports_D[l] = 0;
 		n_inports_E[l] = 0;
@@ -274,13 +274,19 @@ void EtherCATread::AddAnalogIns(string PARTNAME, doubles INPORT_DIMENSIONS, doub
 		addition_status_A[BPID-1][i] = false;
 		multiply_status_A[BPID-1][i] = false;
 		comparison_status_A[BPID-1][i] = false;
+		torquesensor_status_A[BPID-1][i] = false;
 		msgout_status_A[BPID-1][i] = false;
 	}
 
 	// Resizing math properties 
 	addition_values_A[BPID-1].resize(n_outports_A[BPID-1]);
 	multiply_values_A[BPID-1].resize(n_outports_A[BPID-1]);
-
+	comparison_values_A[BPID-1].resize(n_outports_A[BPID-1]);
+	comparison_types_A[BPID-1].resize(n_outports_A[BPID-1]);
+	torquesensor_c1_A[BPID-1].resize(n_outports_A[BPID-1]);
+	torquesensor_c2_A[BPID-1].resize(n_outports_A[BPID-1]);
+	torquesensor_c3_A[BPID-1].resize(n_outports_A[BPID-1]);
+	
 	//! Resizing in- and outport messages
 	input_msgs_A[BPID-1].resize(n_inports_A[BPID-1]);
 	for( uint i = 0; i < n_inports_A[BPID-1]; i++ ) {
@@ -289,11 +295,11 @@ void EtherCATread::AddAnalogIns(string PARTNAME, doubles INPORT_DIMENSIONS, doub
 		
 	intermediate_A[BPID-1].resize(n_outports_A[BPID-1]);
 	output_A[BPID-1].resize(n_outports_A[BPID-1]);
-	output_A_bool[BPID-1].resize(n_outports_A[BPID-1]);
+	output_A_comp[BPID-1].resize(n_outports_A[BPID-1]);
 	for( uint i = 0; i < n_outports_A[BPID-1]; i++ ) {
 		intermediate_A[BPID-1][i].resize( outport_dimensions_A[BPID-1][i]);
 		output_A[BPID-1][i].resize(outport_dimensions_A[BPID-1][i]);
-		output_A_bool[BPID-1][i].resize(outport_dimensions_A[BPID-1][i]);
+		output_A_comp[BPID-1][i].resize(outport_dimensions_A[BPID-1][i]);
 	}
 
 	log(Warning) << "EtherCATread::AddAnalogIns(" << PARTNAME << "): Added AnalogIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports." << endlog();
@@ -552,6 +558,8 @@ void EtherCATread::AddEncoderIns(string PARTNAME, doubles INPORT_DIMENSIONS, dou
 	enc2si_values_E[BPID-1].resize(n_outports_E[BPID-1]);
 	encoderbits_E[BPID-1].resize(n_outports_E[BPID-1]);
 	matrixtransform_entries_E[BPID-1].resize(n_outports_E[BPID-1]);
+	saturation_minvalues_E[BPID-1].resize(n_outports_E[BPID-1]);
+	saturation_maxvalues_E[BPID-1].resize(n_outports_E[BPID-1]);
 
 	initpos_E[BPID-1].resize(n_outports_E[BPID-1]);
 	enc_values[BPID-1].resize(n_outports_E[BPID-1]);
@@ -710,13 +718,18 @@ void EtherCATread::AddCompare_A(string PARTNAME, int PORTNR, string COMPARISON, 
 		log(Error) << "EtherCATread::AddCompare_A([" << PARTNAME << "," << PORTNR << "]): Could not add comparison. VALUES.size(): " << VALUES.size() << " should be equal to outport_dimensions_A[BPID-1][PORTNR-1]:!" << outport_dimensions_A[BPID-1][PORTNR-1] <<"." << endlog();
 		return;
 	}
-	
-	n_outports_A_bool[BPID-1] = n_outports_A_bool[BPID-1] + 1; 
-	// Add port for comparison out
-	for( uint i = 0; i < n_outports_A_bool[BPID-1]; i++ ) {
-		addPort( PARTNAME+"_Aboolout"+to_string(i+1), outports_A_bool[BPID-1][i] );
+	if (COMPARISON != "<" && COMPARISON != "<=" && COMPARISON != "==" && COMPARISON != "=>" && COMPARISON != ">") {
+		log(Error) << "EtherCATread::AddCompare_A([" << PARTNAME << "," << PORTNR << "]): Could not add comparison. COMPARISON: " << COMPARISON << " should be one of these ['<','<=','==','=>','>']" << endlog();
+		return;
 	}
+
 	
+	n_outports_A_comp[BPID-1] = n_outports_A_comp[BPID-1] + 1; 
+	// Add port for comparison out
+	for( uint i = 0; i < n_outports_A_comp[BPID-1]; i++ ) {
+		addPort( PARTNAME+"_Acompout"+to_string(i+1), outports_A_comp[BPID-1][i] );
+	}
+
 	// Resize and save math properties
 	comparison_types_A[BPID-1][PORTNR-1] = COMPARISON;
 	comparison_values_A[BPID-1][PORTNR-1].resize(VALUES.size());
@@ -778,7 +791,7 @@ void EtherCATread::AddTorqueSensor_A(string PARTNAME, int PORTNR, doubles COEFFI
 	if( torquesensor_status_A[BPID-1][PORTNR-1] ) {
 		log(Warning) << "EtherCATread::AddCompare_A([" << PARTNAME << "," << PORTNR << "]): Overwritten existing TorqueSensor." << endlog();
 	} else {
-		log(Info) << "EtherCATread::AddCompare_A([" << PARTNAME << "," << PORTNR << "]): Added a TorqueSensor." << endlog();
+		log(Warning) << "EtherCATread::AddCompare_A([" << PARTNAME << "," << PORTNR << "]): Added a TorqueSensor." << endlog();
 	}
 	
 	// Set status
@@ -968,7 +981,7 @@ void EtherCATread::AddSaturation_E(string PARTNAME, int PORTNR, doubles SATURATI
 {
 	// init
 	uint BPID;
-		
+	
 	//! Check configuration	
 	if (!this->isRunning()) {
 		log(Error) << "EtherCATread::AddSaturation_E([" << PARTNAME << "," << PORTNR << "]): Could not add saturation. Since EtherCATread component has not yet been started." << endlog();
@@ -994,11 +1007,15 @@ void EtherCATread::AddSaturation_E(string PARTNAME, int PORTNR, doubles SATURATI
 		log(Error) << "EtherCATread::AddSaturation_E([" << PARTNAME << "," << PORTNR << "]): Could not add saturation. SATURATIONMIN.size(): " << SATURATIONMIN.size() << " and SATURATIONMAX.size():" << SATURATIONMAX.size() << " should be equal to outport_dimensions_E[BPID-1][PORTNR-1]:!" << outport_dimensions_E[BPID-1][PORTNR-1] <<"." << endlog();
 		return;
 	}
+	for(uint k = 0; k < SATURATIONMIN.size(); k++) {
+		if (SATURATIONMIN[k] > SATURATIONMAX[k]) {
+			log(Error) << "EtherCATread::AddSaturation_E([" << PARTNAME << "," << PORTNR << "]): Could not add saturation. SATURATIONMIN[" << k << "]: " << SATURATIONMIN[k] << " can't be larger then SATURATIONMAX[" << k << "]: " << SATURATIONMAX[k] << "!" << endlog();
+			return;
+		}
+	}
 	
 	// Add port for saturation out
-	for( uint i = 0; i < n_outports_E[BPID-1]; i++ ) {
-		addPort( PARTNAME+"_Esatout"+to_string(i+1), outports_E_sat[BPID-1][i] );
-	}
+	addPort( PARTNAME+"_Esatout"+to_string(PORTNR), outports_E_sat[BPID-1][PORTNR-1]);
 	
 	// Resize and save math properties
 	saturation_minvalues_E[BPID-1][PORTNR-1].resize(SATURATIONMIN.size());
@@ -1012,7 +1029,7 @@ void EtherCATread::AddSaturation_E(string PARTNAME, int PORTNR, doubles SATURATI
 	if( saturation_status_E[BPID-1][PORTNR-1] ) {
 		log(Warning) << "EtherCATread::AddSaturation_E([" << PARTNAME << "," << PORTNR << "]): Overwritten existing saturation." << endlog();
 	} else {
-		log(Info) << "EtherCATread::AddSaturation_E([" << PARTNAME << "," << PORTNR << "]): Added a saturation." << endlog();
+		log(Warning) << "EtherCATread::AddSaturation_E([" << PARTNAME << "," << PORTNR << "]): Added a saturation." << endlog();
 	}
 	
 	// Set status
@@ -1165,7 +1182,7 @@ void EtherCATread::WriteOutputs()
 	for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
 		for( uint i = 0; i < n_outports_A[l]; i++ ) {
 			outports_A[l][i].write(output_A[l][i]);
-			outports_A_bool[l][i].write(output_A_bool[l][i]);
+			outports_A_comp[l][i].write(output_A_comp[l][i]);
 			
 			if (msgout_status_A[l][i]) {
 				// Create, fill and write output msg, 
@@ -1273,30 +1290,32 @@ void EtherCATread::Calculate_A()
 	
 	// Comparison
 	for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
-		for( uint i = 0; i < n_outports_A_bool[l]; i++ ) {
+		for( uint i = 0; i < n_outports_A_comp[l]; i++ ) {
 			if (comparison_status_A[l][i]) {
 				for ( uint k = 0; k < outport_dimensions_A[l][i]; k++ ) {
-					output_A_bool[l][i][k] = false;
+					output_A_comp[l][i][k] = false;
 					if (comparison_types_A[l][i] == "<") {
 						if (output_A[l][i][k] < comparison_values_A[l][i][k]) {
-							output_A_bool[l][i][k] = true;
+							output_A_comp[l][i][k] = true;
 						}
 					} else if (comparison_types_A[l][i] == "<=") {
 						if (output_A[l][i][k] <= comparison_values_A[l][i][k]) {
-							output_A_bool[l][i][k] = true;
+							output_A_comp[l][i][k] = true;
 						}
 					} else if (comparison_types_A[l][i] == "==") {
 						if (output_A[l][i][k] == comparison_values_A[l][i][k]) {
-							output_A_bool[l][i][k] = true;
+							output_A_comp[l][i][k] = true;
 						}
 					} else if (comparison_types_A[l][i] == "=>") {
 						if (output_A[l][i][k] >= comparison_values_A[l][i][k]) {
-							output_A_bool[l][i][k] = true;
+							output_A_comp[l][i][k] = true;
 						}
 					} else if (comparison_types_A[l][i] == ">") {
 						if (output_A[l][i][k] > comparison_values_A[l][i][k]) {
-							output_A_bool[l][i][k] = true;
+							output_A_comp[l][i][k] = true;
 						}
+					} else {
+						log(Error) << "EtherCATread::Calculate_A:Comparison(" << bodypart_names[l] << ", port " << i+1 << "): Invalid comparison type: " << comparison_types_A[l][i] << ", should be one of ['<','<=','==','=>','>']s" << endlog();
 					}
 				}
 			}
