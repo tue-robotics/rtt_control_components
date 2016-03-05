@@ -10,6 +10,7 @@
 #include <soem_beckhoff_drivers/EncoderMsg.h>
 #include <std_msgs/Float32MultiArray.h>
 #include <std_msgs/Bool.h>
+#include <sensor_msgs/JointState.h>
 
 #define MAX_BODYPARTS 6 /* maximum number of ports */
 #define MAX_PORTS 10 	/* maximum number of ports */
@@ -90,6 +91,7 @@ namespace ETHERCATREAD
 		// External - Add MsgOut
 		virtual void AddMsgOut_A(string PARTNAME, int PORTNR);
 		virtual void AddMsgOut_D(string PARTNAME, int PORTNR);
+		virtual void AddMsgOut_E(string PARTNAME, int PORTNR, strings JOINT_NAMES);
 		
 		//! AnalogIns
 		// Ports
@@ -165,6 +167,7 @@ namespace ETHERCATREAD
 		OutputPort<doubles> outports_E[MAX_BODYPARTS][MAX_PORTS];
 		OutputPort<doubles> outports_E_vel[MAX_BODYPARTS][MAX_PORTS];
 		OutputPort<doubles> outports_E_sat[MAX_BODYPARTS][MAX_PORTS];
+		OutputPort<sensor_msgs::JointState> outports_E_msg[MAX_BODYPARTS][MAX_PORTS];
 
 		// In/Output
 		vector< soem_beckhoff_drivers::EncoderMsg > input_msgs_E[MAX_BODYPARTS];
@@ -172,6 +175,7 @@ namespace ETHERCATREAD
 		vector< doubles > output_E[MAX_BODYPARTS];
 		vector< doubles > output_E_vel[MAX_BODYPARTS];
 		vector< doubles > output_E_sat[MAX_BODYPARTS];
+		sensor_msgs::JointState output_E_msgs[MAX_BODYPARTS][MAX_PORTS]; 
 		vector< doubles > enc_values[MAX_BODYPARTS];
 		vector< doubles > previous_enc_values[MAX_BODYPARTS];
 		
@@ -188,6 +192,7 @@ namespace ETHERCATREAD
 		bools enc2si_status_E[MAX_BODYPARTS];
 		bools matrixtransform_status_E[MAX_BODYPARTS];
 		bools saturation_status_E[MAX_BODYPARTS];
+		bools msgout_status_E[MAX_BODYPARTS];
 		ints inport_dimensions_E[MAX_BODYPARTS];
 		ints outport_dimensions_E[MAX_BODYPARTS];
 		ints from_which_inport_E[MAX_BODYPARTS];

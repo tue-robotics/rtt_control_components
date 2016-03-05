@@ -96,6 +96,11 @@ EtherCATread::EtherCATread(const string& name) : TaskContext(name, PreOperationa
 		.doc("Add a std_msg outport with bool msg")
 		.arg("PARTNAME","Name of the bodypart")
 		.arg("PORTNR","Output port number of the encoder ins");
+	addOperation( "AddMsgOut_E", &EtherCATread::AddMsgOut_E, this, OwnThread )
+		.doc("Add a joinstate message outport from the saturation port. At the moment this therefore only works if also a saturation has been used")
+		.arg("PARTNAME","Name of the bodypart")
+		.arg("PORTNR","Output port number of the encoder ins")
+		.arg("JOINT_NAMES","Vector of strings containing the names of the joints");
 }
 
 EtherCATread::~EtherCATread(){}
@@ -548,10 +553,12 @@ void EtherCATread::AddEncoderIns(string PARTNAME, doubles INPORT_DIMENSIONS, dou
 	enc2si_status_E[BPID-1].resize(N_OUTPORTS);
 	matrixtransform_status_E[BPID-1].resize(N_OUTPORTS);
 	saturation_status_E[BPID-1].resize(N_OUTPORTS);
+	msgout_status_E[BPID-1].resize(N_OUTPORTS);	
 	for( uint i = 0; i < N_OUTPORTS; i++ ) {
 		enc2si_status_E[BPID-1][i] = false;
 		matrixtransform_status_E[BPID-1][i] = false;
 		saturation_status_E[BPID-1][i] = false;
+		msgout_status_E[BPID-1][i] = false;
 	}
 	
 	// Resizing math properties 
@@ -1043,7 +1050,7 @@ void EtherCATread::AddMsgOut_A(string PARTNAME, int PORTNR)
 		
 	//! Check configuration	
 	if (!this->isRunning()) {
-		log(Error) << "EtherCATread::AddMsgOut_A([" << PARTNAME << "," << PORTNR << "]): Could MsgOut_A. Since EtherCATread component has not yet been started." << endlog();
+		log(Error) << "EtherCATread::AddMsgOut_A([" << PARTNAME << "," << PORTNR << "]): Could not add MsgOut_A. Since EtherCATread component has not yet been started." << endlog();
 		return;
 	}
 	// Check if the bodypart name is in the bodypart_name list and set the BPID accordingly
@@ -1054,7 +1061,7 @@ void EtherCATread::AddMsgOut_A(string PARTNAME, int PORTNR)
 		}
 	}
 	if ( 0 >= BPID || BPID > bodypart_names.size()) {
-		log(Error) << "EtherCATread::AddMsgOut_A([" << PARTNAME << "," << PORTNR << "]): Could MsgOut_A. Invalid BPID. Should satisfy  0 < BPID <= bodypart_names.size(). -> 0 < " << BPID << " <= " << bodypart_names.size() << "!" << endlog(); 
+		log(Error) << "EtherCATread::AddMsgOut_A([" << PARTNAME << "," << PORTNR << "]): Could not add MsgOut_A. Invalid BPID. Should satisfy  0 < BPID <= bodypart_names.size(). -> 0 < " << BPID << " <= " << bodypart_names.size() << "!" << endlog(); 
 		return;
 	}
 	
@@ -1074,7 +1081,7 @@ void EtherCATread::AddMsgOut_D(string PARTNAME, int PORTNR)
 		
 	//! Check configuration	
 	if (!this->isRunning()) {
-		log(Error) << "EtherCATread::AddMsgOut_D([" << PARTNAME << "," << PORTNR << "]): Could MsgOut_D. Since EtherCATread component has not yet been started." << endlog();
+		log(Error) << "EtherCATread::AddMsgOut_D([" << PARTNAME << "," << PORTNR << "]): Could not add MsgOut_D. Since EtherCATread component has not yet been started." << endlog();
 		return;
 	}
 	// Check if the bodypart name is in the bodypart_name list and set the BPID accordingly
@@ -1085,7 +1092,7 @@ void EtherCATread::AddMsgOut_D(string PARTNAME, int PORTNR)
 		}
 	}
 	if ( 0 >= BPID || BPID > bodypart_names.size()) {
-		log(Error) << "EtherCATread::AddMsgOut_D([" << PARTNAME << "," << PORTNR << "]): Could MsgOut_D. Invalid BPID. Should satisfy  0 < BPID <= bodypart_names.size(). -> 0 < " << BPID << " <= " << bodypart_names.size() << "!" << endlog(); 
+		log(Error) << "EtherCATread::AddMsgOut_D([" << PARTNAME << "," << PORTNR << "]): Could not add MsgOut_D. Invalid BPID. Should satisfy  0 < BPID <= bodypart_names.size(). -> 0 < " << BPID << " <= " << bodypart_names.size() << "!" << endlog(); 
 		return;
 	}
 	
@@ -1096,6 +1103,46 @@ void EtherCATread::AddMsgOut_D(string PARTNAME, int PORTNR)
 	msgout_status_D[BPID-1][PORTNR-1] = true;
 	
 	log(Info) << "EtherCATread::AddMsgOut_D([" << PARTNAME << "," << PORTNR << "]): Added MsgOut_D." << endlog();
+}
+
+void EtherCATread::AddMsgOut_E(string PARTNAME, int PORTNR, strings JOINT_NAMES)
+{		
+	// init
+	uint BPID;
+		
+	//! Check configuration	
+	if (!this->isRunning()) {
+		log(Error) << "EtherCATread::AddMsgOut_E([" << PARTNAME << "," << PORTNR << "]): Could not add MsgOut_E. Since EtherCATread component has not yet been started." << endlog();
+		return;
+	}
+	
+	// Check if the bodypart name is in the bodypart_name list and set the BPID accordingly
+	for (uint l = 0; l < bodypart_names.size(); l++) {
+		if (bodypart_names[l] == PARTNAME) {
+			BPID = l + 1;
+			log(Info) << "EtherCATread::AddMsgOut_E([" << PARTNAME << "," << PORTNR << "]): BPID IS: " << BPID << "." << endlog();
+		}
+	}
+		
+	if ( 0 >= BPID || BPID > bodypart_names.size()) {
+		log(Error) << "EtherCATread::AddMsgOut_E([" << PARTNAME << "," << PORTNR << "]): Could not add MsgOut_E. Invalid BPID. Should satisfy  0 < BPID <= bodypart_names.size(). -> 0 < " << BPID << " <= " << bodypart_names.size() << "!" << endlog(); 
+		return;
+	}
+			
+	// Create output port
+	addPort( PARTNAME+"_EoutMsg"+to_string(PORTNR), outports_E_msg[BPID-1][PORTNR-1] );
+
+	// Init Jointstate msg
+	for (uint k = 0; k < JOINT_NAMES.size(); k++) {
+		output_E_msgs[BPID-1][PORTNR-1].name.push_back(JOINT_NAMES[k]);
+	}
+	
+	output_E_msgs[BPID-1][PORTNR-1].position.assign(JOINT_NAMES.size(), 0.0);
+    output_E_msgs[BPID-1][PORTNR-1].velocity.assign(JOINT_NAMES.size(), 0.0);
+    output_E_msgs[BPID-1][PORTNR-1].effort.assign(JOINT_NAMES.size(), 0.0);
+		
+	// Set status
+	msgout_status_E[BPID-1][PORTNR-1] = true;
 }
 
 //! Functions to edit inputs
@@ -1217,6 +1264,20 @@ void EtherCATread::WriteOutputs()
 			outports_E_vel[l][i].write(output_E_vel[l][i]);
 			if (saturation_status_E[l][i]) {
 				outports_E_sat[l][i].write(output_E_sat[l][i]);
+			}
+			if (msgout_status_E[l][i]) {
+				// fill, write output msg, 		
+				if (saturation_status_E[l][i]) {		
+					for( uint k = 0; k < output_E_msgs[l][i].position.size(); ++k) {
+						output_E_msgs[l][i].position[k] = output_E_sat[l][i][k];
+					}
+				} else {
+					for( uint k = 0; k < output_E_msgs[l][i].position.size(); ++k) {
+						output_E_msgs[l][i].position[k] = output_E[l][i][k];
+					}
+				}
+				output_E_msgs[l][i].header.stamp = ros::Time::now();
+				outports_E_msg[l][i].write(output_E_msgs[l][i]);
 			}
 		}
 	}
