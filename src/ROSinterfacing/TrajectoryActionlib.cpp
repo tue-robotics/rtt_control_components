@@ -289,7 +289,7 @@ void TrajectoryActionlib::AddBodyPart(int partNr, strings JointNames)
     // Update map
     for (uint l = 0; l < JointNames.size(); l++) {
         joint_map[JointNames[l]] = make_pair(partNr-1, l);
-        log(Info) << "TrajectoryActionlib: Updated map for "<< JointNames[l] <<" with pair (Bodypart,JointId) = (" << partNr-1 << "," << l << ")!" << endlog();
+        log(Warning) << "TrajectoryActionlib: Updated map for "<< JointNames[l] <<" with pair (Bodypart,JointId) = (" << partNr-1 << "," << l << ")!" << endlog();
     }
 
     // Initialize various vectors of vectors
@@ -397,6 +397,8 @@ void TrajectoryActionlib::SendToPos(int partNr, strings jointnames, doubles pos)
 
 void TrajectoryActionlib::ResetReferences(int partNr)
 {
+	log(Warning) <<"TrajectoryActionlib::ResetReferences: ResetReferences start for partNr: " << partNr <<endlog();
+	
 	if (partNr < 0 || partNr > maxN ) {
 		log(Error) <<"TrajectoryActionlib::ResetReferences: Invalid partNr provided: partNr = " << partNr <<endlog();
 		return;
@@ -404,6 +406,7 @@ void TrajectoryActionlib::ResetReferences(int partNr)
 	
     doubles resetpos;
     strings jointnames;
+    ints jointids;
     //Set the starting value to the current actual value
     currentpos_inport[partNr-1].read( resetpos );
     log(Info) << "TrajectoryActionlib::ResetReferences: Size resetpos: " << resetpos.size() << endlog();
@@ -412,16 +415,21 @@ void TrajectoryActionlib::ResetReferences(int partNr)
     for ( map<string, BodyJointPair>::const_iterator it = joint_map.begin(); it != joint_map.end(); ++it )
     {
         const BodyJointPair& body_joint_pair = it->second;
-        if (body_joint_pair.first == partNr-1)
+        if (body_joint_pair.first == partNr-1) 
+        {
             jointnames.push_back(it->first);
+            jointids.push_back(it->second.second);
+		}
     }
     log(Info) << "TrajectoryActionlib::ResetReferences: Size jointnames: " << jointnames.size() << endlog();
 
     for (uint i = 0; i < jointnames.size(); ++i)
     {
-        log(Info) << "TrajectoryActionlib::ResetReferences: " << jointnames[i] << " = " << resetpos[i] << endlog();
-        reference_generator_.setJointState(jointnames[i], resetpos[i], 0.0);
+        log(Warning) << "TrajectoryActionlib::ResetReferences: " << jointnames[i] << " = " << resetpos[jointids[i]] << endlog();
+        reference_generator_.setJointState(jointnames[i], resetpos[jointids[i]], 0.0);
     }
+
+	log(Warning) <<"TrajectoryActionlib::ResetReferences: ResetReferences end for partNr: " << partNr <<endlog();
 
     return;
 }

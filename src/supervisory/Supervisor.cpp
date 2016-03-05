@@ -452,27 +452,22 @@ bool Supervisor::AddPeerCheckList( string peerName, vector<TaskContext*> List )
 
 bool Supervisor::startList( vector<TaskContext*> List )
 {
-	//ROS_INFO_STREAM("Supervisor: starting startlist");
 	vector<TaskContext*>::iterator i;
-	for ( i = List.begin() ; i != List.end() ; i++ )
-	{
+	for ( i = List.begin() ; i != List.end() ; i++ ) {
 		TaskContext* tc = (*i);
 		string componentname = tc->getName();
 
-		if (!tc->isRunning() )
-		{
+		if (!tc->isRunning() ) {
 			log(Info) << "Supervisor: " << componentname << ": Starting" << endlog();
 			ROS_DEBUG_STREAM("Supervisor: " + componentname + ": Starting");
 			log(Debug)<<"Supervisor::starting " << componentname << " at " << os::TimeService::Instance()->getNSecs()*1e-9 - start_time <<endlog();
 			tc->start();
 			log(Debug)<<"Supervisor::started  " << componentname << " at " << os::TimeService::Instance()->getNSecs()*1e-9 - start_time <<endlog();
 		}
-		if ( ! tc->isRunning() )
-		{
+		if ( ! tc->isRunning() ) {
 			ROS_WARN_STREAM( "Supervisor: " + componentname + ": Could not be started, trying again." );
 			tc->start();
-			if ( ! tc->isRunning() )
-			{
+			if ( ! tc->isRunning() ) {
 				ROS_ERROR_STREAM( "Supervisor: " + componentname + ": Could not be started!" );
 				return false;
 			}
@@ -499,11 +494,9 @@ bool Supervisor::stopList( vector<TaskContext*> List )
 
 bool Supervisor::StartBodyPart( string partName )
 {
-	for ( int partNr = 0; partNr < 6; partNr++ )
-	{
+	for ( int partNr = 0; partNr < 6; partNr++ ) {
 		string ipartName = bodyParts[partNr];
-		if (ipartName.compare(partName) == 0)
-		{
+		if (ipartName.compare(partName) == 0) {
 			startList( EnabledList[partNr] );
 			return true;
 		}
@@ -560,6 +553,11 @@ bool Supervisor::GoOperational(int partNr, diagnostic_msgs::DiagnosticArray stat
 {
 	if (staleParts[partNr] == false) {
 		if (statusArray.status[partNr].level != StatusErrormsg.level) {				// continue only if not in error state
+			
+			if (statusArray.status[partNr].level != StatusHomingmsg.level) {		// if in homing state, the EnabledList does not need to be restarted
+				startList( EnabledList[partNr] );
+			}
+			
 			stopList( HomingOnlyList[partNr] );
 			startList( OpOnlyList[partNr] );
 			if (!old_structure) { 
@@ -567,9 +565,7 @@ bool Supervisor::GoOperational(int partNr, diagnostic_msgs::DiagnosticArray stat
 				setAllowed(partNr, true);
 			}
 			
-			if (statusArray.status[partNr].level != StatusHomingmsg.level) {		// if not in homing state, the EnabledList does not need to be restarted
-				startList( EnabledList[partNr] );
-			}
+
 			setState(partNr, StatusOperationalmsg);
 		}
 	} else {
@@ -587,7 +583,7 @@ bool Supervisor::GoIdle(int partNr, diagnostic_msgs::DiagnosticArray statusArray
 		stopList( OpOnlyList[partNr] );
 		
 		if (!old_structure) {
-			log(Warning) << "Supervisor::GoIdle: Allowing bodypart:     [" << partNr << "]" <<endlog();
+			log(Info) << "Supervisor::GoIdle: Set Allowed to false:     [" << partNr << "]" <<endlog();
 			setAllowed(partNr, false);
 		}
 		

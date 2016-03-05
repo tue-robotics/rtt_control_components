@@ -124,7 +124,7 @@ namespace SUPERVISORY
         virtual bool stopList( vector<TaskContext*> List );
         virtual bool isEmpty( vector<TaskContext*> List );
         
-        //Atributes
+        //Taskcontext pointers, Atributes
         TaskContext* GlobalReferenceGenerator;
         Attribute<bools> AllowReadReferencesRefGen;
               

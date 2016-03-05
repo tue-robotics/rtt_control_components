@@ -83,7 +83,6 @@ bool Homing::configureHook()
         addPort( ("accout"+to_string(j+1)), accoutport[j] );
     }
 
-
     //! Property checks
     // Scalars
     if (N <= 0 || N > 10 ) {
@@ -324,7 +323,6 @@ bool Homing::startHook()
         log(Error) << prefix <<"_Homing: Could not start component: Could not find : TrajectoryActionlib.SendToPos Operation!"<<endlog();
         return false;
     }
-    
 
     //! Check port connections
     // Generic
@@ -407,7 +405,10 @@ void Homing::updateHook()
 			pos_inport.read( position );
 
 			// Stop and Reset Encoders
+			log(Warning) << prefix <<"_Homing: Stopping Bodypart: " << bodypart << "!"<<endlog();
 			StopBodyPart(bodypart); 			
+			log(Warning) << prefix <<"_Homing: Stopping Bodypart: " << bodypart << "!"<<endlog();
+			
 			if (new_structure) {
 				Eread_ResetEncoders(partNr,1,reset_stroke);
 			} else {
