@@ -25,178 +25,186 @@ TracingContinous::TracingContinous(const string& name) :
 											buffersize(16384),
 											Ts(0.001)
 {
-	addProperty( "vector_sizes", vectorsizes_prop ).doc("size of the vector per port. Example: array ( 2.0 4.0 4.0 )");
 	addProperty( "buffersize", buffersize ).doc("Size of the buffer");
 	addProperty( "filename", filename ).doc("Name of the file");
 	addProperty( "Ts", Ts ).doc("Sample time of orocos, used for time vector");
+	addProperty( "sendErrorLog_delay", sendErrorLog_delay ).doc("After an error is detected, a delay is used before sending the error log");
+
+	addOperation("AddBodypart", &TracingContinous::AddBodypart, this, OwnThread)
+		.doc("Add bodypart to trace")
+		.arg("PARTNAME","Name of the bodypart")
+		.arg("BPID","ID number of the bodypart")
+		.arg("NRPORTS","Nr Ports")
+		.arg("NRJOINTS","Number of joints")
+		.arg("PORTNAMES","To label the ports that are traced");
 }
 
 TracingContinous::~TracingContinous(){}
 
 bool TracingContinous::configureHook()
 {
+	// Init
+	n_totalports = 0;
 	
-	columns = 0;
-
-	// Create ports based on the number of vector sizes given
-	Nports = vectorsizes_prop.size();
-	vectorsizes.resize(Nports);
-
-	// Creating ports
-	for ( uint i = 0; i < Nports; i++ )
-	{
-		vectorsizes[i] = vectorsizes_prop[i]; // Hack
-		if (i == 0) {
-			string name_inport = "in"+to_string(i+1);
-			addEventPort( name_inport, inports[i]);
-		}
-		else {
-			string name_inport = "in"+to_string(i+1);
-			addPort( name_inport, inports[i]);
-		}
-		columns += vectorsizes[i];
-		cout << "Column size: ";
-		cout << columns;
-		cout << "\n";
+	for ( uint l = 0; l < MAX_BODYPARTS; l++ ) {
+		buffer_status[l] = false;
+		buffer_nrports[l] = 0;
+		buffer_nrjoints[l] = 0;
 	}
-
-	counter = -1;
-
-	buffers.resize(buffersize); // Maybe create reserve()?
-	for (uint line = 0; line < buffersize; line++)
-	{
-		buffers[line].resize(columns,-1);
-	}
-
-
+	
 	return true;
 }
 
 bool TracingContinous::startHook()
 {
-	
-	printed = false;
+	n_cyclicbuffer = 0;
+	error = false;
+	buffer_full = false;
+	error_bpid = 0;
+	sendErrorLog_delaycntr =0;
 	
 	return true;
 }
 
 void TracingContinous::updateHook()
 {
-	
 	// First updatehook is useless
-	if(counter == -1){counter = 0;return;}
-	// TODO: if ( !this->isRunning() ) return; (Check if this also works, counter can become a uint
-	
-	if (counter == 10 && printed == false) {
-		log(Warning) << "TracingContinous: Started tracing!" << endlog();
-		printed = true;
-		}
-	
-	uint startcolumn = 0;
-	for ( uint i = 0; i < Nports; i++ )
-	{
-		doubles input(vectorsizes[i],-2.0);
-
-		if ( inports[i].read( input ) == NewData )
-		{
-			uint inputiterator = 0;
-			// Fill it with data
-			for (uint column =  startcolumn; column < startcolumn + vectorsizes[i]; ++column)
-			{
-				buffers[counter][column] = input[inputiterator];
-				inputiterator++;
-			}
-		}
-		else {
-			// Fill it with -1 since no data seen
-			for (uint column =  startcolumn; column < startcolumn + vectorsizes[i]; ++column)
-			{
-				buffers[counter][column] = -1;
-			}
-			//if (i==1) log(Warning)<<"tracing:: no new data recieved on event port"<<endlog();
-		}
-		startcolumn += vectorsizes[i];
+	if ( !this->isRunning() ) {    // if(counter == -1){counter = 0;return;}
+		return;
 	}
-
-	counter++;
-
-	// Stop if buffer is full
-	if(abs(counter) >= buffersize) 
-	{
-		log(Warning) << "TracingContinous: Trace stop!" << endlog();
-		stop();
+	
+	// Check for errors sendErrorLog_delay
+	if (!error) {
+		for ( uint i = 0; i < MAX_BODYPARTS; i++ ) {
+			errorInports[i].read(error);
+			if (error == true ) {
+				error_bpid = i+1;
+				log(Warning) << "TracingContinous: Detected the Error!" << endlog();
+			}
+		}
+	} else {
+		sendErrorLog_delaycntr++;
+		if (sendErrorLog_delaycntr>sendErrorLog_delay) {
+			stopHook(error_bpid,n_cyclicbuffer);
+		}
+	}
+	
+	// Storing data in cyclic buffer
+	for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
+		if (buffer_status[l] == true) {
+			for( uint i = 0; i < buffer_nrports[l]; i++ ) {
+				if ( dataInports[l][i].read( input[l][i] ) == NewData ) {
+					for ( uint k = 0; k < buffer_nrjoints[l]; k++ ) {
+						// to do fix this segfault
+						buffer[l][i][k][n_cyclicbuffer] = input[l][i][k];
+					}
+				} else { // no new data then fill with -1
+					for ( uint k = 0; k < buffer_nrjoints[l]; k++ ) {
+						buffer[l][i][k][n_cyclicbuffer] = -1.0;
+					}
+				}
+			}
+		}
+	}
+	
+	// update cyclic buffer
+	n_cyclicbuffer++;
+	if (n_cyclicbuffer==buffersize) {
+		buffer_full = true;
+		n_cyclicbuffer = 0;
 	}
 }
 
-void TracingContinous::stopHook()
-{	
+void TracingContinous::AddBodypart(string PARTNAME, uint BPID, uint NRPORTS, uint NRJOINTS, strings PORTNAMES)
+{
+	// Check BPID, NRPORTS, NRJOINTS
+	if( BPID <= 0 || BPID > MAX_BODYPARTS) {
+		log(Error) << "TracingContinous::AddBodypart(" << PARTNAME << "): Could not add bodypart. Invalid BPID: " << BPID << "! Should be between 0 and " << MAX_BODYPARTS << "!" << endlog();
+		return;
+	}
+	if( NRPORTS <= 0 || NRPORTS > MAX_PORTS) {
+		log(Error) << "TracingContinous::AddBodypart(" << PARTNAME << "): Could not add bodypart. Invalid NRPORTS: " << NRPORTS << "! Should be between 0 and " << MAX_PORTS << "!" << endlog();
+		return;
+	}
+	if( NRJOINTS <= 0 || NRJOINTS > MAX_JOINTS) {
+		log(Error) << "TracingContinous::AddBodypart(" << PARTNAME << "): Could not add bodypart. Invalid NRJOINTS: " << NRJOINTS << "! Should be between 0 and " << MAX_JOINTS << "!" << endlog();
+		return;
+	}
+	if( PORTNAMES.size() != NRPORTS ) {
+		log(Error) << "TracingContinous::AddBodypart(" << PARTNAME << "): Could not add bodypart. Invalid size of PORTNAMES: " << PORTNAMES.size() << "! Should be equal to NRPORTS: " << NRPORTS << "!" << endlog();
+		return;
+	}
+	
+	// Init
+	buffer_status[BPID-1] = true;
+	buffer_nrports[BPID-1] = NRPORTS;
+	buffer_nrjoints[BPID-1] = NRJOINTS;
+	n_totalports += NRPORTS;
+	n_totaltraces += NRPORTS*NRJOINTS;
+	
+	// Add ports and append buffer_name for every joint of every port
+	addPort(PARTNAME+"_error", errorInports[BPID-1]);
+	for ( uint i = 0; i < NRPORTS; i++ ) { 
+		string portname = PARTNAME+"_"+PORTNAMES[i]; 
+		addPort(portname, dataInports[BPID-1][i]);
+		
+		for ( uint k = 0; k < NRJOINTS; k++ ) {
+			buffer_names.push_back(portname+to_string(k));
+		}
+	}
+	
+	// Create data structures 
+	buffer[BPID-1].resize(NRPORTS);
+	for ( uint i = 0; i < NRPORTS; i++ ) { 
+		buffer[BPID-1][i].resize(NRJOINTS);
+		for ( uint k = 0; k < NRPORTS; k++ ) {
+			buffer[BPID-1][i][k].resize(buffersize);
+		}
+	}
+	
+	log(Warning) << "TracingContinous: AddedBodypart: " << PARTNAME <<"!" << endlog();
+}
+
+void TracingContinous::stopHook(int BPID, uint N_CYCLICBUFFER)
+{
+	if (!buffer_full) {
+		log(Warning) << "TracingContinous: Detected error for BPID: " << BPID <<", but buffer was not yet full so auto log is skipped!" << endlog();
+	} else {
+		sendErrorLog(BPID,N_CYCLICBUFFER);
+	}
+	
+	startHook();
+	return;
+}
+
+void TracingContinous::sendErrorLog(int BPID, uint N_CYCLICBUFFER)
+{
+	// Construct log file
 	FILE * pFile;
 	pFile = fopen (filename.c_str(),"w");
-
-
+	
+	// First add all the portnames on top of the file
 	fprintf(pFile, "Time    \t");
-	for ( uint i = 0; i < vectorsizes.size(); i++ )
-	{
-		string portname = inports[i].getName();
-		for ( int j = 0; j < vectorsizes[i]; j++ )
-		{
-			fprintf(pFile, " %s[%d]    \t", portname.c_str(), j );
-			//char columnheader = "["+to_string(j)+"]\t";
-			//portname.c_str()+
-			//fprintf(pFile, "%s\t", columnheader);
-			//cout << columnheader;
-		}
+	for ( uint m = 0; m < n_totaltraces; m++ ) {
+		fprintf(pFile, "%s    \t", buffer_names[m].c_str());
 	}
 	fprintf(pFile, "\n");
-	//
-
-	uint line = 0;
-	std::vector<doubles>::iterator vit;
-	doubles::iterator dit;
-	for(vit = buffers.begin(); vit != buffers.end(); ++vit)
-	{
-		double timevalue = line*Ts;
-		fprintf(pFile, "%f\t", timevalue);
-		for(dit = (*vit).begin(); dit != (*vit).end(); ++dit)
-		{
-			fprintf(pFile, "% .6e\t", *dit);
-			//fprintf(pFile, "% f\t", *dit);
+	
+	// Start at N_CYCLICBUFFER+1 and loop to end of buffer, at end start at 0 and continue to N_CYCLICBUFFER 
+	for ( uint n = N_CYCLICBUFFER+1; n==N_CYCLICBUFFER; n++ ) {
+		for ( uint i = 0; i < buffer_nrports[BPID-1]; i++ ) {
+			for ( uint k = 0; k < buffer_nrjoints[BPID-1]; k++ ) {
+				fprintf(pFile, "%f    \t", buffer[BPID-1][i][k][n] );
+			}
 		}
-		fprintf(pFile, "\n");
-		line++;
+		// At the end of the buffer go back to n=0
+		if (n==buffersize) {
+			n=0;
+		}
 	}
-
+	
 	log(Warning) << "TracingContinous: Trace written!" << endlog();
-
 	fclose(pFile);
-
 }
 
-void TracingContinous::Send_Email(char * msgbuf)
-{
-	char tmpfile[100];
-	char command[2000];
-	FILE * fp;
-
-	memset(tmpfile,0x00,sizeof(tmpfile));
-	memset(command,0x00,sizeof(command));
-
-	strcpy(tmpfile,mkstemp("/tmp",NULL));
-
-	if ( (fp=fopen(tmpfile,"w"))) {
-		fprintf(fp,"APDU Process %d has an error.\n", getpid());
-		fprintf(fp,"\n%s",msgbuf);
-
-		fclose(fp);
-
-		sprintf(command,"cat %s | sendmail -s \"SOME SUBJECT\" \"some_email@some_pace.com me@myself.com\"", tmpfile);
-
-		int sc_returnvalue;
-		sc_returnvalue = system(command);
-		remove(tmpfile);
-	}
-
-}
-
-ORO_CREATE_COMPONENT(Signal::TracingContinous)    
-
+ORO_CREATE_COMPONENT(Signal::TracingContinous)
