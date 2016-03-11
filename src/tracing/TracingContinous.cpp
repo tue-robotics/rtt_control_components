@@ -75,16 +75,18 @@ void TracingContinous::updateHook()
 	
 	// Check for errors sendErrorLog_delay
 	if (!error) {
-		for ( uint i = 0; i < MAX_BODYPARTS; i++ ) {
-			errorInports[i].read(error);
-			if (error == true ) {
-				error_bpid = i+1;
-				log(Warning) << "TracingContinous: Detected the Error!" << endlog();
+		for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
+			if (buffer_status[l] == true) {
+				errorInports[l].read(error);
+				if (error == true ) {
+					error_bpid = l+1;
+					log(Warning) << "TracingContinous: Detected the Error!" << endlog();
+				}
 			}
 		}
 	} else {
 		sendErrorLog_delaycntr++;
-		if (sendErrorLog_delaycntr>sendErrorLog_delay) {
+		if (sendErrorLog_delaycntr > sendErrorLog_delay) {
 			stopHook(error_bpid,n_cyclicbuffer);
 		}
 	}
@@ -95,7 +97,6 @@ void TracingContinous::updateHook()
 			for( uint i = 0; i < buffer_nrports[l]; i++ ) {
 				if ( dataInports[l][i].read( input[l][i] ) == NewData ) {
 					for ( uint k = 0; k < buffer_nrjoints[l]; k++ ) {
-						// to do fix this segfault
 						buffer[l][i][k][n_cyclicbuffer] = input[l][i][k];
 					}
 				} else { // no new data then fill with -1
@@ -159,12 +160,14 @@ void TracingContinous::AddBodypart(string PARTNAME, uint BPID, uint NRPORTS, uin
 	for ( uint i = 0; i < NRPORTS; i++ ) { 
 		buffer[BPID-1][i].resize(NRJOINTS);
 		input[BPID-1][i].resize(NRJOINTS);
-		for ( uint k = 0; k < NRPORTS; k++ ) {
+		for ( uint k = 0; k < NRJOINTS; k++ ) {
 			buffer[BPID-1][i][k].resize(buffersize);
 		}
 	}
 	
-	log(Warning) << "TracingContinous: AddedBodypart: " << PARTNAME <<"!" << endlog();
+	log(Warning) << "TracingContinous: n ports -> 		buffer[BPID-1].size(): " << buffer[BPID-1].size() <<"!" << endlog();
+	log(Warning) << "TracingContinous: n_joints ->  	buffer[BPID-1][0].size(): " << buffer[BPID-1][0].size() <<"!" << endlog();
+	log(Warning) << "TracingContinous: n datapoints -> 	buffer[BPID-1][0][0].size(): " << buffer[BPID-1][0][0].size() <<"!" << endlog();
 }
 
 void TracingContinous::stopHook(int BPID, uint N_CYCLICBUFFER)
@@ -175,35 +178,48 @@ void TracingContinous::stopHook(int BPID, uint N_CYCLICBUFFER)
 		sendErrorLog(BPID,N_CYCLICBUFFER);
 	}
 	
-	startHook();
+	//startHook();
 	return;
 }
 
 void TracingContinous::sendErrorLog(int BPID, uint N_CYCLICBUFFER)
 {
 	// Construct log file
-	FILE * pFile;
+	FILE* pFile;
 	pFile = fopen (filename.c_str(),"w");
 	
-	// First add all the portnames on top of the file
-	fprintf(pFile, "Time    \t");
-	for ( uint m = 0; m < n_totaltraces; m++ ) {
-		fprintf(pFile, "%s    \t", buffer_names[m].c_str());
-	}
-	fprintf(pFile, "\n");
 	
-	// Start at N_CYCLICBUFFER+1 and loop to end of buffer, at end start at 0 and continue to N_CYCLICBUFFER 
-	for ( uint n = N_CYCLICBUFFER+1; n==N_CYCLICBUFFER; n++ ) {
-		for ( uint i = 0; i < buffer_nrports[BPID-1]; i++ ) {
-			for ( uint k = 0; k < buffer_nrjoints[BPID-1]; k++ ) {
-				fprintf(pFile, "%f    \t", buffer[BPID-1][i][k][n] );
-			}
-		}
-		// At the end of the buffer go back to n=0
-		if (n==buffersize) {
-			n=0;
-		}
-	}
+	//fprintf(pFile, "Time    \t");
+	
+
+	//log(Warning) << "TracingContinous: buffer_names.size():" << buffer_names.size() << ", -> n_totaltraces: " << n_totaltraces << "!" << endlog();
+	
+
+	//// First add all the portnames on top of the file
+	//fprintf(pFile, "Time    \t");
+	
+	
+	//for ( uint m = 0; m < n_totaltraces; m++ ) {
+		
+		//log(Warning) << "TracingContinous: buffer_names[m].c_str():" << buffer_names[m].c_str() << ", -> n_totaltraces: " << n_totaltraces << "!-> m: " << m << "!" << endlog();
+		//fprintf(pFile, "%s    \t", buffer_names[m].c_str());
+	//}
+	//fprintf(pFile, "\n");
+	
+	//log(Warning) << "TracingContinous: Trace written!" << endlog();
+	
+	//// Start at N_CYCLICBUFFER+1 and loop to end of buffer, at end start at 0 and continue to N_CYCLICBUFFER 
+	//for ( uint n = N_CYCLICBUFFER+1; n==N_CYCLICBUFFER; n++ ) {
+		//for ( uint i = 0; i < buffer_nrports[BPID-1]; i++ ) {
+			//for ( uint k = 0; k < buffer_nrjoints[BPID-1]; k++ ) {
+				//fprintf(pFile, "%f    \t", buffer[BPID-1][i][k][n] );
+			//}
+		//}
+		//// At the end of the buffer go back to n=0
+		//if (n==buffersize) {
+			//n=0;
+		//}
+	//}
 	
 	log(Warning) << "TracingContinous: Trace written!" << endlog();
 	fclose(pFile);
