@@ -155,8 +155,10 @@ void TracingContinous::AddBodypart(string PARTNAME, uint BPID, uint NRPORTS, uin
 	
 	// Create data structures 
 	buffer[BPID-1].resize(NRPORTS);
+	input[BPID-1].resize(NRPORTS);
 	for ( uint i = 0; i < NRPORTS; i++ ) { 
 		buffer[BPID-1][i].resize(NRJOINTS);
+		input[BPID-1][i].resize(NRJOINTS);
 		for ( uint k = 0; k < NRPORTS; k++ ) {
 			buffer[BPID-1][i][k].resize(buffersize);
 		}
