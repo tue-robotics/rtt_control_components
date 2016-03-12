@@ -21,12 +21,12 @@ using namespace Signal;
 
 TracingContinous::TracingContinous(const string& name) : 
 											TaskContext(name, PreOperational),
-											filename("data.txt"),
+											loglocation("/home/amigo/ros/data/private/hardware_tracing/autolog"),
 											buffersize(16384),
 											Ts(0.001)
 {
 	addProperty( "buffersize", buffersize ).doc("Size of the buffer");
-	addProperty( "filename", filename ).doc("Name of the file");
+	addProperty( "loglocation", loglocation ).doc("Name of the location of the file");
 	addProperty( "Ts", Ts ).doc("Sample time of orocos, used for time vector");
 	addProperty( "sendErrorLog_delay", sendErrorLog_delay ).doc("After an error is detected, a delay is used before sending the error log");
 
@@ -37,6 +37,9 @@ TracingContinous::TracingContinous(const string& name) :
 		.arg("NRPORTS","Nr Ports")
 		.arg("NRJOINTS","Number of joints")
 		.arg("PORTNAMES","To label the ports that are traced");
+	addOperation("sendLog", &TracingContinous::sendLog, this, OwnThread)
+		.doc("Add bodypart to trace")
+		.arg("BPID","BodypartID of which the log file should be saved");
 }
 
 TracingContinous::~TracingContinous(){}
@@ -60,7 +63,6 @@ bool TracingContinous::configureHook()
 bool TracingContinous::startHook()
 {
 	n_cyclicbuffer = 0;
-	buffer_full = false;
 	error_bpid = 0;
 	sendErrorLog_delaycntr =0;
 	
@@ -84,7 +86,6 @@ void TracingContinous::updateHook()
 					processingerror = true;
 					errors[l] = true;
 					error_bpid = l+1;
-					log(Warning) << "TracingContinous: Detected the Error!" << endlog();
 				}
 			}
 		}
@@ -116,7 +117,6 @@ void TracingContinous::updateHook()
 	// update cyclic buffer
 	n_cyclicbuffer++;
 	if (n_cyclicbuffer==buffersize) {
-		buffer_full = true;
 		n_cyclicbuffer = 0;
 	}
 }
@@ -177,18 +177,16 @@ void TracingContinous::AddBodypart(string PARTNAME, uint BPID, uint NRPORTS, uin
 
 void TracingContinous::stopHook(int BPID, uint N_CYCLICBUFFER)
 {
-	if (buffer_full) {
-		sendErrorLog(BPID,N_CYCLICBUFFER);
-	}
+	log(Warning) << "TracingContinous: stopHook for BPID: " << BPID << ",  and N_CYCLICBUFFER: " << N_CYCLICBUFFER << " !" << endlog();	
 	
-	//startHook();
-	return;
-}
-
-void TracingContinous::sendErrorLog(int BPID, uint N_CYCLICBUFFER)
-{
 	// Construct log file
-	FILE* pFile;
+	time_t     now = time(0);
+    struct tm  tstruct;
+    char       buf[80];
+    tstruct = *localtime(&now);
+    strftime(buf, sizeof(buf), "%Y-%m-%d.%X", &tstruct);
+	string filename = loglocation+"/autolog"+buf+".dat";
+	FILE* pFile;	
 	pFile = fopen (filename.c_str(),"w");
 	
 	// First add all the portnames on top of the file
@@ -219,6 +217,14 @@ void TracingContinous::sendErrorLog(int BPID, uint N_CYCLICBUFFER)
 	}
 	
 	fclose(pFile);
+	
+	this->stop();
+	return;
+}
+
+void TracingContinous::sendLog(int BPID)
+{
+	stopHook(BPID,n_cyclicbuffer);
 }
 
 ORO_CREATE_COMPONENT(Signal::TracingContinous)

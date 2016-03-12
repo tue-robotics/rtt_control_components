@@ -56,7 +56,7 @@ namespace Signal
 		InputPort<bool> errorInports[MAX_BODYPARTS];
 
 		// Properties
-		string filename;
+		string loglocation;
 		uint buffersize;
 		uint sendErrorLog_delay;
 		double Ts;
@@ -66,7 +66,6 @@ namespace Signal
 		bool processingerror;
 		uint error_bpid;
 		uint sendErrorLog_delaycntr;
-		bool buffer_full;
 		uint n_totalports;
 		uint n_totaltraces;
 		uint buffer_nrports[MAX_BODYPARTS];
@@ -86,8 +85,8 @@ namespace Signal
 		bool startHook();
 		void updateHook();
 		virtual void AddBodypart(string PARTNAME, uint BPID, uint NRPORTS, uint NRJOINTS, strings PORTNAMES);
-		virtual void sendErrorLog(int BPID, uint N_CYCLICBUFFER);
 		virtual void stopHook(int BPID, uint N_CYCLICBUFFER);
+		virtual void sendLog(int BPID);			// for manual saving of log
 	};
 }
 #endif
