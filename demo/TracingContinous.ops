@@ -2,15 +2,9 @@
 #                                                                      #
 # 							TEST						       		   #
 #             														   #
-#	Example ops file for the use of EtherCATwrite component            #
+#	Example ops file for the use of the tracing Continous component    #
 #                                                                      #
 ########################################################################
-
-# Note the difference between Eread and Ewrite: 
-# EtherCATread  ->  Readinputs, MapInputs2Outputs, Calculate, Writeoutputs
-# Therefore the math operations are done on the already mapped outputs
-# EtherCATwrite  ->  Readinputs, Calculate,MapInputs2Outputs, Writeoutputs
-# Therefore the math operations are done first on the inputs then the mapping is done
 
 #### IMPORT PACKAGE ####
 import("rtt_ros")
@@ -37,7 +31,7 @@ loadComponent("Tracing","Signal::TracingContinous")
 setActivity("Tracing",TS,HighestPriority,ORO_SCHED_RT)
 Tracing.buffersize = 10000
 Tracing.sendErrorLog_delay = 1000 
-Tracing.filename = "/home/amigo/DATA/testTC.dat";
+Tracing.filename = "/home/maxbaeten/DATA/testTC.dat";
 Tracing.Ts = TS
 Tracing.configure
 Tracing.start()
