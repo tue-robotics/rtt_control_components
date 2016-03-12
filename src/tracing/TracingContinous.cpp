@@ -45,11 +45,13 @@ bool TracingContinous::configureHook()
 {
 	// Init
 	n_totalports = 0;
+	processingerror = false;
 	
 	for ( uint l = 0; l < MAX_BODYPARTS; l++ ) {
 		buffer_status[l] = false;
 		buffer_nrports[l] = 0;
 		buffer_nrjoints[l] = 0;
+		errors[l] = false;
 	}
 	
 	return true;
@@ -58,7 +60,6 @@ bool TracingContinous::configureHook()
 bool TracingContinous::startHook()
 {
 	n_cyclicbuffer = 0;
-	error = false;
 	buffer_full = false;
 	error_bpid = 0;
 	sendErrorLog_delaycntr =0;
@@ -74,11 +75,14 @@ void TracingContinous::updateHook()
 	}
 	
 	// Check for errors sendErrorLog_delay
-	if (!error) {
+	if (!processingerror) {
 		for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
 			if (buffer_status[l] == true) {
+				bool error;
 				errorInports[l].read(error);
 				if (error == true ) {
+					processingerror = true;
+					errors[l] = true;
 					error_bpid = l+1;
 					log(Warning) << "TracingContinous: Detected the Error!" << endlog();
 				}
@@ -87,6 +91,7 @@ void TracingContinous::updateHook()
 	} else {
 		sendErrorLog_delaycntr++;
 		if (sendErrorLog_delaycntr > sendErrorLog_delay) {
+			processingerror = false;
 			stopHook(error_bpid,n_cyclicbuffer);
 		}
 	}
@@ -172,9 +177,7 @@ void TracingContinous::AddBodypart(string PARTNAME, uint BPID, uint NRPORTS, uin
 
 void TracingContinous::stopHook(int BPID, uint N_CYCLICBUFFER)
 {
-	if (!buffer_full) {
-		log(Warning) << "TracingContinous: Detected error for BPID: " << BPID <<", but buffer was not yet full so auto log is skipped!" << endlog();
-	} else {
+	if (buffer_full) {
 		sendErrorLog(BPID,N_CYCLICBUFFER);
 	}
 	
@@ -188,40 +191,33 @@ void TracingContinous::sendErrorLog(int BPID, uint N_CYCLICBUFFER)
 	FILE* pFile;
 	pFile = fopen (filename.c_str(),"w");
 	
+	// First add all the portnames on top of the file
+	fprintf(pFile, "Time    \t");
+	for ( uint m = 0; m < n_totaltraces; m++ ) {
+		fprintf(pFile, "%s    \t", buffer_names[m].c_str());
+	}
+	fprintf(pFile, "\n");
 	
-	//fprintf(pFile, "Time    \t");
-	
-
-	//log(Warning) << "TracingContinous: buffer_names.size():" << buffer_names.size() << ", -> n_totaltraces: " << n_totaltraces << "!" << endlog();
-	
-
-	//// First add all the portnames on top of the file
-	//fprintf(pFile, "Time    \t");
-	
-	
-	//for ( uint m = 0; m < n_totaltraces; m++ ) {
+	uint n = N_CYCLICBUFFER+1;
+	// Start at N_CYCLICBUFFER+1 and loop to end of buffer, at end start at 0 and continue to N_CYCLICBUFFER 
+	for ( uint nn = 0; nn<buffersize; nn++ ) {
 		
-		//log(Warning) << "TracingContinous: buffer_names[m].c_str():" << buffer_names[m].c_str() << ", -> n_totaltraces: " << n_totaltraces << "!-> m: " << m << "!" << endlog();
-		//fprintf(pFile, "%s    \t", buffer_names[m].c_str());
-	//}
-	//fprintf(pFile, "\n");
+		// Write line of data
+		for ( uint i = 0; i < buffer_nrports[BPID-1]; i++ ) {
+			for ( uint k = 0; k < buffer_nrjoints[BPID-1]; k++ ) {
+				fprintf(pFile, "%If    \t", buffer[BPID-1][i][k][n] );
+			}
+		}
+		fprintf(pFile, "\n");
+		
+		// Increas n and at the end of the buffer go back to n=0
+		n++;
+		if (n==buffersize) {
+			n=0;
+			log(Warning) << "TracingContinous: set n to zero" << n <<"!" << endlog();
+		}
+	}
 	
-	//log(Warning) << "TracingContinous: Trace written!" << endlog();
-	
-	//// Start at N_CYCLICBUFFER+1 and loop to end of buffer, at end start at 0 and continue to N_CYCLICBUFFER 
-	//for ( uint n = N_CYCLICBUFFER+1; n==N_CYCLICBUFFER; n++ ) {
-		//for ( uint i = 0; i < buffer_nrports[BPID-1]; i++ ) {
-			//for ( uint k = 0; k < buffer_nrjoints[BPID-1]; k++ ) {
-				//fprintf(pFile, "%f    \t", buffer[BPID-1][i][k][n] );
-			//}
-		//}
-		//// At the end of the buffer go back to n=0
-		//if (n==buffersize) {
-			//n=0;
-		//}
-	//}
-	
-	log(Warning) << "TracingContinous: Trace written!" << endlog();
 	fclose(pFile);
 }
 

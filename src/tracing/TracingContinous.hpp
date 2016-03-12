@@ -60,9 +60,10 @@ namespace Signal
 		uint buffersize;
 		uint sendErrorLog_delay;
 		double Ts;
-
+		
 		// buffer
-		bool error;
+		bool errors[MAX_BODYPARTS];
+		bool processingerror;
 		uint error_bpid;
 		uint sendErrorLog_delaycntr;
 		bool buffer_full;
