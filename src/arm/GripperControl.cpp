@@ -85,7 +85,7 @@ bool GripperControl::startHook()
 void GripperControl::updateHook()
 {
 	bool resetGripper;
-    doubles outpos(1,0.0);
+    static doubles outpos(1,0.0);
     doubles outvel(1,0.0);
     doubles outacc(1,0.0);
 	
@@ -127,6 +127,11 @@ void GripperControl::updateHook()
     outacc[0]=mRefPoint.acc;
 
 	if (!completed){
+		mRefPoint = mRefGenerator.generateReference(desiredPos, desiredVel, desiredAcc, InterpolDt, false, InterpolEps);
+		outpos[0]=mRefPoint.pos;
+		outvel[0]=mRefPoint.vel;
+		outacc[0]=mRefPoint.acc;
+		
 		torqueInPort.read(torques);
 		positionInPort.read(measPos);
 		
@@ -169,6 +174,9 @@ void GripperControl::updateHook()
 		}
 		
 		gripperMeasurementPort.write(gripperMeasurement);
+	} else {
+		outvel[0]=0.0;
+		outacc[0]=0.0;
 	}
 	
 	// Write outputs
