@@ -121,11 +121,6 @@ void GripperControl::updateHook()
 		}
 	}
 
-    mRefPoint = mRefGenerator.generateReference(desiredPos, desiredVel, desiredAcc, InterpolDt, false, InterpolEps);
-    outpos[0]=mRefPoint.pos;
-    outvel[0]=mRefPoint.vel;
-    outacc[0]=mRefPoint.acc;
-
 	if (!completed){
 		mRefPoint = mRefGenerator.generateReference(desiredPos, desiredVel, desiredAcc, InterpolDt, false, InterpolEps);
 		outpos[0]=mRefPoint.pos;
