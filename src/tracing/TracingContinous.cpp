@@ -220,7 +220,8 @@ void TracingContinous::stopHook(int BPID, uint N_CYCLICBUFFER)
 	
 	fclose(pFile);
 	
-	system("rosrun rtt_control_components emaillogfile");
+	string str = "rosrun rtt_control_components emaillogfile "+ filename + " " + to_string(buffer_nrports[BPID-1]) + " " + to_string(buffer_nrjoints[BPID-1]);
+	int result = system(str.c_str());
 	
 	this->stop();
 	
