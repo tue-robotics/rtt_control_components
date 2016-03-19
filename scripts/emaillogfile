@@ -1,2 +1,3 @@
 #!/bin/bash
-echo "emailing log file"
+echo "Just testing my sendmail gmail relay" | mail -a "/home/maxbaeten/DATA/testTC.dat" -s "AMIGO crashlog" maxbaeten@hotmail.com
+echo "Sent log file"

@@ -31,7 +31,7 @@ loadComponent("Tracing","Signal::TracingContinous")
 setActivity("Tracing",TS,HighestPriority,ORO_SCHED_RT)
 Tracing.buffersize = 10000
 Tracing.sendErrorLog_delay = 1000 
-Tracing.filename = "/home/maxbaeten/DATA/testTC.dat";
+Tracing.loglocation = "/home/maxbaeten/DATA";
 Tracing.Ts = TS
 Tracing.configure
 Tracing.start()

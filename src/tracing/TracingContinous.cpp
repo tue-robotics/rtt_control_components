@@ -12,6 +12,7 @@
 #include <rtt/Port.hpp>
 #include <rtt/Component.hpp>
 #include <fstream>
+#include <stdlib.h>
 
 #include "TracingContinous.hpp"
 
@@ -200,6 +201,7 @@ void TracingContinous::stopHook(int BPID, uint N_CYCLICBUFFER)
 	// Start at N_CYCLICBUFFER+1 and loop to end of buffer, at end start at 0 and continue to N_CYCLICBUFFER 
 	for ( uint nn = 0; nn<buffersize; nn++ ) {
 		
+		fprintf(pFile, "%If    \t", (nn*Ts));
 		// Write line of data
 		for ( uint i = 0; i < buffer_nrports[BPID-1]; i++ ) {
 			for ( uint k = 0; k < buffer_nrjoints[BPID-1]; k++ ) {
@@ -218,7 +220,10 @@ void TracingContinous::stopHook(int BPID, uint N_CYCLICBUFFER)
 	
 	fclose(pFile);
 	
+	system("rosrun rtt_control_components emaillogfile");
+	
 	this->stop();
+	
 	return;
 }
 
