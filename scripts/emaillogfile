@@ -1,11 +1,11 @@
 #!/bin/bash
-echo "Just testing my sendmail gmail relay" | mail -a $1 -s "AMIGO crashlog" maxbaeten@hotmail.com
-echo "Sent log file"
+#echo "Just testing my sendmail gmail relay" | mail -a $1 -s "AMIGO crashlog" maxbaeten@hotmail.com
+echo "Saved but did not Sent log file"
 
 # Let's make a gnuplot
 
-echo $2
-echo $3
+#echo $2
+#echo $3
 
 
 #set datafile separator "\t"

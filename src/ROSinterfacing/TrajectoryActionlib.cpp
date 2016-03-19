@@ -426,7 +426,7 @@ void TrajectoryActionlib::ResetReferences(int partNr)
     for (uint i = 0; i < jointnames.size(); ++i)
     {
         log(Warning) << "TrajectoryActionlib::ResetReferences: " << jointnames[i] << " = " << resetpos[jointids[i]] << endlog();
-        reference_generator_.setJointState(jointnames[i], resetpos[jointids[i]], 0.0);
+        reference_generator_.resetJointState(jointnames[i], resetpos[jointids[i]], 0.0);
     }
 
 	log(Warning) <<"TrajectoryActionlib::ResetReferences: ResetReferences end for partNr: " << partNr <<endlog();
