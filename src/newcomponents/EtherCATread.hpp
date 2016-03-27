@@ -105,7 +105,7 @@ namespace ETHERCATREAD
 		vector< doubles > intermediate_A[MAX_BODYPARTS];
 		vector< doubles > output_A[MAX_BODYPARTS];
 		vector< bools > output_A_comp[MAX_BODYPARTS];
-	
+		
 		// Scalars
 		uint n_addedbodyparts_A;
 		
@@ -174,6 +174,8 @@ namespace ETHERCATREAD
 		vector< doubles > intermediate_E[MAX_BODYPARTS];
 		vector< doubles > output_E[MAX_BODYPARTS];
 		vector< doubles > output_E_vel[MAX_BODYPARTS];
+		vector< doubles > temp_output_E[MAX_BODYPARTS];
+		vector< doubles > temp_output_E_vel[MAX_BODYPARTS];
 		vector< doubles > output_E_sat[MAX_BODYPARTS];
 		sensor_msgs::JointState output_E_msgs[MAX_BODYPARTS][MAX_PORTS]; 
 		vector< doubles > enc_values[MAX_BODYPARTS];

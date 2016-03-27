@@ -68,7 +68,8 @@ namespace SIGNALGENERATOR
 		//! Global
 		double TS;
 		long double start_time;
-
+		long double time;
+		
 		// functions
 		virtual void SetOutputZero();
 		virtual void WriteOutput();

@@ -22,7 +22,7 @@ SignalGenerator::SignalGenerator(const string& name) : TaskContext(name, PreOper
 		.arg("vector_size","Number of outputs of the particular port")
 		.arg("default_values","Array containing the output values")
 		.arg("digital_message","Boolean specifying wether the output is published using a soem_beckhoff::DigitalMsg");	
-		
+	
 	//! Editing outputs
 	// Analog
 	addOperation("AddRamp_A", &SignalGenerator::AddRamp_A, this, OwnThread)
@@ -81,8 +81,9 @@ bool SignalGenerator::configureHook()
 	n_analog_signal = 0;
 	n_digital_signal = 0;
 	n_integer_signal = 0;
-	TS = getPeriod();	
+	TS = getPeriod();
 	start_time = os::TimeService::Instance()->getNSecs()*1e-9;
+	time = 0.0;
 	
 	for( uint l = 0; l < MAX_PORTS; l++ ) {
 		ramp_status_A[l] = false;
@@ -101,7 +102,7 @@ bool SignalGenerator::configureHook()
 bool SignalGenerator::startHook(){}
 
 void SignalGenerator::updateHook()
-{    
+{
 	// Set output zero
 	SetOutputZero();
 	
@@ -469,7 +470,7 @@ void SignalGenerator::AddStep_I(int ID, doubles STEPTIME, doubles STEPVALUE)
 		step_time_I[ID-1][i] = STEPTIME[i];
 		step_value_I[ID-1][i] = STEPVALUE[i];
 	}
-		
+	
 	log(Info) << "SignalGenerator::AddStep_I: Succesfully added Step!" << endlog();
 }
 
@@ -497,7 +498,7 @@ void SignalGenerator::AddStep_D(int ID, doubles STEPTIME, doubles STEPVALUE)
 		step_time_D[ID-1][i] = STEPTIME[i];
 		step_value_D[ID-1][i] = STEPVALUE[i];
 	}
-		
+	
 	log(Info) << "SignalGenerator::AddStep_D: Succesfully added Step!" << endlog();
 }
 
@@ -541,36 +542,33 @@ void SignalGenerator::CalculateNoise_A()
 
 void SignalGenerator::CalculateSine_A()
 {
-	long double time;
 	time = (os::TimeService::Instance()->getNSecs()*1e-9)-start_time;
 
 	for( uint j = 0; j < n_analog_signal; j++ ) {
 		if (sine_status_A[j]) {
 			for( uint i = 0; i < output_A[j].size(); i++ ) {
 				output_nonadditive_A[j][i] = sine_amplitude_A[j][i] * sin(2*PI*sine_frequency_A[j][i]*time+sine_phase_A[j][i]);
-			}	
+			}
 		}
 	}
 }
 
 void SignalGenerator::CalculateSine_I()
 {
-	long double time;
 	time = (os::TimeService::Instance()->getNSecs()*1e-9)-start_time;
 
 	for( uint j = 0; j < n_integer_signal; j++ ) {
 		if (sine_status_I[j]) {
 			for( uint i = 0; i < output_I[j].size(); i++ ) {
 				output_nonadditive_I[j][i] = sine_amplitude_I[j][i] * sin(2*PI*sine_frequency_I[j][i]*time+sine_phase_I[j][i]);
-			}	
+			}
 		}
 	}
 }
 
 void SignalGenerator::CalculateStep_A()
 {
-	long double time;
-	time = (os::TimeService::Instance()->getNSecs()*1e-9)-start_time;	
+	time = (os::TimeService::Instance()->getNSecs()*1e-9)-start_time;
 	
 	for( uint j = 0; j < n_analog_signal; j++ ) {
 		if (step_status_A[j]) {	
@@ -586,8 +584,7 @@ void SignalGenerator::CalculateStep_A()
 
 void SignalGenerator::CalculateStep_I()
 {
-	long double time;
-	time = (os::TimeService::Instance()->getNSecs()*1e-9)-start_time;	
+	time = (os::TimeService::Instance()->getNSecs()*1e-9)-start_time;
 	
 	for( uint j = 0; j < n_integer_signal; j++ ) {
 		if (step_status_I[j]) {	
@@ -604,8 +601,7 @@ void SignalGenerator::CalculateStep_I()
 
 void SignalGenerator::CalculateStep_D()
 {
-	long double time;
-	time = (os::TimeService::Instance()->getNSecs()*1e-9)-start_time;	
+	time = (os::TimeService::Instance()->getNSecs()*1e-9)-start_time;
 	
 	for( uint j = 0; j < n_digital_signal; j++ ) {
 		if (step_status_D[j]) {	
@@ -622,7 +618,7 @@ void SignalGenerator::CalculateStep_D()
 void SignalGenerator::SetOutputZero()
 {
 	// Analog
-	for( uint j = 0; j < n_analog_signal; j++ ) {	
+	for( uint j = 0; j < n_analog_signal; j++ ) {
 		for( uint i = 0; i < output_A[j].size(); i++ ) {
 			output_A[j][i] = 0.0;
 			output_nonadditive_A[j][i] = 0.0;
@@ -630,7 +626,7 @@ void SignalGenerator::SetOutputZero()
 	}
 	
 	// Integer
-	for( uint j = 0; j < n_integer_signal; j++ ) {	
+	for( uint j = 0; j < n_integer_signal; j++ ) {
 		for( uint i = 0; i < output_I[j].size(); i++ ) {
 			output_I[j][i] = 0.0;
 			output_nonadditive_I[j][i] = 0.0;
@@ -654,7 +650,7 @@ void SignalGenerator::WriteOutput()
 				output_A[j][i] = output_nonadditive_A[j][i]+output_additive_A[j][i];
 			}
 			outports_A[j].write(output_A[j]);
-		}	
+		}
 	}
 	
 	// Digital
@@ -667,7 +663,7 @@ void SignalGenerator::WriteOutput()
 		} else {
 			output_D[j] = (bool) output_additive_D[j][0];
 			outports_D[j].write(output_D[j]);
-		}	
+		}
 	}
 	
 	// Integer
@@ -682,7 +678,7 @@ void SignalGenerator::WriteOutput()
 				output_I[j][i] = (int) output_nonadditive_I[j][i] + (int) output_additive_I[j][i];
 			}
 			outports_I[j].write(output_I[j]);
-		}	
+		}
 	}
 	
 	return;

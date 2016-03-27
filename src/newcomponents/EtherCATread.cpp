@@ -150,9 +150,9 @@ void EtherCATread::updateHook()
 	MapInputs2Outputs();
 	
 	// Functions to do all the calculations on the incoming data, for example converting enc counts to si values, or multiplying inputs with factor X
-	Calculate_A();
-	Calculate_D();
-	Calculate_E();
+	Calculate_A(); // Addition -> Multiplier -> Comparison -> Torque Sensor
+	Calculate_D(); // Flip
+	Calculate_E(); // Enc2SI -> Matrix Transform -> Saturation
 	
 	// Function to write the output calculated onto the output port
     WriteOutputs();   
@@ -578,12 +578,16 @@ void EtherCATread::AddEncoderIns(string PARTNAME, doubles INPORT_DIMENSIONS, dou
 	intermediate_E[BPID-1].resize(n_outports_E[BPID-1]);
 	output_E[BPID-1].resize(n_outports_E[BPID-1]);
 	output_E_vel[BPID-1].resize(n_outports_E[BPID-1]);
+	temp_output_E[BPID-1].resize(n_outports_E[BPID-1]);
+	temp_output_E_vel[BPID-1].resize(n_outports_E[BPID-1]);
 	output_E_sat[BPID-1].resize(n_outports_E[BPID-1]);
 
 	for( uint i = 0; i < n_outports_E[BPID-1]; i++ ) {
 		intermediate_E[BPID-1][i].resize( outport_dimensions_E[BPID-1][i] );
 		output_E[BPID-1][i].resize( outport_dimensions_E[BPID-1][i] );
 		output_E_vel[BPID-1][i].resize( outport_dimensions_E[BPID-1][i] );
+		temp_output_E[BPID-1][i].resize( outport_dimensions_E[BPID-1][i] );
+		temp_output_E_vel[BPID-1][i].resize( outport_dimensions_E[BPID-1][i] );
 		output_E_sat[BPID-1][i].resize( outport_dimensions_E[BPID-1][i] );
 	}
 
@@ -1047,7 +1051,7 @@ void EtherCATread::AddMsgOut_A(string PARTNAME, int PORTNR)
 {
 	// init
 	uint BPID;
-		
+	
 	//! Check configuration	
 	if (!this->isRunning()) {
 		log(Error) << "EtherCATread::AddMsgOut_A([" << PARTNAME << "," << PORTNR << "]): Could not add MsgOut_A. Since EtherCATread component has not yet been started." << endlog();
@@ -1106,7 +1110,7 @@ void EtherCATread::AddMsgOut_D(string PARTNAME, int PORTNR)
 }
 
 void EtherCATread::AddMsgOut_E(string PARTNAME, int PORTNR, strings JOINT_NAMES)
-{		
+{	
 	// init
 	uint BPID;
 		
@@ -1128,7 +1132,7 @@ void EtherCATread::AddMsgOut_E(string PARTNAME, int PORTNR, strings JOINT_NAMES)
 		log(Error) << "EtherCATread::AddMsgOut_E([" << PARTNAME << "," << PORTNR << "]): Could not add MsgOut_E. Invalid BPID. Should satisfy  0 < BPID <= bodypart_names.size(). -> 0 < " << BPID << " <= " << bodypart_names.size() << "!" << endlog(); 
 		return;
 	}
-			
+	
 	// Create output port
 	addPort( PARTNAME+"_EoutMsg"+to_string(PORTNR), outports_E_msg[BPID-1][PORTNR-1] );
 
@@ -1197,7 +1201,7 @@ void EtherCATread::CheckAllConnections()
 				if ( !outports_E_vel[l][i].connected() ) {
 					log(Info) << "EtherCATread::CheckAllConnections: Encoder velocity outport " << outports_E_vel[l][i].getName() << " is not connected!" << endlog();
 				}
-			}		
+			}
 		}
 	}
 	
@@ -1457,8 +1461,8 @@ void EtherCATread::Calculate_E()
 			if (matrixtransform_status_E[l][i]) {
 				
 				// Store output of enc2si operation into a temporary input vector
-				doubles input_MT_E = output_E[l][i];
-				doubles input_MT_E_vel = output_E_vel[l][i];
+				temp_output_E[l][i] = output_E[l][i];
+				temp_output_E_vel[l][i] = output_E_vel[l][i];
 				
 				// Resize output vectors in case of a non square Matrix transformation
 				output_E[l][i].resize(outport_dimensions_E[l][i]);
@@ -1468,11 +1472,9 @@ void EtherCATread::Calculate_E()
 					output_E[l][i][k] = 0.0;
 					output_E_vel[l][i][k] = 0.0;
 					
-					for ( uint m = 0; m < input_MT_E.size(); m++ ) {
-						
-						output_E[l][i][k] += matrixtransform_entries_E[l][i][k][m] * input_MT_E[m];
-						output_E_vel[l][i][k] += matrixtransform_entries_E[l][i][k][m] * input_MT_E_vel[m];
-					
+					for ( uint m = 0; m < temp_output_E[l][i].size(); m++ ) {
+						output_E[l][i][k] += matrixtransform_entries_E[l][i][k][m] * temp_output_E[l][i][m];
+						output_E_vel[l][i][k] += matrixtransform_entries_E[l][i][k][m] * temp_output_E_vel[l][i][m];
 					}
 				}
 			}
@@ -1499,10 +1501,10 @@ void EtherCATread::Calculate_E()
 
 double EtherCATread::determineDt()
 {
-    long double new_time = os::TimeService::Instance()->getNSecs()*1e-9;
-    double dt = (new_time - old_time);
-    old_time = new_time;
-    return dt;
+	long double new_time = os::TimeService::Instance()->getNSecs()*1e-9;
+	double dt = (new_time - old_time);
+	old_time = new_time;
+	return dt;
 }
 
 void EtherCATread::ResetEncoders(int BPID, int PORTNR, doubles RESETVALUES )
@@ -1535,7 +1537,6 @@ void EtherCATread::ResetEncoders(int BPID, int PORTNR, doubles RESETVALUES )
 		
 		// Set initpos_E and previous_enc_values
 		initpos_E[BPID-1][PORTNR-1][k] = output_E[BPID-1][PORTNR-1][k] - RESETVALUES[k];
-		
 		
 		//log(Warning)<<"EtherCATread::ResetEncoders(" << BPID << bodypart_names[BPID-1] << ", port " << PORTNR << "): Resetting Encoders. initpos_E[BPID-1][PORTNR-1][0] = output_E[BPID-1][PORTNR-1][0] - RESETVALUES[0] -> : " << initpos_E[BPID-1][PORTNR-1][0] << " = " << output_E[BPID-1][PORTNR-1][0]  << " - " << RESETVALUES[0]  << "!"<<endlog();
 	}

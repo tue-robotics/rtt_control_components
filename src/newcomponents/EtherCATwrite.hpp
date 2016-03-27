@@ -68,8 +68,9 @@ namespace ETHERCATWRITE
 		OutputPort<soem_beckhoff_drivers::AnalogMsg> outports_A[MAX_BODYPARTS][MAX_PORTS];
 	
 		// In/Output
-		std::vector< doubles > input_A[MAX_PORTS];
-		std::vector< soem_beckhoff_drivers::AnalogMsg > output_msgs_A[MAX_PORTS];
+		vector< doubles > input_A[MAX_PORTS];
+		vector< doubles > temp_input_A[MAX_BODYPARTS];
+		vector< soem_beckhoff_drivers::AnalogMsg > output_msgs_A[MAX_PORTS];
 		
 		// Scalars
 		uint n_addedbodyparts_A;
@@ -88,9 +89,9 @@ namespace ETHERCATWRITE
 		ints from_which_inport_A[MAX_BODYPARTS];
 		ints from_which_entry_A[MAX_BODYPARTS];
 		
-		// 3D	
-		vector< doubles > addition_values_A[MAX_BODYPARTS];	
-		vector< doubles > multiply_values_A[MAX_BODYPARTS];	
+		// 3D
+		vector< doubles > addition_values_A[MAX_BODYPARTS];
+		vector< doubles > multiply_values_A[MAX_BODYPARTS];
 		vector< vector< doubles > > matrixtransform_entries_A[MAX_BODYPARTS];
 
 		// Functions
@@ -105,7 +106,7 @@ namespace ETHERCATWRITE
 
 		// In/Output
 		bool input_D[MAX_PORTS][MAX_PORTS];
-		std::vector< soem_beckhoff_drivers::DigitalMsg > output_msgs_D[MAX_PORTS];
+		vector< soem_beckhoff_drivers::DigitalMsg > output_msgs_D[MAX_PORTS];
 	
 		// Scalars
 		uint n_addedbodyparts_D;
