@@ -58,6 +58,11 @@ namespace ARM
       double desiredAcc;
       double InterpolDt;
       double InterpolEps;
+      
+	  bool resetGripper;
+	  doubles outpos;
+	  doubles outvel;
+	  doubles outacc;
 	  
 	  // variables
   	  bool completed;
