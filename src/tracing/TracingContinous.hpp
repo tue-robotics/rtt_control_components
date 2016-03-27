@@ -71,7 +71,7 @@ namespace Signal
 		uint buffer_nrports[MAX_BODYPARTS];
 		uint buffer_nrjoints[MAX_BODYPARTS];
 		uint n_cyclicbuffer;
-		strings buffer_names;
+		strings buffer_names[MAX_BODYPARTS];
 		bool buffer_status[MAX_BODYPARTS];
 		vector<doubles> input[MAX_BODYPARTS]; // input = vector of bodyparts, vector of ports, vector of joints // stores last sample
 		vector< vector< doubles > > buffer[MAX_BODYPARTS]; // buffer = vector of bodyparts, vector of ports, vector of joints, vector of ndatapoints

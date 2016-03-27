@@ -48,6 +48,7 @@ Controller::Controller(const string& name) :
     addPort( "enable",                     		enable_inport)  		.doc("Receives enable boolean from safety component, controller sends out zeros if enable = false");
     addPort( "out",                             controleffort_outport)  .doc("Control output port");
     addPort( "jointErrors",                     jointerrors_outport)  	.doc("Joint Errors output port");
+    addPort( "references",                      references_outport)  	.doc("References output port (mux of all incoming reference ports, mostly for logging purposes)");
 }
 
 Controller::~Controller()
@@ -75,12 +76,28 @@ Controller::~Controller()
 
 bool Controller::configureHook()
 {
-    //! Determine which controllers are required
-    WeakIntegrator = false;
+	//! Init
+	zero_output.assign(vector_size,0.0);
+	jointErrors.assign(vector_size,0.0);
+	output_Gains.assign(vector_size,0.0);
+	output_WeakIntegrator.assign(vector_size,0.0);
+	output_LeadLag.assign(vector_size,0.0);
+	output_Notch.assign(vector_size,0.0);
+	output.assign(vector_size,0.0);
+	positions.assign(vector_size,0.0);
+    references.assign(vector_size,0.0);
+	for ( uint j = 0; j < N_refinports; j++ ) {
+        ref_in[j].assign(inport_sizes[j],0.0);
+	}
+	for ( uint j = 0; j < N_ffwinports; j++ ) {
+		ffw_input[j].assign(vector_size,0.0);
+	}
+	WeakIntegrator = false;
     LeadLag = false;
     Notch = false;
     LowPass = false;
-
+	
+    //! Determine which controllers are required
     for (uint i = 0; i < controllers.size(); i++) {
         if (controllers[i] == "WeakIntegrator") {
             WeakIntegrator = true;
@@ -95,7 +112,6 @@ bool Controller::configureHook()
             return false;
         }
     }
-
 
     //! Check input properties
     // Generic checks
@@ -169,10 +185,10 @@ bool Controller::configureHook()
 
     //! Add Inports and FFW ports
     for ( uint j = 0; j < N_refinports; j++ ) {
-        addPort( ("ref_in"+to_string(j+1)),		references_inport[j] )		.doc("Control Reference port");
+        addPort( ("ref_in"+to_string(j+1)),		references_inports[j] )		.doc("Control Reference port");
     }
     for (uint j = 0; j < N_ffwinports; j++) {
-        addPort( ("ffw_in" + to_string(j+1)),	ffw_inport[j])				.doc("One of the FFW inports");
+        addPort( ("ffw_in" + to_string(j+1)),	ffw_inports[j])				.doc("One of the FFW inports");
     }
 
     //! Create filters
@@ -213,7 +229,6 @@ bool Controller::startHook()
     //! Init
     safe = false;
 
-
     //! Check port connections:
     // input ports
     if ( !positions_inport.connected() ) {
@@ -225,13 +240,13 @@ bool Controller::startHook()
         return false;
     }
     for (uint j = 0; j < N_ffwinports; j++) {
-        if ( !ffw_inport[j].connected() ) {
+        if ( !ffw_inports[j].connected() ) {
             log(Error)<<"Controller: Could not start component: ffw_in" << j + 1 << " not connected!"<<endlog();
 			return false;
 		}
 	}
     for (uint j = 0; j < N_refinports; j++) {
-        if ( !references_inport[j].connected() ) {
+        if ( !references_inports[j].connected() ) {
             log(Error)<<"Controller: Could not start component: ref_in" << j + 1 << " not connected!"<<endlog();
             return false;
         }
@@ -251,48 +266,34 @@ bool Controller::startHook()
 void Controller::updateHook()
 {
     // Read positions
-    doubles positions(vector_size,0.0);
     positions_inport.read(positions);
 
-    // Read all reference ports
-    doubles references(vector_size,0.0);
+    // Read all reference ports and mux them into a single reference vector
     uint k = 0;
     for ( uint j = 0; j < N_refinports; j++ ) {
-        doubles ref_in(inport_sizes[j],0.0);
-        references_inport[j].read(ref_in);
+        references_inports[j].read(ref_in[j]);
         for ( uint i = 0; i < inport_sizes[j]; i++ ) {
-            references[k] = ref_in[i];
+            references[k] = ref_in[j][i];
             k++;
         }
     }
 
     // Read (possible) ffw ports
-    vector<doubles> ffw_input;
-    ffw_input.resize(N_ffwinports);
     for (uint j = 0; j < N_ffwinports; j++) {
-        ffw_input[j].assign(vector_size,0.0);
-        ffw_inport[j].read(ffw_input[j]);
+        ffw_inports[j].read(ffw_input[j]);
     }
 
     // Read safety boolean
     enable_inport.read(safe);
-
+    
     if (!safe) {
+		
         // Write zero outputs
-        doubles zero_output(vector_size,0.0);
         jointerrors_outport.write(zero_output);
         controleffort_outport.write(zero_output);
-
-        return;
-
+        references_outport.write(zero_output);
+        
     } else {
-
-        doubles jointErrors(vector_size,0.0);
-        doubles output_Gains(vector_size,0.0);
-        doubles output_WeakIntegrator(vector_size,0.0);
-        doubles output_LeadLag(vector_size,0.0);
-        doubles output_Notch(vector_size,0.0);
-        doubles output(vector_size,0.0);
 
         for (uint i = 0; i < vector_size; i++) {
 			// Compute joint errors and Apply Gain
@@ -344,6 +345,7 @@ void Controller::updateHook()
         // Write the outputs
         jointerrors_outport.write(jointErrors);
         controleffort_outport.write(output);
+        references_outport.write(references);
     }
 }
 

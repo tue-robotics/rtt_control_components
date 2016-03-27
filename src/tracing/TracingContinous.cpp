@@ -49,6 +49,7 @@ bool TracingContinous::configureHook()
 {
 	// Init
 	n_totalports = 0;
+	n_totaltraces = 0;
 	processingerror = false;
 	
 	for ( uint l = 0; l < MAX_BODYPARTS; l++ ) {
@@ -156,7 +157,7 @@ void TracingContinous::AddBodypart(string PARTNAME, uint BPID, uint NRPORTS, uin
 		addPort(portname, dataInports[BPID-1][i]);
 		
 		for ( uint k = 0; k < NRJOINTS; k++ ) {
-			buffer_names.push_back(portname+to_string(k));
+			buffer_names[BPID-1].push_back(portname+to_string(k));
 		}
 	}
 	
@@ -191,9 +192,9 @@ void TracingContinous::stopHook(int BPID, uint N_CYCLICBUFFER)
 	pFile = fopen (filename.c_str(),"w");
 	
 	// First add all the portnames on top of the file
-	fprintf(pFile, "Time    \t");
-	for ( uint m = 0; m < n_totaltraces; m++ ) {
-		fprintf(pFile, "%s    \t", buffer_names[m].c_str());
+	fprintf(pFile, "Time  \t");
+	for ( uint m = 0; m < buffer_names[BPID-1].size(); m++ ) {
+		fprintf(pFile, "|%s    \t", buffer_names[BPID-1][m].c_str());
 	}
 	fprintf(pFile, "\n");
 	
@@ -220,10 +221,10 @@ void TracingContinous::stopHook(int BPID, uint N_CYCLICBUFFER)
 	
 	fclose(pFile);
 	
-	string str = "rosrun rtt_control_components emaillogfile "+ filename + " " + to_string(buffer_nrports[BPID-1]) + " " + to_string(buffer_nrjoints[BPID-1]);
-	int result = system(str.c_str());
-	
 	this->stop();
+	
+	//string str = "rosrun rtt_control_components emaillogfile "+ filename + " " + to_string(buffer_nrports[BPID-1]) + " " + to_string(buffer_nrjoints[BPID-1]);
+	//int result = system(str.c_str());
 	
 	return;
 }

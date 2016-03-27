@@ -20,6 +20,9 @@
 #include <scl/filters/DSkewedNotch.hpp>
 #include <sensor_msgs/JointState.h>
 
+#define MAX_REFIN 3 /* maximum number of ports */
+#define MAX_FFWIN 3 /* maximum number of ports */
+
 using namespace std;
 using namespace RTT;
 
@@ -60,10 +63,11 @@ namespace FILTERS
         // Ports
         InputPort<doubles> positions_inport;
         InputPort<bool> enable_inport;
-        InputPort<doubles> references_inport[3];
-        InputPort<doubles> ffw_inport[3];
+        InputPort<doubles> references_inports[MAX_REFIN];
+        InputPort<doubles> ffw_inports[MAX_FFWIN];
         OutputPort<doubles> controleffort_outport;
         OutputPort<doubles> jointerrors_outport;
+        OutputPort<doubles> references_outport;
 
         // Properties
         uint vector_size;
@@ -92,6 +96,19 @@ namespace FILTERS
         bool LeadLag;
         bool Notch;
         bool LowPass;
+        
+        // Various
+        doubles zero_output;
+	    doubles jointErrors;
+        doubles output_Gains;
+        doubles output_WeakIntegrator;
+        doubles output_LeadLag;
+        doubles output_Notch;
+        doubles output;
+        doubles positions;
+        doubles references;
+		doubles ref_in[MAX_REFIN];
+		doubles ffw_input[MAX_FFWIN];
 
         // Filters
         vector<DFILTERS::DWeakIntegrator*> filters_WeakIntegrator;
