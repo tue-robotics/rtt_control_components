@@ -64,6 +64,7 @@ namespace Signal
 		// buffer
 		bool errors[MAX_BODYPARTS];
 		bool processingerror;
+		bool error;
 		uint error_bpid;
 		uint sendErrorLog_delaycntr;
 		uint n_totalports;

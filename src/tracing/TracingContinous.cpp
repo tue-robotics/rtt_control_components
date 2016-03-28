@@ -50,13 +50,11 @@ bool TracingContinous::configureHook()
 	// Init
 	n_totalports = 0;
 	n_totaltraces = 0;
-	processingerror = false;
-	
+
 	for ( uint l = 0; l < MAX_BODYPARTS; l++ ) {
 		buffer_status[l] = false;
 		buffer_nrports[l] = 0;
 		buffer_nrjoints[l] = 0;
-		errors[l] = false;
 	}
 	
 	return true;
@@ -67,6 +65,12 @@ bool TracingContinous::startHook()
 	n_cyclicbuffer = 0;
 	error_bpid = 0;
 	sendErrorLog_delaycntr =0;
+	processingerror = false;
+	error == false;
+	
+	for ( uint l = 0; l < MAX_BODYPARTS; l++ ) {
+		errors[l] = false;
+	}
 	
 	return true;
 }
@@ -82,10 +86,10 @@ void TracingContinous::updateHook()
 	if (!processingerror) {
 		for( uint l = 0; l < MAX_BODYPARTS; l++ ) {
 			if (buffer_status[l] == true) {
-				bool error;
 				errorInports[l].read(error);
 				if (error == true ) {
 					processingerror = true;
+					error = false;
 					errors[l] = true;
 					error_bpid = l+1;
 				}
