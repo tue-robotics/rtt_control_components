@@ -176,10 +176,6 @@ void TracingContinous::AddBodypart(string PARTNAME, uint BPID, uint NRPORTS, uin
 			buffer[BPID-1][i][k].resize(buffersize);
 		}
 	}
-	
-	log(Warning) << "TracingContinous: n ports -> 		buffer[BPID-1].size(): " << buffer[BPID-1].size() <<"!" << endlog();
-	log(Warning) << "TracingContinous: n_joints ->  	buffer[BPID-1][0].size(): " << buffer[BPID-1][0].size() <<"!" << endlog();
-	log(Warning) << "TracingContinous: n datapoints -> 	buffer[BPID-1][0][0].size(): " << buffer[BPID-1][0][0].size() <<"!" << endlog();
 }
 
 void TracingContinous::stopHook(int BPID, uint N_CYCLICBUFFER)
@@ -188,10 +184,10 @@ void TracingContinous::stopHook(int BPID, uint N_CYCLICBUFFER)
 	
 	// Construct log file
 	time_t     now = time(0);
-    struct tm  tstruct;
-    char       buf[80];
-    tstruct = *localtime(&now);
-    strftime(buf, sizeof(buf), "%Y-%m-%d.%X", &tstruct);
+	struct tm  tstruct;
+	char       buf[80];
+	tstruct = *localtime(&now);
+	strftime(buf, sizeof(buf), "%Y-%m-%d.%X", &tstruct);
 	string filename = loglocation+"/autolog"+buf+".dat";
 	FILE* pFile;	
 	pFile = fopen (filename.c_str(),"w");
@@ -220,16 +216,12 @@ void TracingContinous::stopHook(int BPID, uint N_CYCLICBUFFER)
 		n++;
 		if (n==buffersize) {
 			n=0;
-			log(Warning) << "TracingContinous: set n to zero" << n <<"!" << endlog();
 		}
 	}
 	
 	fclose(pFile);
 	
 	this->stop();
-	
-	//string str = "rosrun rtt_control_components emaillogfile "+ filename + " " + to_string(buffer_nrports[BPID-1]) + " " + to_string(buffer_nrjoints[BPID-1]);
-	//int result = system(str.c_str());
 	
 	return;
 }

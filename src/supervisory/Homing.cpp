@@ -173,8 +173,6 @@ bool Homing::configureHook()
 
 bool Homing::startHook()
 {
-	log(Warning) << prefix <<"_Homing: Starting component!"<<endlog();
-
 	//! Init
 	joint_finished = false;
 	finishing = false;
@@ -288,9 +286,7 @@ bool Homing::startHook()
 	}
 	ResetReferences	= TrajectoryActionlib->getOperation("ResetReferences");
 	SendToPos 		= TrajectoryActionlib->getOperation("SendToPos");
-		
-	log(Warning) << prefix <<"_Homing: Setting execution engines!"<<endlog();
-
+	
 	// Set Execution engines
 	StartBodyPart.setCaller(	Supervisor->engine());
 	StopBodyPart.setCaller(		Supervisor->engine());
@@ -386,9 +382,7 @@ bool Homing::startHook()
 	for ( uint i = 0; i < N; i++ ){
 		mRefGenerators[i].setRefGen(position[i]);
 	}
-	
-	log(Warning) << prefix <<"_Homing: Started component!"<<endlog();
-	
+		
 	return true;
 }
 
@@ -420,9 +414,7 @@ void Homing::updateHook()
 			
 		} else if (stateB == 5) { // Starting bodypart, This loop should be entered only once
 			stateB++;
-			
-			log(Warning) << prefix <<"_Homing: Started finishing homing joints of " << bodypart << "!"<<endlog();						
-			
+						
 			// If the component is LPERA or RPERA then the gripperControl component needs to be started
 			if (prefix == "LPERA" || prefix == "RPERA") {
 				if (!GripperControl->isRunning() )
@@ -477,9 +469,7 @@ void Homing::updateHook()
 
 		joint_finished = evaluateHomingCriterion(homing_order[jointNr]-1);
 		if (joint_finished) {
-			
-			log(Warning) << prefix <<"_Homing: START joint_finished "<< homing_order[jointNr] << "!" <<endlog();
-			
+						
 			// Reset Reference generator
 			for ( uint i = 0; i < N; i++ ){
 				mRefGenerators[i].setRefGen(position[i]);
@@ -498,14 +488,11 @@ void Homing::updateHook()
 			Safety_maxJointErrors.set(updated_maxerr);
 			
 			stateA++;
-			
-			log(Warning) << prefix <<"_Homing: END joint_finished "<< homing_order[jointNr] << "!" <<endlog();
-
 		}
 	} else if (stateA == 1) {	// Move to zero position relative to homing position (homing_stroke_goal)
 		if ( (position[homing_order[jointNr]-1] > (homing_stroke_goal-0.01) ) && (position[homing_order[jointNr]-1] < (homing_stroke_goal+0.01) ) ) {
-			if (jointNr != N-1 ) {log(Warning) << prefix <<"_Homing: Finished homing of joint "<< homing_order[jointNr] << ". Proceeding to joint " << homing_order[jointNr+1]<< "! \n " <<endlog();}
-			if (jointNr == N-1 ) {log(Warning) << prefix <<"_Homing: Finished homing of last joint "<< homing_order[jointNr] << ". \n" <<endlog();}
+			if (jointNr != N-1 ) {log(Warning) << prefix <<"_Homing: Finished homing of joint "<< homing_order[jointNr] << ". Proceeding to joint " << homing_order[jointNr+1]<< "!" <<endlog();}
+			if (jointNr == N-1 ) {log(Warning) << prefix <<"_Homing: Finished homing of last joint "<< homing_order[jointNr] << "." <<endlog();}
 			jointNr++;
 			stateA = 0;
 		}

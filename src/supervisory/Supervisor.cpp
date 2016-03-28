@@ -300,9 +300,7 @@ void Supervisor::updateHook()
 					log(Warning) << "Supervisor: Received Homing request from dashboard for all parts" << endlog();
 					for ( int partNr = 1; partNr < 6; partNr++ ) {
 						if (homeableParts[partNr]) {
-							log(Warning) << "Supervisor: Going Homing!"<<endlog();
 							GoHoming(partNr,hardwareStatusmsg);
-							log(Warning) << "Supervisor: Went Homing!"<<endlog();
 						} else { 
 							GoOperational(partNr,hardwareStatusmsg);
 						}
