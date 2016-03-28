@@ -62,15 +62,16 @@ bool TracingContinous::configureHook()
 
 bool TracingContinous::startHook()
 {
+	for ( uint l = 0; l < MAX_BODYPARTS; l++ ) {
+		errorInports[l].read(error);
+		errors[l] = false;
+	}
+	
 	n_cyclicbuffer = 0;
 	error_bpid = 0;
 	sendErrorLog_delaycntr =0;
 	processingerror = false;
 	error == false;
-	
-	for ( uint l = 0; l < MAX_BODYPARTS; l++ ) {
-		errors[l] = false;
-	}
 	
 	return true;
 }

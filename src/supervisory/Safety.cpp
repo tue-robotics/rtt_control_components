@@ -161,7 +161,6 @@ void Safety::updateHook()
 		if( (fabs(jointErrors[i])>maxErrors[i]) ) {
 			if( errors == false && errorcntrs[i] >= 3) {
 				ROS_ERROR_STREAM( prefix <<"_Safety: Error of joint q"<<i+1<<" exceeded limit ("<<maxErrors[i]<<"). jointErrors["<<i<<"] = " << jointErrors[i] << " output disabled." );
-				ROS_ERROR_STREAM( prefix <<"_Safety: Motor output m"<<i+1 << " = " << fabs(motorSat[i])<<")." );
 				errors = true;
 			} else if ( errors == false && errorcntrs[i] < 3) {
 				errorcntrs[i]++;
@@ -187,7 +186,6 @@ void Safety::updateHook()
 		if(fabs(timeNow-timeReachedSaturation[i])>=maxConSatTime){
 			if(errors==false){ // This check makes sure it is printed only once.
 				ROS_ERROR_STREAM( prefix <<"_Safety: Motor output "<<i+1<<" satured too long (absolute "<<maxConSatTime<<" sec above "<<fabs(motorSat[i])<<"). output disabled." );
-				ROS_ERROR_STREAM( prefix <<"_Safety: Error of joint q"<<i+1<<" ("<<maxErrors[i]<<"). jointErrors["<<i<<"] = " << jointErrors[i] << "." );
 				errors = true;
 			}
 		}

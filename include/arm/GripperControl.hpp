@@ -32,55 +32,51 @@ namespace ARM
 	
 	class GripperControl : 
 
-	  public RTT::TaskContext
-	  {
-	  private:
-	  // Inports
-	  InputPort<tue_msgs::GripperCommand> gripperCommandPort;
-	  InputPort<doubles> torqueInPort;
-	  InputPort<doubles> positionInPort;
-	  InputPort<bool> resetGripperPort;
-	  InputPort<bool> reNullPort;
-	  
-	  // Outports
-      OutputPort<doubles> posoutport;
-      OutputPort<doubles> veloutport;
-      OutputPort<doubles> accoutport;
-	  OutputPort<tue_msgs::GripperMeasurement> gripperMeasurementPort;
-	  
-	  // Properties
-	  uint sensorPos;
-	  double maxPos;
-	  double minPos;
-	  double threshold_closed;
-	  double desiredPos;
-      double desiredVel;
-      double desiredAcc;
-      double InterpolDt;
-      double InterpolEps;
-      
-	  bool resetGripper;
-	  doubles outpos;
-	  doubles outvel;
-	  doubles outacc;
-	  
-	  // variables
-  	  bool completed;
-	  bool gripperHomed;
-	  doubles torques;
-	  doubles measPos;
-      tue_msgs::GripperCommand gripperCommand;
-      refgen::RefGenerator mRefGenerator;
-      amigo_msgs::ref_point mRefPoint;
-	  
-	public:
+		public RTT::TaskContext
+		{
+		private:
+		// Inports
+		InputPort<tue_msgs::GripperCommand> gripperCommandPort;
+		InputPort<doubles> torqueInPort;
+		InputPort<doubles> positionInPort;
 
-	  GripperControl(const std::string& name);	  
-	  ~GripperControl();
-	  
-	  bool configureHook();
-	  bool startHook();
-	  void updateHook();
+		// Outports
+		OutputPort<doubles> posoutport;
+		OutputPort<doubles> veloutport;
+		OutputPort<doubles> accoutport;
+		OutputPort<tue_msgs::GripperMeasurement> gripperMeasurementPort;
+
+		// Properties
+		uint sensorPos;
+		double maxPos;
+		double minPos;
+		double threshold_closed;
+		double desiredPos;
+		double desiredVel;
+		double desiredAcc;
+		double InterpolDt;
+		double InterpolEps;
+
+		doubles outpos;
+		doubles outvel;
+		doubles outacc;
+
+		// variables
+		bool completed;
+		doubles torques;
+		doubles measPos;
+		tue_msgs::GripperCommand gripperCommand;
+		refgen::RefGenerator mRefGenerator;
+		amigo_msgs::ref_point mRefPoint;
+
+		public:
+
+		GripperControl(const std::string& name);
+		~GripperControl();
+
+		bool configureHook();
+		bool startHook();
+		void updateHook();
 	};
 	
 };
