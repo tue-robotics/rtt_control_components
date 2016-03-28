@@ -3,7 +3,8 @@
  *
  *  Created on: 6 janv 2012
  *      Author: wla
- * Wrecked by Tim 
+ * Wrecked by Tim
+ *  Wrecked further by Max
  */
 
 #ifndef SUPERVISOR_HPP_
@@ -46,104 +47,108 @@ namespace SUPERVISORY
 	 *  * Homingports -> if boolean ture - go to operational state
 	 */
 
-    class Supervisor
-    : public RTT::TaskContext
-      {
-      public:
-      
-      
+	class Supervisor
+	: public RTT::TaskContext
+	{
+		public:
+		
 		// ports
-        InputPort<std_msgs::Bool> ebutton_ports[4];
+		InputPort<std_msgs::Bool> ebutton_ports[4];
 		InputPort<std_msgs::Bool> rosshutdownport;
-        OutputPort<std_msgs::Bool> enabled_rosport;
-        InputPort<bool> homingfinished_port[6];
-        InputPort<bool> error_port[6]; 
-        InputPort<soem_beckhoff_drivers::EncoderMsg> serialRunningPort;
-        InputPort<std_msgs::UInt8MultiArray> dashboardCmdPort;
-        OutputPort<diagnostic_msgs::DiagnosticArray> ebuttonStatusPort;
-        OutputPort<std_msgs::Bool> isenabled_rosport[6];
-        OutputPort<diagnostic_msgs::DiagnosticArray> hardwareStatusPort;
-        
-        // Properties
-        vector<string> ebutton_order;
-        bool restart_aftererror;
-        
+		OutputPort<std_msgs::Bool> enabled_rosport;
+		InputPort<bool> homingfinished_port[6];
+		InputPort<bool> error_port[6]; 
+		InputPort<soem_beckhoff_drivers::EncoderMsg> serialRunningPort;
+		InputPort<std_msgs::UInt8MultiArray> dashboardCmdPort;
+		OutputPort<diagnostic_msgs::DiagnosticArray> ebuttonStatusPort;
+		OutputPort<std_msgs::Bool> isenabled_rosport[6];
+		OutputPort<diagnostic_msgs::DiagnosticArray> hardwareStatusPort;
+
+		// Properties
+		vector<string> ebutton_order;
+		bool restart_aftererror;
+		
+		// Inputs
+		bool error;
+		bool homingfinished;
+		soem_beckhoff_drivers::EncoderMsg serialRunning;
+		std_msgs::Bool rosshutdownmsg;
+		vector<std_msgs::Bool> emergency_switches;
+		std_msgs::UInt8MultiArray dashboardCmdmsg;
+		std_msgs::Bool rosenabledmsg;
+		std_msgs::Bool rosdisabledmsg;
+		diagnostic_msgs::DiagnosticStatus StatusStalemsg;
+		diagnostic_msgs::DiagnosticStatus StatusOperationalmsg;
+		diagnostic_msgs::DiagnosticStatus StatusIdlemsg;
+		diagnostic_msgs::DiagnosticStatus StatusHomingmsg;
+		diagnostic_msgs::DiagnosticStatus StatusErrormsg;
+		diagnostic_msgs::DiagnosticArray hardwareStatusmsg;
+
 		//vectors
-        bool homeableParts[6];
-        bool idleDueToEmergencyButton[6];
-        bool homedParts[6];
-        bool staleParts[6]; // staleparts is used to make sure, components that aren't started will be shown stale on the dashboard
-        string bodyParts[6];
-        vector<std_msgs::Bool> emergency_switches;
-        bools allowedBodyparts;
-        bool old_structure;
-        
-        // scalars
-        bool detected_error;
-        bool emergency;     
-        bool goodToGO;   
+		bool homeableParts[6];
+		bool idleDueToEmergencyButton[6];
+		bool homedParts[6];
+		bool staleParts[6]; // staleparts is used to make sure, components that aren't started will be shown stale on the dashboard
+		string bodyParts[6];
+		bools allowedBodyparts;
+		bool old_structure;
+
+		// scalars
+		bool detected_error;
+		bool emergency;     
+		bool goodToGO;   
+		bool somebuttonpressed;
+		long double new_time;
 		long double aquisition_time;
 		long double start_time;
 		long double error_dected_time;
 		int number_of_ebuttons;
-		
-		// msgs
-        std_msgs::UInt8MultiArray dashboardCmdmsg;
-        std_msgs::Bool rosenabledmsg;
-        std_msgs::Bool rosdisabledmsg;
-        diagnostic_msgs::DiagnosticStatus StatusStalemsg;
-        diagnostic_msgs::DiagnosticStatus StatusOperationalmsg;
-        diagnostic_msgs::DiagnosticStatus StatusIdlemsg;
-        diagnostic_msgs::DiagnosticStatus StatusHomingmsg;
-        diagnostic_msgs::DiagnosticStatus StatusErrormsg;
-        diagnostic_msgs::DiagnosticArray hardwareStatusmsg;
 
-        Supervisor(const string& name);
-        virtual ~Supervisor();
+		Supervisor(const string& name);
+		virtual ~Supervisor();
 
 		// component Hook functions
-        virtual bool configureHook();
-        virtual bool startHook();
-        virtual void updateHook();
-        virtual void stopHook();
+		virtual bool configureHook();
+		virtual bool startHook();
+		virtual void updateHook();
+		virtual void stopHook();
 
-        // Set up functions for name body part and add component to list
-        virtual bool CreateRobotObject(string robotName, vector<string> defaultBodyParts);
-        virtual bool AddBodyPart( int partNr, string partName, bool homeable , bool homingmandatory, bool resettable);
+		// Set up functions for name body part and add component to list
+		virtual bool CreateRobotObject(string robotName, vector<string> defaultBodyParts);
+		virtual bool AddBodyPart( int partNr, string partName, bool homeable , bool homingmandatory, bool resettable);
 		virtual bool AddAllwaysOnPeer(string peerName);
-        virtual bool AddOpOnlyPeer(string peerName, int partNr);
-        virtual bool AddHomingOnlyPeer(string peerName, int partNr);
-        virtual bool AddEnabledPeer(string peerName, int partNr);
-        virtual bool StartBodyPart( string partName );
-        virtual bool StopBodyPart( string partName );
-        virtual void displaySupervisoredPeers();
-        
-		// Internal functions
-        virtual bool AddPeerCheckList( string peerName, vector<TaskContext*> List );
-        virtual bool startList( vector<TaskContext*> List );
-        virtual bool stopList( vector<TaskContext*> List );
-        virtual bool isEmpty( vector<TaskContext*> List );
-        
-        //Taskcontext pointers, Atributes
-        TaskContext* GlobalReferenceGenerator;
-        Attribute<bools> AllowReadReferencesRefGen;
-              
-        // state transitions
-        virtual bool GoOperational(int partNr, diagnostic_msgs::DiagnosticArray statusArray);
-        virtual bool GoIdle(int partNr, diagnostic_msgs::DiagnosticArray statusArray);
-        virtual bool GoHoming(int partNr, diagnostic_msgs::DiagnosticArray statusArray);
-        virtual bool GoError(int partNr, diagnostic_msgs::DiagnosticArray statusArray);
-        virtual void setAllowed(int partNr, bool allowed);
-        virtual bool setState(int partNr, diagnostic_msgs::DiagnosticStatus state);
+		virtual bool AddOpOnlyPeer(string peerName, int partNr);
+		virtual bool AddHomingOnlyPeer(string peerName, int partNr);
+		virtual bool AddEnabledPeer(string peerName, int partNr);
+		virtual bool StartBodyPart( string partName );
+		virtual bool StopBodyPart( string partName );
 
-    protected:
+		// Internal functions
+		virtual bool AddPeerCheckList( string peerName, vector<TaskContext*> List );
+		virtual bool startList( vector<TaskContext*> List );
+		virtual bool stopList( vector<TaskContext*> List );
+		virtual bool isEmpty( vector<TaskContext*> List );
+
+		//Taskcontext pointers, Atributes
+		TaskContext* GlobalReferenceGenerator;
+		Attribute<bools> AllowReadReferencesRefGen;
+			  
+		// state transitions
+		virtual bool GoOperational(int partNr, diagnostic_msgs::DiagnosticArray statusArray);
+		virtual bool GoIdle(int partNr, diagnostic_msgs::DiagnosticArray statusArray);
+		virtual bool GoHoming(int partNr, diagnostic_msgs::DiagnosticArray statusArray);
+		virtual bool GoError(int partNr, diagnostic_msgs::DiagnosticArray statusArray);
+		virtual void setAllowed(int partNr, bool allowed);
+		virtual bool setState(int partNr, diagnostic_msgs::DiagnosticStatus state);
+
+	protected:
 		// Component lists
-        vector<TaskContext*> AllwaysOnList;
-        vector<TaskContext*> OpOnlyList[6];
-        vector<TaskContext*> HomingOnlyList[6];
-        vector<TaskContext*> EnabledList[6];
-        
-      };
+		vector<TaskContext*> AllwaysOnList;
+		vector<TaskContext*> OpOnlyList[6];
+		vector<TaskContext*> HomingOnlyList[6];
+		vector<TaskContext*> EnabledList[6];
+		
+	};
 }
 
 #endif
