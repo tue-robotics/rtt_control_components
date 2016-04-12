@@ -15,18 +15,6 @@
 /*
  * Description:
  * 
- * Component that can handle all etherCAT outputs for multiple bodyparts.
- * Also this component can perform mathemathical operations on the inputs.
- * 
- * Contains:	For example:
- * AnalogOuts	Sensor inputs
- * DigitalOuts	Ebuttons
- * 
- * Math operations currently supported 
- * (Encouraged to add yourself/request if you need others)
- * 
- * AnalogOuts:		Addition, Multiply, MatrixTransform
- * DigitalOuts: 	-
 */
 
 using namespace std;
