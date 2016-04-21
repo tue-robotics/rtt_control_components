@@ -36,6 +36,8 @@ bool ReadEncoders::configureHook()
     enc_position.assign(N,0);
     enc_position_prev.assign(N,0);
     enc_velocity.assign(N,0.0);
+    // by default not using velocity from slave
+    vel_connected = false;
 
     if (N > maxN) {
         log(Error)<<"You're trying to read "<<N<<" encoders while a maximum of "<<maxN<<" is hardcoded. Appologies"<<endlog();
@@ -49,11 +51,13 @@ bool ReadEncoders::configureHook()
     // Creating ports
     for ( uint i = 0; i < N; i++ ) {
         string name_inport = "enc"+to_string(i+1)+"_in";
+        string name_inport_vel = "vel"+to_string(i+1)+"_in";
         if (i != 0) {
             addPort( name_inport, inport_enc[i] );
         } else if (i == 0) {
             addEventPort( name_inport, inport_enc[i] );
         }
+        addPort( name_inport_vel, inport_vel[i] );
     }
 
     addPort( "out", outport );
@@ -78,6 +82,20 @@ bool ReadEncoders::startHook()
     }
     if ( !outport.connected() ) {
         log(Warning)<<"ReadEncoders::Outputport not connected!"<<endlog();
+    }
+    if (inport_vel[0].connected()) {
+        vel_connected = true;
+        log(Info)<<"ReadEncoders:: Using encoder velocity from slave"<<endlog();
+    }
+    else if (!inport_vel[0].connected()){
+        vel_connected = false;
+        log(Info)<<"ReadEncoders:: Calculating encoder velocity on pc"<<endlog();
+    }
+    for ( uint i = 1; i < N; i++ ) {
+        if (vel_connected != inport_vel[i].connected()) {
+            log(Error)<<"ReadEncoders:: Not all velocity ports have the same connected status"<<endlog();
+            return false;
+        }
     }
 
     for ( uint i = 0; i < N; i++ ) {
@@ -114,15 +132,23 @@ void ReadEncoders::updateHook()
         }
     }
 
-    // determine dt
-    double dt = determineDt();
-
-    for ( uint i = 0; i < N; i++ ) {
-        SI_values[i] = readEncoder(i);
-        enc_velocity[i] = ((double)(enc_position[i]-enc_position_prev[i])*enc2SI[i])/dt;
-        enc_position_prev[i] = enc_position[i];
+    if (vel_connected) {
+        for (uint i = 0; i < N; i++) {
+            enc_velocity[i]=readSpeed(i);
+            SI_values[i] = readEncoder(i);
+            enc_position_prev[i] = enc_position[i];
+        }
     }
+    else if (!vel_connected) {
+        // determine dt
+        double dt = determineDt();
 
+        for ( uint i = 0; i < N; i++ ) {
+            SI_values[i] = readEncoder(i);
+            enc_velocity[i] = ((double)(enc_position[i]-enc_position_prev[i])*enc2SI[i])/dt;
+            enc_position_prev[i] = enc_position[i];
+        }
+    }
     outport.write(SI_values);
     outport_vel.write(enc_velocity);
     outport_enc.write(ENC_values);
@@ -144,6 +170,14 @@ double ReadEncoders::readEncoder( int i )
     enc_position[i] = ienc[i] * encoderbits + new_enc_position;
     double SI_value =  ((double)enc_position[i] * enc2SI[i]) - init_SI_values[i] + offsets[i];
     return SI_value;
+}
+
+double ReadEncoders::readSpeed( int i )
+{
+    AnalogMsg encspeed;
+    encspeed.values.assign(1, 0.0); // Is this needed???
+    inport_vel[i].read(encspeed);
+    return ((double) encspeed.values[0]);
 }
 
 double ReadEncoders::determineDt()

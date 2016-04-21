@@ -35,12 +35,13 @@ namespace SOEM
     uint counter;
 
     // Declaring input- and output_ports
-    InputPort<EncoderMsg> inport_enc[maxN];
-    InputPort<bool> inport_reNull;
-    InputPort<doubles> inport_init;
-    OutputPort<doubles> outport;
-    OutputPort<doubles> outport_enc;
-    OutputPort<doubles> outport_vel;
+    InputPort<EncoderMsg>   inport_enc[maxN];
+    InputPort<AnalogMsg>    inport_vel[maxN];
+    InputPort<bool>         inport_reNull;
+    InputPort<doubles>      inport_init;
+    OutputPort<doubles>     outport;
+    OutputPort<doubles>     outport_enc;
+    OutputPort<doubles>     outport_vel;
     
 
     // Declaring message types
@@ -56,6 +57,7 @@ namespace SOEM
     ints enc_position_prev;
     doubles enc_velocity;
     long double old_time;
+    bool vel_connected;
     
     public:
 
@@ -70,6 +72,7 @@ namespace SOEM
     private:
 
     double readEncoder( int i );
+    double readSpeed( int i );
     double determineDt();
     };
 }
