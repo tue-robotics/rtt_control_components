@@ -5,6 +5,7 @@
 #include <rtt/Port.hpp>
 #include <rtt/Component.hpp>
 #include <soem_beckhoff_drivers/EncoderMsg.h>
+#include <soem_beckhoff_drivers/AnalogMsg.h>
 
 #define maxN 10 //Maximum number of ports that can be created
 
