@@ -31,6 +31,8 @@ namespace SOEM
     private:
     // Number of encoders to read
     uint N;
+    // Number of gearratios
+    uint N2;
 
     // Counter
     uint counter;
@@ -54,6 +56,7 @@ namespace SOEM
     doubles enc2SI;
     doubles offsets;
     uint encoderbits;
+    doubles gearratios;
     ints enc_position;
     ints enc_position_prev;
     doubles enc_velocity;

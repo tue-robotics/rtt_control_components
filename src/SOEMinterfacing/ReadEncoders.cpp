@@ -17,6 +17,7 @@ ReadEncoders::ReadEncoders(const string& name) : TaskContext(name, PreOperationa
     addProperty( "encoderbits", encoderbits ).doc("Saturation value of the encoder. For example: 65536 for a 16 bit encoder");
     addProperty( "enc2SI", enc2SI ).doc("Value to convert the encoder value to an SI value. Typically 2pi/(encodersteps_per_rev*gearbox)");
     addProperty( "offset", offsets ).doc("Offset value in SI units, untested feature");
+    addProperty( "gearratios", gearratios).doc("Gearratios from motor to output, rad/s to wanted velocity");
     addOperation( "ResetEncoders", &ReadEncoders::ResetEncoders, this, OwnThread ).doc("Reset an encoder value to a new value, usefull for homing");
 }
 ReadEncoders::~ReadEncoders()
@@ -29,6 +30,7 @@ bool ReadEncoders::configureHook()
 {
     // Determine number of encoders to be read
     N = enc2SI.size();
+    N2 = gearratios.size();
     SI_values.assign(N, 0.0);
     ENC_values.assign(N, 0.0);
     init_SI_values.assign(N, 0.0);
@@ -46,7 +48,12 @@ bool ReadEncoders::configureHook()
         log(Warning)<<"No conversion factors given (enc2SI), make sure you're loading the properties ok"<<endlog();
         return false;
     }
+    if (N2!=N){
+        log(Error)<<"Number of encoders, "<<N<<", is not equal to the number of gearratios, "<<N2<<endlog();
+        return false;
+    }
     log(Info)<<"Creating ports for "<<N<<" encoders."<<endlog();
+
 
     // Creating ports
     for ( uint i = 0; i < N; i++ ) {
@@ -131,14 +138,15 @@ void ReadEncoders::updateHook()
             ResetEncoders(reset_values);
         }
     }
-
+    // velocity from slave
     if (vel_connected) {
-        for (uint i = 0; i < N; i++) {
-            enc_velocity[i]=readSpeed(i);
+        for ( uint i = 0; i < N; i++ ) {
+            enc_velocity[i]=readSpeed(i)*gearratios[i];
             SI_values[i] = readEncoder(i);
             enc_position_prev[i] = enc_position[i];
         }
     }
+    // velocity calculated on pc
     else if (!vel_connected) {
         // determine dt
         double dt = determineDt();
