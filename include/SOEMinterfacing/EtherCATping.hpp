@@ -28,7 +28,7 @@ namespace ETHERCATPING
 
 	InputPort<soem_beckhoff_drivers::EncoderMsg> inports[6];
 	soem_beckhoff_drivers::EncoderMsg in_msg;
-	vector<bool> slave_cntrs;
+	vector<uint16_t> slave_cntrs;
 	uint16_t cntr;
 
 	EtherCATping(const string& name);

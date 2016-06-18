@@ -43,15 +43,13 @@ void EtherCATping::updateHook()
 	// Check if there is new data on an encoder port
 	for ( uint i = 0; i < 6; i++ ) {
 		if ( inports[i].read(in_msg) == NewData) {
-			slave_cntrs[i] = slave_cntrs[i] + 1;
+			slave_cntrs[i]++;
 		}
 	}
 	
 	// Publish Report and reset cntrs
 	cntr++;
-	if (cntr>1000) {
-		log(Warning)<<"EtherCATping Report: SLAVE 1: "<<slave_cntrs[1]/10<<" %,SLAVE 2: "<<slave_cntrs[2]/10<<" %,SLAVE 3: "<<slave_cntrs[3]/10<<" %,SLAVE 4: "<<slave_cntrs[4]/10<<" %,SLAVE 5: "<<slave_cntrs[5]/10<<" %,SLAVE 6: "<<slave_cntrs[6]/10<<" %"<<endlog();
-		
+	if (cntr==1000) {		
 		for ( uint i = 0; i < 6; i++ ) {
 			slave_cntrs[i] = 0;
 		}
