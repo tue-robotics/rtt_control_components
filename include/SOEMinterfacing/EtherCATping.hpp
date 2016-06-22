@@ -5,6 +5,9 @@
 #include <rtt/Port.hpp>
 #include <soem_beckhoff_drivers/EncoderMsg.h>
 
+#define N_PORTS 7 /* maximum number of ports */
+
+
 using namespace std;
 
 template <class T>
@@ -26,10 +29,11 @@ namespace ETHERCATPING
 
 	public:
 
-	InputPort<soem_beckhoff_drivers::EncoderMsg> inports[6];
+	InputPort<soem_beckhoff_drivers::EncoderMsg> inports[N_PORTS];
 	soem_beckhoff_drivers::EncoderMsg in_msg;
 	vector<uint16_t> slave_cntrs;
 	uint16_t cntr;
+	uint countdown_timer;
 
 	EtherCATping(const string& name);
 	~EtherCATping();
@@ -37,6 +41,7 @@ namespace ETHERCATPING
 	bool configureHook();
 	bool startHook();
 	void updateHook();
+	void sendUpdate(uint n_times);
 	};
 }
 #endif
