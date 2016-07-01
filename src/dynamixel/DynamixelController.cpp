@@ -195,7 +195,7 @@ void DynamixelController::updateHook()
             newPosition = dxl_makeword(dxl_get_rxpacket_parameter(0), dxl_get_rxpacket_parameter(1));
             log(Debug) << "DynamixelController: dynamixel id, " << read_dynamixel+1 << ", received new position, " << newPosition << endlog();
             currentPos.position[read_dynamixel] = (newPosition-dynamixel_offset[read_dynamixel])/RAD_TO_STEP;
-            currentPosPort.write(currentPos);
+            //currentPosPort.write(currentPos);
             read_dynamixel ++;
             if ( read_dynamixel < n_dynamixels ){
                 log(Debug) << "DynamixelController: Read position of dynamixel, id " << read_dynamixel+1 << endlog();
@@ -235,6 +235,8 @@ void DynamixelController::updateHook()
             trial++;
         }
     }
+    currentPos.header.stamp = ros::Time::now();
+    currentPosPort.write(currentPos);
 }
 
 void DynamixelController::create_pos_goal_packet(void)
