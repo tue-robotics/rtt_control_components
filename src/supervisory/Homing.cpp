@@ -399,9 +399,9 @@ void Homing::updateHook()
 			pos_inport.read( position );
 
 			// Stop and Reset Encoders
-			log(Warning) << prefix <<"_Homing: Stopping Bodypart: " << bodypart << "!"<<endlog();
+			log(Info) << prefix <<"_Homing: Stopping Bodypart: " << bodypart << "!"<<endlog();
 			StopBodyPart(bodypart); 			
-			log(Warning) << prefix <<"_Homing: Stopping Bodypart: " << bodypart << "!"<<endlog();
+			log(Info) << prefix <<"_Homing: Stopping Bodypart: " << bodypart << "!"<<endlog();
 			
 			if (new_structure) {
 				Eread_ResetEncoders(partNr,1,reset_stroke);
@@ -436,7 +436,7 @@ void Homing::updateHook()
 			for (uint j = 0; j<N; j++) {
 				printstring += to_string(require_homing[j]) + ", ";
 			}
-			log(Warning) << prefix <<"_Homing: Finished homing joints of " << bodypart << ": " << printstring << "]!"<<endlog();
+			log(Warning) << prefix <<"_Homing: Finished homing of " << bodypart << "!"<<endlog();
 			homingfinished_outport.write(true);	
 			
 		}
@@ -451,9 +451,6 @@ void Homing::updateHook()
 		updated_maxerr[homing_order[jointNr]-1] = initial_maxerr[homing_order[jointNr]-1];
 		Safety_maxJointErrors.set(updated_maxerr);
 		
-		if (jointNr != (N-1)) {log(Warning) << prefix <<"_Homing: Skipped homing of joint "<< homing_order[jointNr] << ". Proceeding to joint " << homing_order[jointNr+1]<< "! \n" <<endlog();}
-		if (jointNr == (N-1)) {log(Warning) << prefix <<"_Homing: Skipped homing of last joint "<< homing_order[jointNr] << "! \n" <<endlog();}
-
 		// Go to the next joint and start over
 		jointNr++;
 		SendRef();
@@ -491,8 +488,6 @@ void Homing::updateHook()
 		}
 	} else if (stateA == 1) {	// Move to zero position relative to homing position (homing_stroke_goal)
 		if ( (position[homing_order[jointNr]-1] > (homing_stroke_goal-0.01) ) && (position[homing_order[jointNr]-1] < (homing_stroke_goal+0.01) ) ) {
-			if (jointNr != N-1 ) {log(Warning) << prefix <<"_Homing: Finished homing of joint "<< homing_order[jointNr] << ". Proceeding to joint " << homing_order[jointNr+1]<< "!" <<endlog();}
-			if (jointNr == N-1 ) {log(Warning) << prefix <<"_Homing: Finished homing of last joint "<< homing_order[jointNr] << "." <<endlog();}
 			jointNr++;
 			stateA = 0;
 		}

@@ -307,7 +307,7 @@ void EtherCATread::AddAnalogIns(string PARTNAME, doubles INPORT_DIMENSIONS, doub
 		output_A_comp[BPID-1][i].resize(outport_dimensions_A[BPID-1][i]);
 	}
 
-	log(Warning) << "EtherCATread::AddAnalogIns(" << PARTNAME << "): Added AnalogIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports." << endlog();
+	log(Info) << "EtherCATread::AddAnalogIns(" << PARTNAME << "): Added AnalogIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports." << endlog();
 
 	return;
 }
@@ -431,7 +431,7 @@ void EtherCATread::AddDigitalIns(string PARTNAME, doubles INPORT_DIMENSIONS, dou
     intermediate_D[BPID-1].resize(n_outports_D[BPID-1]);
     output_D[BPID-1].resize(n_outports_D[BPID-1]);
     
-    log(Warning) << "EtherCATread::AddDigitalIns(" << PARTNAME << "): Added DigitalIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports." << endlog();
+    log(Info) << "EtherCATread::AddDigitalIns(" << PARTNAME << "): Added DigitalIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports." << endlog();
 
 	return;
 }
@@ -591,7 +591,7 @@ void EtherCATread::AddEncoderIns(string PARTNAME, doubles INPORT_DIMENSIONS, dou
 		output_E_sat[BPID-1][i].resize( outport_dimensions_E[BPID-1][i] );
 	}
 
-	log(Warning) << "EtherCATread::AddEncoderIns(" << PARTNAME << "): Added EncoderIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports." << endlog();
+	log(Info) << "EtherCATread::AddEncoderIns(" << PARTNAME << "): Added EncoderIns with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports." << endlog();
 
 	return;
 }
@@ -691,7 +691,7 @@ void EtherCATread::AddMultiply_A(string PARTNAME, int PORTNR, doubles MULTIPLYFA
 	if( multiply_status_A[BPID-1][PORTNR-1] ) {
 		log(Warning) << "EtherCATread::AddMultiply_A([" << PARTNAME << "," << PORTNR << "]): Overwritten existing multiplier." << endlog();
 	} else {
-		log(Warning) << "EtherCATread::AddMultiply_A([" << PARTNAME << "," << PORTNR << "]): Added multiplier." << endlog();
+		log(Info) << "EtherCATread::AddMultiply_A([" << PARTNAME << "," << PORTNR << "]): Added multiplier." << endlog();
 	}
 	
 	// Set status
@@ -802,7 +802,7 @@ void EtherCATread::AddTorqueSensor_A(string PARTNAME, int PORTNR, doubles COEFFI
 	if( torquesensor_status_A[BPID-1][PORTNR-1] ) {
 		log(Warning) << "EtherCATread::AddCompare_A([" << PARTNAME << "," << PORTNR << "]): Overwritten existing TorqueSensor." << endlog();
 	} else {
-		log(Warning) << "EtherCATread::AddCompare_A([" << PARTNAME << "," << PORTNR << "]): Added a TorqueSensor." << endlog();
+		log(Info) << "EtherCATread::AddCompare_A([" << PARTNAME << "," << PORTNR << "]): Added a TorqueSensor." << endlog();
 	}
 	
 	// Set status
@@ -1040,7 +1040,7 @@ void EtherCATread::AddSaturation_E(string PARTNAME, int PORTNR, doubles SATURATI
 	if( saturation_status_E[BPID-1][PORTNR-1] ) {
 		log(Warning) << "EtherCATread::AddSaturation_E([" << PARTNAME << "," << PORTNR << "]): Overwritten existing saturation." << endlog();
 	} else {
-		log(Warning) << "EtherCATread::AddSaturation_E([" << PARTNAME << "," << PORTNR << "]): Added a saturation." << endlog();
+		log(Info) << "EtherCATread::AddSaturation_E([" << PARTNAME << "," << PORTNR << "]): Added a saturation." << endlog();
 	}
 	
 	// Set status
@@ -1316,7 +1316,6 @@ void EtherCATread::MapInputs2Outputs()
 		uint j = 0;
 		for( uint i = 0; i < n_outports_E[l]; i++ ) {
 			for( uint k = 0; k < outport_dimensions_E[l][i]; ++k) {
-				//log(Warning) << "EtherCATread::MapInputs2Outputs: intermediate_E[l"<< l << "][i"<< i << "][k"<< k << "][j+k"<< j+k << "] = (double) input_msgs_E[l"<< l << "][ " << from_which_inport_E[l][j+k]-1 << "], " << input_msgs_E[l][from_which_inport_E[l][j+k]-1].value << "!" << endlog();
 				intermediate_E[l][i][k] = (double) input_msgs_E[l][ from_which_inport_E[l][j+k]-1 ].value;
 			}
 			j += outport_dimensions_E[l][i];
@@ -1538,7 +1537,6 @@ void EtherCATread::ResetEncoders(int BPID, int PORTNR, doubles RESETVALUES )
 		// Set initpos_E and previous_enc_values
 		initpos_E[BPID-1][PORTNR-1][k] = output_E[BPID-1][PORTNR-1][k] - RESETVALUES[k];
 		
-		//log(Warning)<<"EtherCATread::ResetEncoders(" << BPID << bodypart_names[BPID-1] << ", port " << PORTNR << "): Resetting Encoders. initpos_E[BPID-1][PORTNR-1][0] = output_E[BPID-1][PORTNR-1][0] - RESETVALUES[0] -> : " << initpos_E[BPID-1][PORTNR-1][0] << " = " << output_E[BPID-1][PORTNR-1][0]  << " - " << RESETVALUES[0]  << "!"<<endlog();
 	}
 }
 

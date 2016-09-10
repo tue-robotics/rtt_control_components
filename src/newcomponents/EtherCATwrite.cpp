@@ -240,7 +240,7 @@ void EtherCATwrite::AddAnalogOuts(string PARTNAME, doubles INPORT_DIMENSIONS, do
 		output_msgs_A[BPID-1][i].values.resize( outport_dimensions_A[BPID-1][i] );
 	}
 
-	log(Warning) << "EtherCATwrite::AddAnalogOuts(" << PARTNAME << "): Added AnalogOuts with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports!" << endlog();
+	log(Info) << "EtherCATwrite::AddAnalogOuts(" << PARTNAME << "): Added AnalogOuts with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports!" << endlog();
 
 	return;
 }
@@ -365,7 +365,7 @@ void EtherCATwrite::AddDigitalOuts(string PARTNAME, doubles INPORT_DIMENSIONS, d
         output_msgs_D[BPID-1][i].values.resize(outport_dimensions_D[BPID-1][i]);
     }
     
-    log(Warning) << "EtherCATwrite::AddDigitalOuts(" << PARTNAME << "): Succesfully added DigitalOuts with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports!" << endlog();
+    log(Info) << "EtherCATwrite::AddDigitalOuts(" << PARTNAME << "): Added DigitalOuts with " << N_INPORTS << " inports and " << N_OUTPORTS << " outports!" << endlog();
 
 	return;
 }
@@ -417,7 +417,7 @@ void EtherCATwrite::AddAddition_A(string PARTNAME, int PORTNR, doubles ADDVALUES
 	if( addition_status_A[BPID-1][PORTNR-1] ) {
 		log(Warning) << "EtherCATwrite::AddAddition_A([" << PARTNAME << "," << PORTNR << "]): Overwritten existing addition." << endlog();
 	} else {
-		log(Warning) << "EtherCATwrite::AddAddition_A([" << PARTNAME << "," << PORTNR << "]): Added addition." << endlog();
+		log(Info) << "EtherCATwrite::AddAddition_A([" << PARTNAME << "," << PORTNR << "]): Added addition." << endlog();
 	}
 	
 	// Set status
@@ -529,7 +529,7 @@ void EtherCATwrite::AddMatrixTransform_A(string PARTNAME, int PORTNR, double INP
 		matrixtransform_entries_A[BPID-1][PORTNR-1][k][k] = 1.0;
 	}
 	
-	log(Warning) << "EtherCATwrite::AddMatrixTransform_A([" << PARTNAME << "," << PORTNR << "]): Added a matrix transform." << endlog();
+	log(Info) << "EtherCATwrite::AddMatrixTransform_A([" << PARTNAME << "," << PORTNR << "]): Added a matrix transform." << endlog();
 	
 	// Set status
 	matrixtransform_status_A[BPID-1][PORTNR-1] = true;
