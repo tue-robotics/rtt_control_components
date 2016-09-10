@@ -74,10 +74,12 @@ namespace ETHERCATREAD
 		virtual void ResetEncoders(int BPID, int PORTNR, doubles RESETVALUES );
 		
 		// External - Add Ins
+		virtual void SetAnalogInsPortNames(string PARTNAME, std::vector<string> PORTNAMES_IN, std::vector<string> PORTNAMES_OUT);
+		virtual void SetDigitalInsPortNames(string PARTNAME, std::vector<string> PORTNAMES_IN, std::vector<string> PORTNAMES_OUT);
 		virtual void AddAnalogIns(string PARTNAME, doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY);
 		virtual void AddDigitalIns(string PARTNAME, doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY);
 		virtual void AddEncoderIns(string PARTNAME, doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY);
-		
+				
 		// External - Add Math
 		virtual void AddAddition_A(string PARTNAME, int PORTNR, doubles ADDVALUES);
 		virtual void AddMultiply_A(string PARTNAME, int PORTNR, doubles MULTIPLYFACTOR);
@@ -116,6 +118,8 @@ namespace ETHERCATREAD
 		uint n_outports_A_comp[MAX_BODYPARTS];
 		
 		// Matrices
+		strings portnames_in_A[MAX_BODYPARTS];
+		strings portnames_out_A[MAX_BODYPARTS];
 		bools addition_status_A[MAX_BODYPARTS];
 		bools multiply_status_A[MAX_BODYPARTS];
 		bools comparison_status_A[MAX_BODYPARTS];

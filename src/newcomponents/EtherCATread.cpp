@@ -11,96 +11,41 @@ EtherCATread::EtherCATread(const string& name) : TaskContext(name, PreOperationa
 	
 	//! Operations
 	// Add Ins
-    addOperation("AddAnalogIns", &EtherCATread::AddAnalogIns, this, OwnThread)
-		.doc("Add one or more analog ins")
-		.arg("INPORT_DIMENSIONS","Array containing for each inport an entry with value the size of that input port")
-		.arg("OUTPORT_DIMENSIONS","Array containing for each outport an entry with value the size of that output port")
-		.arg("FROM_WHICH_INPORT","Array specifying where the input from the inports should go - first specify from which inport")
-		.arg("FROM_WHICH_ENTRY","Array specifying where the input from the inports should go - second specify which entry")
-		.arg("PARTNAME","String specifying the name of the part");
-    addOperation("AddDigitalIns", &EtherCATread::AddDigitalIns, this, OwnThread)
-		.doc("Add one or more Digital ins")
-		.arg("INPORT_DIMENSIONS","Array containing for each inport an entry with value the size of that input port")
-		.arg("OUTPORT_DIMENSIONS","Array containing for each outport an entry with value the size of that output port")
-		.arg("FROM_WHICH_INPORT","Array specifying where the input from the inports should go - first specify from which inport")
-		.arg("FROM_WHICH_ENTRY","Array specifying where the input from the inports should go - second specify which entry")
-		.arg("PARTNAME","String specifying the name of the part");
-    addOperation("AddEncoderIns", &EtherCATread::AddEncoderIns, this, OwnThread)
-		.doc("Add one or more Encoder ins")
-		.arg("INPORT_DIMENSIONS","Array containing for each inport an entry with value the size of that input port")
-		.arg("OUTPORT_DIMENSIONS","Array containing for each outport an entry with value the size of that output port")
-		.arg("FROM_WHICH_INPORT","Array specifying where the input from the inports should go - first specify from which inport")
-		.arg("FROM_WHICH_ENTRY","Array specifying where the input from the inports should go - second specify which entry")
-		.arg("PARTNAME","String specifying the name of the part");
+    addOperation("AddAnalogIns",  &EtherCATread::SetAnalogInsPortNames,  this, OwnThread).doc("Set custom port names for analog  ins. Run before adding the analogins");
+    addOperation("AddAnalogIns",  &EtherCATread::SetDigitalInsPortNames, this, OwnThread).doc("Set custom port names for digital ins. Run before adding the analogins");
+    addOperation("AddAnalogIns",  &EtherCATread::AddAnalogIns, this, OwnThread).doc("Add one or more analog ins");
+    addOperation("AddDigitalIns", &EtherCATread::AddDigitalIns, this, OwnThread).doc("Add one or more Digital ins");
+    addOperation("AddEncoderIns", &EtherCATread::AddEncoderIns, this, OwnThread).doc("Add one or more Encoder ins");
 		
 	// Math
 	addOperation("AddAddition_A", &EtherCATread::AddAddition_A, this, OwnThread)
-		.doc("This function will add to all analog values of intput i the value as set in values[i]")
-		.arg("PARTNAME","Name of the bodypart")
-		.arg("PORTNR","Output port number of the analog in")
-		.arg("VALUES","Doubles specifying with which the input should be added");	
+		.doc("This function will add to all analog values of intput i the value as set in values[i]");
 	addOperation("AddMultiply_A", &EtherCATread::AddMultiply_A, this, OwnThread)
-		.doc("This function will multiply all analog values of intput i with the value as set in factor[i]")
-		.arg("PARTNAME","Name of the bodypart")
-		.arg("PORTNR","Output port number of the analog in")
-		.arg("VALUES","Doubles specifying with which the input should be multiplied");	
+		.doc("This function will multiply all analog values of intput i with the value as set in factor[i]");
 	addOperation("AddCompare_A", &EtherCATread::AddCompare_A, this, OwnThread)
-		.doc("This function will do a comparison of type [<,<=,==,=>,>]")
-		.arg("PARTNAME","Name of the bodypart")
-		.arg("PORTNR","Output port number of the analog in")
-		.arg("COMPARISON","Type of comparison: One of the following strings ['<','<=','==','=>','>']")
-		.arg("VALUES","Value to compare with");	
+		.doc("This function will do a comparison of type [<,<=,==,=>,>]");
 	addOperation("AddTorqueSensor_A", &EtherCATread::AddTorqueSensor_A, this, OwnThread)
-		.doc("This function uses torque sensor function: Tmeasured[i] = (c1[i]/(Vmeasured[i] + c2[i])+c3[i]) to convert a sensor voltage to a torque")
-		.arg("PARTNAME","Name of the bodypart")
-		.arg("PORTNR","Output port number of the analog in")
-		.arg("COEFFICIENT1","Coefficient c1")
-		.arg("COEFFICIENT2","Coefficient c2")
-		.arg("COEFFICIENT3","Coefficient c3");
-		
+		.doc("This function uses torque sensor function: Tmeasured[i] = (c1[i]/(Vmeasured[i] + c2[i])+c3[i]) to convert a sensor voltage to a torque");
+
 	addOperation("AddFlip_D", &EtherCATread::AddFlip_D, this, OwnThread)
-		.doc("This function will flip the digital value")
-		.arg("PARTNAME","Name of the bodypart")
-		.arg("PORTNR","Output port number of the digital in");
+		.doc("This function will flip the digital value");
 		
 	addOperation("AddEnc2Si_E", &EtherCATread::AddEnc2Si_E, this, OwnThread)
-		.doc("This function will convert raw encoder input into si values. Note that this function unlike other also adds a renull and reset port")
-		.arg("PARTNAME","Name of the bodypart")
-		.arg("PORTNR","Output port number of the encoder ins")
-		.arg("ENCODER_BITS","Saturation value of the encoder. For example: 65536 for a 16 bit encoder")
-		.arg("ENC2SI","Value to convert the encoder value to an SI value. Typically 2pi/(encodersteps_per_rev*gearbox)");
+		.doc("This function will convert raw encoder input into si values. Note that this function unlike other also adds a renull and reset port");
 	addOperation("AddMatrixTransform_E", &EtherCATread::AddMatrixTransform_E, this, OwnThread)
-		.doc("This function will add a matrix multiplication on the si output of the encoders. Matrix elements have to be added with properties")
-		.arg("PARTNAME","Name of the bodypart")
-		.arg("PORTNR","Output port number of the encoder ins")
-		.arg("INPUTSIZE","Size of the input of the matrix transform")
-		.arg("OUTPUTSIZE","Size of the output of the matrix transform");
+		.doc("This function will add a matrix multiplication on the si output of the encoders. Matrix elements have to be added with properties");
 	addOperation("AddSaturation_E", &EtherCATread::AddSaturation_E, this, OwnThread)
-		.doc("This function will limit the output of the encoder to minimum and maximum values. It will not affect the encoder port, however it will publish on a different port")
-		.arg("PARTNAME","Name of the bodypart")
-		.arg("PORTNR","Output port number of the encoder ins")
-		.arg("SATURATIONMIN","Size of the input of the matrix transform")
-		.arg("SATURATIONMAX","Size of the output of the matrix transform");
+		.doc("This function will limit the output of the encoder to minimum and maximum values. It will not affect the encoder port, however it will publish on a different port");
 		
 	addOperation( "ResetEncoders", &EtherCATread::ResetEncoders, this, OwnThread )
-		.doc("Reset an encoder value to a new value")
-		.arg("PARTNAME","Name of the bodypart")
-		.arg("PORTNR","Output port number of the encoder ins")
-		.arg("resetvalues","Values to reset the encoder to");
+		.doc("Reset an encoder value to a new value");
 	
 	addOperation( "AddMsgOut_A", &EtherCATread::AddMsgOut_A, this, OwnThread )
-		.doc("Add a std_msg outport with analog msg")
-		.arg("PARTNAME","Name of the bodypart")
-		.arg("PORTNR","Output port number of the encoder ins");
+		.doc("Add a std_msg outport with analog msg");
 	addOperation( "AddMsgOut_D", &EtherCATread::AddMsgOut_D, this, OwnThread )
-		.doc("Add a std_msg outport with bool msg")
-		.arg("PARTNAME","Name of the bodypart")
-		.arg("PORTNR","Output port number of the encoder ins");
+		.doc("Add a std_msg outport with bool msg");
 	addOperation( "AddMsgOut_E", &EtherCATread::AddMsgOut_E, this, OwnThread )
-		.doc("Add a joinstate message outport from the saturation port. At the moment this therefore only works if also a saturation has been used")
-		.arg("PARTNAME","Name of the bodypart")
-		.arg("PORTNR","Output port number of the encoder ins")
-		.arg("JOINT_NAMES","Vector of strings containing the names of the joints");
+		.doc("Add a joinstate message outport from the saturation port. At the moment this therefore only works if also a saturation has been used");
 }
 
 EtherCATread::~EtherCATread(){}
@@ -160,8 +105,38 @@ void EtherCATread::updateHook()
 	return;
 }
 
+void EtherCATread::SetAnalogInsPortNames(string PARTNAME, std::vector<string> PORTNAMES_IN, std::vector<string> PORTNAMES_OUT)
+{
+	// to do implement sanity checks
+	
+	// Check if the bodypart name is in the bodypart_name list and set the BPID accordingly to do make this a function
+	for (uint l = 0; l < bodypart_names.size(); l++) {
+		if (bodypart_names[l] == PARTNAME) {
+			BPID = l + 1;
+			log(Info) << "EtherCATread::AddAnalogIns(" << PARTNAME << "): BPID IS: " << BPID << "." << endlog();
+		}
+	}
+	if ( 0 >= BPID || BPID > bodypart_names.size()) {
+		log(Error) << "EtherCATread::AddAnalogIns(" << PARTNAME << "): Could not add AnalogIns. Invalid BPID. Should satisfy  0 < BPID <= bodypart_names.size(). -> 0 < " << BPID << " <= " << bodypart_names.size() << "!" << endlog(); 
+		return;
+	}
+	
+	
+	for (uint i = 0; i < PORTNAMES_IN.size(); i++) {
+		portnames_in_A[][]
+	}
+}
+
+void EtherCATread::SetDigitalInsPortNames(string PARTNAME, std::vector<string> PORTNAMES_IN, std::vector<string> PORTNAMES_OUT)
+{
+	// to do implement this
+}
+
 void EtherCATread::AddAnalogIns(string PARTNAME, doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY)
 {
+	// to do add error if dimensions do not work with the custom port names size
+	// to do add variable port names
+	
 	// Init 
 	uint N_INPORTS = INPORT_DIMENSIONS.size();
 	uint N_OUTPORTS = OUTPORT_DIMENSIONS.size();
@@ -236,13 +211,23 @@ void EtherCATread::AddAnalogIns(string PARTNAME, doubles INPORT_DIMENSIONS, doub
 			return;
 		}
 	}
+	
+	// Check portname string arrays
+	//if ( PORTNAMES_IN.size() != 0 && PORTNAMES_IN.size() != INPORT_DIMENSIONS.size() ) { 
+		//log(Error) << "EtherCATread::AddAnalogIns(" << PARTNAME << "): Could not add AnalogIns. The size of the PortNamesIn array is " << PORTNAMES_IN.size() << " which should be 0 or equal to the number of inports: " << INPORT_DIMENSIONS.size() << "!" << endlog();
+		//return;
+	//}
+	//if ( PORTNAMES_OUT.size() != 0 && PORTNAMES_OUT.size() != OUTPORT_DIMENSIONS.size() ) { 
+		//log(Error) << "EtherCATread::AddAnalogOuts(" << PARTNAME << "): Could not add AnalogOuts. The size of the PortNamesOut array is " << PORTNAMES_OUT.size() << " which should be 0 or equal to the number of inports: " << INPORT_DIMENSIONS.size() << "!" << endlog();
+		//return;
+	//}
 
 	//! Now that all inputs have been properly examined. The in- and outports can be created
 	for( uint i = 0; i < N_INPORTS; i++ ) {
-		addPort( PARTNAME+"_Ain"+to_string(i+1), inports_A[BPID-1][i] );
+		addPort( PARTNAME+"AnIn"+to_string(i+1), inports_A[BPID-1][i] );
 	}
 	for( uint i = 0; i < N_OUTPORTS; i++ ) {
-		addPort( PARTNAME+"_Aout"+to_string(i+1), outports_A[BPID-1][i] );
+		addPort( PARTNAME+"AnOut"+to_string(i+1), outports_A[BPID-1][i] );
 	}
 
 	//! And the temperary properties can be added to the global properties
@@ -314,6 +299,9 @@ void EtherCATread::AddAnalogIns(string PARTNAME, doubles INPORT_DIMENSIONS, doub
 
 void EtherCATread::AddDigitalIns(string PARTNAME, doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY)
 {	
+	// to do add error if dimensions do not work with the custom port names size
+	// to do add variable port names
+	
 	// Init 
 	uint N_INPORTS = INPORT_DIMENSIONS.size();
 	uint N_OUTPORTS = OUTPORT_DIMENSIONS.size();
@@ -384,10 +372,10 @@ void EtherCATread::AddDigitalIns(string PARTNAME, doubles INPORT_DIMENSIONS, dou
     
     //! Now that all inputs have been properly examined. The in- and outports can be created
 	for( uint i = 0; i < N_INPORTS; i++ ) {
-		addPort( PARTNAME+"_Din"+to_string(i+1), inports_D[BPID-1][i] );
+		addPort( PARTNAME+"DiIn"+to_string(i+1), inports_D[BPID-1][i] );
 	}
     for( uint i = 0; i < N_OUTPORTS; i++ ) {
-        addPort( PARTNAME+"_Dout"+to_string(i+1), outports_D[BPID-1][i] );
+        addPort( PARTNAME+"DiOut"+to_string(i+1), outports_D[BPID-1][i] );
     }
     
     //! And the temperary properties can be added to the global properties
@@ -437,7 +425,7 @@ void EtherCATread::AddDigitalIns(string PARTNAME, doubles INPORT_DIMENSIONS, dou
 }
 
 void EtherCATread::AddEncoderIns(string PARTNAME, doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY)
-{	
+{
 	// Init 
 	uint N_INPORTS = INPORT_DIMENSIONS.size();
 	uint N_OUTPORTS = OUTPORT_DIMENSIONS.size();
@@ -520,11 +508,11 @@ void EtherCATread::AddEncoderIns(string PARTNAME, doubles INPORT_DIMENSIONS, dou
     
     //! Now that all inputs have been properly examined. The in- and outports can be created
 	for( uint i = 0; i < N_INPORTS; i++ ) {
-		addPort( PARTNAME+"_Ein"+to_string(i+1), inports_E[BPID-1][i] );
+		addPort( PARTNAME+"EncIn"+to_string(i+1), inports_E[BPID-1][i] );
 	}
 	for( uint i = 0; i < N_OUTPORTS; i++ ) {
-		addPort( PARTNAME+"_Eout"+to_string(i+1), outports_E[BPID-1][i] );
-		addPort( PARTNAME+"_Eout_vel"+to_string(i+1), outports_E_vel[BPID-1][i] );
+		addPort( PARTNAME+"EncOut"+to_string(i+1), outports_E[BPID-1][i] );
+		addPort( PARTNAME+"EncOutVel"+to_string(i+1), outports_E_vel[BPID-1][i] );
 	}
 
 	//! And the temperary properties can be added to the global properties
@@ -738,7 +726,7 @@ void EtherCATread::AddCompare_A(string PARTNAME, int PORTNR, string COMPARISON, 
 	n_outports_A_comp[BPID-1] = n_outports_A_comp[BPID-1] + 1; 
 	// Add port for comparison out
 	for( uint i = 0; i < n_outports_A_comp[BPID-1]; i++ ) {
-		addPort( PARTNAME+"_Acompout"+to_string(i+1), outports_A_comp[BPID-1][i] );
+		addPort( PARTNAME+"AnCompOut"+to_string(i+1), outports_A_comp[BPID-1][i] );
 	}
 
 	// Resize and save math properties
@@ -1026,7 +1014,7 @@ void EtherCATread::AddSaturation_E(string PARTNAME, int PORTNR, doubles SATURATI
 	}
 	
 	// Add port for saturation out
-	addPort( PARTNAME+"_Esatout"+to_string(PORTNR), outports_E_sat[BPID-1][PORTNR-1]);
+	addPort( PARTNAME+"EncSatOut"+to_string(PORTNR), outports_E_sat[BPID-1][PORTNR-1]);
 	
 	// Resize and save math properties
 	saturation_minvalues_E[BPID-1][PORTNR-1].resize(SATURATIONMIN.size());
@@ -1070,7 +1058,7 @@ void EtherCATread::AddMsgOut_A(string PARTNAME, int PORTNR)
 	}
 	
 	// Create output port
-	addPort( PARTNAME+"_AoutMsg"+to_string(PORTNR), outports_A_msg[BPID-1][PORTNR-1] );
+	addPort( PARTNAME+"AnOutMsg"+to_string(PORTNR), outports_A_msg[BPID-1][PORTNR-1] );
 		
 	// Set status
 	msgout_status_A[BPID-1][PORTNR-1] = true;
@@ -1101,7 +1089,7 @@ void EtherCATread::AddMsgOut_D(string PARTNAME, int PORTNR)
 	}
 	
 	// Create output port
-	addPort( PARTNAME+"_DoutMsg"+to_string(PORTNR), outports_D_msg[BPID-1][PORTNR-1] );
+	addPort( PARTNAME+"DiOutMsg"+to_string(PORTNR), outports_D_msg[BPID-1][PORTNR-1] );
 	
 	// Set status
 	msgout_status_D[BPID-1][PORTNR-1] = true;
@@ -1134,7 +1122,7 @@ void EtherCATread::AddMsgOut_E(string PARTNAME, int PORTNR, strings JOINT_NAMES)
 	}
 	
 	// Create output port
-	addPort( PARTNAME+"_EoutMsg"+to_string(PORTNR), outports_E_msg[BPID-1][PORTNR-1] );
+	addPort( PARTNAME+"EncOutMsg"+to_string(PORTNR), outports_E_msg[BPID-1][PORTNR-1] );
 
 	// Init Jointstate msg
 	for (uint k = 0; k < JOINT_NAMES.size(); k++) {
