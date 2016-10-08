@@ -107,7 +107,8 @@ void EtherCATread::updateHook()
 
 void EtherCATread::SetAnalogInsPortNames(string PARTNAME, std::vector<string> PORTNAMES_IN, std::vector<string> PORTNAMES_OUT)
 {
-	// to do implement sanity checks
+	// Init
+	uint BPID;
 	
 	// Check if the bodypart name is in the bodypart_name list and set the BPID accordingly to do make this a function
 	for (uint l = 0; l < bodypart_names.size(); l++) {
@@ -117,14 +118,54 @@ void EtherCATread::SetAnalogInsPortNames(string PARTNAME, std::vector<string> PO
 		}
 	}
 	if ( 0 >= BPID || BPID > bodypart_names.size()) {
-		log(Error) << "EtherCATread::AddAnalogIns(" << PARTNAME << "): Could not add AnalogIns. Invalid BPID. Should satisfy  0 < BPID <= bodypart_names.size(). -> 0 < " << BPID << " <= " << bodypart_names.size() << "!" << endlog(); 
+		log(Error) << "EtherCATread::AddAnalogIns(" << PARTNAME << "): Could not set AnalogIns portnames. Invalid BPID. Should satisfy  0 < BPID <= bodypart_names.size(). -> 0 < " << BPID << " <= " << bodypart_names.size() << "!" << endlog(); 
 		return;
 	}
 	
+	// check if the analogins are already made in that case the ports should be renamed
 	
-	for (uint i = 0; i < PORTNAMES_IN.size(); i++) {
-		portnames_in_A[][]
+	if (PARTNAME == added_bodyparts_A[BPID-1]) {
+		// check if all ports are disconnected
+		for (uint i = 0; i < n_inports_A[BPID-1]; i++) { 
+			if (inports_A[BPID-1][i].Connected()) {
+				log(Error) << "EtherCATread::AddAnalogIns(" << PARTNAME << "): Could not set AnalogIns portnames. One of the in ports was already connected!" << endlog(); 
+				return;
+			}
+		}
+		for (uint i = 0; i < n_outports_A[BPID-1]; i++) { 
+			if (outports_A[BPID-1][i].Connected()) {
+				log(Error) << "EtherCATread::AddAnalogIns(" << PARTNAME << "): Could not set AnalogIns portnames. One of the out ports was already connected!" << endlog(); 
+				return;
+			}
+		}
+		
+		// Check sizes of PORTNAMES		
+		if (PORTNAMES_IN.size() != inport_dimensions_A[BPID-1].size()) {
+			log(Error) << "EtherCATread::AddAnalogIns(" << PARTNAME << "): Could not set AnalogIns portnames. The dimensions of PORTNAMES did not equal to the number of already added analogins" << endlog(); 
+			return;
+		}
+	 
+		// Overwrite ports with new name
+		for( uint i = 0; i < n_inports_A[BPID-1]; i++ ) {
+			addPort( PARTNAME+PORTNAMES_IN(i)+"AnIn"+to_string(i+1), inports_A[BPID-1][i] );
+		}
+		for( uint i = 0; i < n_outports_A[BPID-1]; i++ ) {
+			addPort( PARTNAME+PORTNAMES_OUT(i)+"AnOut"+to_string(i+1), outports_A[BPID-1][i] );
+		}
+		
+	} else {
+		// if analog ins are not added yet, fill in portnames_in_a and portnames_out_a
+		portnames_in_A[BPID-1].resize(PORTNAMES_IN.size());
+		portnames_out_A[BPID-1].resize(PORTNAMES_OUT.size());
+		
+		for( uint i = 0; i < PORTNAMES_IN.size(); i++ ) {
+			portnames_in_A[BPID-1][i] = PORTNAMES_IN[i];
+		}
+		for( uint i = 0; i < PORTNAMES_OUT.size(); i++ ) {
+			portnames_out_A[BPID-1][i] = PORTNAMES_OUT[i];
+		}
 	}
+	
 }
 
 void EtherCATread::SetDigitalInsPortNames(string PARTNAME, std::vector<string> PORTNAMES_IN, std::vector<string> PORTNAMES_OUT)
@@ -134,9 +175,6 @@ void EtherCATread::SetDigitalInsPortNames(string PARTNAME, std::vector<string> P
 
 void EtherCATread::AddAnalogIns(string PARTNAME, doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY)
 {
-	// to do add error if dimensions do not work with the custom port names size
-	// to do add variable port names
-	
 	// Init 
 	uint N_INPORTS = INPORT_DIMENSIONS.size();
 	uint N_OUTPORTS = OUTPORT_DIMENSIONS.size();
@@ -212,22 +250,27 @@ void EtherCATread::AddAnalogIns(string PARTNAME, doubles INPORT_DIMENSIONS, doub
 		}
 	}
 	
-	// Check portname string arrays
-	//if ( PORTNAMES_IN.size() != 0 && PORTNAMES_IN.size() != INPORT_DIMENSIONS.size() ) { 
-		//log(Error) << "EtherCATread::AddAnalogIns(" << PARTNAME << "): Could not add AnalogIns. The size of the PortNamesIn array is " << PORTNAMES_IN.size() << " which should be 0 or equal to the number of inports: " << INPORT_DIMENSIONS.size() << "!" << endlog();
-		//return;
-	//}
-	//if ( PORTNAMES_OUT.size() != 0 && PORTNAMES_OUT.size() != OUTPORT_DIMENSIONS.size() ) { 
-		//log(Error) << "EtherCATread::AddAnalogOuts(" << PARTNAME << "): Could not add AnalogOuts. The size of the PortNamesOut array is " << PORTNAMES_OUT.size() << " which should be 0 or equal to the number of inports: " << INPORT_DIMENSIONS.size() << "!" << endlog();
-		//return;
-	//}
-
+	// resize portnames_in_A 
+	if (portnames_in_A[BPID-1].size != 0) {
+		portnames_in_A[BPID-1].resize(INPORT_DIMENSIONS.size());
+		portnames_out_A[BPID-1].resize(OUTPORT_DIMENSIONS.size());
+	} else { 
+		if (portnames_in_A[BPID-1].size != INPORT_DIMENSIONS.size() || portnames_in_A[BPID-1].size != INPORT_DIMENSIONS.size() ) {
+			log(Error) << "EtherCATread::AddAnalogIns(" << PARTNAME << "): Could not add AnalogIns. The size of the PortNamesIn array provided in SetAnalogInsPortNames " << PORTNAMES_IN.size() << " is not equal to the number of inports: " << INPORT_DIMENSIONS.size() << "!" << endlog();
+			return;
+		} 
+		if (portnames_out_A[BPID-1].size != OUTPORT_DIMENSIONS.size() || portnames_out_A[BPID-1].size != OUTPORT_DIMENSIONS.size() ) {
+			log(Error) << "EtherCATread::AddAnalogIns(" << PARTNAME << "): Could not add AnalogIns. The size of the PortNamesIn array provided in SetAnalogInsPortNames " << PORTNAMES_IN.size() << " is not equal to the number of inports: " << INPORT_DIMENSIONS.size() << "!" << endlog();
+			return;
+		}	
+	}
+	
 	//! Now that all inputs have been properly examined. The in- and outports can be created
 	for( uint i = 0; i < N_INPORTS; i++ ) {
-		addPort( PARTNAME+"AnIn"+to_string(i+1), inports_A[BPID-1][i] );
+		addPort( PARTNAME+portnames_in_A[BPID-1][i]+"AnIn"+to_string(i+1), inports_A[BPID-1][i] );
 	}
 	for( uint i = 0; i < N_OUTPORTS; i++ ) {
-		addPort( PARTNAME+"AnOut"+to_string(i+1), outports_A[BPID-1][i] );
+		addPort( PARTNAME+portnames_out_A[BPID-1][i]+"AnOut"+to_string(i+1), outports_A[BPID-1][i] );
 	}
 
 	//! And the temperary properties can be added to the global properties

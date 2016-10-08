@@ -74,7 +74,7 @@ namespace ETHERCATREAD
 		virtual void ResetEncoders(int BPID, int PORTNR, doubles RESETVALUES );
 		
 		// External - Add Ins
-		virtual void SetAnalogInsPortNames(string PARTNAME, std::vector<string> PORTNAMES_IN, std::vector<string> PORTNAMES_OUT);
+		virtual void SetAnalogInsPortNames( string PARTNAME, std::vector<string> PORTNAMES_IN, std::vector<string> PORTNAMES_OUT);
 		virtual void SetDigitalInsPortNames(string PARTNAME, std::vector<string> PORTNAMES_IN, std::vector<string> PORTNAMES_OUT);
 		virtual void AddAnalogIns(string PARTNAME, doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY);
 		virtual void AddDigitalIns(string PARTNAME, doubles INPORT_DIMENSIONS, doubles OUTPORT_DIMENSIONS, doubles FROM_WHICH_INPORT, doubles FROM_WHICH_ENTRY);
