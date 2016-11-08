@@ -227,6 +227,7 @@ orocos_component(PublishOdometry src/ROSinterfacing/PublishOdometry.cpp ${HEADER
 orocos_component(ReadTwistMsg src/ROSinterfacing/ReadTwistMsg.cpp ${HEADER_FILES})
 orocos_component(RosDiagnostics src/ROSinterfacing/RosDiagnostics.cpp ${HEADER_FILES})
 orocos_component(JointStateDistributor src/ROSinterfacing/JointStateDistributor.cpp ${HEADER_FILES})
+orocos_component(AnyToROS src/ROSinterfacing/AnyToROS.cpp ${HEADER_FILES})
 target_link_libraries(BoolToROS ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(DoublesToJointState ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(DoublesToROS ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
@@ -238,6 +239,7 @@ target_link_libraries(PublishOdometry ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES
 target_link_libraries(ReadTwistMsg ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(RosDiagnostics ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(JointStateDistributor ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
+target_link_libraries(AnyToROS ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 
 ### Orocos Components - soem_interfacing ###
 orocos_component(AnalogInsGeneric src/SOEMinterfacing/AnalogInsGeneric.cpp ${HEADER_FILES})
