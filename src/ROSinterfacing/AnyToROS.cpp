@@ -26,6 +26,7 @@ AnyToROS::AnyToROS(const string& name) :
     addOperation("AddDoublesToROS", &AnyToROS::AddDoublesToROS, this, OwnThread)
 		.doc("Add a doubles to ROS")
 		.arg("N","vector size")
+		.arg("portname","port name")
 		.arg("ids","To select a certain number of elements");
 }
 
@@ -34,6 +35,10 @@ AnyToROS::~AnyToROS(){}
 bool AnyToROS::configureHook()
 {
     n_ports_D = 0;
+    //for(uint j=0; j<maxPorts; j++) {
+	outports_D.resize(maxPorts);
+	outports_D_msg.resize(maxPorts);
+    //}
     
     return true;
 }
@@ -43,7 +48,7 @@ bool AnyToROS::startHook()
     return true;
 }
 
-void AnyToROS::AddDoublesToROS(int N, ints ids)
+void AnyToROS::AddDoublesToROS(int N, ints ids, string portname)
 {
 	// Check
 	if(n_ports_D >= maxPorts) {
@@ -65,6 +70,21 @@ void AnyToROS::AddDoublesToROS(int N, ints ids)
 	for(uint j=0; j<N; j++) {
 		output_D_msg[n_ports_D-1][j].data = 0.0;
 	}
+	
+	
+	
+	// Add ports
+	if (n_ports_D==1) {
+		addPort( "in_"+portname+"Ev", inports_D[n_ports_D-1]);
+	} else {
+		addPort( "in_"+portname, inports_D[n_ports_D-1]);
+	}	
+	
+	for(uint j=0; j<N; j++) {	
+		addPort( "out_"+portname+"_"+to_string(j+1), outports_D[n_ports_D-1][j] );
+		addPort( "outmsg_"+portname+"_"+to_string(j+1), outports_D_msg[n_ports_D-1][j] );
+	}
+	
 }
 
 void AnyToROS::updateHook()
@@ -86,3 +106,12 @@ void AnyToROS::updateHook()
 }
 
 ORO_CREATE_COMPONENT(ROS::AnyToROS)
+
+//loadComponent("AnyToROS","ROS::AnyToROS")
+//setActivity("AnyToROS",0.0,HighestPriority,ORO_SCHED_RT)
+//AnyToROS.start
+//AnyToROS.AddDoublesToROS(8, 8,"pos")
+//AnyToROS.AddDoublesToROS(8, 8,"ref")
+//AnyToROS.AddDoublesToROS(8, 8,"err")
+//AnyToROS.AddDoublesToROS(8, 8,"eff")
+//AnyToROS.AddDoublesToROS(8, 8,"for")
