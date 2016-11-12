@@ -50,15 +50,14 @@ namespace ROS
 	int n_ports_D;
 	ints ids_D[maxPorts];
 	doubles input_D[maxPorts];
-	vector<std_msgs::Float32> output_D_msg[maxPorts];
 
 	/* Declaring functions */
 	virtual void AddDoublesToROS(int N, ints ids, string portname);
 
     /* Declaring output ports*/
 	InputPort<doubles> inports_D[maxPorts];
-    vector< OutputPort<double> > outports_D[maxPorts];
-    vector< OutputPort<std_msgs::Float32> > outports_D_msg[maxPorts];
+    OutputPort<double> outports_D[maxPorts][maxPorts];
+    OutputPort<std_msgs::Float32> outports_D_msg[maxPorts][maxPorts];
 
     public:
 

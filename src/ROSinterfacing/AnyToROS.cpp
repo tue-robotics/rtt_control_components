@@ -35,11 +35,7 @@ AnyToROS::~AnyToROS(){}
 bool AnyToROS::configureHook()
 {
     n_ports_D = 0;
-    //for(uint j=0; j<maxPorts; j++) {
-	outports_D.resize(maxPorts);
-	outports_D_msg.resize(maxPorts);
-    //}
-    
+        
     return true;
 }
 
@@ -50,6 +46,8 @@ bool AnyToROS::startHook()
 
 void AnyToROS::AddDoublesToROS(int N, ints ids, string portname)
 {
+	log(Warning) << "AnyToROS::AddDoublesToROS: ids.size() = " << ids.size() << "!" << endlog();
+	
 	// Check
 	if(n_ports_D >= maxPorts) {
         log(Error) << "AnyToROS::AddDoublesToROS: Could not add doubles to ROS. Already to many ports: " << n_ports_D << " added. maxPorts: " << maxPorts << "!" << endlog();
@@ -58,60 +56,59 @@ void AnyToROS::AddDoublesToROS(int N, ints ids, string portname)
         log(Error) << "AnyToROS::AddDoublesToROS: Could not add doubles to ROS. Since the length of vector ids: " << ids.size() << ", is longer than the total number of joints: " << N << "!" << endlog();
 	}
 	
-	// Init
 	n_ports_D++;
-	ids_D[n_ports_D-1].resize(ids.size());
-	input_D[n_ports_D-1].resize(ids.size());
-	output_D_msg[n_ports_D-1].resize(ids.size());
+	
+	// Init inputs
+	input_D[n_ports_D-1].resize(N);
+	for(uint j=0; j<N; j++) {
+		input_D[n_ports_D-1][j]=0.0;
+	}
+	
+	// Init outputs	
+	ids_D[n_ports_D-1].resize(ids.size());	
 	for(uint j=0; j<ids.size(); j++) {
 		ids_D[n_ports_D-1][j]=ids[j];
-		input_D[n_ports_D-1][j]=0.0;		
 	}
-	for(uint j=0; j<N; j++) {
-		output_D_msg[n_ports_D-1][j].data = 0.0;
-	}
-	
-	
 	
 	// Add ports
 	if (n_ports_D==1) {
-		addPort( "in_"+portname+"Ev", inports_D[n_ports_D-1]);
+		addEventPort( "in_"+portname+"Ev", inports_D[n_ports_D-1]);
 	} else {
 		addPort( "in_"+portname, inports_D[n_ports_D-1]);
 	}	
 	
-	for(uint j=0; j<N; j++) {	
-		addPort( "out_"+portname+"_"+to_string(j+1), outports_D[n_ports_D-1][j] );
-		addPort( "outmsg_"+portname+"_"+to_string(j+1), outports_D_msg[n_ports_D-1][j] );
+	for(uint j=0; j<ids.size(); j++) {	
+		
+		addPort( "out_"+portname+"_"+to_string(ids[j]), outports_D[n_ports_D-1][j] );
+		addPort( "outmsg_"+portname+"_"+to_string(ids[j]), outports_D_msg[n_ports_D-1][j] );
 	}
-	
+
 }
 
 void AnyToROS::updateHook()
-{
+{	
+	static unsigned int input_index;  // Indicate which element from the input vector is desired
+	static std_msgs::Float32 output_msg; // Message to send
+	
 	// Doubles to ROS
-	for(uint i=0; i<n_ports_D; i++) {
+	for(uint i=0; i<n_ports_D; i++) {									// i loops over the number of inports
 		if ( inports_D[i].read(input_D[i]) == NewData ) {
-			for(uint k=0; k<ids_D[i].size(); k++) {
-				// fill in the output_D_msg
-				output_D_msg[i][k].data = input_D[i][ids_D[i][k]];
-				// write to msg port
-				outports_D_msg[i][k].write(output_D_msg[i][k]);
+			for(uint k=0; k<ids_D[i].size(); k++) {						// k loops over the the number of requested output ports
+				// Get the index for the input data
+				input_index = ids_D[i][k]-1;
+				
+				// Get the data from the input struct
+				double data_point = input_D[i][input_index];
+				
+				// fill in the output message and write it to the port
+				output_msg.data = data_point;
+				outports_D_msg[i][k].write(output_msg);
+				
 				// write to normal port
-				outports_D[i][k].write(output_D_msg[i][k].data);
+				outports_D[i][k].write(data_point);
 			}
 		}
 	}
-
 }
 
 ORO_CREATE_COMPONENT(ROS::AnyToROS)
-
-//loadComponent("AnyToROS","ROS::AnyToROS")
-//setActivity("AnyToROS",0.0,HighestPriority,ORO_SCHED_RT)
-//AnyToROS.start
-//AnyToROS.AddDoublesToROS(8, 8,"pos")
-//AnyToROS.AddDoublesToROS(8, 8,"ref")
-//AnyToROS.AddDoublesToROS(8, 8,"err")
-//AnyToROS.AddDoublesToROS(8, 8,"eff")
-//AnyToROS.AddDoublesToROS(8, 8,"for")
