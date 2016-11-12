@@ -26,7 +26,7 @@ Tracing::Tracing(const string& name) :
 											buffersize(16384),
 											Ts(0.001)
 {
-	addProperty( "vector_sizes", vectorsizes_prop ).doc("size of the vector per port. Example: array ( 2.0 4.0 4.0 )");
+	addProperty( "vector_sizes", vectorsizes_prop ).doc("size of the vector per port. Example: array ( 2.0, 4.0, 4.0 )");
 	addProperty( "buffersize", buffersize ).doc("Size of the buffer");
 	addProperty( "filename", filename ).doc("Name of the file");
 	addProperty( "Ts", Ts ).doc("Sample time of orocos, used for time vector");
