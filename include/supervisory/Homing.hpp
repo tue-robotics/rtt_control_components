@@ -57,6 +57,11 @@ namespace SUPERVISORY
 		// Input/Output
 		std_msgs::Bool homeswitch_msg;
 		doubles absolutesensoroutput;
+		
+		// Outputs
+		doubles outpos;
+		doubles outvel;
+		doubles outacc;
 
 		// Properties
 		bool new_structure;
@@ -103,10 +108,10 @@ namespace SUPERVISORY
 		doubles homing_endpos;
 		doubles initial_maxerr;
 		doubles updated_maxerr;
+		/** Indicates whether to reset the joint to the current position
+		 * as soon as the homing criterion has been met */
+		ints require_reset; 
 		bools allowedBodyparts;
-		vector< doubles > outpos;
-		vector< doubles > outvel;
-		vector< doubles > outacc;
 		std::vector<refgen::RefGenerator> mRefGenerators;
 		std::vector<amigo_msgs::ref_point> mRefPoints;
 		

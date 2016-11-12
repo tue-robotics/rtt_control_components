@@ -46,8 +46,6 @@ bool AnyToROS::startHook()
 
 void AnyToROS::AddDoublesToROS(int N, ints ids, string portname)
 {
-	log(Warning) << "AnyToROS::AddDoublesToROS: ids.size() = " << ids.size() << "!" << endlog();
-	
 	// Check
 	if(n_ports_D >= maxPorts) {
         log(Error) << "AnyToROS::AddDoublesToROS: Could not add doubles to ROS. Already to many ports: " << n_ports_D << " added. maxPorts: " << maxPorts << "!" << endlog();
