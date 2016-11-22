@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   kdl_parser
   rtt_std_msgs
   tue_manipulation
+  soem_beckhoff_drivers
   )
 
 include_directories(
@@ -292,15 +293,20 @@ orocos_component(rgb_controller src/lighting/rgb_controller.cpp ${HEADER_FILES})
 target_link_libraries(rgb_controller ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 
 ### Add dependencies for all components making use of messages inside soem_beckhoff_drivers
-add_dependencies(Supervisor soem_beckhoff_drivers_generate_messages_cpp)
-add_dependencies(DynamixelController soem_beckhoff_drivers_generate_messages_cpp)
-add_dependencies(DigitalOuts soem_beckhoff_drivers_generate_messages_cpp)
-add_dependencies(AnalogInsPera soem_beckhoff_drivers_generate_messages_cpp)
-add_dependencies(ReadEncodersTimeStamp soem_beckhoff_drivers_generate_messages_cpp)
-add_dependencies(ReadEncoders soem_beckhoff_drivers_generate_messages_cpp)
-add_dependencies(AnalogInsGeneric soem_beckhoff_drivers_generate_messages_cpp)
-add_dependencies(AnalogOutsGeneric soem_beckhoff_drivers_generate_messages_cpp)
-add_dependencies(AnalogInsPera2 soem_beckhoff_drivers_generate_messages_cpp)
-add_dependencies(AnalogIns soem_beckhoff_drivers_generate_messages_cpp)
-add_dependencies(AnalogOutsPera soem_beckhoff_drivers_generate_messages_cpp)
-add_dependencies(AnalogOuts soem_beckhoff_drivers_generate_messages_cpp)
+add_dependencies(Supervisor ${catkin_EXPORTED_TARGETS})
+add_dependencies(DynamixelController ${catkin_EXPORTED_TARGETS})
+add_dependencies(DigitalOuts ${catkin_EXPORTED_TARGETS})
+add_dependencies(AnalogInsPera ${catkin_EXPORTED_TARGETS})
+add_dependencies(ReadEncodersTimeStamp ${catkin_EXPORTED_TARGETS})
+add_dependencies(ReadEncoders ${catkin_EXPORTED_TARGETS})
+add_dependencies(AnalogInsGeneric ${catkin_EXPORTED_TARGETS})
+add_dependencies(AnalogOutsGeneric ${catkin_EXPORTED_TARGETS})
+add_dependencies(AnalogInsPera2 ${catkin_EXPORTED_TARGETS})
+add_dependencies(AnalogIns ${catkin_EXPORTED_TARGETS})
+add_dependencies(AnalogOutsPera ${catkin_EXPORTED_TARGETS})
+add_dependencies(AnalogOuts ${catkin_EXPORTED_TARGETS})
+add_dependencies(EtherCATread ${catkin_EXPORTED_TARGETS})
+add_dependencies(EtherCATwrite ${catkin_EXPORTED_TARGETS})
+add_dependencies(SignalGenerator ${catkin_EXPORTED_TARGETS})
+add_dependencies(Compare ${catkin_EXPORTED_TARGETS})
+add_dependencies(DigitalIns ${catkin_EXPORTED_TARGETS})
