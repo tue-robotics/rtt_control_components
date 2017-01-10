@@ -330,16 +330,23 @@ void TrajectoryActionlib::AddBodyPart(int partNr, strings JointNames)
 	for (size_t i = 0; i < JointNames.size(); ++i)
 	{
 		boost::shared_ptr<const urdf::Joint> Joint = Model.getJoint(JointNames[i]);
-		minpos[partNr-1][i] = Joint->limits->lower; ///TODO/// Maybe not store in a matrix, are they used anywhere outside this loop?
-		maxpos[partNr-1][i] = Joint->limits->upper;
-		maxvel[partNr-1][i] = Joint->limits->velocity;
-		maxacc[partNr-1][i] = Joint->limits->effort;
+		if (Joint) 
+		{
+			minpos[partNr-1][i] = Joint->limits->lower; ///TODO/// Maybe not store in a matrix, are they used anywhere outside this loop?
+			maxpos[partNr-1][i] = Joint->limits->upper;
+			maxvel[partNr-1][i] = Joint->limits->velocity;
+			maxacc[partNr-1][i] = Joint->limits->effort;
 
-		log(Info) << "TrajectoryActionlib: Bodypart " << partNr << ", Joint " << JointNames[i] << " has these limits: "<< endlog();
-		log(Info) << "minpos="<<minpos[partNr-1][i]<<" maxpos="<<maxpos[partNr-1][i]<<" maxvel="<<maxvel[partNr-1][i]<<" maxacc="<<maxacc[partNr-1][i]<<endlog();
+			log(Info) << "TrajectoryActionlib: Bodypart " << partNr << ", Joint " << JointNames[i] << " has these limits: "<< endlog();
+			log(Info) << "minpos="<<minpos[partNr-1][i]<<" maxpos="<<maxpos[partNr-1][i]<<" maxvel="<<maxvel[partNr-1][i]<<" maxacc="<<maxacc[partNr-1][i]<<endlog();
 
-		reference_generator_.initJoint(JointNames[i], Joint->limits->velocity, Joint->limits->effort, Joint->limits->lower, Joint->limits->upper);
-		//reference_generator_.setPositionLimits(i, minpos[partNr-1][i], maxpos[partNr-1][i]);
+			reference_generator_.initJoint(JointNames[i], Joint->limits->velocity, Joint->limits->effort, Joint->limits->lower, Joint->limits->upper);
+			//reference_generator_.setPositionLimits(i, minpos[partNr-1][i], maxpos[partNr-1][i]);
+		}
+		else
+		{
+			log(Error) << "Joint Null Pointer for Model.getJoint() on '" << JointNames[i] << "'" << endlog();
+		}
 	}
 }
 
