@@ -321,7 +321,7 @@ void TrajectoryActionlib::AddBodyPart(int partNr, strings JointNames)
 	activeBodyparts[numberOfBodyparts-1] = partNr;
 	allowedBodyparts[partNr-1] = false;
 
-	log(Warning) << "TrajectoryActionlib: Total of "<< totalNumberOfJoints <<" joints for " << numberOfBodyparts << " Bodyparts" << endlog();
+	log(Info) << "TrajectoryActionlib: Total of "<< totalNumberOfJoints <<" joints for " << numberOfBodyparts << " Bodyparts" << endlog();
 
 	// Get the constraints for each joint from the URDF model
 	urdf::Model Model;
