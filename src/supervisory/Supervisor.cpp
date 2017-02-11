@@ -11,7 +11,7 @@
 #include "Supervisor.hpp"
 #include <ros/ros.h>
 
-enum dashboard_cmd_t {HOMING_CMD = 21, START_CMD = 22, STOP_CMD = 23, RESET_CMD = 24};
+enum dashboard_cmd_t {RESTART_CMD = 0, HOMING_CMD = 21, START_CMD = 22, STOP_CMD = 23, RESET_CMD = 24};
 
 using namespace std;
 using namespace RTT;
@@ -296,6 +296,9 @@ void Supervisor::updateHook()
 	if (goodToGO) {
 		if ( dashboardCmdPort.read(dashboardCmdmsg) == NewData ) {
 			if (dashboardCmdmsg.data[0] == 0) { // 0 = all bodyparts
+				if (dashboardCmdmsg.data[0] == RESTART_CMD ) {
+                    exit(1);
+                }
 				if (dashboardCmdmsg.data[1] == HOMING_CMD && emergency == false ) {
 					log(Warning) << "Supervisor: Received Homing request from dashboard for all parts" << endlog();
 					for ( int partNr = 1; partNr < 6; partNr++ ) {
