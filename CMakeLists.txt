@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(rtt_control_components)
 
 find_package(cmake_modules REQUIRED)
-find_package(Eigen REQUIRED)
+find_package(Eigen3 REQUIRED)
 find_package(catkin REQUIRED COMPONENTS
   rtt_ros
   std_msgs
@@ -35,7 +35,7 @@ include_directories(
 	${catkin_INCLUDE_DIRS} 
 	${scl_filters_INCLUDE_DIRS} 
 	${USE_OROCOS_INCLUDE_DIRS}
-	${Eigen_INCLUDE_DIRS})
+	${Eigen3_INCLUDE_DIRS})
 
 
 orocos_install_headers( DIRECTORY
