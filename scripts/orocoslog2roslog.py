@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import rospy
 
 # This file reads the orocos log line by line and converts them to ROS log statements
