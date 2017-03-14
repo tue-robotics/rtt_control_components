@@ -76,7 +76,6 @@ bool TrajectoryActionlib::startHook()
 	// Start the actionlib server
 	rtt_action_server_.start();
 	dt = this->getPeriod();
-	dt = 0.001;
 	return true;
 }
 
