@@ -22,7 +22,7 @@ while not rospy.is_shutdown():
         else:
             f.seek(cur,0)
         for line in f:
-            severety = line[line.index('[')+1:line.index(']')-1].strip().lower()
+            severety = line[line.index('[')+1:line.index(']')].strip().lower()
             log = line[line.index(']')+1:].strip()
             if severety == "debug":
                 rospy.logdebug(log)
