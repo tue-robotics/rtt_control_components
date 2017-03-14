@@ -23,16 +23,16 @@ while not rospy.is_shutdown():
             f.seek(cur,0)
         for line in f:
             severety = line[line.index('[')+1:line.index(']')-1].strip().lower()
-            logstart = line.index(']')+1
+            log = line[line.index(']')+1:].strip()
             if severety == "debug":
-                rospy.logdebug(logstart.strip())
+                rospy.logdebug(log)
             if severety == "info":
-                rospy.loginfo(logstart.strip())
+                rospy.loginfo(log)
             if severety == "warning":
-                rospy.logwarn(logstart.strip())
+                rospy.logwarn(log)
             if severety == "error":
-                rospy.logerr(logstart.strip())
+                rospy.logerr(log)
             if severety == "fatal":
-                rospy.logfatal(logstart.strip())
+                rospy.logfatal(log)
         cur = f.tell()
     rate.sleep()
