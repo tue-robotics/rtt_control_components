@@ -1,11 +1,26 @@
 #include "TrajectoryActionlib.hpp"
 
+#include <ros/console.h>
+
 using namespace std;
 using namespace RTT;
 using namespace ROS;
 
+template <typename T>
+std::string vectorToString(std::vector<T> vector)
+{
+  std::stringstream ss;
+  for (const T& e : vector)
+  {
+    ss << e << ", ";
+  }
+  return ss.str();
+}
+
 TrajectoryActionlib::TrajectoryActionlib(const string& name) : TaskContext(name, PreOperational)
 {
+  ROS_INFO_NAMED("TrajectoryActionlib", "Constructor");
+
 	//! Operations
 	addOperation("AddBodyPart", &TrajectoryActionlib::AddBodyPart, this, OwnThread)
 		.doc("Add a body part by specifying its partNr and its jointNames")
@@ -32,7 +47,9 @@ TrajectoryActionlib::TrajectoryActionlib(const string& name) : TaskContext(name,
 }
 
 TrajectoryActionlib::~TrajectoryActionlib()
-{    
+{
+  ROS_INFO_NAMED("TrajectoryActionlib", "Destructor");
+
 	//! remove operations
 	remove("AddBodyPart");
 	remove("SendToPos");
@@ -41,6 +58,8 @@ TrajectoryActionlib::~TrajectoryActionlib()
 
 bool TrajectoryActionlib::configureHook()
 {
+  ROS_INFO_NAMED("TrajectoryActionlib", "configureHook");
+
 	//! Resize
 	minpos.resize(maxN);
 	maxpos.resize(maxN);
@@ -70,6 +89,8 @@ bool TrajectoryActionlib::configureHook()
 
 bool TrajectoryActionlib::startHook()
 {
+  ROS_INFO_NAMED("TrajectoryActionlib", "StartHook");
+
 	// Initialize
 	start_time = os::TimeService::Instance()->getNSecs()*1e-9;
 
@@ -82,6 +103,8 @@ bool TrajectoryActionlib::startHook()
 
 void TrajectoryActionlib::updateHook()
 {
+  ROS_INFO_THROTTLE_NAMED(1., "TrajectoryActionlib", "updateHook 1 Hz throttled");
+
 	double t_now = os::TimeService::Instance()->getNSecs()*1e-9;
 	// 6.5s after start, check all properties, ports, etc.
 	if (!checked) {
@@ -183,9 +206,10 @@ void TrajectoryActionlib::updateHook()
 // Called by rtt_action_server_ when a new goal is received
 void TrajectoryActionlib::goalCallback(GoalHandle gh) {
 	log(Info) << "TrajectoryActionlib: Received Message" << endlog();
+  ROS_INFO_STREAM_NAMED("TrajectoryActionlib", "goalCallback goal: " << *gh.getGoal());
 
 	std::stringstream error;
-	std::string goalid = gh.getGoalID().id;
+  std::string goalid = gh.getGoalID().id;
 	if (!reference_generator_.setGoal(*gh.getGoal(), goalid, error))
 	{
 		gh.setRejected();
@@ -195,96 +219,23 @@ void TrajectoryActionlib::goalCallback(GoalHandle gh) {
 
 	// Accept the goal
 	gh.setAccepted();
-	goal_handles_[goalid] = gh;    
-	
-	/*// Accept/reject goal requests here
-
-	log(Info) << "TrajectoryActionlib: Received Message" << endlog();
-	bool accept = true;
-	int error_code = 0;
-
-	uint number_of_goal_joints_ = gh.getGoal()->trajectory.joint_names.size();
-	if (number_of_goal_joints_ < 1) {
-		log(Warning) << "TrajectoryActionlib: Trajectory contains too little joints" << endlog();
-		accept = false;
-		error_code = control_msgs::FollowJointTrajectoryResult::INVALID_JOINTS;
-	}
-
-	Point destination = gh.getGoal()->trajectory.points[number_of_points_ - 1];
-
-	// Loop over all joints within the message received
-	uint k = 0;
-	while (k < number_of_goal_joints_ && accept == true) {
-		map<string, BodyJointPair>::const_iterator it = joint_map.find(gh.getGoal()->trajectory.joint_names[k]);
-		if (it == joint_map.end()) {
-			log(Warning) << "TrajectoryActionlib: received a message with joint name ["+gh.getGoal()->trajectory.joint_names[k]+"] that is not listed!" << endlog();
-			accept = false;
-			error_code = control_msgs::FollowJointTrajectoryResult::INVALID_JOINTS;
-			k++;
-		} else {
-			// received a message with joint name that is found. Continue checking for operational state of bodypart
-			BodyJointPair bjp = it->second;
-			int body_part_id = bjp.first;
-			int joint_id = bjp.second;
-			if (allowedBodyparts[body_part_id] == true) {
-				if ( destination.positions[k] < minpos[body_part_id][joint_id] ) {
-					log(Warning) << "TrajectoryActionlib: Received goal " << destination.positions[k] << " for partNr " << body_part_id+1 << ", joint " << joint_id+1 << ". This is outside minimal bound " << minpos [body_part_id][joint_id] << "!" << endlog();
-					accept = false;
-					error_code = control_msgs::FollowJointTrajectoryResult::GOAL_TOLERANCE_VIOLATED;
-				} else if ( destination.positions[k] > maxpos[body_part_id][joint_id] ) {
-					log(Warning) << "TrajectoryActionlib: Received goal " << destination.positions[k] << " for partNr " << body_part_id+1 << ", joint " << joint_id+1 << ". This is outside maximal bound " << maxpos [body_part_id][joint_id] << "!" << endlog();
-					accept = false;
-					error_code = control_msgs::FollowJointTrajectoryResult::GOAL_TOLERANCE_VIOLATED;
-				}
-			} else { // Message received for bodypart that did not get the AllowReadReference!
-				log(Warning) << "TrajectoryActionlib: Message received for bodypart that did not get the AllowReadReference!" << endlog();
-				accept = false;
-				error_code = control_msgs::FollowJointTrajectoryResult::INVALID_GOAL;
-			}
-			k++;
-		}
-	}
-	if (accept) {
-		gh.setAccepted();
-		log(Info)<<"TrajectoryActionlib: Accepted goal"<<endlog();
-		TrajectoryInfo t_info(gh);
-		t_info.dt = t_info.points.back().time_from_start.toSec() / t_info.points.size();
-		log(Info)<<"TrajectoryActionlib: Accepted goal. Dt = " << t_info.dt <<endlog();
-
-
-		// Push back goal handle
-		goal_handles_.push_back(t_info);
-	}
-	else {
-		Result result;
-		result.error_code = error_code;
-		gh.setRejected(result, "blaat");
-		log(Info)<<"TrajectoryActionlib: Rejected goal"<<endlog();
-	}*/
+  goal_handles_[goalid] = gh;
 }
 
 // Called by rtt_action_server_ when a goal is cancelled / preempted
 void TrajectoryActionlib::cancelCallback(GoalHandle gh)
 {
+  ROS_INFO_STREAM_NAMED("TrajectoryActionlib", "cancelCallback goal: " << *gh.getGoal());
+
 	gh.setCanceled();
 	reference_generator_.cancelGoal(gh.getGoalID().id);
 	goal_handles_.erase(gh.getGoalID().id);
-	
-	/*log(Info) << "TrajectoryActionlib: Cancelling this goal!" << endlog();
-	// Find the goalhandle in the goal_handles_ vector
-	for(std::vector<TrajectoryInfo>::iterator it = goal_handles_.begin(); it != goal_handles_.end(); ++it)
-	{
-		if (gh.getGoalID().id == it->goal_handle.getGoalID().id)
-		{
-			it->goal_handle.setCanceled();
-			it = goal_handles_.erase(it);
-			return;
-		}
-	}*/
 }
 
 void TrajectoryActionlib::AddBodyPart(int partNr, strings JointNames)
 {
+  ROS_INFO_STREAM_NAMED("TrajectoryActionlib", "AddBodyPart: " << partNr << vectorToString(JointNames));
+
 	// Update map
 	for (uint l = 0; l < JointNames.size(); l++) {
 		joint_map[JointNames[l]] = make_pair(partNr-1, l);
@@ -352,49 +303,21 @@ void TrajectoryActionlib::AddBodyPart(int partNr, strings JointNames)
 
 void TrajectoryActionlib::SendToPos(int partNr, strings jointnames, doubles pos)
 {
-	if (pos.size() != vector_sizes[partNr-1]) {
+  ROS_INFO_STREAM_NAMED("TrajectoryActionlib", "SendToPos: " << partNr << "," << vectorToString(jointnames)
+                        << ", " << vectorToString(pos));
+
+  if (pos.size() != vector_sizes[partNr-1])
+  {
 		log(Warning) << "TrajectoryActionlib: Invalid size of pos/vector_sizes[partNr-1]" << endlog();
 	}
-	if (allowedBodyparts[partNr-1] == false) {
+  if (allowedBodyparts[partNr-1] == false)
+  {
 		log(Warning) << "TrajectoryActionlib: Received SendToPos for bodypart that is not yet allowed" << endlog();
 	}
 	log(Info)<< "TrajectoryActionlib: Received SendToPos goal: " << endlog();
-	
-	/*for ( uint joint_id = 0; joint_id < pos.size(); joint_id++ ){
-		desiredPos [partNr-1] [joint_id] = min( pos[joint_id]            		, maxpos     [partNr-1][joint_id]);
-		desiredPos [partNr-1] [joint_id] = max( minpos [partNr-1] [joint_id]    , desiredPos [partNr-1][joint_id]);
-		desiredVel [partNr-1] [joint_id] = maxvel [partNr-1] [joint_id];
-		desiredAcc [partNr-1] [joint_id] = maxacc [partNr-1] [joint_id];
-	}
 
-	// Construct the initial goal
-	control_msgs::FollowJointTrajectoryGoal initial_goal;
-	for ( map<string, BodyJointPair>::const_iterator it = joint_map.begin(); it != joint_map.end(); ++it )
-	{
-		const BodyJointPair& body_joint_pair = it->second;
-		if (body_joint_pair.first == partNr-1)
-			initial_goal.trajectory.joint_names.push_back(it->first);
-	}
-	trajectory_msgs::JointTrajectoryPoint initial_point;
-	initial_point.positions = pos;
-	initial_goal.trajectory.points.push_back(initial_point);
-
-	for (uint i = 0; i < initial_goal.trajectory.joint_names.size(); ++i)
-	{
-		log(Info) << "TrajectoryActionlib::SendToPos: " << initial_goal.trajectory.joint_names[i] << " = " << initial_point.positions[i] << endlog();
-	}
-
-	std::stringstream error;
-	std::string goalstring = "goalstring";
-	reference_generator_.setGoal(initial_goal, goalstring, error);*/
 	tue::manipulation::JointGoalInfo goal_info;
-	//goal_info.id = "Homing";
 	bool result = reference_generator_.setGoal(jointnames, pos, goal_info);
-
-//    if (!result)
-//	{
-//		log(Error) << goal_info.error() << endlog();
-//	}
 
 	log(Info) << "TrajectoryActionlib::SendToPos: result = " << result << endlog();
 	log(Info) << "Lets go!" << endlog();
@@ -402,6 +325,7 @@ void TrajectoryActionlib::SendToPos(int partNr, strings jointnames, doubles pos)
 
 void TrajectoryActionlib::ResetReferences(int partNr)
 {
+  ROS_INFO_STREAM_NAMED("TrajectoryActionlib", "ResetReferences: " << partNr);
 	if (partNr < 0 || partNr > maxN ) {
 		log(Error) <<"TrajectoryActionlib::ResetReferences: Invalid partNr provided: partNr = " << partNr <<endlog();
 		return;
@@ -440,6 +364,8 @@ void TrajectoryActionlib::ResetReferences(int partNr)
 
 bool TrajectoryActionlib::CheckConnectionsAndProperties()
 {
+  ROS_INFO_THROTTLE_NAMED(1., "CheckConnectionsAndProperties", "updateHook 1 Hz throttled");
+
 	// to do use iterator
 	for ( uint j = 0; j < activeBodyparts.size(); j++ ) {
 		// look up bodypart number
@@ -479,12 +405,6 @@ bool TrajectoryActionlib::CheckConnectionsAndProperties()
 			log(Error)<<"TrajectoryActionlib: Stopping component: initial_pos" << partNr << " is not connected."<<endlog();
 			return false;
 		}
-
-		/*//Set the starting value to the current actual value
-		currentpos_inport[partNr-1].read( current_position[partNr-1] );
-		for ( uint i = 0; i < vector_sizes[partNr-1]; i++ ){
-		   mRefGenerators[partNr-1][i].setRefGen(current_position[partNr-1][i]);
-		}*/
 	}
 
 	return true;
