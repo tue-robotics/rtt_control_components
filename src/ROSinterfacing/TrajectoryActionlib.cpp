@@ -19,7 +19,7 @@ std::string vectorToString(std::vector<T> vector)
 
 TrajectoryActionlib::TrajectoryActionlib(const string& name) : TaskContext(name, PreOperational)
 {
-  ROS_INFO_NAMED("TrajectoryActionlib", "Constructor");
+  ROS_DEBUG_NAMED("TrajectoryActionlib", "Constructor");
 
 	//! Operations
 	addOperation("AddBodyPart", &TrajectoryActionlib::AddBodyPart, this, OwnThread)
@@ -48,7 +48,7 @@ TrajectoryActionlib::TrajectoryActionlib(const string& name) : TaskContext(name,
 
 TrajectoryActionlib::~TrajectoryActionlib()
 {
-  ROS_INFO_NAMED("TrajectoryActionlib", "Destructor");
+  ROS_DEBUG_NAMED("TrajectoryActionlib", "Destructor");
 
 	//! remove operations
 	remove("AddBodyPart");
@@ -58,7 +58,7 @@ TrajectoryActionlib::~TrajectoryActionlib()
 
 bool TrajectoryActionlib::configureHook()
 {
-  ROS_INFO_NAMED("TrajectoryActionlib", "configureHook");
+  ROS_DEBUG_NAMED("TrajectoryActionlib", "configureHook");
 
 	//! Resize
 	minpos.resize(maxN);
@@ -89,7 +89,7 @@ bool TrajectoryActionlib::configureHook()
 
 bool TrajectoryActionlib::startHook()
 {
-  ROS_INFO_NAMED("TrajectoryActionlib", "StartHook");
+  ROS_DEBUG_NAMED("TrajectoryActionlib", "StartHook");
 
 	// Initialize
 	start_time = os::TimeService::Instance()->getNSecs()*1e-9;
@@ -103,7 +103,7 @@ bool TrajectoryActionlib::startHook()
 
 void TrajectoryActionlib::updateHook()
 {
-  ROS_INFO_THROTTLE_NAMED(1., "TrajectoryActionlib", "updateHook 1 Hz throttled");
+  ROS_DEBUG_THROTTLE_NAMED(1., "TrajectoryActionlib", "updateHook 1 Hz throttled");
 
 	double t_now = os::TimeService::Instance()->getNSecs()*1e-9;
 	// 6.5s after start, check all properties, ports, etc.
@@ -136,35 +136,41 @@ void TrajectoryActionlib::updateHook()
 		}
 
 		std::vector<double> references;
-		reference_generator_.calculatePositionReferences(dt, references);
+    if (reference_generator_.calculatePositionReferences(dt, references))
+    {
+      for(unsigned int i = 0 ; i < joint_names.size(); ++i) {
+        map<string, BodyJointPair>::const_iterator it = joint_map.find(joint_names[i]);
+        BodyJointPair bjp = it->second;
+        int body_part_id = bjp.first;
+        int joint_id = bjp.second;
 
-		for(unsigned int i = 0 ; i < joint_names.size(); ++i) {
-			map<string, BodyJointPair>::const_iterator it = joint_map.find(joint_names[i]);
-			BodyJointPair bjp = it->second;
-			int body_part_id = bjp.first;
-			int joint_id = bjp.second;
-			
-			// Joint positions
-			if (references[i] == references[i]) // Check for NaN
-			{
-				desiredPos[body_part_id][joint_id] = references[i];
-			}
-			actualPos[body_part_id] [joint_id] = desiredPos[body_part_id][joint_id];
-			
-			// Joint velocities
-			double vel = reference_generator_.joint_state(i).velocity();
-			if (vel == vel) // Check for NaN
-			{
-				vel_out[body_part_id][joint_id] = vel;
-			}
-			
-			// Joint accelerations
-			double acc = reference_generator_.joint_state(i).acceleration();
-			if (acc == acc) // Check for NaN
-			{
-				acc_out[body_part_id][joint_id] = acc;
-			}
-		}
+        // Joint positions
+        if (references[i] == references[i]) // Check for NaN
+        {
+          desiredPos[body_part_id][joint_id] = references[i];
+        }
+        actualPos[body_part_id] [joint_id] = desiredPos[body_part_id][joint_id];
+
+        // Joint velocities
+        double vel = reference_generator_.joint_state(i).velocity();
+        if (vel == vel) // Check for NaN
+        {
+          vel_out[body_part_id][joint_id] = vel;
+        }
+
+        // Joint accelerations
+        double acc = reference_generator_.joint_state(i).acceleration();
+        if (acc == acc) // Check for NaN
+        {
+          acc_out[body_part_id][joint_id] = acc;
+        }
+      }
+    }
+    else
+    {
+      ROS_ERROR("Failed to calculatePositionReferences, aborting all active goals");
+      reference_generator_.abortAllGoals();
+    }
 		
 		// Check for each goal if it succeeded or canceled, and notify the goal handle accordingly
 		for(std::map<std::string, GoalHandle>::iterator it = goal_handles_.begin(); it != goal_handles_.end();)
@@ -182,6 +188,11 @@ void TrajectoryActionlib::updateHook()
 				gh.setCanceled();
 				goal_handles_.erase(it++);
 			}
+      else if (status == tue::manipulation::JOINT_GOAL_ABORTED)
+      {
+        gh.setAborted();
+        goal_handles_.erase(it++);
+      }
 			else
 			{
 				++it;
@@ -234,7 +245,7 @@ void TrajectoryActionlib::cancelCallback(GoalHandle gh)
 
 void TrajectoryActionlib::AddBodyPart(int partNr, strings JointNames)
 {
-  ROS_INFO_STREAM_NAMED("TrajectoryActionlib", "AddBodyPart: " << partNr << vectorToString(JointNames));
+  ROS_DEBUG_STREAM_NAMED("TrajectoryActionlib", "AddBodyPart: " << partNr << vectorToString(JointNames));
 
 	// Update map
 	for (uint l = 0; l < JointNames.size(); l++) {
@@ -303,7 +314,7 @@ void TrajectoryActionlib::AddBodyPart(int partNr, strings JointNames)
 
 void TrajectoryActionlib::SendToPos(int partNr, strings jointnames, doubles pos)
 {
-  ROS_INFO_STREAM_NAMED("TrajectoryActionlib", "SendToPos: " << partNr << "," << vectorToString(jointnames)
+  ROS_DEBUG_STREAM_NAMED("TrajectoryActionlib", "SendToPos: " << partNr << "," << vectorToString(jointnames)
                         << ", " << vectorToString(pos));
 
   if (pos.size() != vector_sizes[partNr-1])
@@ -325,7 +336,7 @@ void TrajectoryActionlib::SendToPos(int partNr, strings jointnames, doubles pos)
 
 void TrajectoryActionlib::ResetReferences(int partNr)
 {
-  ROS_INFO_STREAM_NAMED("TrajectoryActionlib", "ResetReferences: " << partNr);
+  ROS_DEBUG_STREAM_NAMED("TrajectoryActionlib", "ResetReferences: " << partNr);
 	if (partNr < 0 || partNr > maxN ) {
 		log(Error) <<"TrajectoryActionlib::ResetReferences: Invalid partNr provided: partNr = " << partNr <<endlog();
 		return;
@@ -364,7 +375,7 @@ void TrajectoryActionlib::ResetReferences(int partNr)
 
 bool TrajectoryActionlib::CheckConnectionsAndProperties()
 {
-  ROS_INFO_THROTTLE_NAMED(1., "CheckConnectionsAndProperties", "updateHook 1 Hz throttled");
+  ROS_DEBUG_THROTTLE_NAMED(1., "CheckConnectionsAndProperties", "updateHook 1 Hz throttled");
 
 	// to do use iterator
 	for ( uint j = 0; j < activeBodyparts.size(); j++ ) {
