@@ -41,6 +41,7 @@ Homing::Homing(const string& name) : TaskContext(name, PreOperational)
 	addProperty("homing_stroke",		homing_stroke	).doc("Stroke from endstop to reset position (This distance is provided as delta goal after homing position is reached)");
 	addProperty("reset_stroke",			reset_stroke	).doc("Stroke from resetposition to zero position (also the position the bodypart will assume when the rest of the joints are homed)");
 	addProperty("homing_endpos",		homing_endpos	).doc("Position to go to after homing");
+	addProperty("require_reset",		require_reset   ).doc("Indicates whether to reset the joint to the current position as soon as the homing criterion has been met");
 	addProperty("interpolatorDt",		InterpolDt		).doc("InterpolDt (TS)");
 	addProperty("interpolatorEps",		InterpolEps		).doc("InterpolEps");
 
@@ -130,7 +131,14 @@ bool Homing::configureHook()
 		log(Error) << prefix <<"_Homing: Could not configure component: Size of homing_endpos "<<homing_endpos.size()<<" does not match outport_sizes[0] "<<outport_sizes[0]<< "." <<endlog();
 		return false;
 	}
-
+	if (require_reset.size() == 0) {
+		log(Warning) << prefix <<"_Homing: require reset is not set " << endlog();
+		require_reset.resize(N, 1);
+	}
+	else if (require_reset.size() != N) {
+		log(Error) << prefix <<"_Homing: Could not configure component: Size of require_reset ("<<require_reset.size()<<") does not match vector_size ("<<N<<")"<<endlog();
+		return false;
+	}
 
 	//! Check which types of homing are required
 	homeswitchhoming = false;
@@ -152,20 +160,15 @@ bool Homing::configureHook()
 		}
 	}
 
-
 	//! Input checks specific for homing types
 	if ( (forcehoming && homing_forces.size() != N) || (errorhoming && homing_errors.size() != N) || (absolutehoming && homing_absPos.size() != N) ) {
 		log(Error) << prefix <<"_Homing: Could not configure component: homing_forces["<< homing_forces.size() <<"], homing_errors["<< homing_errors.size() <<"], homing_absPos["<< homing_absPos.size() <<"] should be size " << N <<"."<<endlog();
 		return false;
 	}
 
-
 	//! Resizing
 	mRefGenerators.resize(N);
 	mRefPoints.resize(N);
-	outpos.resize(N_outports);
-	outvel.resize(N_outports);
-	outacc.resize(N_outports);
 	desiredVel.resize(homingVel.size());
 
 	return true;
@@ -186,13 +189,10 @@ bool Homing::startHook()
 	initial_maxerr.assign(N,0.0);
 	updated_maxerr.assign(N,0.0);
 	allowedBodyparts.resize(5);
-	for ( uint n = 0; n < N_outports; n++ ) {
-		outpos[n].assign(outport_sizes[n],0.0);
-		outvel[n].assign(outport_sizes[n],0.0);
-		outacc[n].assign(outport_sizes[n],0.0);
-	}
+	outpos.resize(N, 0.0);
+	outvel.resize(N, 0.0);
+	outacc.resize(N, 0.0);
 	desiredVel = homingVel;
-
 
 	//! Check peers and set TaskContext pointers to components
 	// Supervisor
@@ -258,7 +258,6 @@ bool Homing::startHook()
 		delete GripperControl;
 	}
 
-
 	//! Property Acces
 	// Fetch acces
 	Safety_maxJointErrors = Safety->attributes()->getAttribute("maxJointErrors");
@@ -273,7 +272,6 @@ bool Homing::startHook()
 		log(Error) << prefix <<"_Homing: Could not start component: Could not gain acces to property allowedBodyparts of the TrajectoryActionlib component."<<endlog();
 		return false;
 	}
-
 
 	//! Operations
 	// Fetch
@@ -363,19 +361,18 @@ bool Homing::startHook()
 		}
 	}
 
-
 	//! Increase allowed joint errors
 	// Fetch initial property values
 	initial_maxerr = Safety_maxJointErrors.get();
-
+	
 	// Update property values
+	updated_maxerr = initial_maxerr;
 	for (uint j = 0; j<N; j++) {
 		if ( (require_homing[j] != 0) ) {
 			updated_maxerr[j] = 2.0*initial_maxerr[j];
 		}
 	}
 	Safety_maxJointErrors.set(updated_maxerr);
-
 
 	//! Initialize refgen
 	pos_inport.read( position );
@@ -387,7 +384,10 @@ bool Homing::startHook()
 }
 
 void Homing::updateHook()
-{
+{		
+	// Read positions
+	pos_inport.read(position);
+	
 	// Check if homing of bodypart is finished
 	if(jointNr==N) {
 		
@@ -395,13 +395,10 @@ void Homing::updateHook()
 			stateA = 2;
 			stateB = 1;
 
-			// Reset encoders and reset ref gen
-			pos_inport.read( position );
-
 			// Stop and Reset Encoders
-			log(Warning) << prefix <<"_Homing: Stopping Bodypart: " << bodypart << "!"<<endlog();
+			log(Info) << prefix <<"_Homing: Stopping Bodypart: " << bodypart << "!"<<endlog();
 			StopBodyPart(bodypart); 			
-			log(Warning) << prefix <<"_Homing: Stopping Bodypart: " << bodypart << "!"<<endlog();
+			log(Info) << prefix <<"_Homing: Stopping Bodypart: " << bodypart << "!"<<endlog();
 			
 			if (new_structure) {
 				Eread_ResetEncoders(partNr,1,reset_stroke);
@@ -431,12 +428,12 @@ void Homing::updateHook()
 			StartBodyPart(bodypart);
 			SendToPos(partNr, jointnames, homing_endpos);
 
-			// Finised :)
+			// Finished :)
 			string printstring = "[";
 			for (uint j = 0; j<N; j++) {
 				printstring += to_string(require_homing[j]) + ", ";
 			}
-			log(Warning) << prefix <<"_Homing: Finished homing joints of " << bodypart << ": " << printstring << "]!"<<endlog();
+			log(Warning) << prefix <<"_Homing: Finished homing of " << bodypart << "!"<<endlog();
 			homingfinished_outport.write(true);	
 			
 		}
@@ -445,15 +442,9 @@ void Homing::updateHook()
 	}
 
 	// Check whether homing is required for this joint
-	if (require_homing[homing_order[jointNr]-1] == 0 && (stateA < 2) ) {
-
-		// Reset parameters
-		updated_maxerr[homing_order[jointNr]-1] = initial_maxerr[homing_order[jointNr]-1];
-		Safety_maxJointErrors.set(updated_maxerr);
-		
-		if (jointNr != (N-1)) {log(Warning) << prefix <<"_Homing: Skipped homing of joint "<< homing_order[jointNr] << ". Proceeding to joint " << homing_order[jointNr+1]<< "! \n" <<endlog();}
-		if (jointNr == (N-1)) {log(Warning) << prefix <<"_Homing: Skipped homing of last joint "<< homing_order[jointNr] << "! \n" <<endlog();}
-
+	unsigned int joint_index = homing_order[jointNr]-1;
+	if (require_homing[joint_index] == 0 && (stateA < 2) ) {
+	
 		// Go to the next joint and start over
 		jointNr++;
 		SendRef();
@@ -461,38 +452,34 @@ void Homing::updateHook()
 		return;
 	}
 
-	// Read positions
-	pos_inport.read(position);
-
 	if (stateA == 0) { // Move to homing goal and evaluate homing criterion
-		updateHomingRef(homing_order[jointNr]-1);
+		updateHomingRef(joint_index);
 
-		joint_finished = evaluateHomingCriterion(homing_order[jointNr]-1);
+		joint_finished = evaluateHomingCriterion(joint_index);
 		if (joint_finished) {
 						
-			// Reset Reference generator
-			for ( uint i = 0; i < N; i++ ){
-				mRefGenerators[i].setRefGen(position[i]);
+			// Reset Reference generator if desired.
+			if (require_reset[joint_index]) {
+				mRefGenerators[joint_index].setRefGen(position[joint_index]);
+			} else {
+			    mRefGenerators[joint_index].setRefGen(mRefPoints[joint_index].pos);
 			}
-			SendRef();
 
 			// Send to reset position
-			desiredPos = position;
-			desiredPos[homing_order[jointNr]-1] -= homing_stroke[homing_order[jointNr]-1];
-			homing_stroke_goal = desiredPos[homing_order[jointNr]-1];
-			desiredVel[homing_order[jointNr]-1] = 3*desiredVel[homing_order[jointNr]-1];
+			desiredPos[joint_index] = position[joint_index];
+			desiredPos[joint_index] -= homing_stroke[joint_index];
+			homing_stroke_goal = desiredPos[joint_index];
+			desiredVel[joint_index] = 3*desiredVel[joint_index];
 			
 			// Reset parameters
-			updated_maxerr[homing_order[jointNr]-1] = initial_maxerr[homing_order[jointNr]-1];
+			updated_maxerr[joint_index] = initial_maxerr[joint_index];
 			
 			Safety_maxJointErrors.set(updated_maxerr);
 			
 			stateA++;
 		}
 	} else if (stateA == 1) {	// Move to zero position relative to homing position (homing_stroke_goal)
-		if ( (position[homing_order[jointNr]-1] > (homing_stroke_goal-0.01) ) && (position[homing_order[jointNr]-1] < (homing_stroke_goal+0.01) ) ) {
-			if (jointNr != N-1 ) {log(Warning) << prefix <<"_Homing: Finished homing of joint "<< homing_order[jointNr] << ". Proceeding to joint " << homing_order[jointNr+1]<< "!" <<endlog();}
-			if (jointNr == N-1 ) {log(Warning) << prefix <<"_Homing: Finished homing of last joint "<< homing_order[jointNr] << "." <<endlog();}
+		if ( (position[joint_index] > (homing_stroke_goal-0.01) ) && (position[joint_index] < (homing_stroke_goal+0.01) ) ) {
 			jointNr++;
 			stateA = 0;
 		}
@@ -502,20 +489,20 @@ void Homing::updateHook()
 }
 
 void Homing::SendRef()
-{
+{	
 	// Send ref
 	uint j = 0;
 	for ( uint n = 0; n < N_outports; n++ ) {
 		for ( uint i = 0; i < outport_sizes[n]; i++ ) {
 			mRefPoints[j] = mRefGenerators[j].generateReference(desiredPos[j], desiredVel[j], desiredAcc[j], InterpolDt, false, InterpolEps);
-			outpos[n][i]=mRefPoints[j].pos;
-			outvel[n][i]=mRefPoints[j].vel;
-			outacc[n][i]=mRefPoints[j].acc;
+			outpos[i]=mRefPoints[j].pos;
+			outvel[i]=mRefPoints[j].vel;
+			outacc[i]=mRefPoints[j].acc;
 			j ++;
 		}
-		posoutport[n].write( outpos[n] );
-		veloutport[n].write( outvel[n] );
-		accoutport[n].write( outacc[n] );
+		posoutport[n].write( outpos );
+		veloutport[n].write( outvel );
+		accoutport[n].write( outacc );
 	}
 }
 
@@ -523,7 +510,7 @@ void Homing::updateHomingRef( uint jointID)
 {
 	// Read positions
 	pos_inport.read(position);
-	desiredPos = position;
+	desiredPos[jointID] = position[jointID];
 
 	// Update direction for homeswitch data and absolute sensor data
 	direction = 1.0*homing_direction[jointID];
@@ -551,7 +538,7 @@ void Homing::updateHomingRef( uint jointID)
 }
 
 bool Homing::evaluateHomingCriterion( uint jointID)
-{
+{	
 	bool result = false;
 	if (homing_type[jointID] == 1 ) {
 		std_msgs::Bool homeswitch_msg;

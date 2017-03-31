@@ -11,7 +11,7 @@
 #include "Supervisor.hpp"
 #include <ros/ros.h>
 
-enum dashboard_cmd_t {HOMING_CMD = 21, START_CMD = 22, STOP_CMD = 23, RESET_CMD = 24};
+enum dashboard_cmd_t {RESTART_CMD = 0, HOMING_CMD = 21, START_CMD = 22, STOP_CMD = 23, RESET_CMD = 24};
 
 using namespace std;
 using namespace RTT;
@@ -174,13 +174,13 @@ bool Supervisor::startHook()
 	// Connection checks
 	if ( !serialRunningPort.connected() ) {
 		log(Error) << "Supervisor: Could not start component: serialport to check soem is not connected" << endlog();
-		return false;
+		exit(1);
 	}
 	// ebutton connection checks
 	for ( int j = 1; j < ebutton_order.size(); j++ ) {
 		if (!ebutton_ports[j].connected()) {
 			log(Error) << "Supervisor: Could not start component: ebutton_ports[" << j << "] is not connected" << endlog();
-			return false;
+			exit(1);
 		}
 	}
 
@@ -191,7 +191,7 @@ bool Supervisor::startHook()
 		start_time = os::TimeService::Instance()->getNSecs()*1e-9;
 		if ( start_time - aquisition_time > 1.0 ) {
 			log(Error) << "Supervisor: No soem heartbeat found" << endlog();
-			return false;
+			exit(1);
 		}
 	}
 	aquisition_time = os::TimeService::Instance()->getNSecs()*1e-9;
@@ -214,7 +214,7 @@ bool Supervisor::startHook()
 		// Check Property Acces
 		if (!AllowReadReferencesRefGen.ready() ) {
 			log(Error) << "Supervisor: Could not gain acces to GlobalReferenceGenerator.AllowReadReferences"<<endlog();
-			return false;
+			exit(1);
 		}
 
 		// Set all Allowances to false
@@ -296,6 +296,9 @@ void Supervisor::updateHook()
 	if (goodToGO) {
 		if ( dashboardCmdPort.read(dashboardCmdmsg) == NewData ) {
 			if (dashboardCmdmsg.data[0] == 0) { // 0 = all bodyparts
+				if (dashboardCmdmsg.data[1] == RESTART_CMD ) {
+					exit(1);
+				}
 				if (dashboardCmdmsg.data[1] == HOMING_CMD && emergency == false ) {
 					log(Warning) << "Supervisor: Received Homing request from dashboard for all parts" << endlog();
 					for ( int partNr = 1; partNr < 6; partNr++ ) {
