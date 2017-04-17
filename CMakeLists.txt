@@ -124,6 +124,22 @@ target_link_libraries(DigitalOuts ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 orocos_component(ReadEncoders src/SOEMinterfacing/ReadEncoders.cpp ${HEADER_FILES})
 target_link_libraries(ReadEncoders ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 
+### Orocos Components - Math ###
+orocos_component(SmallerLarger src/math/SmallerLarger.cpp ${HEADER_FILES})
+target_link_libraries(SmallerLarger ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
+orocos_component(MatrixTransform src/math/MatrixTransform.cpp ${HEADER_FILES})
+target_link_libraries(MatrixTransform ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
+orocos_component(Gain src/math/Gain.cpp ${HEADER_FILES})
+target_link_libraries(Gain ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
+orocos_component(Addition src/math/Addition.cpp ${HEADER_FILES})
+target_link_libraries(Addition ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
+
+### Orocos Components - Sources ###
+orocos_component(ConstantSignal src/sources/ConstantSignal.cpp ${HEADER_FILES})
+target_link_libraries(ConstantSignal ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
+orocos_component(ConstantBool src/sources/ConstantBool.cpp ${HEADER_FILES})
+target_link_libraries(ConstantBool ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
+
 ### Orocos Components - Dynamixel ###
 orocos_component(DynamixelController src/dynamixel/DynamixelController.cpp ${HEADER_FILES})
 target_link_libraries(DynamixelController ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
