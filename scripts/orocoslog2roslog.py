@@ -26,23 +26,24 @@ while not rospy.is_shutdown():
         else:
             f.seek(cur, 0)
         for line in f:
-            result = pattern.search(line.decode('utf-8'))
-            severety = result.group('severety').lower()
-            logline = result.group('logline')
-            if result:
-                if severety == "debug":
-                    rospy.logdebug(logline)
-                elif severety == "info":
-                    rospy.loginfo(logline)
-                elif severety == "warning":
-                    rospy.logwarn(logline)
-                elif severety == "error":
-                    rospy.logerr(logline)
-                elif severety == "fatal":
-                    rospy.logfatal(logline)
+            if not line.strip(): # Skip empty lines
+                result = pattern.search(line.decode('utf-8'))
+                severety = result.group('severety').lower()
+                logline = result.group('logline')
+                if result:
+                    if severety == "debug":
+                        rospy.logdebug(logline)
+                    elif severety == "info":
+                        rospy.loginfo(logline)
+                    elif severety == "warning":
+                        rospy.logwarn(logline)
+                    elif severety == "error":
+                        rospy.logerr(logline)
+                    elif severety == "fatal":
+                        rospy.logfatal(logline)
+                    else:
+                        rospy.logerr('Unrecognized severety: ' + severety)
                 else:
-                    rospy.logerr('Unrecognized severety: ' + severety)
-            else:
-                rospy.logerr("No match found in orocos log")
+                    rospy.logerr("No match found in orocos log")
         cur = f.tell()
     rate.sleep()
