@@ -65,6 +65,8 @@ orocos_generate_package(
 ### Orocos Components - New ###
 orocos_component(EtherCATread src/newcomponents/EtherCATread.cpp ${HEADER_FILES})
 orocos_component(EtherCATwrite src/newcomponents/EtherCATwrite.cpp ${HEADER_FILES})
+orocos_component(Integrator src/math/Integrator.cpp ${HEADER_FILES})
+target_link_libraries(Integrator ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(EtherCATread ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 target_link_libraries(EtherCATwrite ${catkin_LIBRARIES} ${USE_OROCOS_LIBRARIES})
 
