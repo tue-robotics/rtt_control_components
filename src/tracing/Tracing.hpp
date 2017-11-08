@@ -16,68 +16,63 @@
 #include "boost/multi_array.hpp"
 #include <cassert>
 
-#define maxN 10 //Maximum number of ports that can be created.
-
+#define maxN 10 // Maximum number of ports that can be created.
 
 using namespace std;
 using namespace RTT;
 
 namespace Signal
 {
-  typedef vector<double> doubles;
-  typedef vector<uint> uints;
+typedef vector<double> doubles;
+typedef vector<uint> uints;
 
-  template <class T>
-  inline string to_string (const T& t){
-    stringstream ss;
-    ss << t;
-    return ss.str();
-  };
-  
-  /**
-   * @brief A Component that calculates Tracingolute value of the 
-   *        input signals
-   *
-   * The component has input port as stated in property number_of_inputs,
-   * that should receive vector of doubles.
-   * Input ports are eventports which will trigger the component.
-   * 
-   * @param * N - number of inputs
-   *        * vector_size - size of input vectors
-   */
-   
-  class Tracing
-  : public RTT::TaskContext
-    {
-    private:
+template <class T> inline string to_string(const T& t)
+{
+  stringstream ss;
+  ss << t;
+  return ss.str();
+};
 
-		/* Declaring and output port*/
-		InputPort<doubles> inports[maxN];
+/**
+ * @brief A Component that calculates Tracingolute value of the
+ *        input signals
+ *
+ * The component has input port as stated in property number_of_inputs,
+ * that should receive vector of doubles.
+ * Input ports are eventports which will trigger the component.
+ *
+ * @param * N - number of inputs
+ *        * vector_size - size of input vectors
+ */
 
-		string filename;
-		doubles vectorsizes_prop;
-		vector<int> vectorsizes;
-		uint buffersize;
-		double Ts;
+class Tracing : public RTT::TaskContext
+{
+private:
+  /* Declaring and output port*/
+  InputPort<doubles> inports[maxN];
 
-		doubles buffer;
-		vector<doubles> buffers;
-		int counter;
-		uint columns;
-		uint rows;
-		uint Nports;
-		bool printed;
-	
-    public:
+  string filename;
+  doubles vectorsizes_prop;
+  vector<int> vectorsizes;
+  uint buffersize;
+  double Ts;
 
-		Tracing(const string& name);
-		~Tracing();
+  doubles buffer;
+  vector<doubles> buffers;
+  int counter;
+  uint columns;
+  uint rows;
+  uint Nports;
+  bool printed;
 
-		bool configureHook();
-		bool startHook();
-		void updateHook();
-		void stopHook();
+public:
+  Tracing(const string& name);
+  ~Tracing();
 
-    };
+  bool configureHook();
+  bool startHook();
+  void updateHook();
+  void stopHook();
+};
 }
 #endif

@@ -18,71 +18,66 @@
 
 #include <rtt/os/Timer.hpp>
 
-#define maxN 10 //Maximum number of ports that can be created.
-
+#define maxN 10 // Maximum number of ports that can be created.
 
 using namespace std;
 using namespace RTT;
 
 namespace Signal
 {
-  typedef vector<double> doubles;
-  typedef vector<uint> uints;
+typedef vector<double> doubles;
+typedef vector<uint> uints;
 
-  template <class T>
-  inline string to_string (const T& t){
-    stringstream ss;
-    ss << t;
-    return ss.str();
-  };
-  
-  /**
-   * @brief A Component that calculates Tracingolute value of the 
-   *        input signals
-   *
-   * The component has input port as stated in property number_of_inputs,
-   * that should receive vector of doubles.
-   * Input ports are eventports which will trigger the component.
-   * 
-   * @param * N - number of inputs
-   *        * vector_size - size of input vectors
-   */
-   
-  class TracingTimeStamp
-  : public RTT::TaskContext
-    {
-    private:
+template <class T> inline string to_string(const T& t)
+{
+  stringstream ss;
+  ss << t;
+  return ss.str();
+};
 
-		/* Declaring and output port*/
-		InputPort<doubles> inports[maxN];
+/**
+ * @brief A Component that calculates Tracingolute value of the
+ *        input signals
+ *
+ * The component has input port as stated in property number_of_inputs,
+ * that should receive vector of doubles.
+ * Input ports are eventports which will trigger the component.
+ *
+ * @param * N - number of inputs
+ *        * vector_size - size of input vectors
+ */
 
-		string filename;
-		doubles vectorsizes_prop;
-		vector<int> vectorsizes;
-		uint buffersize;
-		double Ts;
+class TracingTimeStamp : public RTT::TaskContext
+{
+private:
+  /* Declaring and output port*/
+  InputPort<doubles> inports[maxN];
 
-		doubles buffer;
-		vector<doubles> buffers;
-		uints counters;
-		int counter;
-		uint columns;
-		uint rows;
-		uint Nports;
+  string filename;
+  doubles vectorsizes_prop;
+  vector<int> vectorsizes;
+  uint buffersize;
+  double Ts;
 
-        RTT::os::TimeService::ticks start_ticks;
-        RTT::os::TimeService::Seconds current_seconds;
-	
-    public:
+  doubles buffer;
+  vector<doubles> buffers;
+  uints counters;
+  int counter;
+  uint columns;
+  uint rows;
+  uint Nports;
 
-        TracingTimeStamp(const string& name);
-        ~TracingTimeStamp();
+  RTT::os::TimeService::ticks start_ticks;
+  RTT::os::TimeService::Seconds current_seconds;
 
-		bool configureHook();
-		bool startHook();
-		void updateHook();
-		void stopHook();
+public:
+  TracingTimeStamp(const string& name);
+  ~TracingTimeStamp();
 
-    };
+  bool configureHook();
+  bool startHook();
+  void updateHook();
+  void stopHook();
+};
 }
 #endif
