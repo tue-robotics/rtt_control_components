@@ -96,11 +96,10 @@ namespace SUPERVISORY
 		bool forcehoming;
 		bool errorhoming;
 		bool joint_finished;
-		bool finishing;
-		bool finishingdone;
+		bool shuttingdown;
 		int jointNr;
-		int stateA;
-		int stateB;
+		int homing_state;
+		int shuttingdown_state;
 		double homing_stroke_goal;
 		double direction ;
 		doubles position;
@@ -150,6 +149,7 @@ namespace SUPERVISORY
 		bool evaluateHomingCriterion(uint jointID);
 		void updateHomingRef(uint jointID);
 		void SendRef();
+		void HomingFinished();
 
 	};
 }

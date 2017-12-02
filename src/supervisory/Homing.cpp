@@ -178,11 +178,10 @@ bool Homing::startHook()
 {
 	//! Init
 	joint_finished = false;
-	finishing = false;
-	finishingdone = false;
-	jointNr = 0;
-	stateA = 0;
-	stateB = 0;
+	shuttingdown = false;
+	jointNr = 0;				// iterates from 0 to N-1. If jointNr == N homing is finished
+	homing_state = 0;			// homing_state = 0 -> Moving towards homing position, homing_state is 1 moving back towards zero position
+	shuttingdown_state = 0;		// shuttingdown_state = 0 (Not shutting down), at shuttingdown_state = 1 () and shuttingdown_state = 10 
 	homing_stroke_goal = 0.0;
 	position.assign(N,0.0);
 	desiredPos.assign(N,0.0);
@@ -275,8 +274,8 @@ bool Homing::startHook()
 
 	//! Operations
 	// Fetch
-	StartBodyPart 	= Supervisor->getOperation(			"StartBodyPart");
-	StopBodyPart 	= Supervisor->getOperation(			"StopBodyPart");
+	StartBodyPart 	= Supervisor->getOperation("StartBodyPart");
+	StopBodyPart 	= Supervisor->getOperation("StopBodyPart");
 	if (new_structure) {
 		Eread_ResetEncoders 	= EtherCATread->getOperation(		"ResetEncoders");
 	} else {
@@ -375,121 +374,102 @@ bool Homing::startHook()
 	Safety_maxJointErrors.set(updated_maxerr);
 
 	//! Initialize refgen
-	pos_inport.read( position );
+	pos_inport.read( desiredPos );
 	for ( uint i = 0; i < N; i++ ){
-		mRefGenerators[i].setRefGen(position[i]);
+		mRefGenerators[i].setRefGen(desiredPos[i]);
 	}
-		
+	
 	return true;
 }
 
 void Homing::updateHook()
-{		
-	// Read positions
-	pos_inport.read(position);
-	
-	// Check if homing of bodypart is finished
-	if(jointNr==N) {
+{
+	if (shuttingdown) {
+		return;
+	} else {
 		
-		if (stateA != 2 ) {	// Stopping and resetting bodypart This loop should be entered only once
-			stateA = 2;
-			stateB = 1;
+		// Check if homing of bodypart is finished
+		if(jointNr==N) {
+			if (shuttingdown_state == 0 ) {	// Stopping and resetting bodypart
+				homing_state = 2;
+				shuttingdown_state = 1;
 
-			// Stop and Reset Encoders
-			log(Info) << prefix <<"_Homing: Stopping Bodypart: " << bodypart << "!"<<endlog();
-			StopBodyPart(bodypart); 			
-			log(Info) << prefix <<"_Homing: Stopping Bodypart: " << bodypart << "!"<<endlog();
-			
-			if (new_structure) {
-				Eread_ResetEncoders(partNr,1,reset_stroke);
-			} else {
-				Readenc_ResetEncoders(reset_stroke);
-			}
-			
-		} else if (stateB < 5) { // Wait a bit
-			stateB++;
-			
-		} else if (stateB == 5) { // Starting bodypart, This loop should be entered only once
-			stateB++;
-						
-			// If the component is LPERA or RPERA then the gripperControl component needs to be started
-			if (prefix == "LPERA" || prefix == "RPERA") {
-				if (!GripperControl->isRunning() )
-				{
-					GripperControl->start();
+				// Stop and Reset Encoders
+				log(Info) << prefix <<"_Homing: Stopping Bodypart: " << bodypart << "!"<<endlog();
+				StopBodyPart(bodypart);
+				
+				if (new_structure) {
+					Eread_ResetEncoders(partNr,1,reset_stroke);
+				} else {
+					Readenc_ResetEncoders(reset_stroke);
 				}
+			} else if (shuttingdown_state < 3) { // Wait one sample
+				shuttingdown_state++;
+			} else if (shuttingdown_state == 3) { // Starting bodypart, This loop should be entered only once
+				shuttingdown = true; // HomingFinished should be called only once
+				shuttingdown_state++;
+				HomingFinished();
+				
 			}
-		
-			// Fetch allowedBodyparts from TrajectoryAction, modify and send back
-			allowedBodyparts = TrajectoryActionlib_allowedBodyparts.get();
-			allowedBodyparts[partNr-1] = true;
-			TrajectoryActionlib_allowedBodyparts.set(allowedBodyparts);
-			
-			StartBodyPart(bodypart);
-			SendToPos(partNr, jointnames, homing_endpos);
-
-			// Finished :)
-			string printstring = "[";
-			for (uint j = 0; j<N; j++) {
-				printstring += to_string(require_homing[j]) + ", ";
-			}
-			log(Warning) << prefix <<"_Homing: Finished homing of " << bodypart << "!"<<endlog();
-			homingfinished_outport.write(true);	
-			
+			return;
 		}
 		
-		return;
-	}
-
-	// Check whether homing is required for this joint
-	unsigned int joint_index = homing_order[jointNr]-1;
-	if (require_homing[joint_index] == 0 && (stateA < 2) ) {
-	
-		// Go to the next joint and start over
-		jointNr++;
-		SendRef();
-
-		return;
-	}
-
-	if (stateA == 0) { // Move to homing goal and evaluate homing criterion
-		updateHomingRef(joint_index);
-
-		joint_finished = evaluateHomingCriterion(joint_index);
-		if (joint_finished) {
-						
-			// Reset Reference generator if desired.
-			if (require_reset[joint_index]) {
-				mRefGenerators[joint_index].setRefGen(position[joint_index]);
-			} else {
-			    mRefGenerators[joint_index].setRefGen(mRefPoints[joint_index].pos);
-			}
-
-			// Send to reset position
-			desiredPos[joint_index] = position[joint_index];
-			desiredPos[joint_index] -= homing_stroke[joint_index];
-			homing_stroke_goal = desiredPos[joint_index];
-			desiredVel[joint_index] = 3*desiredVel[joint_index];
-			
-			// Reset parameters
-			updated_maxerr[joint_index] = initial_maxerr[joint_index];
-			
-			Safety_maxJointErrors.set(updated_maxerr);
-			
-			stateA++;
-		}
-	} else if (stateA == 1) {	// Move to zero position relative to homing position (homing_stroke_goal)
-		if ( (position[joint_index] > (homing_stroke_goal-0.01) ) && (position[joint_index] < (homing_stroke_goal+0.01) ) ) {
+		// Read positions
+		pos_inport.read(position);
+		
+		// Make sure we only do this once and not every loop
+		// Check whether homing is required for this joint
+		unsigned int joint_index = homing_order[jointNr]-1;
+		if (require_homing[joint_index] == 0 && (homing_state < 2) ) {
+		
+			// Go to the next joint and start over
 			jointNr++;
-			stateA = 0;
-		}
-	}
+			SendRef();
 
-	SendRef();
+			return;
+		}
+
+		if (homing_state == 0) { // Move to homing goal and evaluate homing criterion
+			
+			// Make sure we do this only once and not every loop
+			updateHomingRef(joint_index);
+
+			joint_finished = evaluateHomingCriterion(joint_index);
+			if (joint_finished) {
+							
+				// Reset Reference generator if desired.
+				if (require_reset[joint_index]) {
+					mRefGenerators[joint_index].setRefGen(position[joint_index]);
+				} else {
+					mRefGenerators[joint_index].setRefGen(mRefPoints[joint_index].pos);
+				}
+
+				// Send to reset position
+				desiredPos[joint_index] = position[joint_index];
+				desiredPos[joint_index] -= homing_stroke[joint_index];
+				homing_stroke_goal = desiredPos[joint_index];
+				desiredVel[joint_index] = 3*desiredVel[joint_index];
+				
+				// Reset parameters
+				updated_maxerr[joint_index] = initial_maxerr[joint_index];
+				
+				Safety_maxJointErrors.set(updated_maxerr);
+				
+				homing_state++;
+			}
+		} else if (homing_state == 1) {	// Move to zero position relative to homing position (homing_stroke_goal)
+			if ( (position[joint_index] > (homing_stroke_goal-0.01) ) && (position[joint_index] < (homing_stroke_goal+0.01) ) ) {
+				jointNr++;
+				homing_state = 0;
+			}
+		}
+		
+		SendRef();
+	}
 }
 
 void Homing::SendRef()
-{	
+{
 	// Send ref
 	uint j = 0;
 	for ( uint n = 0; n < N_outports; n++ ) {
@@ -509,7 +489,6 @@ void Homing::SendRef()
 void Homing::updateHomingRef( uint jointID)
 {
 	// Read positions
-	pos_inport.read(position);
 	desiredPos[jointID] = position[jointID];
 
 	// Update direction for homeswitch data and absolute sensor data
@@ -575,6 +554,37 @@ bool Homing::evaluateHomingCriterion( uint jointID)
 	}
 
 	return result;
+}
+
+void Homing::HomingFinished()
+{
+	log(Warning) << prefix <<"_Homing: shutting down!"<<endlog();
+	
+	// If the component is LPERA or RPERA then the gripperControl component needs to be started
+	if (prefix == "LPERA" || prefix == "RPERA") {
+		if (!GripperControl->isRunning() )
+		{
+			GripperControl->start();
+		}
+	}
+
+	// Fetch allowedBodyparts from TrajectoryAction, modify and send back
+	allowedBodyparts = TrajectoryActionlib_allowedBodyparts.get();
+	allowedBodyparts[partNr-1] = true;
+	TrajectoryActionlib_allowedBodyparts.set(allowedBodyparts);
+	
+	StartBodyPart(bodypart);
+	SendToPos(partNr, jointnames, homing_endpos);
+
+	// Finished :)
+	string printstring = "[";
+	for (uint j = 0; j<N; j++) {
+		printstring += to_string(require_homing[j]) + ", ";
+	}
+	log(Warning) << prefix <<"_Homing: Finished homing of " << bodypart << "!"<<endlog();
+	homingfinished_outport.write(true);
+	
+	log(Warning) << prefix <<"_Homing: Finished shutting down!"<<endlog();
 }
 
 ORO_CREATE_COMPONENT(SUPERVISORY::Homing)
