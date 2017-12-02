@@ -375,9 +375,9 @@ bool Homing::startHook()
 	Safety_maxJointErrors.set(updated_maxerr);
 
 	//! Initialize refgen
-	pos_inport.read( position );
+	pos_inport.read( desiredPos );
 	for ( uint i = 0; i < N; i++ ){
-		mRefGenerators[i].setRefGen(position[i]);
+		mRefGenerators[i].setRefGen(desiredPos[i]);
 	}
 		
 	return true;
