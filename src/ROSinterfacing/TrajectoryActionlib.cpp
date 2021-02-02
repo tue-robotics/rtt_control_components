@@ -291,7 +291,7 @@ void TrajectoryActionlib::AddBodyPart(int partNr, strings JointNames)
 
 	for (size_t i = 0; i < JointNames.size(); ++i)
 	{
-		boost::shared_ptr<const urdf::Joint> Joint = Model.getJoint(JointNames[i]);
+		urdf::JointConstSharedPtr Joint = Model.getJoint(JointNames[i]);
 		if (Joint) 
 		{
 			minpos[partNr-1][i] = Joint->limits->lower; ///TODO/// Maybe not store in a matrix, are they used anywhere outside this loop?
